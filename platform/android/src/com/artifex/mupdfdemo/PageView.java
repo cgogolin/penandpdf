@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -20,6 +21,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.preference.PreferenceManager;
 
 class PatchInfo {
 	public Point patchViewSize;
@@ -137,9 +139,15 @@ public abstract class PageView extends ViewGroup {
 	private       ProgressBar mBusyIndicator;
 	private final Handler   mHandler = new Handler();
 
+    private float inkThickness;
+    
 	public PageView(Context c, Point parentSize, Bitmap sharedHqBm) {
 		super(c);
 		mContext    = c;
+                
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
+                inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(INK_THICKNESS)));
+                
 		mParentSize = parentSize;
 		setBackgroundColor(BACKGROUND_COLOR);
 		mEntireBm = Bitmap.createBitmap(parentSize.x, parentSize.y, Config.ARGB_8888);
@@ -393,7 +401,8 @@ public abstract class PageView extends ViewGroup {
 						paint.setStrokeCap(Paint.Cap.ROUND);
 
 						paint.setStyle(Paint.Style.STROKE);
-						paint.setStrokeWidth(INK_THICKNESS * scale);
+//						paint.setStrokeWidth(INK_THICKNESS * scale);
+                                                paint.setStrokeWidth(inkThickness * scale);
 						paint.setColor(INK_COLOR);
 
 						canvas.drawPath(path, paint);
@@ -483,7 +492,7 @@ public abstract class PageView extends ViewGroup {
 		mSearchView.invalidate();
 	}
 
-	protected PointF[][] getDraw() {
+	protected PointF[][] getDraw() { //This is where ink drawn stuff processed 
 		if (mDrawing == null)
 			return null;
 

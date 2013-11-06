@@ -517,7 +517,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		setItemSelectBox(null);
 	}
 
-	public boolean saveDraw() {
+    public boolean saveDraw() { 
 		PointF[][] path = getDraw();
 
 		if (path == null)
@@ -542,7 +542,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 		};
 
-		mAddInk.execute(getDraw());
+		mAddInk.execute(getDraw());//This is where ink drawn stuff is saved!!!
 		cancelDraw();
 
 		return true;

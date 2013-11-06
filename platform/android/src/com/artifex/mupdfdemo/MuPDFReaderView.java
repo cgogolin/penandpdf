@@ -178,24 +178,6 @@ public class MuPDFReaderView extends ReaderView {
                         }
                     }
 		}
-            
-		// if ( mMode == Mode.Drawing )
-		// {
-		// 	float x = event.getX();
-		// 	float y = event.getY();
-		// 	switch (event.getAction())
-		// 	{
-		// 		case MotionEvent.ACTION_DOWN:
-		// 			touch_start(x, y);
-		// 			break;
-		// 		case MotionEvent.ACTION_MOVE:
-		// 			touch_move(x, y);
-		// 			break;
-		// 		case MotionEvent.ACTION_UP:
-		// 			touch_up();
-		// 			break;
-		// 	}
-		// }
 
 		if ((event.getAction() & event.getActionMasked()) == MotionEvent.ACTION_DOWN)
 		{

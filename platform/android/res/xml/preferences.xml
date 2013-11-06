@@ -5,4 +5,21 @@
         android:title="@string/use_stylus"
         android:summary="@string/use_stylus_summ"
         android:defaultValue="false" />
+    <CheckBoxPreference
+        android:key="pref_scroll_vertical"
+        android:title="@string/scroll_vertical"
+        android:summary="@string/scroll_vertical_summ"
+        android:defaultValue="false" />
+    <CheckBoxPreference
+        android:key="pref_scroll_continuous"
+        android:title="@string/scroll_continuous"
+        android:summary="@string/scroll_continuous_summ"
+        android:defaultValue="false" />
+    <EditTextPreference
+        android:key="pref_ink_thickness"
+        android:title="@string/ink_thickness"
+        android:summary="@string/ink_thickness_summ"
+	android:numeric="decimal"
+	android:digits="0123456789."
+        android:defaultValue="10" />
 </PreferenceScreen>
