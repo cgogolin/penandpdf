@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/menu_settings"
+    	  android:title="@string/menu_settings"
+    	  android:showAsAction="never"
+    	  />
+  <!-- <item android:id="@+id/menu_search" -->
+  <!--         android:title="@string/menu_search" -->
+  <!--         android:showAsAction="ifRoom" -->
+  <!--         android:actionViewClass="android.widget.SearchView" -->
+  <!-- 	  android:layout_width="match_parent" -->
+  <!-- 	  android:inputType="textFilter" -->
+  <!-- 	  /> -->
+<!--           android:icon="@drawable/ic_menu_search" -->
+<!--  <item android:id="@+id/menu_search_button"
+	android:icon="@drawable/ic_menu_search"
+	android:title="@string/menu_search" 
+	android:showAsAction="ifRoom"
+	/>-->
+<!--<item android:icon="@drawable/ic_action_settings"
+      android:title="@string/menu_settings" 
+      android:showAsAction="always"
+      >-->
+<!--  <menu xmlns:android="http://schemas.android.com/apk/res/android">-->
+    <!-- <item android:id="@+id/menu_set_library_path" -->
+    <!-- 	  android:title="@string/menu_set_library_path"  -->
+    <!-- 	  android:showAsAction="never" -->
+    <!-- 	  /> -->
+    <!-- <item android:id="@+id/menu_set_path_conversion" -->
+    <!-- 	  android:title="@string/menu_set_path_conversion"  -->
+    <!-- 	  android:showAsAction="never" -->
+    <!-- 	  /> -->
+<!--  </menu>-->
+<!--</item>-->
+</menu>

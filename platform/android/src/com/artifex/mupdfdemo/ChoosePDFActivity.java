@@ -19,14 +19,21 @@ import android.os.Environment;
 import android.os.FileObserver;
 import android.os.Handler;
 import android.view.View;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MenuInflater;
 import android.widget.ListView;
+//import android.widget.AdapterView.OnItemClickListener;
+import android.preference.PreferenceManager;
+import android.app.ActionBar;
 
 enum Purpose {
 	PickPDF,
 	PickKeyFile
 }
 
-public class ChoosePDFActivity extends ListActivity {
+public class ChoosePDFActivity extends ListActivity
+{
 	static private File  mDirectory;
 	static private Map<String, Integer> mPositions = new HashMap<String, Integer>();
 	private File         mParent;
@@ -41,6 +48,9 @@ public class ChoosePDFActivity extends ListActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+                    //Set default preferences on first start
+                PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+                
 		mPurpose = Intent.ACTION_MAIN.equals(getIntent().getAction()) ? Purpose.PickPDF : Purpose.PickKeyFile;
 
 
@@ -170,6 +180,28 @@ public class ChoosePDFActivity extends ListActivity {
 		observer.startWatching();
 	}
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) //Inflates the options menu
+    {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) //Handel clicks in the options menu 
+    {
+        switch (item.getItemId()) 
+        {
+            case R.id.menu_settings:
+                Intent intent = new Intent(this,SettingsActivity.class);
+                startActivity(intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+    
 	private void lastPosition() {
 		String p = mDirectory.getAbsolutePath();
 		if (mPositions.containsKey(p))

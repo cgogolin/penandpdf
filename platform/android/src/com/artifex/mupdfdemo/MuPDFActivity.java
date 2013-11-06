@@ -33,6 +33,7 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ViewAnimator;
+import android.preference.PreferenceManager;
 
 class ThreadPerTaskExecutor implements Executor {
 	public void execute(Runnable r) {
@@ -245,6 +246,9 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 	{
 		super.onCreate(savedInstanceState);
 
+                    //Set default preferences on first start
+                PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+                
 		mAlertBuilder = new AlertDialog.Builder(this);
 
 		if (core == null) {

@@ -3,11 +3,13 @@ package com.artifex.mupdfdemo;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.preference.PreferenceManager;
 
 public class MuPDFReaderView extends ReaderView {
 	enum Mode {Viewing, Selecting, Drawing}
@@ -139,23 +141,61 @@ public class MuPDFReaderView extends ReaderView {
 
 	public boolean onTouchEvent(MotionEvent event) {
 
-		if ( mMode == Mode.Drawing )
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
+            boolean useStylus = sharedPref.getBoolean(SettingsActivity.PREF_USE_STYLUS, false);
+                
+                // Add stylus detection here!!!
+            int pointerIndexToUse = 0;
+            if (useStylus) 
+            {
+                int pointerIndexOfStylus = -1; //-1 means no stylus detected
+                for(int pointerIndex = 0; pointerIndex < event.getPointerCount(); pointerIndex++) {
+                    if (event.getToolType(pointerIndex) == android.view.MotionEvent.TOOL_TYPE_STYLUS) {
+                        pointerIndexOfStylus = pointerIndex;
+                        break; // we simply take the first stylus we find.
+                    }
+                }
+                pointerIndexToUse = pointerIndexOfStylus;
+            }
+            
+                if ( mMode == Mode.Drawing )
 		{
-			float x = event.getX();
-			float y = event.getY();
-			switch (event.getAction())
-			{
-				case MotionEvent.ACTION_DOWN:
-					touch_start(x, y);
-					break;
-				case MotionEvent.ACTION_MOVE:
-					touch_move(x, y);
-					break;
-				case MotionEvent.ACTION_UP:
-					touch_up();
-					break;
-			}
+                    if (event.getActionIndex() == pointerIndexToUse || !useStylus)
+                    {
+			float x = event.getX(pointerIndexToUse);
+			float y = event.getY(pointerIndexToUse);
+                        switch (event.getAction())
+                        {
+                            case MotionEvent.ACTION_DOWN:
+                                touch_start(x, y);
+                                break;
+                            case MotionEvent.ACTION_MOVE:
+                                touch_move(x, y);
+                                break;
+                            case MotionEvent.ACTION_UP:
+                                touch_up();
+                                break;
+                        }
+                    }
 		}
+            
+		// if ( mMode == Mode.Drawing )
+		// {
+		// 	float x = event.getX();
+		// 	float y = event.getY();
+		// 	switch (event.getAction())
+		// 	{
+		// 		case MotionEvent.ACTION_DOWN:
+		// 			touch_start(x, y);
+		// 			break;
+		// 		case MotionEvent.ACTION_MOVE:
+		// 			touch_move(x, y);
+		// 			break;
+		// 		case MotionEvent.ACTION_UP:
+		// 			touch_up();
+		// 			break;
+		// 	}
+		// }
 
 		if ((event.getAction() & event.getActionMasked()) == MotionEvent.ACTION_DOWN)
 		{
