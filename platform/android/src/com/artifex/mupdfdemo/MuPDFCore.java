@@ -70,6 +70,9 @@ public class MuPDFCore
 	private native boolean hasChangesInternal();
 	private native void saveInternal();
 
+        //added by me
+	public native void setInkThickness(float inkThickness);
+    
 	public static native boolean javascriptSupported();
 
 	public MuPDFCore(Context context, String filename) throws Exception

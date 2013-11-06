@@ -34,7 +34,7 @@
 #define STRIKE_HEIGHT (0.375f)
 #define UNDERLINE_HEIGHT (0.075f)
 #define LINE_THICKNESS (0.07f)
-#define INK_THICKNESS (4.0f)
+#define INK_THICKNESS (3.0f) //must be made editable!!!
 #define SMALL_FLOAT (0.00001)
 
 enum
@@ -109,6 +109,9 @@ struct globals_s
 	// needs access to the following.
 	JNIEnv *env;
 	jclass thiz;
+
+        //added by me
+    float inkThickness;
 };
 
 static jfieldID global_fid;
@@ -277,7 +280,10 @@ JNI_FN(MuPDFCore_openFile)(JNIEnv * env, jobject thiz, jstring jfilename)
 		return 0;
 	glo->resolution = 160;
 	glo->alerts_initialised = 0;
-
+        
+            //added by me
+        glo->inkThickness = INK_THICKNESS;
+        
 	filename = (*env)->GetStringUTFChars(env, jfilename, NULL);
 	if (filename == NULL)
 	{
@@ -1549,7 +1555,8 @@ JNI_FN(MuPDFCore_addInkAnnotationInternal)(JNIEnv * env, jobject thiz, jobjectAr
 
 		annot = (fz_annot *)pdf_create_annot(idoc, (pdf_page *)pc->page, FZ_ANNOT_INK);
 
-		pdf_set_ink_annot_list(idoc, (pdf_annot *)annot, pts, counts, n, color, INK_THICKNESS);
+//		pdf_set_ink_annot_list(idoc, (pdf_annot *)annot, pts, counts, n, color, INK_THICKNESS);
+                pdf_set_ink_annot_list(idoc, (pdf_annot *)annot, pts, counts, n, color, glo->inkThickness);
 
 		dump_annotation_display_lists(glo);
 	}
@@ -2517,4 +2524,12 @@ JNI_FN(MuPDFCore_dumpMemoryInternal)(JNIEnv * env, jobject thiz)
 	Memento_stats();
 	LOGE("dumpMemoryInternal end");
 #endif
+}
+
+
+JNIEXPORT jobjectArray JNICALL
+JNI_FN(MuPDFCore_setInkThickness)(JNIEnv * env, jobject thiz, float inkThickness)
+{
+    globals *glo = get_globals(env, thiz);
+    glo->inkThickness = inkThickness;
 }

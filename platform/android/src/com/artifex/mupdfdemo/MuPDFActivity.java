@@ -336,7 +336,14 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			alert.show();
 			return;
 		}
-
+                if (core != null) //pass on preferences to the core
+                {
+                    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+                    float inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(PageView.INK_THICKNESS)));
+                    core.setInkThickness(inkThickness*0.45f); // I have no Idea whre the 0.4 or 0.45 comes from....
+                }
+                
+                
 		createUI(savedInstanceState);
 	}
 

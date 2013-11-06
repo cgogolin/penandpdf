@@ -105,7 +105,8 @@ public abstract class PageView extends ViewGroup {
 	private static final int LINK_COLOR = 0x80AC7225;
 	private static final int BOX_COLOR = 0xFF4444FF;
 	private static final int INK_COLOR = 0xFFFF0000;
-	private static final float INK_THICKNESS = 10.0f;
+//	private static final float INK_THICKNESS = 10.0f;
+    	public static final float INK_THICKNESS = 10.0f;
 	private static final int BACKGROUND_COLOR = 0xFFFFFFFF;
 	private static final int PROGRESS_DIALOG_DELAY = 200;
 	protected final Context   mContext;
