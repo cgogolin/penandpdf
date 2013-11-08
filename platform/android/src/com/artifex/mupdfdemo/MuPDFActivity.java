@@ -12,6 +12,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
@@ -58,7 +59,8 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 	private final int    PRINT_REQUEST=1;
 	private final int    FILEPICK_REQUEST=2;
 //        private Menu mMenu;
-	private MuPDFCore    core;
+    private SharedPreferences.OnSharedPreferenceChangeListener mOnSharedPreferenceChangeListener;
+        private MuPDFCore    core;
 	private String       mFileName;
 	private MuPDFReaderView mDocView;
 	private View         mButtonsView;
@@ -257,6 +259,13 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 
                     //Set default preferences on first start
                 PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+                    //And register a OnSharedPreferenceChangeListener
+                mOnSharedPreferenceChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+                        public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+                            setPreferencesInCore();
+                        }
+                    };
+                PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(mOnSharedPreferenceChangeListener);
                 
 		mAlertBuilder = new AlertDialog.Builder(this);
 
@@ -345,24 +354,9 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			alert.show();
 			return;
 		}
-                if (core != null) //pass on preferences to the core
+                if (core != null) 
                 {
-                    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-                    
-                        //Set ink thickness in core
-                    float inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(INK_THICKNESS)));
-                    core.setInkThickness(inkThickness*0.45f); // I have no idea whre the 0.4 or 0.45 comes from....               
-                    
-                        //Set colors in core
-                    int colorNumber;                    
-                    colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, "0" ));
-                    core.setInkColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
-                    colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, "0" ));
-                    core.setHighlightColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
-                    colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, "0" ));
-                    core.setUnderlineColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
-                    colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, "0" ));
-                    core.setStrikeoutColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
+                    setPreferencesInCore();
                 }
                 
                 
@@ -382,6 +376,8 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
             case Annot:
             case Edit:
                 inflater.inflate(R.menu.annot_menu, menu);
+                MenuItem undoButton = menu.findItem(R.id.menu_undo);
+                undoButton.setEnabled(false).setVisible(false);
                 break;
             default:
         }
@@ -430,7 +426,11 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 invalidateOptionsMenu();
                 return true;
             case R.id.menu_accept:
-                OnAcceptButtonClick(mButtonsView);
+                switch (mActionBarMode) {
+                    case Annot:
+                        OnAcceptButtonClick(mButtonsView);
+                        break;
+                }
                 mActionBarMode = ActionBarMode.Main;
                 invalidateOptionsMenu();
                 return true;
@@ -440,10 +440,16 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
             case R.id.menu_copytext:
                 OnCopyTextButtonClick(mButtonsView);
                 return true;
-            case R.id.menu_share:
-
+            case R.id.menu_search:
+                searchModeOn();
+                showButtons();
                 return true;
-                
+            case R.id.menu_save:
+                if(core.save()==0)
+                    showInfo(getString(R.string.successfully_saved));
+                else
+                    showInfo(getString(R.string.error_saveing));
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -498,22 +504,31 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 
 			@Override
 			protected void onTapMainDocArea() {
+                            if (mActionBarMode == ActionBarMode.Edit) 
+                            {
+                                mActionBarMode = ActionBarMode.Main;
+                                invalidateOptionsMenu();
+                            }
 				if (!mButtonsVisible) {
-					showButtons();
+//					showButtons();
 				} else {
-					if (mTopBarMode == TopBarMode.Main)
-						hideButtons();
+                                    if (mTopBarMode == TopBarMode.Main)
+                                    {
+//						hideButtons();
+                                    }
 				}
 			}
 
 			@Override
 			protected void onDocMotion() {
-				hideButtons();
+//                            hideButtons();
 			}
 
 			@Override
 			protected void onHit(Hit item) {
-                            if (mTopBarMode != TopBarMode.Delete && item == Hit.Annotation){showButtons();}
+                            if (mTopBarMode != TopBarMode.Delete && item == Hit.Annotation){
+//                                showButtons();
+                            }
                             mTopBarMode = TopBarMode.Annot;
                             
                             mActionBarMode = ActionBarMode.Edit;
@@ -704,8 +719,11 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
 		mDocView.setDisplayedViewIndex(prefs.getInt("page"+mFileName, 0));
 
-		if (savedInstanceState == null || !savedInstanceState.getBoolean("ButtonsHidden", false))
-			showButtons();
+		if (savedInstanceState == null || !savedInstanceState.getBoolean("ButtonsHidden", false)) 
+                {
+                        //    showButtons();
+                }
+                
 
 		if(savedInstanceState != null && savedInstanceState.getBoolean("SearchMode", false))
 			searchModeOn();
@@ -790,10 +808,36 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			outState.putBoolean("ReflowMode", true);
 	}
 
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        setPreferencesInCore();
+    }
+
+    private void setPreferencesInCore(){
+        if (core != null) 
+        {
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);   
+                //Set ink thickness in core
+            float inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(INK_THICKNESS)));
+            core.setInkThickness(inkThickness*0.45f); // I have no idea whre the 0.4 or 0.45 comes from....               
+            
+                //Set colors in core
+            int colorNumber;                    
+            colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, "0" ));
+            core.setInkColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
+            colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, "0" ));
+            core.setHighlightColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
+            colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, "0" ));
+            core.setUnderlineColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
+            colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, "0" ));
+            core.setStrikeoutColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
+        }
+    }
+    
 	@Override
 	protected void onPause() {
 		super.onPause();
-
+                // getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+                
 		if (mSearchTask != null)
 			mSearchTask.stop();
 
@@ -805,6 +849,12 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		}
 	}
 
+    // @Override
+    // protected void onResume() {
+    //     super.onResume();
+    //     getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+    // }
+    
 	public void onDestroy()
 	{
 		mDocView.applyToChildren(new ReaderView.ViewMapper() {
@@ -1221,7 +1271,6 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 				public void onClick(DialogInterface dialog, int which) {
 					if (which == AlertDialog.BUTTON_POSITIVE)
 						core.save();
-
 					finish();
 				}
 			};

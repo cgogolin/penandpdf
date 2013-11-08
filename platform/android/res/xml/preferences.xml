@@ -1,53 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <CheckBoxPreference
-        android:key="pref_use_stylus"
-        android:title="@string/use_stylus"
-        android:summary="@string/use_stylus_summ"
-        android:defaultValue="false" />
-    <CheckBoxPreference
-        android:key="pref_scroll_vertical"
-        android:title="@string/scroll_vertical"
-        android:summary="@string/scroll_vertical_summ"
-        android:defaultValue="false" />
-    <CheckBoxPreference
-        android:key="pref_scroll_continuous"
-        android:title="@string/scroll_continuous"
-        android:summary="@string/scroll_continuous_summ"
-        android:defaultValue="false" />
-    <EditTextPreference
-        android:key="pref_ink_thickness"
-        android:title="@string/ink_thickness"
-        android:summary="@string/ink_thickness_summ"
-	android:numeric="decimal"
-	android:digits="0123456789."
-        android:defaultValue="10" />
-    <EditTextPreference
-        android:key="pref_ink_color"
-        android:title="@string/ink_color"
-        android:summary="@string/ink_color_summ"
-	android:numeric="integer"
-	android:digits="0123456789."
-        android:defaultValue="1" />
-    <EditTextPreference
-        android:key="pref_highlight_color"
-        android:title="@string/highlight_color"
-        android:summary="@string/highlight_color_summ"
-	android:numeric="integer"
-	android:digits="0123456789."
-        android:defaultValue="16" />
-    <EditTextPreference
-        android:key="pref_underline_color"
-        android:title="@string/underline_color"
-        android:summary="@string/underline_color_summ"
-	android:numeric="integer"
-	android:digits="0123456789."
-        android:defaultValue="17" />
-    <EditTextPreference
-        android:key="pref_strikeout_color"
-        android:title="@string/strikeout_color"
-        android:summary="@string/strikeout_color_summ"
-	android:numeric="integer"
-	android:digits="0123456789."
-        android:defaultValue="17" />
+    <PreferenceCategory 
+        android:title="@string/stylus_settings"
+        android:key="pref_stylus_settings">
+      <CheckBoxPreference
+	  android:key="pref_use_stylus"
+	  android:title="@string/use_stylus"
+	  android:summary="@string/use_stylus_summ"
+	  android:defaultValue="false" />
+    </PreferenceCategory>
+    <PreferenceCategory 
+        android:title="@string/display_settings"
+        android:key="display_settings">
+      <CheckBoxPreference
+	  android:key="pref_fit_width"
+	  android:title="@string/fit_width"
+	  android:summary="@string/fit_width_summ"
+	  android:defaultValue="false" />
+      <CheckBoxPreference
+	  android:key="pref_scroll_vertical"
+	  android:title="@string/scroll_vertical"
+	  android:summary="@string/scroll_vertical_summ"
+	  android:defaultValue="false" />
+      <CheckBoxPreference
+	  android:key="pref_scroll_continuous"
+	  android:title="@string/scroll_continuous"
+	  android:summary="@string/scroll_continuous_summ"
+	  android:defaultValue="false" />
+    </PreferenceCategory>
+    <PreferenceCategory 
+        android:title="@string/annotation_settings"
+        android:key="pref_annotation_settings">
+      <EditTextPreference
+	  android:key="pref_ink_thickness"
+	  android:title="@string/ink_thickness"
+	  android:summary="@string/ink_thickness_summ"
+	  android:numeric="decimal"
+	  android:digits="0123456789."
+	  android:defaultValue="3" />
+      <EditTextPreference
+	  android:key="pref_ink_color"
+	  android:title="@string/ink_color"
+	  android:summary="@string/ink_color_summ"
+	  android:numeric="integer"
+	  android:digits="0123456789."
+	  android:defaultValue="1" />
+      <EditTextPreference
+	  android:key="pref_highlight_color"
+	  android:title="@string/highlight_color"
+	  android:summary="@string/highlight_color_summ"
+	  android:numeric="integer"
+	  android:digits="0123456789."
+	  android:defaultValue="16" />
+      <EditTextPreference
+	  android:key="pref_underline_color"
+	  android:title="@string/underline_color"
+	  android:summary="@string/underline_color_summ"
+	  android:numeric="integer"
+	  android:digits="0123456789."
+	  android:defaultValue="17" />
+      <EditTextPreference
+	  android:key="pref_strikeout_color"
+	  android:title="@string/strikeout_color"
+	  android:summary="@string/strikeout_color_summ"
+	  android:numeric="integer"
+	  android:digits="0123456789."
+	  android:defaultValue="17" />
+    </PreferenceCategory>
 </PreferenceScreen>

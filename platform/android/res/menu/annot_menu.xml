@@ -25,7 +25,6 @@
 	android:icon="@drawable/ic_action_undo"
 	android:title="@string/menu_undo" 
 	android:showAsAction="always"
-	android:visibility="gone"
 	/>
   <item android:id="@+id/menu_cancel"
 	android:icon="@drawable/ic_action_cancel"

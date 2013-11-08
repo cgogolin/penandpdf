@@ -7,6 +7,7 @@ public class SettingsActivity extends Activity {
     final static String PREF_USE_STYLUS = "pref_use_stylus";
     final static String PREF_SCROLL_VERTICAL = "pref_scroll_vertical";
     final static String PREF_SCROLL_CONTINUOUS = "pref_scroll_continuous";
+    final static String PREF_FIT_WIDTH = "pref_fit_width";
     final static String PREF_INK_THICKNESS = "pref_ink_thickness";
     final static String PREF_INK_COLOR = "pref_ink_color";
     final static String PREF_HIGHLIGHT_COLOR = "pref_highlight_color";

@@ -17,7 +17,7 @@
 	<string name="no_further_occurrences_found">No further occurrences found</string>
 	<string name="select">Select</string>
 	<string name="search">Search</string>
-	<string name="copytext">Copy text</string>
+	<string name="copy_text">Copy text</string>
 	<string name="strike_out">Strike-out</string>
 	<string name="delete">Delete</string>
 	<string name="highlight">Highlight</string>
@@ -25,6 +25,8 @@
 	<string name="edit_annotations">Edit annotations</string>
 	<string name="ink">Ink</string>
 	<string name="save">Save</string>
+	<string name="successfully_saved">Successfully saved</string>
+	<string name="error_saveing">Error while saving</string>
 	<string name="print">Print</string>
 	<string name="dismiss">Dismiss</string>
 	<string name="parent_directory">[Up one level]</string>
@@ -69,6 +71,9 @@
 	<string name="menu_cancel">Cancel</string>
 	<string name="menu_gotopage">Go to page</string>
 	<string name="settings_title">Settings</string>
+	<string name="stylus_settings">Stylus settings</string>
+	<string name="display_settings">Display settings</string>
+	<string name="annotation_settings">Annotation settings</string>
 	<string name="use_stylus">Use stylus</string>
 	<string name="use_stylus_summ">Detect and unse stylus for free hand annotations</string>
 	<string name="scroll_vertical">Scroll vertical</string>
@@ -85,4 +90,8 @@
 	<string name="underline_color_summ">Color for underlining text</string>
 	<string name="strikeout_color">Strikeout color</string>
 	<string name="strikeout_color_summ">Color for strinking out text</string>
+	<string name="fit_width">Fit width</string>
+	<string name="fit_width_summ">Fit the width of the page</string>
+
+
 </resources>

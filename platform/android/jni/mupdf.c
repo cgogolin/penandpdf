@@ -2478,9 +2478,11 @@ static char *tmp_path(char *path)
 	}
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT int JNICALL
 JNI_FN(MuPDFCore_saveInternal)(JNIEnv * env, jobject thiz)
 {
+        int written = 0;
+    
 	globals *glo = get_globals(env, thiz);
 	fz_context *ctx = glo->ctx;
 
@@ -2497,8 +2499,6 @@ JNI_FN(MuPDFCore_saveInternal)(JNIEnv * env, jobject thiz)
 		tmp = tmp_path(glo->current_path);
 		if (tmp)
 		{
-			int written = 0;
-
 			fz_var(written);
 			fz_try(ctx)
 			{
@@ -2539,6 +2539,7 @@ JNI_FN(MuPDFCore_saveInternal)(JNIEnv * env, jobject thiz)
 			free(tmp);
 		}
 	}
+        return written-1; //return -1 on error and 0 on success 
 }
 
 JNIEXPORT void JNICALL

@@ -68,7 +68,7 @@ public class MuPDFCore
 	private native void stopAlertsInternal();
 	private native void destroying();
 	private native boolean hasChangesInternal();
-	private native void saveInternal();
+	private native int saveInternal();
 
         //added by me
 	public native void setInkThickness(float inkThickness);
@@ -304,7 +304,7 @@ public class MuPDFCore
 		return hasChangesInternal();
 	}
 
-	public synchronized void save() {
-		saveInternal();
+	public synchronized int save() {
+		return saveInternal();
 	}
 }

@@ -146,16 +146,6 @@ public abstract class PageView extends ViewGroup {
 	public PageView(Context c, Point parentSize, Bitmap sharedHqBm) {
 		super(c);
 		mContext    = c;
-
-                    //Set ink thickness and colors for PageView
-                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
-
-                inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
-                
-                inkColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, Integer.toString(inkColor))));
-                highlightColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, Integer.toString(highlightColor))));
-                underlineColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, Integer.toString(underlineColor))));
-                strikeoutColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, Integer.toString(strikeoutColor))));
                 
 		mParentSize = parentSize;
 		setBackgroundColor(BACKGROUND_COLOR);
@@ -254,6 +244,14 @@ public abstract class PageView extends ViewGroup {
 			mDrawEntire = null;
 		}
 
+                    //Set ink thickness and colors for PageView
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
+                inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
+                inkColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, Integer.toString(inkColor))));
+                highlightColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, Integer.toString(highlightColor))));
+                underlineColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, Integer.toString(underlineColor))));
+                strikeoutColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, Integer.toString(strikeoutColor))));
+                
 		mIsBlank = false;
 		// Highlights may be missing because mIsBlank was true on last draw
 		if (mSearchView != null)
@@ -267,8 +265,8 @@ public abstract class PageView extends ViewGroup {
 		}
 
 		// Calculate scaled size that fits within the screen limits
-		// This is the size at minimum zoom
-		mSourceScale = Math.min(mParentSize.x/size.x, mParentSize.y/size.y);
+		// This is the size at minimum zoom                
+                mSourceScale = Math.min(mParentSize.x/size.x, mParentSize.y/size.y);
 		Point newSize = new Point((int)(size.x*mSourceScale), (int)(size.y*mSourceScale));
 		mSize = newSize;
 
@@ -472,6 +470,15 @@ public abstract class PageView extends ViewGroup {
 	}
 
 	public void startDraw(float x, float y) {
+                    //Set ink thickness and color
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
+                inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
+                inkColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, Integer.toString(inkColor))));
+                
+                // highlightColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, Integer.toString(highlightColor))));
+                // underlineColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, Integer.toString(underlineColor))));
+                // strikeoutColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, Integer.toString(strikeoutColor))));
+            
 		float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
 		float docRelX = (x - getLeft())/scale;
 		float docRelY = (y - getTop())/scale;
@@ -711,19 +718,19 @@ public abstract class PageView extends ViewGroup {
 		return true;
 	}
 
-    public void setInkThickness(float inkThickness){
-        this.inkThickness = inkThickness;
-    }
-    public void setinkColor(int inkColor){
-        this.inkColor = inkColor;    
-    }
-    public void setHighlightColor(int highlightColor){
-        this.highlightColor = highlightColor;
-    }
-    public void setUnderlineColor(int underlineColor){
-        this.underlineColor = underlineColor;
-    }
-    public void setStrikeoutColor(int strikeoutColor){
-        this.strikeoutColor = strikeoutColor;
-    }
+    // public void setInkThickness(float inkThickness){
+    //     this.inkThickness = inkThickness;
+    // }
+    // public void setinkColor(int inkColor){
+    //     this.inkColor = inkColor;    
+    // }
+    // public void setHighlightColor(int highlightColor){
+    //     this.highlightColor = highlightColor;
+    // }
+    // public void setUnderlineColor(int underlineColor){
+    //     this.underlineColor = underlineColor;
+    // }
+    // public void setStrikeoutColor(int strikeoutColor){
+    //     this.strikeoutColor = strikeoutColor;
+    // }
 }
