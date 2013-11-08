@@ -101,12 +101,9 @@ class TextSelector {
 }
 
 public abstract class PageView extends ViewGroup {
-	private static final int HIGHLIGHT_COLOR = 0x802572AC;
-	private static final int LINK_COLOR = 0x80AC7225;
-	private static final int BOX_COLOR = 0xFF4444FF;
-	private static final int INK_COLOR = 0xFFFF0000;
-//	private static final float INK_THICKNESS = 10.0f;
-    	public static final float INK_THICKNESS = 10.0f;
+        public static final int HIGHLIGHT_COLOR = 0x802572AC;
+        public static final int LINK_COLOR = 0x80AC7225;
+        public static final int BOX_COLOR = 0xFF4444FF;
 	private static final int BACKGROUND_COLOR = 0xFFFFFFFF;
 	private static final int PROGRESS_DIALOG_DELAY = 200;
 	protected final Context   mContext;
@@ -140,14 +137,25 @@ public abstract class PageView extends ViewGroup {
 	private       ProgressBar mBusyIndicator;
 	private final Handler   mHandler = new Handler();
 
-    private float inkThickness;
+    private float inkThickness = 10;
+    private int inkColor = 0x80AC7225;
+    private int highlightColor = 0x80AC7225;
+    private int underlineColor = 0x80AC7225;
+    private int strikeoutColor = 0x80AC7225;
     
 	public PageView(Context c, Point parentSize, Bitmap sharedHqBm) {
 		super(c);
 		mContext    = c;
-                
+
+                    //Set ink thickness and colors for PageView
                 SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
-                inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(INK_THICKNESS)));
+
+                inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
+                
+                inkColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, Integer.toString(inkColor))));
+                highlightColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, Integer.toString(highlightColor))));
+                underlineColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, Integer.toString(underlineColor))));
+                strikeoutColor = AndroidColors.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, Integer.toString(strikeoutColor))));
                 
 		mParentSize = parentSize;
 		setBackgroundColor(BACKGROUND_COLOR);
@@ -331,7 +339,7 @@ public abstract class PageView extends ViewGroup {
 					final Paint paint = new Paint();
 
 					if (!mIsBlank && mSearchBoxes != null) {
-						paint.setColor(HIGHLIGHT_COLOR);
+						paint.setColor(highlightColor);
 						for (RectF rect : mSearchBoxes)
 							canvas.drawRect(rect.left*scale, rect.top*scale,
 									        rect.right*scale, rect.bottom*scale,
@@ -402,9 +410,8 @@ public abstract class PageView extends ViewGroup {
 						paint.setStrokeCap(Paint.Cap.ROUND);
 
 						paint.setStyle(Paint.Style.STROKE);
-//						paint.setStrokeWidth(INK_THICKNESS * scale);
                                                 paint.setStrokeWidth(inkThickness * scale);
-						paint.setColor(INK_COLOR);
+                                                paint.setColor(inkColor);
 
 						canvas.drawPath(path, paint);
 					}
@@ -703,4 +710,20 @@ public abstract class PageView extends ViewGroup {
 	public boolean isOpaque() {
 		return true;
 	}
+
+    public void setInkThickness(float inkThickness){
+        this.inkThickness = inkThickness;
+    }
+    public void setinkColor(int inkColor){
+        this.inkColor = inkColor;    
+    }
+    public void setHighlightColor(int highlightColor){
+        this.highlightColor = highlightColor;
+    }
+    public void setUnderlineColor(int underlineColor){
+        this.underlineColor = underlineColor;
+    }
+    public void setStrikeoutColor(int strikeoutColor){
+        this.strikeoutColor = strikeoutColor;
+    }
 }

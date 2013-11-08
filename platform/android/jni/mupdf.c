@@ -34,7 +34,20 @@
 #define STRIKE_HEIGHT (0.375f)
 #define UNDERLINE_HEIGHT (0.075f)
 #define LINE_THICKNESS (0.07f)
-#define INK_THICKNESS (3.0f) //must be made editable!!!
+#define INK_THICKNESS (3.0f)
+#define INK_COLORr (1.0f)
+#define INK_COLORg (0.0f)
+#define INK_COLORb (0.0f)
+#define HIGHLIGHT_COLORr (1.0f)
+#define HIGHLIGHT_COLORg (1.0f)
+#define HIGHLIGHT_COLORb (0.0f)
+#define UNDERLINE_COLORr (0.0f)
+#define UNDERLINE_COLORg (0.0f)
+#define UNDERLINE_COLORb (1.0f)
+#define STRIKEOUT_COLORr (1.0f)
+#define STRIKEOUT_COLORg (0.0f)
+#define STRIKEOUT_COLORb (0.0f)
+
 #define SMALL_FLOAT (0.00001)
 
 enum
@@ -112,6 +125,10 @@ struct globals_s
 
         //added by me
     float inkThickness;
+    float inkColor[3];
+    float highlightColor[3];
+    float underlineColor[3];
+    float strikeoutColor[3];
 };
 
 static jfieldID global_fid;
@@ -283,6 +300,19 @@ JNI_FN(MuPDFCore_openFile)(JNIEnv * env, jobject thiz, jstring jfilename)
         
             //added by me
         glo->inkThickness = INK_THICKNESS;
+        glo->inkColor[0] = INK_COLORr;
+        glo->inkColor[1] = INK_COLORg;
+        glo->inkColor[2] = INK_COLORb;
+        glo->highlightColor[0] = HIGHLIGHT_COLORr;
+        glo->highlightColor[1] = HIGHLIGHT_COLORg;
+        glo->highlightColor[2] = HIGHLIGHT_COLORb;
+        glo->underlineColor[0] = UNDERLINE_COLORr;
+        glo->underlineColor[1] = UNDERLINE_COLORg;
+        glo->underlineColor[2] = UNDERLINE_COLORb;        
+        glo->strikeoutColor[0] = STRIKEOUT_COLORr;
+        glo->strikeoutColor[1] = STRIKEOUT_COLORg;
+        glo->strikeoutColor[2] = STRIKEOUT_COLORb;
+        
         
 	filename = (*env)->GetStringUTFChars(env, jfilename, NULL);
 	if (filename == NULL)
@@ -1403,25 +1433,25 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
 	switch (type)
 	{
 		case FZ_ANNOT_HIGHLIGHT:
-			color[0] = 1.0;
-			color[1] = 1.0;
-			color[2] = 0.0;
+			color[0] = glo->highlightColor[0];
+			color[1] = glo->highlightColor[1];
+			color[2] = glo->highlightColor[2];
 			alpha = 0.5;
 			line_thickness = 1.0;
 			line_height = 0.5;
 			break;
 		case FZ_ANNOT_UNDERLINE:
-			color[0] = 0.0;
-			color[1] = 0.0;
-			color[2] = 1.0;
+			color[0] = glo->underlineColor[0];
+			color[1] = glo->underlineColor[1];
+			color[2] = glo->underlineColor[2];
 			alpha = 1.0;
 			line_thickness = LINE_THICKNESS;
 			line_height = UNDERLINE_HEIGHT;
 			break;
 		case FZ_ANNOT_STRIKEOUT:
-			color[0] = 1.0;
-			color[1] = 0.0;
-			color[2] = 0.0;
+			color[0] = glo->strikeoutColor[0];
+			color[1] = glo->strikeoutColor[1];
+			color[2] = glo->strikeoutColor[2];
 			alpha = 1.0;
 			line_thickness = LINE_THICKNESS;
 			line_height = STRIKE_HEIGHT;
@@ -1498,9 +1528,9 @@ JNI_FN(MuPDFCore_addInkAnnotationInternal)(JNIEnv * env, jobject thiz, jobjectAr
 	if (idoc == NULL)
 		return;
 
-	color[0] = 1.0;
-	color[1] = 0.0;
-	color[2] = 0.0;
+	color[0] = glo->inkColor[0];
+	color[1] = glo->inkColor[1];
+	color[2] = glo->inkColor[2];
 
 	fz_var(pts);
 	fz_var(counts);
@@ -1555,7 +1585,6 @@ JNI_FN(MuPDFCore_addInkAnnotationInternal)(JNIEnv * env, jobject thiz, jobjectAr
 
 		annot = (fz_annot *)pdf_create_annot(idoc, (pdf_page *)pc->page, FZ_ANNOT_INK);
 
-//		pdf_set_ink_annot_list(idoc, (pdf_annot *)annot, pts, counts, n, color, INK_THICKNESS);
                 pdf_set_ink_annot_list(idoc, (pdf_annot *)annot, pts, counts, n, color, glo->inkThickness);
 
 		dump_annotation_display_lists(glo);
@@ -2532,4 +2561,44 @@ JNI_FN(MuPDFCore_setInkThickness)(JNIEnv * env, jobject thiz, float inkThickness
 {
     globals *glo = get_globals(env, thiz);
     glo->inkThickness = inkThickness;
+}
+
+
+JNIEXPORT jobjectArray JNICALL
+JNI_FN(MuPDFCore_setInkColor)(JNIEnv * env, jobject thiz, float r, float g, float b)
+{
+    globals *glo = get_globals(env, thiz);
+    glo->inkColor[0] = r;
+    glo->inkColor[1] = g;
+    glo->inkColor[2] = b;
+}
+
+
+JNIEXPORT jobjectArray JNICALL
+JNI_FN(MuPDFCore_setHighlightColor)(JNIEnv * env, jobject thiz, float r, float g, float b)
+{
+    globals *glo = get_globals(env, thiz);
+    glo->highlightColor[0] = r;
+    glo->highlightColor[1] = g;
+    glo->highlightColor[2] = b;
+}
+
+
+JNIEXPORT jobjectArray JNICALL
+JNI_FN(MuPDFCore_setUnderlineColor)(JNIEnv * env, jobject thiz, float r, float g, float b)
+{
+    globals *glo = get_globals(env, thiz);
+    glo->underlineColor[0] = r;
+    glo->underlineColor[1] = g;
+    glo->underlineColor[2] = b;
+}
+
+
+JNIEXPORT jobjectArray JNICALL
+JNI_FN(MuPDFCore_setStrikeoutColor)(JNIEnv * env, jobject thiz, float r, float g, float b)
+{
+    globals *glo = get_globals(env, thiz);
+    glo->strikeoutColor[0] = r;
+    glo->strikeoutColor[1] = g;
+    glo->strikeoutColor[2] = b;
 }

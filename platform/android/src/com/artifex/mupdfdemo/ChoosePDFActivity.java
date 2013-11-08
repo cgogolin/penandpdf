@@ -184,7 +184,7 @@ public class ChoosePDFActivity extends ListActivity
     public boolean onCreateOptionsMenu(Menu menu) //Inflates the options menu
     {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main_menu, menu);
+        inflater.inflate(R.menu.choosepdf_menu, menu);
         return true;
     }
 

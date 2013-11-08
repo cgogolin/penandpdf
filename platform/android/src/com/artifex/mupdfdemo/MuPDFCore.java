@@ -72,6 +72,10 @@ public class MuPDFCore
 
         //added by me
 	public native void setInkThickness(float inkThickness);
+        public native void setInkColor(float r, float g, float b);
+        public native void setHighlightColor(float r, float g, float b);
+        public native void setUnderlineColor(float r, float g, float b);
+        public native void setStrikeoutColor(float r, float g, float b);
     
 	public static native boolean javascriptSupported();
 

@@ -145,17 +145,19 @@ public class MuPDFReaderView extends ReaderView {
             boolean useStylus = sharedPref.getBoolean(SettingsActivity.PREF_USE_STYLUS, false);
                 
                 // Add stylus detection here!!!
-            int pointerIndexToUse = 0;
-            if (useStylus) 
+            int pointerIndexToUse = 0; // by default use the first pointer
+
+                //if in stylus mode use stylus
+            if (useStylus)
             {
-                int pointerIndexOfStylus = -1; //-1 means no stylus detected
+                int pointerIndexOfStylus = -1; 
                 for(int pointerIndex = 0; pointerIndex < event.getPointerCount(); pointerIndex++) {
                     if (event.getToolType(pointerIndex) == android.view.MotionEvent.TOOL_TYPE_STYLUS) {
                         pointerIndexOfStylus = pointerIndex;
                         break; // we simply take the first stylus we find.
                     }
                 }
-                pointerIndexToUse = pointerIndexOfStylus;
+                pointerIndexToUse = pointerIndexOfStylus; // is pointer index of stylus or -1 if no stylus event occured
             }
             
                 if ( mMode == Mode.Drawing )
@@ -177,8 +179,9 @@ public class MuPDFReaderView extends ReaderView {
                                 break;
                         }
                     }
+                    if (useStylus) return true;
 		}
-
+                
 		if ((event.getAction() & event.getActionMasked()) == MotionEvent.ACTION_DOWN)
 		{
 			tapDisabled = false;

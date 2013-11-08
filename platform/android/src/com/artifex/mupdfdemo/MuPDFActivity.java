@@ -22,6 +22,8 @@ import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
 import android.view.KeyEvent;
 import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
@@ -34,6 +36,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ViewAnimator;
 import android.preference.PreferenceManager;
+import android.app.ActionBar;
 
 class ThreadPerTaskExecutor implements Executor {
 	public void execute(Runnable r) {
@@ -43,13 +46,18 @@ class ThreadPerTaskExecutor implements Executor {
 
 public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupport
 {
-	/* The core rendering instance */
+        /* The core rendering instance */
 	enum TopBarMode {Main, Search, Annot, Delete, More, Accept};
+        enum ActionBarMode {Main, Search, Annot, Edit, Delete, More, Accept};
 	enum AcceptMode {Highlight, Underline, StrikeOut, Ink, CopyText};
 
+
+	private static final float INK_THICKNESS=10f;
+    
 	private final int    OUTLINE_REQUEST=0;
 	private final int    PRINT_REQUEST=1;
 	private final int    FILEPICK_REQUEST=2;
+//        private Menu mMenu;
 	private MuPDFCore    core;
 	private String       mFileName;
 	private MuPDFReaderView mDocView;
@@ -70,6 +78,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 	private ViewAnimator mTopBarSwitcher;
 	private ImageButton  mLinkButton;
 	private TopBarMode   mTopBarMode = TopBarMode.Main;
+    	private ActionBarMode   mActionBarMode = ActionBarMode.Main;
 	private AcceptMode   mAcceptMode;
 	private ImageButton  mSearchBack;
 	private ImageButton  mSearchFwd;
@@ -339,15 +348,109 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 if (core != null) //pass on preferences to the core
                 {
                     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-                    float inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(PageView.INK_THICKNESS)));
-                    core.setInkThickness(inkThickness*0.45f); // I have no Idea whre the 0.4 or 0.45 comes from....
+                    
+                        //Set ink thickness in core
+                    float inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(INK_THICKNESS)));
+                    core.setInkThickness(inkThickness*0.45f); // I have no idea whre the 0.4 or 0.45 comes from....               
+                    
+                        //Set colors in core
+                    int colorNumber;                    
+                    colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, "0" ));
+                    core.setInkColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
+                    colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, "0" ));
+                    core.setHighlightColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
+                    colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, "0" ));
+                    core.setUnderlineColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
+                    colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, "0" ));
+                    core.setStrikeoutColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
                 }
                 
                 
 		createUI(savedInstanceState);
 	}
 
-	public void requestPassword(final Bundle savedInstanceState) {
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) //Inflates the options menu
+    {
+//        mMenu = menu;
+        MenuInflater inflater = getMenuInflater();
+        switch (mActionBarMode)
+        {
+            case Main:
+                inflater.inflate(R.menu.main_menu, menu);
+                break;
+            case Annot:
+            case Edit:
+                inflater.inflate(R.menu.annot_menu, menu);
+                break;
+            default:
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) //Handel clicks in the options menu 
+    {
+        switch (item.getItemId()) 
+        {
+            case R.id.menu_settings:
+                Intent intent = new Intent(this,SettingsActivity.class);
+                startActivity(intent);
+                return true;
+            case R.id.menu_draw:
+                OnInkButtonClick(mButtonsView);
+                mActionBarMode = ActionBarMode.Annot;
+                invalidateOptionsMenu();
+                return true;
+            case R.id.menu_highlight:
+                OnHighlightButtonClick(mButtonsView);
+                mActionBarMode = ActionBarMode.Annot;
+                invalidateOptionsMenu();
+                return true;
+            case R.id.menu_underline:
+                OnUnderlineButtonClick(mButtonsView);
+                mActionBarMode = ActionBarMode.Annot;
+                invalidateOptionsMenu();
+                return true;
+            case R.id.menu_strikeout:
+                OnStrikeOutButtonClick(mButtonsView);
+                mActionBarMode = ActionBarMode.Annot;
+                invalidateOptionsMenu();
+                return true;
+            case R.id.menu_cancel:
+                switch (mActionBarMode) {
+                    case Annot:
+                        OnCancelAcceptButtonClick(mButtonsView);
+                        break;
+                    case Edit:
+                        OnDeleteButtonClick(mButtonsView);
+                        break;
+                }
+                mActionBarMode = ActionBarMode.Main;
+                invalidateOptionsMenu();
+                return true;
+            case R.id.menu_accept:
+                OnAcceptButtonClick(mButtonsView);
+                mActionBarMode = ActionBarMode.Main;
+                invalidateOptionsMenu();
+                return true;
+            case R.id.menu_print:
+                OnPrintButtonClick(mButtonsView);
+                return true;
+            case R.id.menu_copytext:
+                OnCopyTextButtonClick(mButtonsView);
+                return true;
+            case R.id.menu_share:
+
+                return true;
+                
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+
+    public void requestPassword(final Bundle savedInstanceState) {
 		mPasswordView = new EditText(this);
 		mPasswordView.setInputType(EditorInfo.TYPE_TEXT_VARIATION_PASSWORD);
 		mPasswordView.setTransformationMethod(new PasswordTransformationMethod());
@@ -410,31 +513,52 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 
 			@Override
 			protected void onHit(Hit item) {
-				switch (mTopBarMode) {
-				case Annot:
-					if (item == Hit.Annotation) {
-						showButtons();
-						mTopBarMode = TopBarMode.Delete;
-						mTopBarSwitcher.setDisplayedChild(mTopBarMode.ordinal());
-					}
-					break;
-				case Delete:
-					mTopBarMode = TopBarMode.Annot;
-					mTopBarSwitcher.setDisplayedChild(mTopBarMode.ordinal());
-				// fall through
-				default:
-					// Not in annotation editing mode, but the pageview will
-					// still select and highlight hit annotations, so
-					// deselect just in case.
-					MuPDFView pageView = (MuPDFView) mDocView.getDisplayedView();
-					if (pageView != null)
-						pageView.deselectAnnotation();
-					break;
-				}
+                            if (mTopBarMode != TopBarMode.Delete && item == Hit.Annotation){showButtons();}
+                            mTopBarMode = TopBarMode.Annot;
+                            
+                            mActionBarMode = ActionBarMode.Edit;
+                            invalidateOptionsMenu();
+                            
+                            // switch (mTopBarMode) {
+                            //     case Delete:
+                            //         mTopBarMode = TopBarMode.Annot;
+                            //         mTopBarSwitcher.setDisplayedChild(mTopBarMode.ordinal());
+                            //     default:
+                            //         if (item == Hit.Annotation){
+                            //             showButtons();
+                            //             mTopBarMode = TopBarMode.Delete;
+                            //             mTopBarSwitcher.setDisplayedChild(mTopBarMode.ordinal());
+                            //         }
+                            // }
+
+                            
+				// switch (mTopBarMode) {
+				// case Annot:
+				// 	if (item == Hit.Annotation) {
+				// 		showButtons();
+				// 		mTopBarMode = TopBarMode.Delete;
+				// 		mTopBarSwitcher.setDisplayedChild(mTopBarMode.ordinal());
+				// 	}
+				// 	break;
+				// case Delete:
+				// 	mTopBarMode = TopBarMode.Annot;
+				// 	mTopBarSwitcher.setDisplayedChild(mTopBarMode.ordinal());
+				// // fall through
+				// default:
+				// 	// Not in annotation editing mode, but the pageview will
+				// 	// still select and highlight hit annotations, so
+				// 	// deselect just in case.
+				// 	MuPDFView pageView = (MuPDFView) mDocView.getDisplayedView();
+				// 	if (pageView != null)
+				// 		pageView.deselectAnnotation();
+				// 	break;
+				// }
 			}
 		};
 		mDocView.setAdapter(new MuPDFPageAdapter(this, this, core));
 
+                
+                
 		mSearchTask = new SearchTask(this, core) {
 			@Override
 			protected void onTextFound(SearchTaskResult result) {
