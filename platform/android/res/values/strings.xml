@@ -97,5 +97,7 @@
 	<string name="save_on_pause">Save on pause</string>
 	<string name="save_on_pause_summ">Save current file when app looses focus</string>
 
-
+	<string name="dialog_gotopage_title">Go to page</string>
+	<string name="dialog_gotopage_ok">Go</string>
+	<string name="dialog_gotopage_cancel">Cancel</string>
 </resources>

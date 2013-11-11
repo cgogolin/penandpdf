@@ -88,6 +88,7 @@ class TextSelector {
 			} else if (lastLine) {
 				end = mSelectBox.right;
 			}
+                            //Add code here to make selection smarter!
 
 			tp.onStartLine();
 

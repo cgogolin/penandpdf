@@ -39,6 +39,7 @@ import android.widget.TextView;
 import android.widget.ViewAnimator;
 import android.preference.PreferenceManager;
 import android.app.ActionBar;
+import android.text.InputType;
 
 class ThreadPerTaskExecutor implements Executor {
 	public void execute(Runnable r) {
@@ -50,7 +51,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 {
         /* The core rendering instance */
 	enum TopBarMode {Main, Search, Annot, Delete, More, Accept};
-        enum ActionBarMode {Main, Search, Annot, Edit, Delete, More, Accept};
+    enum ActionBarMode {Main, Search, Annot, Edit, Delete, More, Accept, Copy};
 	enum AcceptMode {Highlight, Underline, StrikeOut, Ink, CopyText};
 
         private Uri uri;
@@ -379,6 +380,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 break;
             case Annot:
             case Edit:
+            case Copy:
                 inflater.inflate(R.menu.annot_menu, menu);
                 MenuItem undoButton = menu.findItem(R.id.menu_undo);
                 undoButton.setEnabled(false).setVisible(false);
@@ -420,6 +422,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
             case R.id.menu_cancel:
                 switch (mActionBarMode) {
                     case Annot:
+                    case Copy:
                         OnCancelAcceptButtonClick(mButtonsView);
                         break;
                     case Edit:
@@ -432,6 +435,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
             case R.id.menu_accept:
                 switch (mActionBarMode) {
                     case Annot:
+                    case Copy:
                         OnAcceptButtonClick(mButtonsView);
                         break;
                     case Edit:
@@ -445,10 +449,11 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 OnPrintButtonClick(mButtonsView);
                 return true;
             case R.id.menu_copytext:
+                mActionBarMode = ActionBarMode.Copy;
+                invalidateOptionsMenu();
                 OnCopyTextButtonClick(mButtonsView);
                 return true;
             case R.id.menu_search:
-                
                 return true;
             case R.id.menu_save:
                     //Doesn't work so easily because core.save() closes the file
@@ -457,6 +462,9 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 // else
                 //     showInfo(getString(R.string.error_saveing));
                 // core = openFile(Uri.decode(uri.getEncodedPath()));
+                return true;
+            case R.id.menu_gotopage:
+                showGoToPageDialoge();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -492,10 +500,33 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		alert.show();
 	}
 
-	public void createUI(Bundle savedInstanceState) {
-		if (core == null)
-			return;
 
+    private void showGoToPageDialoge() {
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setSingleLine();
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.dialog_gotopage_title)
+            .setPositiveButton(R.string.dialog_gotopage_ok, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                            // User clicked OK button
+                        int pageNumber = Integer.parseInt(input.getText().toString());
+                        mDocView.setDisplayedViewIndex(pageNumber == 0 ? 0 : pageNumber -1 );
+                    }
+                })
+            .setNegativeButton(R.string.dialog_gotopage_cancel, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                            // User cancelled the dialog
+                    }
+                })
+            .setView(input)
+            .show();
+    }
+    
+        public void createUI(Bundle savedInstanceState) {
+            if (core == null)
+                return;
+            
 		// Now create the UI.
 		// First create the document view
 		mDocView = new MuPDFReaderView(this) {
