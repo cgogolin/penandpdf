@@ -93,5 +93,9 @@
 	<string name="fit_width">Fit width</string>
 	<string name="fit_width_summ">Fit the width of the page</string>
 
+	<string name="autosave_settings">Autosave</string>
+	<string name="save_on_pause">Save on pause</string>
+	<string name="save_on_pause_summ">Save current file when app looses focus</string>
+
 
 </resources>

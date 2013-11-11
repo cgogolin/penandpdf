@@ -13,6 +13,8 @@ public class SettingsActivity extends Activity {
     final static String PREF_HIGHLIGHT_COLOR = "pref_highlight_color";
     final static String PREF_UNDERLINE_COLOR = "pref_underline_color";
     final static String PREF_STRIKEOUT_COLOR = "pref_strikeout_color";
+    final static String PREF_SAVE_ON_PAUSE = "pref_save_on_pause";
+
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {

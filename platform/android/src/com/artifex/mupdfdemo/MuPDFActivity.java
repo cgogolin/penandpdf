@@ -30,6 +30,7 @@ import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Toast;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
@@ -52,7 +53,8 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
         enum ActionBarMode {Main, Search, Annot, Edit, Delete, More, Accept};
 	enum AcceptMode {Highlight, Underline, StrikeOut, Ink, CopyText};
 
-
+        private Uri uri;
+    
 	private static final float INK_THICKNESS=10f;
     
 	private final int    OUTLINE_REQUEST=0;
@@ -263,12 +265,14 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 mOnSharedPreferenceChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
                         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
                             setPreferencesInCore();
+                                //mDocView.resetupChildren();//This should be used to set preferences in page views...
                         }
                     };
                 PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(mOnSharedPreferenceChangeListener);
                 
 		mAlertBuilder = new AlertDialog.Builder(this);
 
+                    //Get filename from saved instance
 		if (core == null) {
 			core = (MuPDFCore)getLastNonConfigurationInstance();
 
@@ -276,11 +280,12 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 				mFileName = savedInstanceState.getString("FileName");
 			}
 		}
+                
 		if (core == null) {
 			Intent intent = getIntent();
 			byte buffer[] = null;
 			if (Intent.ACTION_VIEW.equals(intent.getAction())) {
-				Uri uri = intent.getData();
+				uri = intent.getData();
 				if (uri.toString().startsWith("content://")) {
 					// Handle view requests from the Transformer Prime's file manager
 					// Hopefully other file managers will use this same scheme, if not
@@ -358,8 +363,6 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 {
                     setPreferencesInCore();
                 }
-                
-                
 		createUI(savedInstanceState);
 	}
 
@@ -430,6 +433,9 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                     case Annot:
                         OnAcceptButtonClick(mButtonsView);
                         break;
+                    case Edit:
+                        MuPDFView pageView = (MuPDFView) mDocView.getDisplayedView();
+                        if (pageView != null) pageView.deselectAnnotation();
                 }
                 mActionBarMode = ActionBarMode.Main;
                 invalidateOptionsMenu();
@@ -441,14 +447,15 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 OnCopyTextButtonClick(mButtonsView);
                 return true;
             case R.id.menu_search:
-                searchModeOn();
-                showButtons();
+                
                 return true;
             case R.id.menu_save:
-                if(core.save()==0)
-                    showInfo(getString(R.string.successfully_saved));
-                else
-                    showInfo(getString(R.string.error_saveing));
+                    //Doesn't work so easily because core.save() closes the file
+                // if(core.save()==0)
+                //     showInfo(getString(R.string.successfully_saved));
+                // else
+                //     showInfo(getString(R.string.error_saveing));
+                // core = openFile(Uri.decode(uri.getEncodedPath()));
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -509,71 +516,26 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                                 mActionBarMode = ActionBarMode.Main;
                                 invalidateOptionsMenu();
                             }
-				if (!mButtonsVisible) {
-//					showButtons();
-				} else {
-                                    if (mTopBarMode == TopBarMode.Main)
-                                    {
-//						hideButtons();
-                                    }
-				}
 			}
 
 			@Override
 			protected void onDocMotion() {
-//                            hideButtons();
+
 			}
 
 			@Override
 			protected void onHit(Hit item) {
-                            if (mTopBarMode != TopBarMode.Delete && item == Hit.Annotation){
-//                                showButtons();
-                            }
                             mTopBarMode = TopBarMode.Annot;
                             
                             mActionBarMode = ActionBarMode.Edit;
                             invalidateOptionsMenu();
-                            
-                            // switch (mTopBarMode) {
-                            //     case Delete:
-                            //         mTopBarMode = TopBarMode.Annot;
-                            //         mTopBarSwitcher.setDisplayedChild(mTopBarMode.ordinal());
-                            //     default:
-                            //         if (item == Hit.Annotation){
-                            //             showButtons();
-                            //             mTopBarMode = TopBarMode.Delete;
-                            //             mTopBarSwitcher.setDisplayedChild(mTopBarMode.ordinal());
-                            //         }
-                            // }
-
-                            
-				// switch (mTopBarMode) {
-				// case Annot:
-				// 	if (item == Hit.Annotation) {
-				// 		showButtons();
-				// 		mTopBarMode = TopBarMode.Delete;
-				// 		mTopBarSwitcher.setDisplayedChild(mTopBarMode.ordinal());
-				// 	}
-				// 	break;
-				// case Delete:
-				// 	mTopBarMode = TopBarMode.Annot;
-				// 	mTopBarSwitcher.setDisplayedChild(mTopBarMode.ordinal());
-				// // fall through
-				// default:
-				// 	// Not in annotation editing mode, but the pageview will
-				// 	// still select and highlight hit annotations, so
-				// 	// deselect just in case.
-				// 	MuPDFView pageView = (MuPDFView) mDocView.getDisplayedView();
-				// 	if (pageView != null)
-				// 		pageView.deselectAnnotation();
-				// 	break;
-				// }
 			}
 		};
 		mDocView.setAdapter(new MuPDFPageAdapter(this, this, core));
 
-                
-                
+                    //Enable link highlighting by default
+                mDocView.setLinksEnabled(true);
+                                
 		mSearchTask = new SearchTask(this, core) {
 			@Override
 			protected void onTextFound(SearchTaskResult result) {
@@ -719,10 +681,10 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
 		mDocView.setDisplayedViewIndex(prefs.getInt("page"+mFileName, 0));
 
-		if (savedInstanceState == null || !savedInstanceState.getBoolean("ButtonsHidden", false)) 
-                {
-                        //    showButtons();
-                }
+		// if (savedInstanceState == null || !savedInstanceState.getBoolean("ButtonsHidden", false)) 
+                // {
+                //         showButtons();
+                // }
                 
 
 		if(savedInstanceState != null && savedInstanceState.getBoolean("SearchMode", false))
@@ -734,7 +696,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		// Stick the document view and the buttons overlay into a parent view
 		RelativeLayout layout = new RelativeLayout(this);
 		layout.addView(mDocView);
-		layout.addView(mButtonsView);
+//		layout.addView(mButtonsView);
 		setContentView(layout);
 	}
 
@@ -808,9 +770,10 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			outState.putBoolean("ReflowMode", true);
 	}
 
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        setPreferencesInCore();
-    }
+    // public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+    //     setPreferencesInCore();
+    //         //mDocView.resetupChildren();//This should be used to set preferences in page views...
+    // }
 
     private void setPreferencesInCore(){
         if (core != null) 
@@ -818,25 +781,25 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);   
                 //Set ink thickness in core
             float inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(INK_THICKNESS)));
-            core.setInkThickness(inkThickness*0.45f); // I have no idea whre the 0.4 or 0.45 comes from....               
+            core.setInkThickness(inkThickness*0.45f); // I have no idea whre the 0.45 comes from....               
             
                 //Set colors in core
             int colorNumber;                    
             colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, "0" ));
-            core.setInkColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
+            core.setInkColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
             colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, "0" ));
-            core.setHighlightColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
+            core.setHighlightColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
             colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, "0" ));
-            core.setUnderlineColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
+            core.setUnderlineColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
             colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, "0" ));
-            core.setStrikeoutColor(AndroidColors.getR(colorNumber), AndroidColors.getG(colorNumber), AndroidColors.getB(colorNumber));
+            core.setStrikeoutColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
         }
     }
     
 	@Override
 	protected void onPause() {
 		super.onPause();
-                // getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+                PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(mOnSharedPreferenceChangeListener);
                 
 		if (mSearchTask != null)
 			mSearchTask.stop();
@@ -849,14 +812,14 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		}
 	}
 
-    // @Override
-    // protected void onResume() {
-    //     super.onResume();
-    //     getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
-    // }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(mOnSharedPreferenceChangeListener);
+    }
     
 	public void onDestroy()
-	{
+	{            
 		mDocView.applyToChildren(new ReaderView.ViewMapper() {
 			void applyToView(View view) {
 				((MuPDFView)view).releaseBitmaps();
@@ -1007,20 +970,23 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		startActivityForResult(printIntent, PRINT_REQUEST);
 	}
 
-	private void showInfo(String message) {
-		mInfoView.setText(message);
 
-		int currentApiVersion = android.os.Build.VERSION.SDK_INT;
-		if (currentApiVersion >= android.os.Build.VERSION_CODES.HONEYCOMB) {
-			SafeAnimatorInflater safe = new SafeAnimatorInflater((Activity)this, R.animator.info, (View)mInfoView);
-		} else {
-			mInfoView.setVisibility(View.VISIBLE);
-			mHandler.postDelayed(new Runnable() {
-				public void run() {
-					mInfoView.setVisibility(View.INVISIBLE);
-				}
-			}, 500);
+    	private void shareDoc() {
+		Intent myIntent = getIntent();
+		Uri docUri = myIntent != null ? myIntent.getData() : null;
+
+		if (docUri == null) {
+                        //showInfo(getString(R.string.print_failed)); //???
 		}
+
+		if (docUri.getScheme() == null)
+			docUri = Uri.parse("file://"+docUri.toString());
+
+                    //???
+	}
+
+	private void showInfo(String message) {
+            Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
 	}
 
 	private void makeButtonsView() {
@@ -1270,7 +1236,10 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
 					if (which == AlertDialog.BUTTON_POSITIVE)
-						core.save();
+                                            if(core.save()==0)
+                                                showInfo(getString(R.string.successfully_saved));
+                                            else
+                                                showInfo(getString(R.string.error_saveing));
 					finish();
 				}
 			};
