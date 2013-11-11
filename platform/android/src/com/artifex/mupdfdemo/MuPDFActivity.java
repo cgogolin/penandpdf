@@ -46,7 +46,7 @@ class ThreadPerTaskExecutor implements Executor {
 	}
 }
 
-public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupport
+public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupport, SharedPreferences.OnSharedPreferenceChangeListener
 {
         /* The core rendering instance */
 	enum TopBarMode {Main, Search, Annot, Delete, More, Accept};
@@ -61,7 +61,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 	private final int    PRINT_REQUEST=1;
 	private final int    FILEPICK_REQUEST=2;
 //        private Menu mMenu;
-    private SharedPreferences.OnSharedPreferenceChangeListener mOnSharedPreferenceChangeListener;
+//    private SharedPreferences.OnSharedPreferenceChangeListener mOnSharedPreferenceChangeListener;
         private MuPDFCore    core;
 	private String       mFileName;
 	private MuPDFReaderView mDocView;
@@ -262,13 +262,14 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                     //Set default preferences on first start
                 PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
                     //And register a OnSharedPreferenceChangeListener
-                mOnSharedPreferenceChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-                        public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-                            setPreferencesInCore();
-                                //mDocView.resetupChildren();//This should be used to set preferences in page views...
-                        }
-                    };
-                PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(mOnSharedPreferenceChangeListener);
+                // mOnSharedPreferenceChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+                //         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+                //             setPreferencesInCore();
+                //                 //mDocView.resetupChildren();//This should be used to set preferences in page views...
+                //         }
+                //     };
+                //PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(mOnSharedPreferenceChangeListener);
+                PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
                 
 		mAlertBuilder = new AlertDialog.Builder(this);
 
@@ -770,10 +771,10 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			outState.putBoolean("ReflowMode", true);
 	}
 
-    // public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-    //     setPreferencesInCore();
-    //         //mDocView.resetupChildren();//This should be used to set preferences in page views...
-    // }
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        setPreferencesInCore();
+            //mDocView.resetupChildren();//This should be used to set preferences in page views...
+    }
 
     private void setPreferencesInCore(){
         if (core != null) 
@@ -799,7 +800,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 	@Override
 	protected void onPause() {
 		super.onPause();
-                PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(mOnSharedPreferenceChangeListener);
+//                PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this); //Do not unregister here otherwise we miss changes while settings activity in forground
                 
 		if (mSearchTask != null)
 			mSearchTask.stop();
@@ -815,7 +816,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
     @Override
     protected void onResume() {
         super.onResume();
-        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(mOnSharedPreferenceChangeListener);
+//        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
     }
     
 	public void onDestroy()

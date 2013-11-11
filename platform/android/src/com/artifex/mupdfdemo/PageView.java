@@ -102,7 +102,8 @@ class TextSelector {
 
 public abstract class PageView extends ViewGroup {
         public static final int HIGHLIGHT_COLOR = 0x802572AC;
-        public static final int LINK_COLOR = 0x80AC7225;
+//        public static final int LINK_COLOR = 0x80AC7225;
+        public static final int LINK_COLOR = 0x60A7A7A7;
         public static final int BOX_COLOR = 0xFF4444FF;
 	private static final int BACKGROUND_COLOR = 0xFFFFFFFF;
 	private static final int PROGRESS_DIALOG_DELAY = 200;

@@ -47,7 +47,19 @@
 	  android:numeric="decimal"
 	  android:digits="0123456789."
 	  android:defaultValue="3" />
-      <EditTextPreference
+<ListPreference
+	android:key="pref_ink_color"
+	android:title="@string/ink_color"
+	android:summary="@string/ink_color_summ" />
+<ListPreference
+	android:key="pref_highlight_color"
+	android:title="@string/highlight_color"
+	android:summary="@string/highlight_color_summ" />
+<ListPreference
+	android:key="pref_underline_color"
+	android:title="@string/underline_color"
+	android:summary="@string/underline_color_summ" />
+<!--      <EditTextPreference
 	  android:key="pref_ink_color"
 	  android:title="@string/ink_color"
 	  android:summary="@string/ink_color_summ"
@@ -74,6 +86,12 @@
 	  android:summary="@string/strikeout_color_summ"
 	  android:numeric="integer"
 	  android:digits="0123456789."
-	  android:defaultValue="17" />
+	  android:defaultValue="17" />-->
     </PreferenceCategory>
+
+<!--    <ListPreference
+	android:key="pref_test_list_preference"
+	android:title="Test"
+	android:summary="Test summary" />-->
+    
 </PreferenceScreen>
