@@ -58,11 +58,22 @@ class TextSelector {
 	final private TextWord[][] mText;
 	final private RectF mSelectBox;
 
+    private float mStartLimit = Float.NEGATIVE_INFINITY;
+    private float mEndLimit = Float.POSITIVE_INFINITY;
+    
 	public TextSelector(TextWord[][] text, RectF selectBox) {
 		mText = text;
 		mSelectBox = selectBox;
 	}
 
+
+        public TextSelector(TextWord[][] text, RectF selectBox, float startLimit, float endLimit) {
+            mStartLimit = startLimit;
+            mEndLimit = endLimit;
+            mText = text;
+            mSelectBox = selectBox;
+	}
+    
 	public void select(TextProcessor tp) {
 		if (mText == null || mSelectBox == null)
 			return;
@@ -77,9 +88,10 @@ class TextSelector {
 			TextWord[] line = it.next();
 			boolean firstLine = line[0].top < mSelectBox.top;
 			boolean lastLine = line[0].bottom > mSelectBox.bottom;
-			float start = Float.NEGATIVE_INFINITY;
-			float end = Float.POSITIVE_INFINITY;
-
+                        
+                        float start = mStartLimit;
+                        float end = mEndLimit;
+                        
 			if (firstLine && lastLine) {
 				start = Math.min(mSelectBox.left, mSelectBox.right);
 				end = Math.max(mSelectBox.left, mSelectBox.right);
@@ -88,7 +100,6 @@ class TextSelector {
 			} else if (lastLine) {
 				end = mSelectBox.right;
 			}
-                            //Add code here to make selection smarter!
 
 			tp.onStartLine();
 
@@ -144,6 +155,10 @@ public abstract class PageView extends ViewGroup {
     private int highlightColor = 0x80AC7225;
     private int underlineColor = 0x80AC7225;
     private int strikeoutColor = 0x80AC7225;
+
+        //New
+    private float docRelXmax = Float.NEGATIVE_INFINITY;
+    private float docRelXmin = Float.POSITIVE_INFINITY;
     
 	public PageView(Context c, Point parentSize, Bitmap sharedHqBm) {
 		super(c);
@@ -436,6 +451,10 @@ public abstract class PageView extends ViewGroup {
 	}
 
 	public void deselectText() {
+                //New
+            docRelXmax = Float.NEGATIVE_INFINITY;
+            docRelXmin = Float.POSITIVE_INFINITY;
+            
 		mSelectBox = null;
 		mSearchView.invalidate();
 	}
@@ -446,6 +465,11 @@ public abstract class PageView extends ViewGroup {
 		float docRelY0 = (y0 - getTop())/scale;
 		float docRelX1 = (x1 - getLeft())/scale;
 		float docRelY1 = (y1 - getTop())/scale;
+
+                    //New
+                if(Math.max(docRelX0,docRelX1)>docRelXmax) docRelXmax = Math.max(docRelX0,docRelX1);
+                if(Math.min(docRelX0,docRelX1)<docRelXmin) docRelXmin = Math.min(docRelX0,docRelX1);
+                
 		// Order on Y but maintain the point grouping
 		if (docRelY0 <= docRelY1)
 			mSelectBox = new RectF(docRelX0, docRelY0, docRelX1, docRelY1);
@@ -524,7 +548,12 @@ public abstract class PageView extends ViewGroup {
 	}
 
 	protected void processSelectedText(TextProcessor tp) {
-		(new TextSelector(mText, mSelectBox)).select(tp);
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
+            boolean useSmartTextSelection = sharedPref.getBoolean(SettingsActivity.PREF_SMART_TEXT_SELECTION, true);
+            if (useSmartTextSelection)
+                (new TextSelector(mText, mSelectBox,docRelXmin,docRelXmax)).select(tp);
+            else
+                (new TextSelector(mText, mSelectBox)).select(tp);
 	}
 
 	public void setItemSelectBox(RectF rect) {

@@ -298,7 +298,7 @@ JNI_FN(MuPDFCore_openFile)(JNIEnv * env, jobject thiz, jstring jfilename)
 	glo->resolution = 160;
 	glo->alerts_initialised = 0;
         
-            //added by me
+            //Initialized defaults for annotation styling
         glo->inkThickness = INK_THICKNESS;
         glo->inkColor[0] = INK_COLORr;
         glo->inkColor[1] = INK_COLORg;
@@ -1436,7 +1436,8 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
 			color[0] = glo->highlightColor[0];
 			color[1] = glo->highlightColor[1];
 			color[2] = glo->highlightColor[2];
-			alpha = 0.5;
+//			alpha = 0.5;
+                        alpha = 1.0;
 			line_thickness = 1.0;
 			line_height = 0.5;
 			break;
@@ -1488,10 +1489,12 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
 			fz_transform_point(&pts[i], &ctm);
 		}
 
-		annot = (fz_annot *)pdf_create_annot(idoc, (pdf_page *)pc->page, type);
+                    //Christian Gogolin
+                
+		annot = (fz_annot *)pdf_create_annot(idoc, (pdf_page *)pc->page, type); //in pdf-annot.c
 
-		pdf_set_markup_annot_quadpoints(idoc, (pdf_annot *)annot, pts, n);
-		pdf_set_markup_appearance(idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height);
+		pdf_set_markup_annot_quadpoints(idoc, (pdf_annot *)annot, pts, n); //in pdf-annot.c
+		pdf_set_markup_appearance(idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height); //in pdf-appearance.c
 
 		dump_annotation_display_lists(glo);
 	}

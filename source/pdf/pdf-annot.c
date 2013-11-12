@@ -727,6 +727,12 @@ pdf_create_annot(pdf_document *doc, pdf_page *page, fz_annot_type type)
 			pdf_dict_puts_drop(page->me, "Annots", annot_arr);
 		}
 
+                    //Christian Gogolin
+                pdf_dict_puts_drop(annot->obj, "F", pdf_new_int(doc, 4)); //Make annotations printable
+
+                if (type == FZ_ANNOT_HIGHLIGHT)
+                    pdf_dict_puts_drop(annot->obj, "BM", pdf_new_name(doc, "Multiply")); //Print it "below" the text
+                
 		pdf_dict_puts_drop(annot_obj, "Type", pdf_new_name(doc, "Annot"));
 
 		pdf_dict_puts_drop(annot_obj, "Subtype", pdf_new_name(doc, type_str));
@@ -740,6 +746,18 @@ pdf_create_annot(pdf_document *doc, pdf_page *page, fz_annot_type type)
 		annot->widget_type = PDF_WIDGET_TYPE_NOT_WIDGET;
 		annot->annot_type = type;
 
+//Christian Gogolin
+// Add:                
+// /Resources<</ExtGState<</R0<</AIS false/Type/ExtGState/BM/Multiply>>>>
+// ....
+// >stream
+// /R0 gs
+
+//Instead of
+// /Resources<</ExtGState<</Alp0 106	0 R>>
+// ...
+// /Alp0 gs
+                
 		/*
 			Both annotation object and annotation structure are now created.
 			Insert the object in the hierarchy and the structure in the
@@ -856,7 +874,7 @@ pdf_set_markup_annot_quadpoints(pdf_document *doc, pdf_annot *annot, fz_point *q
 	fz_invert_matrix(&ctm, &annot->page->ctm);
 
 	pdf_dict_puts_drop(annot->obj, "QuadPoints", arr);
-
+        
 	for (i = 0; i < n; i++)
 	{
 		fz_point pt = qp[i];

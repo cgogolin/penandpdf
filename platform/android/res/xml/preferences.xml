@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory 
+<!--    <PreferenceCategory 
         android:title="@string/autosave_settings"
         android:key="pref_autosave_settings">
       <CheckBoxPreference
@@ -8,15 +8,20 @@
 	  android:title="@string/save_on_pause"
 	  android:summary="@string/save_on_pause_summ"
 	  android:defaultValue="false" />
-    </PreferenceCategory>
+    </PreferenceCategory>-->
     <PreferenceCategory 
-        android:title="@string/stylus_settings"
-        android:key="pref_stylus_settings">
+        android:title="@string/markup_settings"
+        android:key="pref_markup_settings">
       <CheckBoxPreference
 	  android:key="pref_use_stylus"
 	  android:title="@string/use_stylus"
 	  android:summary="@string/use_stylus_summ"
 	  android:defaultValue="false" />
+      <CheckBoxPreference
+	  android:key="pref_smart_text_selection"
+	  android:title="@string/use_smart_text_selection"
+	  android:summary="@string/use_smart_text_selection_summ"
+	  android:defaultValue="true" />
     </PreferenceCategory>
     <PreferenceCategory 
         android:title="@string/display_settings"
@@ -26,7 +31,7 @@
 	  android:title="@string/fit_width"
 	  android:summary="@string/fit_width_summ"
 	  android:defaultValue="false" />
-      <CheckBoxPreference
+<!--      <CheckBoxPreference
 	  android:key="pref_scroll_vertical"
 	  android:title="@string/scroll_vertical"
 	  android:summary="@string/scroll_vertical_summ"
@@ -35,7 +40,7 @@
 	  android:key="pref_scroll_continuous"
 	  android:title="@string/scroll_continuous"
 	  android:summary="@string/scroll_continuous_summ"
-	  android:defaultValue="false" />
+	  android:defaultValue="false" />-->
     </PreferenceCategory>
     <PreferenceCategory 
         android:title="@string/annotation_settings"
@@ -46,19 +51,28 @@
 	  android:summary="@string/ink_thickness_summ"
 	  android:numeric="decimal"
 	  android:digits="0123456789."
+	  android:defaultValue="2" />
+      <!--The following are populated in SettingsFragment.java-->
+      <ListPreference
+	  android:key="pref_ink_color"
+	  android:title="@string/ink_color"
+	  android:summary="@string/ink_color_summ"
+	  android:defaultValue="1" />
+      <ListPreference
+	  android:key="pref_highlight_color"
+	  android:title="@string/highlight_color"
+	  android:summary="@string/highlight_color_summ" 
+	  android:defaultValue="21" />
+      <ListPreference
+	  android:key="pref_underline_color"
+	  android:title="@string/underline_color"
+	  android:summary="@string/underline_color_summ" 
 	  android:defaultValue="3" />
-<ListPreference
-	android:key="pref_ink_color"
-	android:title="@string/ink_color"
-	android:summary="@string/ink_color_summ" />
-<ListPreference
-	android:key="pref_highlight_color"
-	android:title="@string/highlight_color"
-	android:summary="@string/highlight_color_summ" />
-<ListPreference
-	android:key="pref_underline_color"
-	android:title="@string/underline_color"
-	android:summary="@string/underline_color_summ" />
+      <ListPreference
+	  android:key="pref_strikeout_color"
+	  android:title="@string/strikeout_color"
+	  android:summary="@string/strikeout_color_summ" 
+	  android:defaultValue="15" />
 <!--      <EditTextPreference
 	  android:key="pref_ink_color"
 	  android:title="@string/ink_color"

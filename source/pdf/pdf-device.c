@@ -521,6 +521,7 @@ pdf_dev_alpha(pdf_device *pdev, float alpha, int stroke)
 			pdf_dict_puts_drop(o, (stroke ? "CA" : "ca"), pdf_new_real(doc, alpha));
 			ref = pdf_new_ref(doc, o);
 			snprintf(text, sizeof(text), "ExtGState/Alp%d", i);
+//                        snprintf(text, sizeof(text), "ExtGState/R%d", i); //Christian Gogolin 
 			pdf_dict_putp(pdev->resources, text, ref);
 		}
 		fz_always(ctx)

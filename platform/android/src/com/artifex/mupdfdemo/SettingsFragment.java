@@ -17,6 +17,7 @@ public class SettingsFragment extends PreferenceFragment {
         ListPreference prefInkColor = (ListPreference) findPreference("pref_ink_color");
         ListPreference prefHighlightColor = (ListPreference) findPreference("pref_highlight_color");
         ListPreference prefUnderlineColor = (ListPreference) findPreference("pref_underline_color");
+        ListPreference prefStrikeOutColor = (ListPreference) findPreference("pref_strikeout_color");
         
         
         prefInkColor.setEntries(ColorPalette.getColorNames());
@@ -25,5 +26,7 @@ public class SettingsFragment extends PreferenceFragment {
         prefHighlightColor.setEntryValues(ColorPalette.getColorNumbers());
         prefUnderlineColor.setEntries(ColorPalette.getColorNames());
         prefUnderlineColor.setEntryValues(ColorPalette.getColorNumbers());
+        prefStrikeOutColor.setEntries(ColorPalette.getColorNames());
+        prefStrikeOutColor.setEntryValues(ColorPalette.getColorNumbers());
     }
 }
