@@ -102,7 +102,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	private EditText mEditText;
 	private AsyncTask<String,Void,Boolean> mSetWidgetText;
 	private AsyncTask<String,Void,Void> mSetWidgetChoice;
-	private AsyncTask<PointF[],Void,Void> mAddStrikeOut;
+	private AsyncTask<PointF[],Void,Void> mAddNonInkAnnotation;
 	private AsyncTask<PointF[][],Void,Void> mAddInk;
 	private AsyncTask<Integer,Void,Void> mDeleteAnnotation;
 	private AsyncTask<Void,Void,String> mCheckSignature;
@@ -454,8 +454,9 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 			public void onEndLine() {
 				if (!rect.isEmpty()) {
-					quadPoints.add(new PointF(rect.left, rect.bottom));
-					quadPoints.add(new PointF(rect.right, rect.bottom));
+                                        //Christian Gogolin switched the following two lines back:
+                                        quadPoints.add(new PointF(rect.left, rect.bottom));
+                                        quadPoints.add(new PointF(rect.right, rect.bottom));
 					quadPoints.add(new PointF(rect.right, rect.top));
 					quadPoints.add(new PointF(rect.left, rect.top));
 				}
@@ -465,7 +466,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		if (quadPoints.size() == 0)
 			return false;
 
-		mAddStrikeOut = new AsyncTask<PointF[],Void,Void>() {
+		mAddNonInkAnnotation = new AsyncTask<PointF[],Void,Void>() {
 			@Override
 			protected Void doInBackground(PointF[]... params) {
 				addMarkup(params[0], type);
@@ -479,7 +480,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			}
 		};
 
-		mAddStrikeOut.execute(quadPoints.toArray(new PointF[quadPoints.size()]));
+		mAddNonInkAnnotation.execute(quadPoints.toArray(new PointF[quadPoints.size()]));
 
 		deselectText();
 
@@ -647,9 +648,9 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			mSetWidgetChoice = null;
 		}
 
-		if (mAddStrikeOut != null) {
-			mAddStrikeOut.cancel(true);
-			mAddStrikeOut = null;
+		if (mAddNonInkAnnotation != null) {
+			mAddNonInkAnnotation.cancel(true);
+			mAddNonInkAnnotation = null;
 		}
 
 		if (mDeleteAnnotation != null) {

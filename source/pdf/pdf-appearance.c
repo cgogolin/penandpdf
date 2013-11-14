@@ -1344,7 +1344,7 @@ static void update_rect(fz_context *ctx, pdf_annot *annot)
 	annot->pagerect = annot->rect;
 	fz_transform_rect(&annot->pagerect, &annot->page->ctm);
 }
-
+//heureka Heureka HEUREKA
 void pdf_set_annot_appearance(pdf_document *doc, pdf_annot *annot, fz_rect *rect, fz_display_list *disp_list)
 {
 	fz_context *ctx = doc->ctx;
@@ -1366,7 +1366,7 @@ void pdf_set_annot_appearance(pdf_document *doc, pdf_annot *annot, fz_rect *rect
 		fz_transform_rect(&trect, &ctm);
 
 		pdf_dict_puts_drop(obj, "Rect", pdf_new_rect(doc, &trect));
-
+                
 		/* See if there is a current normal appearance */
 		ap_obj = pdf_dict_getp(obj, "AP/N");
 		if (!pdf_is_stream(doc, pdf_to_num(ap_obj), pdf_to_gen(ap_obj)))
@@ -1538,6 +1538,107 @@ void pdf_set_markup_appearance(pdf_document *doc, pdf_annot *annot, float color[
 		fz_rethrow(ctx);
 	}
 }
+
+
+void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, float color[3], float alpha, float line_thickness, float line_height)
+{
+        //Add color
+    pdf_obj *color_obj = pdf_new_array(doc, 3);
+    int j;
+    pdf_dict_puts_drop(annot->obj, "C", color_obj);
+    for (j = 0; j < 3; j++)
+        pdf_array_push_drop(color_obj, pdf_new_real(doc, color[i]));
+
+
+    	fz_context *ctx = doc->ctx;
+	const fz_matrix *page_ctm = &annot->page->ctm;
+	fz_path *path = NULL;
+	fz_stroke_state *stroke = NULL;
+	fz_device *dev = NULL;
+	fz_display_list *strike_list = NULL;
+	int i, n;
+        fz_point *qp = quadpoints(doc, annot->obj, &n);
+
+	if (!qp || n <= 0)
+		return;
+
+	fz_var(path);
+	fz_var(stroke);
+	fz_var(dev);
+	fz_var(strike_list);
+	fz_try(ctx)
+	{
+		fz_rect rect = fz_empty_rect;
+
+		rect.x0 = rect.x1 = qp[0].x;
+		rect.y0 = rect.y1 = qp[0].y;
+		for (i = 0; i < n; i++)
+			fz_include_point_in_rect(&rect, &qp[i]);
+
+		strike_list = fz_new_display_list(ctx);
+		dev = fz_new_list_device(ctx, strike_list);
+
+		for (i = 0; i < n; i += 4)
+		{
+			fz_point pt0 = qp[i];
+			fz_point pt1 = qp[i+1];
+			fz_point up;
+			float thickness;
+
+			up.x = qp[i+2].x - qp[i+1].x;
+			up.y = qp[i+2].y - qp[i+1].y;
+
+			pt0.x += line_height * up.x;
+			pt0.y += line_height * up.y;
+			pt1.x += line_height * up.x;
+			pt1.y += line_height * up.y;
+
+			thickness = sqrtf(up.x * up.x + up.y * up.y) * line_thickness;
+
+			if (!stroke || fz_abs(stroke->linewidth - thickness) < SMALL_FLOAT)
+			{
+				if (stroke)
+				{
+					// assert(path)
+					fz_stroke_path(dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
+					fz_drop_stroke_state(ctx, stroke);
+					stroke = NULL;
+					fz_free_path(ctx, path);
+					path = NULL;
+				}
+
+				stroke = fz_new_stroke_state(ctx);
+				stroke->linewidth = thickness;
+				path = fz_new_path(ctx);
+			}
+
+			fz_moveto(ctx, path, pt0.x, pt0.y);
+			fz_lineto(ctx, path, pt1.x, pt1.y);
+		}
+
+		if (stroke)
+		{
+			fz_stroke_path(dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
+		}
+
+		fz_transform_rect(&rect, page_ctm);
+		pdf_set_annot_appearance(doc, annot, &rect, strike_list);
+	}
+	fz_always(ctx)
+	{
+		fz_free(ctx, qp);
+		fz_free_device(dev);
+		fz_drop_stroke_state(ctx, stroke);
+		fz_free_path(ctx, path);
+		fz_drop_display_list(ctx, strike_list);
+	}
+	fz_catch(ctx)
+	{
+		fz_rethrow(ctx);
+	}    
+}
+
+
 
 static fz_colorspace *pdf_to_color(pdf_document *doc, pdf_obj *col, float color[4])
 {

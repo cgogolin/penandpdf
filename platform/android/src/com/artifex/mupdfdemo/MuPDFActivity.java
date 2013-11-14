@@ -1,3 +1,5 @@
+//  -*- compile-command: cd ~/src/android/mupdf/platform/android && ant clean && ~/src/android/android-ndk-r9/ndk-build && ant debug && cp bin/MuPDF-debug.apk /home/cgogolin/Dropbox/galaxynote8/ -*-
+
 package com.artifex.mupdfdemo;
 
 import java.io.InputStream;
@@ -557,10 +559,11 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 
 			@Override
 			protected void onHit(Hit item) {
-                            mTopBarMode = TopBarMode.Annot;
-                            
-                            mActionBarMode = ActionBarMode.Edit;
-                            invalidateOptionsMenu();
+                            if (item == Hit.Annotation) {
+                                mTopBarMode = TopBarMode.Annot;
+                                mActionBarMode = ActionBarMode.Edit;
+                                invalidateOptionsMenu();
+                            }
 			}
 		};
 		mDocView.setAdapter(new MuPDFPageAdapter(this, this, core));

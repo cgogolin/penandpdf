@@ -728,10 +728,14 @@ pdf_create_annot(pdf_document *doc, pdf_page *page, fz_annot_type type)
 		}
 
                     //Christian Gogolin
-                pdf_dict_puts_drop(annot->obj, "F", pdf_new_int(doc, 4)); //Make annotations printable
+                pdf_dict_puts_drop(annot_obj, "F", pdf_new_int(doc, 4)); //Make annotations printable
+                if (type == FZ_ANNOT_HIGHLIGHT) {
+                        //Say that we want this to be renderd "behind" the text
+                    pdf_dict_puts_drop(annot_obj, "BM", pdf_new_name(doc, "Multiply"));
+                }
+                const char* creator = "CreatedByMuPdf";
+                pdf_dict_puts_drop(annot_obj, "NM", pdf_new_string(doc, creator, strlen(creator)));
 
-                if (type == FZ_ANNOT_HIGHLIGHT)
-                    pdf_dict_puts_drop(annot->obj, "BM", pdf_new_name(doc, "Multiply")); //Print it "below" the text
                 
 		pdf_dict_puts_drop(annot_obj, "Type", pdf_new_name(doc, "Annot"));
 
@@ -864,9 +868,23 @@ pdf_delete_annot(pdf_document *doc, pdf_page *page, pdf_annot *annot)
 	doc->dirty = 1;
 }
 
+
+/* void */
+/* pdf_set_markup_annot_color(pdf_document *doc, pdf_annot *annot, float color[3]) */
+/* { */
+/*        //Add color */
+/*     pdf_obj *color_obj = pdf_new_array(doc, 3); */
+/*     int i; */
+/*     pdf_dict_puts_drop(annot->obj, "C", color_obj); */
+/*     for (i = 0; i < 3; i++) */
+/*         pdf_array_push_drop(color_obj, pdf_new_real(doc, color[i])); */
+/* } */
+
+
+
 void
 pdf_set_markup_annot_quadpoints(pdf_document *doc, pdf_annot *annot, fz_point *qp, int n)
-{
+{   
 	fz_matrix ctm;
 	pdf_obj *arr = pdf_new_array(doc, n*2);
 	int i;
