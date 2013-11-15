@@ -15,6 +15,8 @@ import android.view.View;
 import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.Scroller;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 public class ReaderView
 		extends AdapterView<Adapter>
@@ -713,14 +715,19 @@ public class ReaderView
 
 		if (!mReflow) {
 		// Work out a scale that will fit it to this view
-		float scale = Math.min((float)getWidth()/(float)v.getMeasuredWidth(),
-					(float)getHeight()/(float)v.getMeasuredHeight());
-		// Use the fitting values scaled by our current scale factor
-		v.measure(View.MeasureSpec.EXACTLY | (int)(v.getMeasuredWidth()*scale*mScale),
-				View.MeasureSpec.EXACTLY | (int)(v.getMeasuredHeight()*scale*mScale));
+                    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+                    boolean fitWidth = sharedPref.getBoolean(SettingsActivity.PREF_FIT_WIDTH, false);
+                    float scale;
+                    if(fitWidth)
+                        scale = (float)getWidth()/(float)v.getMeasuredWidth();
+                    else
+                        scale = Math.min((float)getWidth()/(float)v.getMeasuredWidth(),(float)getHeight()/(float)v.getMeasuredHeight());
+                        // Use the fitting values scaled by our current scale factor
+                    v.measure(View.MeasureSpec.EXACTLY | (int)(v.getMeasuredWidth()*scale*mScale),
+                              View.MeasureSpec.EXACTLY | (int)(v.getMeasuredHeight()*scale*mScale));
 		} else {
-			v.measure(View.MeasureSpec.EXACTLY | (int)(v.getMeasuredWidth()),
-					View.MeasureSpec.EXACTLY | (int)(v.getMeasuredHeight()));
+                    v.measure(View.MeasureSpec.EXACTLY | (int)(v.getMeasuredWidth()),
+                              View.MeasureSpec.EXACTLY | (int)(v.getMeasuredHeight()));
 		}
 	}
 

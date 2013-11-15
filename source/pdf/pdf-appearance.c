@@ -1547,7 +1547,7 @@ void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, fl
     int j;
     pdf_dict_puts_drop(annot->obj, "C", color_obj);
     for (j = 0; j < 3; j++)
-        pdf_array_push_drop(color_obj, pdf_new_real(doc, color[i]));
+        pdf_array_push_drop(color_obj, pdf_new_real(doc, color[j]));
 
 
     	fz_context *ctx = doc->ctx;

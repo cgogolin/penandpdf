@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+      <item android:id="@+id/menu_search_box"
+      	    android:title="@string/menu_search"
+          android:showAsAction="ifRoom"
+          android:actionViewClass="android.widget.SearchView"
+	  android:inputType="textFilter"
+	  />
+      <item android:id="@+id/menu_previous"
+	    android:icon="@drawable/ic_action_previous_item"
+	    android:title="@string/menu_previous" 
+	    android:showAsAction="always"
+	    />
+      <item android:id="@+id/menu_next"
+	    android:icon="@drawable/ic_action_next_item"
+	    android:title="@string/menu_next" 
+	    android:showAsAction="always"
+	    />
+      <item android:id="@+id/menu_cancel"
+	    android:icon="@drawable/ic_action_cancel"
+	    android:title="@string/menu_cancel" 
+	    android:showAsAction="always"
+	    />
+</menu>

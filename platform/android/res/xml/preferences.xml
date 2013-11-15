@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-<!--    <PreferenceCategory 
-        android:title="@string/autosave_settings"
-        android:key="pref_autosave_settings">
+    <PreferenceCategory 
+	android:title="@string/autosave_settings"
+	android:key="pref_autosave_settings">
       <CheckBoxPreference
-	  android:key="pref_save_on_pause"
-	  android:title="@string/save_on_pause"
-	  android:summary="@string/save_on_pause_summ"
-	  android:defaultValue="false" />
-    </PreferenceCategory>-->
+	  android:key="pref_save_on_destroy"
+	  android:title="@string/save_on_destroy"
+	  android:summary="@string/save_on_destroy_summ"
+	  android:defaultValue="true" />
+    </PreferenceCategory>
     <PreferenceCategory 
         android:title="@string/markup_settings"
         android:key="pref_markup_settings">

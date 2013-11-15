@@ -39,9 +39,14 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ViewAnimator;
+import android.widget.SearchView;
 import android.preference.PreferenceManager;
 import android.app.ActionBar;
+import android.app.SearchManager;
+
 import android.text.InputType;
+
+
 
 class ThreadPerTaskExecutor implements Executor {
 	public void execute(Runnable r) {
@@ -49,7 +54,7 @@ class ThreadPerTaskExecutor implements Executor {
 	}
 }
 
-public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupport, SharedPreferences.OnSharedPreferenceChangeListener
+public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupport, SharedPreferences.OnSharedPreferenceChangeListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener
 {
         /* The core rendering instance */
 	enum TopBarMode {Main, Search, Annot, Delete, More, Accept};
@@ -59,6 +64,10 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
         private Uri uri;
     
 	private static final float INK_THICKNESS=10f;
+        private SearchView searchView = null;
+        private String oldQueryText = "";
+        private String mQuery = "";
+    
     
 	private final int    OUTLINE_REQUEST=0;
 	private final int    PRINT_REQUEST=1;
@@ -256,6 +265,19 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		return core;
 	}
 
+
+    @Override
+    public void onNewIntent(Intent intent) { //Is called when a search is performed
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            if(mQuery != intent.getStringExtra(SearchManager.QUERY))
+            {
+                mQuery = intent.getStringExtra(SearchManager.QUERY);
+                search(1);
+            }
+        }   
+    }
+
+    
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -387,11 +409,56 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 MenuItem undoButton = menu.findItem(R.id.menu_undo);
                 undoButton.setEnabled(false).setVisible(false);
                 break;
+            case Search:
+                inflater.inflate(R.menu.search_menu, menu);
+                    // Associate searchable configuration with the SearchView
+                SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+                searchView = (SearchView) menu.findItem(R.id.menu_search_box).getActionView();
+                searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+                searchView.setIconified(false);
+                searchView.setOnCloseListener(this); //Implemented in: public void onClose(View view)
+                searchView.setOnQueryTextListener(this); //Implemented in: public boolean onQueryTextChange(String query) and public boolean onQueryTextSubmit(String query)
             default:
         }
         return true;
     }
 
+    @Override
+    public boolean onClose() //X button in search box
+    {
+//        oldQueryText = "";
+//        searchView.setQuery("",false);
+        // mActionBarMode = ActionBarMode.Main;
+        // invalidateOptionsMenu();
+
+        SearchTaskResult.set(null);
+            // Make the ReaderView act on the change to mSearchTaskResult
+            // via overridden onChildSetup method.
+        mDocView.resetupChildren();
+        return false;
+    }
+    
+    @Override
+    public boolean onQueryTextChange(String query) //For search
+    { //This is a hacky way to determine when the user has reset the text field with the X button 
+        if ( query.length() == 0 && oldQueryText.length() > 1) {
+            SearchTaskResult.set(null);
+            mDocView.resetupChildren();
+        }
+        oldQueryText = query;
+        return false;
+    }
+
+    @Override 
+    public boolean onQueryTextSubmit(String query) //For search
+    {
+        // showInfo("Searching for "+query);
+        // mQuery = query;
+        // search(1);
+        // return false;
+        return false; //We handle this in onNewIntent()
+    }
+    
     @Override
     public boolean onOptionsItemSelected(MenuItem item) //Handel clicks in the options menu 
     {
@@ -430,6 +497,10 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                     case Edit:
                         OnDeleteButtonClick(mButtonsView);
                         break;
+                    case Search:
+                        SearchTaskResult.set(null);
+                        mDocView.resetupChildren();
+                        break;
                 }
                 mActionBarMode = ActionBarMode.Main;
                 invalidateOptionsMenu();
@@ -456,6 +527,14 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 OnCopyTextButtonClick(mButtonsView);
                 return true;
             case R.id.menu_search:
+                mActionBarMode = ActionBarMode.Search;
+                invalidateOptionsMenu();
+                return true;
+            case R.id.menu_next:
+                if (mQuery != "") search(1);
+                return true;
+            case R.id.menu_previous:
+                if (mQuery != "") search(-1);
                 return true;
             case R.id.menu_save:
                     //Doesn't work so easily because core.save() closes the file
@@ -564,6 +643,11 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                                 mActionBarMode = ActionBarMode.Edit;
                                 invalidateOptionsMenu();
                             }
+                            if (item == Hit.Nothing) {
+                                mTopBarMode = TopBarMode.Main;
+                                mActionBarMode = ActionBarMode.Main;
+                                invalidateOptionsMenu();
+                            }
 			}
 		};
 		mDocView.setAdapter(new MuPDFPageAdapter(this, this, core));
@@ -574,6 +658,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		mSearchTask = new SearchTask(this, core) {
 			@Override
 			protected void onTextFound(SearchTaskResult result) {
+                            showInfo("Found!");
 				SearchTaskResult.set(result);
 				// Ask the ReaderView to move to the resulting page
 				mDocView.setDisplayedViewIndex(result.pageNumber);
@@ -775,7 +860,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 
 	private void toggleReflow() {
 		reflowModeSet(!mReflow);
-		showInfo(mReflow ? getString(R.string.entering_reflow_mode) : getString(R.string.leaving_reflow_mode));
+//		showInfo(mReflow ? getString(R.string.entering_reflow_mode) : getString(R.string.leaving_reflow_mode));
 	}
 
 	@Override
@@ -860,8 +945,14 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 				((MuPDFView)view).releaseBitmaps();
 			}
 		});
+
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+
 		if (core != null)
-			core.onDestroy();
+                {
+                    if(sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_DESTROY, true)) core.save();                    
+                    core.onDestroy();
+                }
 		if (mAlertTask != null) {
 			mAlertTask.cancel(true);
 			mAlertTask = null;
@@ -1149,32 +1240,32 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			if (pageView != null)
 				success = pageView.markupSelection(Annotation.Type.HIGHLIGHT);
 			mTopBarMode = TopBarMode.Annot;
-			if (!success)
-				showInfo(getString(R.string.no_text_selected));
+			// if (!success)
+			// 	showInfo(getString(R.string.no_text_selected));
 			break;
 
 		case Underline:
 			if (pageView != null)
 				success = pageView.markupSelection(Annotation.Type.UNDERLINE);
 			mTopBarMode = TopBarMode.Annot;
-			if (!success)
-				showInfo(getString(R.string.no_text_selected));
+			// if (!success)
+			// 	showInfo(getString(R.string.no_text_selected));
 			break;
 
 		case StrikeOut:
 			if (pageView != null)
 				success = pageView.markupSelection(Annotation.Type.STRIKEOUT);
 			mTopBarMode = TopBarMode.Annot;
-			if (!success)
-				showInfo(getString(R.string.no_text_selected));
+			// if (!success)
+			// 	showInfo(getString(R.string.no_text_selected));
 			break;
 
 		case Ink:
 			if (pageView != null)
 				success = pageView.saveDraw();
 			mTopBarMode = TopBarMode.Annot;
-			if (!success)
-				showInfo(getString(R.string.nothing_to_save));
+			// if (!success)
+                        //     showInfo(getString(R.string.nothing_to_save));
 			break;
 		}
 		mTopBarSwitcher.setDisplayedChild(mTopBarMode.ordinal());
@@ -1213,12 +1304,13 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			imm.hideSoftInputFromWindow(mSearchText.getWindowToken(), 0);
 	}
 
-	private void search(int direction) {
+        private void search(int direction) {
 		hideKeyboard();
+                
 		int displayPage = mDocView.getDisplayedViewIndex();
 		SearchTaskResult r = SearchTaskResult.get();
 		int searchPage = r != null ? r.pageNumber : -1;
-		mSearchTask.go(mSearchText.getText().toString(), direction, displayPage, searchPage);
+		mSearchTask.go(mQuery, direction, displayPage, searchPage);
 	}
 
 	@Override
