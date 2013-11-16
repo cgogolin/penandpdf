@@ -267,14 +267,14 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 
 
     @Override
-    public void onNewIntent(Intent intent) { //Is called when a search is performed
-        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-            if(mQuery != intent.getStringExtra(SearchManager.QUERY))
-            {
-                mQuery = intent.getStringExtra(SearchManager.QUERY);
-                search(1);
-            }
-        }   
+    public void onNewIntent(Intent intent) { 
+        // if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+        //     if(mQuery != intent.getStringExtra(SearchManager.QUERY)) //For some reason we sometimes recieve two search intents in rapid succession
+        //     {
+        //         mQuery = intent.getStringExtra(SearchManager.QUERY);
+        //         search(1);
+        //     }
+        // }   
     }
 
     
@@ -452,11 +452,13 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
     @Override 
     public boolean onQueryTextSubmit(String query) //For search
     {
-        // showInfo("Searching for "+query);
-        // mQuery = query;
-        // search(1);
-        // return false;
-        return false; //We handle this in onNewIntent()
+        if(mQuery != query)
+        {
+                // showInfo("Searching for "+query);
+            mQuery = query;
+            search(1);
+        }
+        return true; //We handle this here and don't want to call onNewIntent()
     }
     
     @Override
@@ -658,7 +660,6 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		mSearchTask = new SearchTask(this, core) {
 			@Override
 			protected void onTextFound(SearchTaskResult result) {
-                            showInfo("Found!");
 				SearchTaskResult.set(result);
 				// Ask the ReaderView to move to the resulting page
 				mDocView.setDisplayedViewIndex(result.pageNumber);

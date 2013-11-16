@@ -1484,14 +1484,14 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
 		{
                         //Modifiedy by Christian Gogolin to fix the order of the points in the quad points of highlight annotations
                     jobject opt;
-                    if(type == FZ_ANNOT_HIGHLIGHT && (i == 2 || i == 3) )
-                    {
-                        if(i == 2)
-                            opt = (*env)->GetObjectArrayElement(env, points, 3);
-                        if(i == 3)
-                            opt = (*env)->GetObjectArrayElement(env, points, 2);
-                    }
-                    else
+                    /* if(type == FZ_ANNOT_HIGHLIGHT && (i == 2 || i == 3) ) */
+                    /* { */
+                    /*     if(i == 2) */
+                    /*         opt = (*env)->GetObjectArrayElement(env, points, 3); */
+                    /*     if(i == 3) */
+                    /*         opt = (*env)->GetObjectArrayElement(env, points, 2); */
+                    /* } */
+                    /* else */
 			opt = (*env)->GetObjectArrayElement(env, points, i);
                     
                     pts[i].x = opt ? (*env)->GetFloatField(env, opt, x_fid) : 0.0f;
