@@ -10,15 +10,18 @@
 	    android:icon="@drawable/ic_action_previous_item"
 	    android:title="@string/menu_previous" 
 	    android:showAsAction="always"
+	    android:background="?android:selectableItemBackground"
 	    />
       <item android:id="@+id/menu_next"
 	    android:icon="@drawable/ic_action_next_item"
 	    android:title="@string/menu_next" 
 	    android:showAsAction="always"
+	    android:background="?android:selectableItemBackground"
 	    />
       <item android:id="@+id/menu_cancel"
 	    android:icon="@drawable/ic_action_cancel"
 	    android:title="@string/menu_cancel" 
 	    android:showAsAction="always"
+	    android:background="?android:selectableItemBackground"
 	    />
 </menu>

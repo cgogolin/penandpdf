@@ -21,7 +21,7 @@ public class MuPDFCore
 	private long globals;
 	private byte fileBuffer[];
 	private String file_format;
-
+    
 	/* The native functions */
 	private native long openFile(String filename);
 	private native long openBuffer();

@@ -9,56 +9,68 @@
   <item android:id="@+id/menu_save"
 	android:title="@string/menu_save"
 	android:showAsAction="never"
+	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_gotopage"
 	android:title="@string/menu_gotopage"
 	android:showAsAction="never"
+	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_copytext"
 	android:icon="@drawable/ic_action_copy"
 	android:title="@string/menu_copytext" 
 	android:showAsAction="never"
+	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_search"
 	android:icon="@drawable/ic_action_search"
 	android:title="@string/menu_search" 
 	android:showAsAction="never"
+	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_bookmarks"
 	android:title="@string/menu_bookmarks" 
 	android:showAsAction="never"
+	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_print"
 	android:title="@string/menu_print"
 	android:showAsAction="never"
+	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_share"
 	android:title="@string/menu_share"
 	android:showAsAction="never"
 	android:actionProviderClass="android.widget.ShareActionProvider"
+	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_settings"
 	android:title="@string/menu_settings"
 	android:showAsAction="never"
+	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_strikeout"
 	android:icon="@drawable/ic_action_strikeout"
 	android:title="@string/menu_strikeout" 
 	android:showAsAction="always"
+	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_underline"
 	android:icon="@drawable/ic_action_underline"
 	android:title="@string/menu_underline" 
 	android:showAsAction="always"
+	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_highlight"
 	android:icon="@drawable/ic_action_highlight"
 	android:title="@string/menu_highlight" 
 	android:showAsAction="always"
+	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_draw"
 	android:icon="@drawable/ic_action_edit"
 	android:title="@string/menu_draw" 
 	android:showAsAction="always"
+	android:background="?android:selectableItemBackground"
 	/>
 </menu>

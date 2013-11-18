@@ -283,8 +283,9 @@ public abstract class PageView extends ViewGroup {
 		}
 
 		// Calculate scaled size that fits within the screen limits
-		// This is the size at minimum zoom                
+		// This is the size at minimum zoom
                 mSourceScale = Math.min(mParentSize.x/size.x, mParentSize.y/size.y);
+                
 		Point newSize = new Point((int)(size.x*mSourceScale), (int)(size.y*mSourceScale));
 		mSize = newSize;
 

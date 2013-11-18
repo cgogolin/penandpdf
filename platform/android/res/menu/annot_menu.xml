@@ -25,15 +25,18 @@
 	android:icon="@drawable/ic_action_undo"
 	android:title="@string/menu_undo" 
 	android:showAsAction="always"
+	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_cancel"
 	android:icon="@drawable/ic_action_cancel"
 	android:title="@string/menu_cancel" 
 	android:showAsAction="always"
+	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_accept"
 	android:icon="@drawable/ic_action_accept"
 	android:title="@string/menu_accept" 
 	android:showAsAction="always"
+	android:background="?android:selectableItemBackground"
 	/>
 </menu>

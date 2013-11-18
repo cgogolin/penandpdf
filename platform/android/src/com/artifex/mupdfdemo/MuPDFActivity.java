@@ -404,23 +404,17 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 inflater.inflate(R.menu.main_menu, menu);
                 
                     // Locate MenuItem with ShareActionProvider, fetch and store ShareActionProvider, determine file name and set up the ShareActionProvider
-                if (mShareActionProvider == null)
-                {
+               if (mShareActionProvider == null)
+               {
                     MenuItem shareItem = menu.findItem(R.id.menu_share);
-
-                    
                     mShareActionProvider = (ShareActionProvider) shareItem.getActionProvider();
                     Intent shareIntent = new Intent();
                     shareIntent.setAction(Intent.ACTION_SEND);
                     shareIntent.setType("plain/text");
-//                    shareIntent.setAction(Intent.ACTION_ATTACH_DATA);
-//                    shareIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                    shareIntent.setType("application/pdf");
                     shareIntent.setType("*/*");
-//                    shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-                    shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(uri.getEncodedPath())));
+//                    shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(uri.getEncodedPath()))); //Causes crash on orientation change
                     if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
-                }
+               }
                 break;
             case Annot:
             case Edit:
@@ -955,7 +949,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
     }
     
 	public void onDestroy()
-	{            
+	{
 		mDocView.applyToChildren(new ReaderView.ViewMapper() {
 			void applyToView(View view) {
 				((MuPDFView)view).releaseBitmaps();
@@ -967,7 +961,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		if (core != null)
                 {
                     if(sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_DESTROY, true)) core.save();                    
-                    core.onDestroy();
+                    core.onDestroy(); //Causes problems on configuration change!!!
                 }
 		if (mAlertTask != null) {
 			mAlertTask.cancel(true);
