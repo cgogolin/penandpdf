@@ -3,6 +3,7 @@
 package com.artifex.mupdfdemo;
 
 import java.io.InputStream;
+import java.io.File;
 import java.util.concurrent.Executor;
 
 import com.artifex.mupdfdemo.ReaderView.ViewMapper;
@@ -40,6 +41,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ViewAnimator;
 import android.widget.SearchView;
+import android.widget.ShareActionProvider;
 import android.preference.PreferenceManager;
 import android.app.ActionBar;
 import android.app.SearchManager;
@@ -62,12 +64,11 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 	enum AcceptMode {Highlight, Underline, StrikeOut, Ink, CopyText};
 
         private Uri uri;
-    
 	private static final float INK_THICKNESS=10f;
         private SearchView searchView = null;
         private String oldQueryText = "";
         private String mQuery = "";
-    
+        private ShareActionProvider mShareActionProvider = null;
     
 	private final int    OUTLINE_REQUEST=0;
 	private final int    PRINT_REQUEST=1;
@@ -401,6 +402,25 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
         {
             case Main:
                 inflater.inflate(R.menu.main_menu, menu);
+                
+                    // Locate MenuItem with ShareActionProvider, fetch and store ShareActionProvider, determine file name and set up the ShareActionProvider
+                if (mShareActionProvider == null)
+                {
+                    MenuItem shareItem = menu.findItem(R.id.menu_share);
+
+                    
+                    mShareActionProvider = (ShareActionProvider) shareItem.getActionProvider();
+                    Intent shareIntent = new Intent();
+                    shareIntent.setAction(Intent.ACTION_SEND);
+                    shareIntent.setType("plain/text");
+//                    shareIntent.setAction(Intent.ACTION_ATTACH_DATA);
+//                    shareIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                    shareIntent.setType("application/pdf");
+                    shareIntent.setType("*/*");
+//                    shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                    shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(uri.getEncodedPath())));
+                    if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
+                }
                 break;
             case Annot:
             case Edit:
@@ -522,6 +542,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 return true;
             case R.id.menu_print:
                 OnPrintButtonClick(mButtonsView);
+//                showInfo("uri: "+uri.toString());
                 return true;
             case R.id.menu_copytext:
                 mActionBarMode = ActionBarMode.Copy;
@@ -539,12 +560,6 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 if (mQuery != "") search(-1);
                 return true;
             case R.id.menu_save:
-                    //Doesn't work so easily because core.save() closes the file
-                // if(core.save()==0)
-                //     showInfo(getString(R.string.successfully_saved));
-                // else
-                //     showInfo(getString(R.string.error_saveing));
-                // core = openFile(Uri.decode(uri.getEncodedPath()));
                 return true;
             case R.id.menu_gotopage:
                 showGoToPageDialoge();
@@ -1178,7 +1193,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		mAcceptMode = AcceptMode.Highlight;
 		mDocView.setMode(MuPDFReaderView.Mode.Selecting);
 		mAnnotTypeText.setText(R.string.highlight);
-		showInfo(getString(R.string.select_text));
+//		showInfo(getString(R.string.select_text));
 	}
 
 	public void OnUnderlineButtonClick(View v) {
@@ -1187,7 +1202,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		mAcceptMode = AcceptMode.Underline;
 		mDocView.setMode(MuPDFReaderView.Mode.Selecting);
 		mAnnotTypeText.setText(R.string.underline);
-		showInfo(getString(R.string.select_text));
+//		showInfo(getString(R.string.select_text));
 	}
 
 	public void OnStrikeOutButtonClick(View v) {
@@ -1196,7 +1211,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		mAcceptMode = AcceptMode.StrikeOut;
 		mDocView.setMode(MuPDFReaderView.Mode.Selecting);
 		mAnnotTypeText.setText(R.string.strike_out);
-		showInfo(getString(R.string.select_text));
+//		showInfo(getString(R.string.select_text));
 	}
 
 	public void OnInkButtonClick(View v) {
@@ -1205,7 +1220,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		mAcceptMode = AcceptMode.Ink;
 		mDocView.setMode(MuPDFReaderView.Mode.Drawing);
 		mAnnotTypeText.setText(R.string.ink);
-		showInfo(getString(R.string.draw_annotation));
+//		showInfo(getString(R.string.draw_annotation));
 	}
 
 	public void OnCancelAcceptButtonClick(View v) {

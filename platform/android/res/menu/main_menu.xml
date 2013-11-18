@@ -35,6 +35,7 @@
   <item android:id="@+id/menu_share"
 	android:title="@string/menu_share"
 	android:showAsAction="never"
+	android:actionProviderClass="android.widget.ShareActionProvider"
 	/>
   <item android:id="@+id/menu_settings"
 	android:title="@string/menu_settings"
