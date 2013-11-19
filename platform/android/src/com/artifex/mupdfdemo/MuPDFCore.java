@@ -21,6 +21,8 @@ public class MuPDFCore
 	private long globals;
 	private byte fileBuffer[];
 	private String file_format;
+    	private String mPath = "";
+        private String mFileName = "";
     
 	/* The native functions */
 	private native long openFile(String filename);
@@ -79,12 +81,16 @@ public class MuPDFCore
     
 	public static native boolean javascriptSupported();
 
-	public MuPDFCore(Context context, String filename) throws Exception
+	public MuPDFCore(Context context, String path) throws Exception
 	{
-		globals = openFile(filename);
+                mPath = path;
+                int lastSlashPos = path.lastIndexOf('/');
+		mFileName = new String(lastSlashPos == -1 ? path : path.substring(lastSlashPos+1));
+
+		globals = openFile(path);
 		if (globals == 0)
 		{
-			throw new Exception(String.format(context.getString(R.string.cannot_open_file_Path), filename));
+			throw new Exception(String.format(context.getString(R.string.cannot_open_file_Path), path));
 		}
 		file_format = fileFormatInternal();
 	}
@@ -306,5 +312,13 @@ public class MuPDFCore
 
 	public synchronized int save() {
 		return saveInternal();
+	}
+
+        public String getPath() {
+            return mPath;
+	}
+
+        public String getFileName() {
+            return mFileName;
 	}
 }
