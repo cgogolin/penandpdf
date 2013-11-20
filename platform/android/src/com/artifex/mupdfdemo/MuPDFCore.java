@@ -2,13 +2,17 @@ package com.artifex.mupdfdemo;
 import java.util.ArrayList;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.PointF;
 import android.graphics.RectF;
+import android.preference.PreferenceManager;
 
 public class MuPDFCore
 {
+    private static final float INK_THICKNESS=10f;
+    
 	/* load our native library */
 	static {
 		System.loadLibrary("mupdf");
@@ -321,4 +325,22 @@ public class MuPDFCore
         public String getFileName() {
             return mFileName;
 	}
+    
+    public void onSharedPreferenceChanged(Context context){
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);   
+            //Set ink thickness
+        float inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(INK_THICKNESS)));
+        setInkThickness(inkThickness*0.45f); // I have no idea whre the 0.45 comes from....               
+        
+            //Set colors
+        int colorNumber;                    
+        colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, "0" ));
+        setInkColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
+        colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, "0" ));
+        setHighlightColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
+        colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, "0" ));
+        setUnderlineColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
+        colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, "0" ));
+        setStrikeoutColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
+    }
 }
