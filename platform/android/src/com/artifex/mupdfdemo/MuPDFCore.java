@@ -99,9 +99,11 @@ public class MuPDFCore
 		file_format = fileFormatInternal();
 	}
 
-	public MuPDFCore(Context context, byte buffer[]) throws Exception
+    public MuPDFCore(Context context, byte buffer[], String displayName) throws Exception
 	{
 		fileBuffer = buffer;
+                mFileName = displayName;
+                
 		globals = openBuffer();
 		if (globals == 0)
 		{

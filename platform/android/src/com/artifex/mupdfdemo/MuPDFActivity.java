@@ -45,6 +45,9 @@ import android.widget.ShareActionProvider;
 import android.preference.PreferenceManager;
 import android.app.ActionBar;
 import android.app.SearchManager;
+import android.provider.MediaStore;
+import android.provider.MediaStore.MediaColumns;
+
 
 import android.text.InputType;
 
@@ -63,7 +66,6 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
     enum ActionBarMode {Main, Annot, Edit, Search, Copy};
     enum AcceptMode {Highlight, Underline, StrikeOut, Ink, CopyText};
     
-    private Uri uri;
     private SearchView searchView = null;
     private String oldQueryText = "";
     private String mQuery = "";
@@ -222,12 +224,12 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
             return core;
 	}
 
-    private MuPDFCore openBuffer(byte buffer[])
+    private MuPDFCore openBuffer(byte buffer[], String displayName)
 	{
             System.out.println("Trying to open byte buffer");
             try
             {
-                core = new MuPDFCore(this, buffer);
+                core = new MuPDFCore(this, buffer, displayName);
                     // New file: drop the old outline data
                 OutlineActivityData.set(null);
             }
@@ -278,73 +280,82 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 core = (MuPDFCore)getLastNonConfigurationInstance();
             }
 
-                //If no core was provided start setting it up
-            if (core == null) {
-                Intent intent = getIntent();
-                byte buffer[] = null;
-                if (Intent.ACTION_VIEW.equals(intent.getAction())) {
-                    uri = intent.getData();
-                    if (uri.toString().startsWith("content://")) {
-                            // Handle view requests from the Transformer Prime's file manager
-                            // Hopefully other file managers will use this same scheme, if not
-                            // using explicit paths.
-                        Cursor cursor = getContentResolver().query(uri, new String[]{"_data"}, null, null, null);
-                        if (cursor.moveToFirst()) {
-                            String str = cursor.getString(0);
-                            String reason = null;
-                            if (str == null) {
-                                try {
-                                    InputStream is = getContentResolver().openInputStream(uri);
+                //If no core was provided start setting it up            
+            Intent intent = getIntent();
+            if (core == null)
+            {
+                if (Intent.ACTION_VIEW.equals(intent.getAction()))
+                {
+                    Uri uri = intent.getData();
+                    String error = null;
+                    
+                    if(new File(Uri.decode(uri.getEncodedPath())).exists()) //Uri points to a file
+                    {
+                        core = openFile(Uri.decode(uri.getEncodedPath()));
+                    }
+                    else if (uri.toString().startsWith("content://")) //Uri points to a content provider
+                    {
+                        byte buffer[] = null;
+                        Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.DATA}, null, null, null); //This should be done asynchonously!
+                        if (cursor != null && cursor.moveToFirst())
+                        {
+                            String displayName = "";
+                            String data = "";
+                            int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+                            int dataIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+                            if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
+                            if(dataIndex >= 0) data = cursor.getString(dataIndex);
+                            try {
+                                InputStream is = getContentResolver().openInputStream(uri);
+                                if(is != null)
+                                {
                                     int len = is.available();
                                     buffer = new byte[len];
                                     is.read(buffer, 0, len);
                                     is.close();
                                 }
-                                catch (java.lang.OutOfMemoryError e)
-                                {
-                                    System.out.println("Out of memory during buffer reading");
-                                    reason = e.toString();
-                                }
-                                catch (Exception e) {
-                                    reason = e.toString();
-                                }
-                                if (reason != null)
-                                {
-                                    buffer = null;
-                                    Resources res = getResources();
-                                    AlertDialog alert = mAlertBuilder.create();
-                                    setTitle(String.format(res.getString(R.string.cannot_open_document_Reason), reason));
-                                    alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
-                                                    new DialogInterface.OnClickListener() {
-                                                        public void onClick(DialogInterface dialog, int which) {
-                                                            finish();
-                                                        }
-                                                    });
-                                    alert.show();
-                                    return;
-                                }
-                            } else {
-                                uri = Uri.parse(str);
                             }
+                            catch (Exception e) {
+                                error = e.toString();
+                            }
+                            cursor.close();
+                            if(buffer != null) core = openBuffer(buffer,displayName);
                         }
                     }
-                    if (buffer != null) {
-                        core = openBuffer(buffer);
-                    } else {
-                        core = openFile(Uri.decode(uri.getEncodedPath()));
+                    else
+                    {
+                        error = getResources().getString(R.string.unable_to_interpret_uri)+" "+uri;
                     }
-                    SearchTaskResult.set(null);
-                }
-                if (core != null && core.needsPassword()) {
-                    requestPassword(savedInstanceState);
-                    return;
-                }
-                if (core != null && core.countPages() == 0)
-                {
-                    core = null;
+                    if (error != null) //There was an error
+                    {
+                        AlertDialog alert = mAlertBuilder.create();
+                        alert.setTitle(R.string.cannot_open_document);
+                        alert.setMessage(getResources().getString(R.string.reason)+": "+error);
+                        alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
+                                        new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                finish();
+                                            }
+                                        });
+                        alert.show();
+                        finish();
+                    }
                 }
             }
-            if (core == null)
+            if (core != null && core.needsPassword()) {
+                requestPassword(savedInstanceState);
+            }
+            if (core != null && core.countPages() == 0)
+            {
+                core = null;
+            }
+            if (core != null) //OK, so apparently we have a valid file 
+            {
+                SearchTaskResult.set(null);
+                core.onSharedPreferenceChanged(this);
+                createUI(savedInstanceState);
+            }
+            else //Something went wrong
             {
                 AlertDialog alert = mAlertBuilder.create();
                 alert.setTitle(R.string.cannot_open_document);
@@ -357,12 +368,6 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 alert.show();
                 return;
             }
-            if (core != null) 
-            {
-//                updateActionBarTitle();
-                core.onSharedPreferenceChanged(this);
-            }
-            createUI(savedInstanceState);
 	}
 
     @Override
@@ -578,16 +583,16 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
         alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.okay),
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
-				if (core.authenticatePassword(mPasswordView.getText().toString())) {
-                                    createUI(savedInstanceState);
-				} else {
+                                    // if (core.authenticatePassword(mPasswordView.getText().toString())) {
+                                    //     createUI(savedInstanceState);
+				if (!core.authenticatePassword(mPasswordView.getText().toString()))
                                     requestPassword(savedInstanceState);
-				}
+                                
                             }
                         });
         alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel),
                         new DialogInterface.OnClickListener() {
-
+                            
                             public void onClick(DialogInterface dialog, int which) {
 				finish();
                             }
@@ -814,12 +819,14 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
     
     public void onDestroy()
 	{
-            mDocView.applyToChildren(new ReaderView.ViewMapper() {
-                    void applyToView(View view) {
-                        ((MuPDFView)view).releaseBitmaps();
-                    }
-		});
-            
+            if(mDocView != null)
+            {
+                mDocView.applyToChildren(new ReaderView.ViewMapper() {
+                        void applyToView(View view) {
+                            ((MuPDFView)view).releaseBitmaps();
+                        }
+                    });
+            }
             if (core != null && !isChangingConfigurations())
             {
                 SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
