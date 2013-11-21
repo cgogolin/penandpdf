@@ -32,6 +32,11 @@
         android:title="@string/display_settings"
         android:key="display_settings">
       <CheckBoxPreference
+	  android:key="keep_screen_on"
+	  android:title="@string/keep_screen_on"
+	  android:summary="@string/keep_screen_on_summ"
+	  android:defaultValue="true" />
+      <CheckBoxPreference
 	  android:key="pref_fit_width"
 	  android:title="@string/fit_width"
 	  android:summary="@string/fit_width_summ"

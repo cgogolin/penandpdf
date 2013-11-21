@@ -328,8 +328,7 @@ public class MuPDFCore
             return mFileName;
 	}
     
-    public void onSharedPreferenceChanged(Context context){
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);   
+    public void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
             //Set ink thickness
         float inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(INK_THICKNESS)));
         setInkThickness(inkThickness*0.45f); // I have no idea whre the 0.45 comes from....               

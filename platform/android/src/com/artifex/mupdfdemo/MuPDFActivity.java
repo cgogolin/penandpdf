@@ -33,6 +33,7 @@ import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.view.WindowManager;
 import android.widget.Toast;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -257,6 +258,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 //Set default preferences on first start
             PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
             PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
+            onSharedPreferenceChanged(PreferenceManager.getDefaultSharedPreferences(this),""); //Call this once so I don't need to duplicate code
             
                 //Get the ActionBarMode and AcceptMode from the bundle
             if(savedInstanceState != null)
@@ -295,7 +297,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 SearchTaskResult.set(null);
                 createAlertWaiter();
                 core.startAlerts();
-                core.onSharedPreferenceChanged(this);
+                core.onSharedPreferenceChanged(PreferenceManager.getDefaultSharedPreferences(this),"");
                 setupUI();
             }
             else //Something went wrong
@@ -814,8 +816,13 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
         outState.putString("AcceptMode", mAcceptMode.toString());
     }
 
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if(core != null) core.onSharedPreferenceChanged(this);
+    public void onSharedPreferenceChanged(SharedPreferences sharedPref, String key) {
+        if (sharedPref.getBoolean(SettingsActivity.PREF_KEEP_SCREEN_ON, false ))
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        else
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        
+        if(core != null) core.onSharedPreferenceChanged(sharedPref, key);
             //mDocView.resetupChildren();//This should be used to set preferences in page views...
     }    
 
