@@ -102,7 +102,9 @@
 
 	<string name="autosave_settings">Autosave</string>
 	<string name="save_on_destroy">Autosave when destroyed</string>
-	<string name="save_on_destroy_summ">Automatically save current file when the app is destroyed.</string>
+	<string name="save_on_destroy_summ">Automatically save current file when the app is finally destroyed.</string>
+	<string name="save_on_pause">Autosave when paused</string>
+	<string name="save_on_pause_summ">Automatically save current file when the app is paused, i.e., sent to the background. Warning: if this is unticked changes may be lost if Android kills this app while in the background! </string>
 	<string name="dialog_gotopage_title">Go to page</string>
 	<string name="dialog_gotopage_ok">Go</string>
 	<string name="dialog_gotopage_cancel">Cancel</string>

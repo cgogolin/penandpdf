@@ -2551,7 +2551,6 @@ JNI_FN(MuPDFCore_saveInternal)(JNIEnv * env, jobject thiz)
 				close_doc(glo);
 				rename(tmp, glo->current_path);
 			}
-
 			free(tmp);
 		}
 	}

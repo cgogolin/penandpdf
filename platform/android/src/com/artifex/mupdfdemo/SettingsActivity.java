@@ -15,6 +15,7 @@ public class SettingsActivity extends Activity {
     final static String PREF_UNDERLINE_COLOR = "pref_underline_color";
     final static String PREF_STRIKEOUT_COLOR = "pref_strikeout_color";
     final static String PREF_SAVE_ON_DESTROY = "pref_save_on_destroy";
+    final static String PREF_SAVE_ON_PAUSE = "pref_save_on_pause";
     final static String PREF_SMART_TEXT_SELECTION = "pref_smart_text_selection";
 
     

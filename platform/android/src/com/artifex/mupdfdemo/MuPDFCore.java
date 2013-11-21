@@ -319,7 +319,7 @@ public class MuPDFCore
 	public synchronized int save() {
 		return saveInternal();
 	}
-
+    
         public String getPath() {
             return mPath;
 	}

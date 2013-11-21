@@ -8,6 +8,11 @@
 	  android:title="@string/save_on_destroy"
 	  android:summary="@string/save_on_destroy_summ"
 	  android:defaultValue="true" />
+      <CheckBoxPreference
+	  android:key="pref_save_on_pause"
+	  android:title="@string/save_on_pause"
+	  android:summary="@string/save_on_pause_summ"
+	  android:defaultValue="true" />
     </PreferenceCategory>
     <PreferenceCategory 
         android:title="@string/markup_settings"

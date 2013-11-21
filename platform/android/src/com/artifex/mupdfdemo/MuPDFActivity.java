@@ -70,6 +70,8 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
     private String oldQueryText = "";
     private String mQuery = "";
     private ShareActionProvider mShareActionProvider = null;
+    private boolean mNotSaveOnDestroyThisTime = false;
+    private boolean mNotSaveOnPauseThisTime = false;
     
     private final int    OUTLINE_REQUEST=0;
     private final int    PRINT_REQUEST=1;
@@ -242,24 +244,16 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 	}
 
 
-    @Override
-    public void onNewIntent(Intent intent) { 
-            // if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-            //     if(mQuery != intent.getStringExtra(SearchManager.QUERY)) //For some reason we sometimes recieve two search intents in rapid succession
-            //     {
-            //         mQuery = intent.getStringExtra(SearchManager.QUERY);
-            //         search(1);
-            //     }
-            // }   
-    }
+    // @Override
+    // public void onNewIntent(Intent intent)
+    //     {}
 
     
-
     @Override
     public void onCreate(Bundle savedInstanceState)
-	{
+        {
             super.onCreate(savedInstanceState);
-
+            
                 //Set default preferences on first start
             PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
             PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
@@ -268,92 +262,41 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
             if(savedInstanceState != null)
             {
                     //We don't want to do this at the moment because we can't save what was selected ar drawn so easily 
-                // mActionBarMode = ActionBarMode.valueOf(savedInstanceState.getString("ActionBarMode", ActionBarMode.Main.toString ()));
-                // mAcceptMode = AcceptMode.valueOf(savedInstanceState.getString("AcceptMode", AcceptMode.Highlight.toString ()));
+                    // mActionBarMode = ActionBarMode.valueOf(savedInstanceState.getString("ActionBarMode", ActionBarMode.Main.toString ()));
+                    // mAcceptMode = AcceptMode.valueOf(savedInstanceState.getString("AcceptMode", AcceptMode.Highlight.toString ()));
             }
             
                 //Initialize the alert builder
             mAlertBuilder = new AlertDialog.Builder(this);
-
-                //Get the core from saved instance
+            
+                //Get the core saved with onRetainNonConfigurationInstance()
             if (core == null) {
-                core = (MuPDFCore)getLastNonConfigurationInstance();
+            core = (MuPDFCore)getLastNonConfigurationInstance();
             }
+        }
 
-                //If no core was provided start setting it up            
-            Intent intent = getIntent();
-            if (core == null)
-            {
-                if (Intent.ACTION_VIEW.equals(intent.getAction()))
-                {
-                    Uri uri = intent.getData();
-                    String error = null;
-                    
-                    if(new File(Uri.decode(uri.getEncodedPath())).exists()) //Uri points to a file
-                    {
-                        core = openFile(Uri.decode(uri.getEncodedPath()));
-                    }
-                    else if (uri.toString().startsWith("content://")) //Uri points to a content provider
-                    {
-                        byte buffer[] = null;
-                        Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.DATA}, null, null, null); //This should be done asynchonously!
-                        if (cursor != null && cursor.moveToFirst())
-                        {
-                            String displayName = "";
-                            String data = "";
-                            int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
-                            int dataIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
-                            if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
-                            if(dataIndex >= 0) data = cursor.getString(dataIndex);
-                            try {
-                                InputStream is = getContentResolver().openInputStream(uri);
-                                if(is != null)
-                                {
-                                    int len = is.available();
-                                    buffer = new byte[len];
-                                    is.read(buffer, 0, len);
-                                    is.close();
-                                }
-                            }
-                            catch (Exception e) {
-                                error = e.toString();
-                            }
-                            cursor.close();
-                            if(buffer != null) core = openBuffer(buffer,displayName);
-                        }
-                    }
-                    else
-                    {
-                        error = getResources().getString(R.string.unable_to_interpret_uri)+" "+uri;
-                    }
-                    if (error != null) //There was an error
-                    {
-                        AlertDialog alert = mAlertBuilder.create();
-                        alert.setTitle(R.string.cannot_open_document);
-                        alert.setMessage(getResources().getString(R.string.reason)+": "+error);
-                        alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int which) {
-                                                finish();
-                                            }
-                                        });
-                        alert.show();
-                        finish();
-                    }
-                }
-            }
-            if (core != null && core.needsPassword()) {
-                requestPassword(savedInstanceState);
-            }
-            if (core != null && core.countPages() == 0)
-            {
-                core = null;
-            }
-            if (core != null) //OK, so apparently we have a valid file 
+
+    // @Override
+    // protected void onStart()
+    //     {}
+
+    
+    @Override
+    protected void onResume()
+        {
+            super.onResume();
+            
+                //If core was not restored during onCreat()
+                //or is not still present because the app was
+                //only paused and save on pause is off set it up now
+            if (core == null) setupCore();
+            if (core != null) //OK, so apparently we have a valid pdf open
             {
                 SearchTaskResult.set(null);
+                createAlertWaiter();
+                core.startAlerts();
                 core.onSharedPreferenceChanged(this);
-                createUI(savedInstanceState);
+                setupUI();
             }
             else //Something went wrong
             {
@@ -366,10 +309,88 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                                     }
                                 });
                 alert.show();
-                return;
             }
+        }
+
+
+        @Override
+    protected void onPause()
+        {
+            super.onPause();
+            
+            if (mSearchTask != null) mSearchTask.stop();
+            
+            if(mDocView != null)
+            {
+                mDocView.applyToChildren(new ReaderView.ViewMapper() {
+                        void applyToView(View view) {
+                            ((MuPDFView)view).releaseBitmaps();
+                        }
+                    });
+            }
+            
+            if (core != null && core.getFileName() != "" && mDocView != null) {
+                SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+                SharedPreferences.Editor edit = prefs.edit();
+                edit.putInt("page"+core.getFileName(), mDocView.getDisplayedViewIndex());
+                edit.commit();
+            }
+            
+            if (core != null)
+            {
+                destroyAlertWaiter();
+                core.stopAlerts();
+            }
+            
+            if(core != null && !isChangingConfigurations())
+            {
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+                if(!mNotSaveOnPauseThisTime && core.hasChanges() && core.getFileName() != "" && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_PAUSE, true))
+                {
+                    core.save();
+                    core.onDestroy(); //Destroy only if we have saved
+                    core = null;
+                }
+            }
+        }
+    
+
+    // @Override
+    // protected void onStop()
+    //     {}
+
+
+    protected void onDestroy() //There is no guarantee that this is ever called!!!
+	{
+            PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
+
+            if(core != null && !isChangingConfigurations())
+            {
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+                if(!mNotSaveOnDestroyThisTime && core.hasChanges() && core.getFileName() != "" && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_DESTROY, true))
+                    core.save();
+                core.onDestroy(); //Destroy in any case
+                core = null;
+            }
+            
+            if (mAlertTask != null) {
+                mAlertTask.cancel(true);
+                mAlertTask = null;
+            }
+            searchView = null;
+            mShareActionProvider = null;
+            super.onDestroy();
 	}
 
+
+
+
+
+
+
+    
+
+    
     @Override
     public boolean onCreateOptionsMenu(Menu menu) //Inflates the options menu
         {
@@ -572,7 +593,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
         }
 
 
-    public void requestPassword(final Bundle savedInstanceState) {
+    public void requestPassword() {
         mPasswordView = new EditText(this);
         mPasswordView.setInputType(EditorInfo.TYPE_TEXT_VARIATION_PASSWORD);
         mPasswordView.setTransformationMethod(new PasswordTransformationMethod());
@@ -584,9 +605,9 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                     // if (core.authenticatePassword(mPasswordView.getText().toString())) {
-                                    //     createUI(savedInstanceState);
+                                    //     setupUI();
 				if (!core.authenticatePassword(mPasswordView.getText().toString()))
-                                    requestPassword(savedInstanceState);
+                                    requestPassword();
                                 
                             }
                         });
@@ -622,17 +643,85 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
             .setView(input)
             .show();
     }
+
+    public void setupCore() {
+        Intent intent = getIntent();
+        if (Intent.ACTION_VIEW.equals(intent.getAction()))
+        {
+            Uri uri = intent.getData();
+            String error = null;
+            
+            if(new File(Uri.decode(uri.getEncodedPath())).exists()) //Uri points to a file
+            {
+                core = openFile(Uri.decode(uri.getEncodedPath()));
+            }
+            else if (uri.toString().startsWith("content://")) //Uri points to a content provider
+            {
+                byte buffer[] = null;
+                Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.DATA}, null, null, null); //This should be done asynchonously!
+                if (cursor != null && cursor.moveToFirst())
+                {
+                    String displayName = "";
+                    String data = "";
+                    int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+                    int dataIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+                    if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
+                    if(dataIndex >= 0) data = cursor.getString(dataIndex);
+                    try {
+                        InputStream is = getContentResolver().openInputStream(uri);
+                        if(is != null)
+                        {
+                            int len = is.available();
+                            buffer = new byte[len];
+                            is.read(buffer, 0, len);
+                            is.close();
+                        }
+                    }
+                    catch (Exception e) {
+                        error = e.toString();
+                    }
+                    cursor.close();
+                    if(buffer != null) core = openBuffer(buffer,displayName);
+                }
+            }
+            else
+            {
+                error = getResources().getString(R.string.unable_to_interpret_uri)+" "+uri;
+            }
+            if (error != null) //There was an error
+            {
+                AlertDialog alert = mAlertBuilder.create();
+                alert.setTitle(R.string.cannot_open_document);
+                alert.setMessage(getResources().getString(R.string.reason)+": "+error);
+                alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        finish();
+                                    }
+                                });
+                alert.show();
+                finish();
+            }
+        }
+        if (core != null && core.needsPassword()) {
+            requestPassword();
+        }
+        if (core != null && core.countPages() == 0)
+        {
+            core = null;
+        }
+    }
     
-    public void createUI(Bundle savedInstanceState) {
-        if (core == null)
-            return;
+    
+    public void setupUI() {
+        if (core == null) return;
             
             // Now create the UI.
             // First create the document view
         mDocView = new MuPDFReaderView(this) {
                 @Override
                 protected void onMoveToChild(int pageNumber) {
-                    if (core == null) return;
+//                    if (core == null) return;
                     getActionBar().setTitle(
                         Integer.toString(pageNumber+1)+"/"+Integer.toString(core.countPages())+" "+core.getFileName()
                                             );
@@ -685,13 +774,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
             // Reenstate last state if it was recorded
         SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
         mDocView.setDisplayedViewIndex(prefs.getInt("page"+core.getFileName(), 0));
-
-            // if(savedInstanceState != null && savedInstanceState.getBoolean("SearchMode", false))
-            // 	searchModeOn();
-
-            // if(savedInstanceState != null && savedInstanceState.getBoolean("ReflowMode", false))
-            // 	reflowModeSet(true);
-
+        
             // Stick the document view into a parent view
         RelativeLayout layout = new RelativeLayout(this);
         layout.addView(mDocView);
@@ -723,38 +806,9 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
             return mycore;
 	}
 
-//     private void reflowModeSet(boolean reflow)
-// 	{
-//             mReflow = reflow;
-//             mDocView.setAdapter(mReflow ? new MuPDFReflowAdapter(this, core) : new MuPDFPageAdapter(this, this, core));
-// //		mReflowButton.setColorFilter(mReflow ? Color.argb(0xFF, 172, 114, 37) : Color.argb(0xFF, 255, 255, 255));
-// //		setButtonEnabled(mAnnotButton, !reflow);
-// //		setButtonEnabled(mSearchButton, !reflow);
-//             if (reflow) setLinkHighlight(false);
-// //		setButtonEnabled(mLinkButton, !reflow);
-// //		setButtonEnabled(mMoreButton, !reflow);
-//             mDocView.refresh(mReflow);
-// 	}
-
-//     private void toggleReflow() {
-//         reflowModeSet(!mReflow);
-// //		showInfo(mReflow ? getString(R.string.entering_reflow_mode) : getString(R.string.leaving_reflow_mode));
-//     }
-
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-
-        if (core != null && core.getFileName() != "" && mDocView != null) {
-                // Store current page in the prefs against the file name,
-                // so that we can pick it up each time the file is loaded
-                // Other info is needed only for screen-orientation change,
-                // so it can go in the bundle
-            SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
-            SharedPreferences.Editor edit = prefs.edit();
-            edit.putInt("page"+core.getFileName(), mDocView.getDisplayedViewIndex());
-            edit.commit();
-        }
         
         outState.putString("ActionBarMode", mActionBarMode.toString());
         outState.putString("AcceptMode", mAcceptMode.toString());
@@ -762,102 +816,10 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if(core != null) core.onSharedPreferenceChanged(this);
-//        setPreferencesInCore();
             //mDocView.resetupChildren();//This should be used to set preferences in page views...
-    }
+    }    
 
-    // private void setPreferencesInCore(){
-    //     if (core != null) 
-    //     {
-    //         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);   
-    //             //Set ink thickness in core
-    //         float inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(INK_THICKNESS)));
-    //         core.setInkThickness(inkThickness*0.45f); // I have no idea whre the 0.45 comes from....               
-            
-    //             //Set colors in core
-    //         int colorNumber;                    
-    //         colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, "0" ));
-    //         core.setInkColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
-    //         colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, "0" ));
-    //         core.setHighlightColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
-    //         colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, "0" ));
-    //         core.setUnderlineColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
-    //         colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, "0" ));
-    //         core.setStrikeoutColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
-    //     }
-    // }
-
-    // private void updateActionBarTitle(int pageNumber){
-    //     if(core != null){
-    //         String title = (pageNumber+1)+"/"+core.countPages()+" ";
-    //         if(core.getFileName() != "")
-    //             title += getActionBar().setTitle(core.getFileName());
-    //     }
-    // }
     
-    @Override
-    protected void onPause() {
-        super.onPause();
-//                PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this); //Do not unregister here otherwise we miss changes while settings activity in forground
-                
-        if (mSearchTask != null)
-            mSearchTask.stop();
-
-        if (core != null && core.getFileName() != "" && mDocView != null) {
-            SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
-            SharedPreferences.Editor edit = prefs.edit();
-            edit.putInt("page"+core.getFileName(), mDocView.getDisplayedViewIndex());
-            edit.commit();
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-//        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
-    }
-    
-    public void onDestroy()
-	{
-            if(mDocView != null)
-            {
-                mDocView.applyToChildren(new ReaderView.ViewMapper() {
-                        void applyToView(View view) {
-                            ((MuPDFView)view).releaseBitmaps();
-                        }
-                    });
-            }
-            if (core != null && !isChangingConfigurations())
-            {
-                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-                if(sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_DESTROY, true)) core.save();                    
-                core.onDestroy();
-            }
-            if (mAlertTask != null) {
-                mAlertTask.cancel(true);
-                mAlertTask = null;
-            }
-            core = null;
-            super.onDestroy();
-	}
-
-    private void setButtonEnabled(ImageButton button, boolean enabled) {
-        button.setEnabled(enabled);
-        button.setColorFilter(enabled ? Color.argb(255, 255, 255, 255):Color.argb(255, 128, 128, 128));
-    }
-
-    private void setLinkHighlight(boolean highlight) {
-        mLinkHighlight = highlight;
-        mDocView.setLinksEnabled(highlight);
-    }
-
-
-	// private void updatePageNumView(int index) {
-	// 	if (core == null)
-	// 		return;
-	// 	mPageNumberView.setText(String.format("%d / %d", index+1, core.countPages()));
-	// }
-
     private void printDoc() {
         if (!core.fileFormat().startsWith("PDF")) {
             showInfo(getString(R.string.format_currently_not_supported));
@@ -881,19 +843,19 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
     }
 
 
-    private void shareDoc() {
-        Intent myIntent = getIntent();
-        Uri docUri = myIntent != null ? myIntent.getData() : null;
+    // private void shareDoc() {
+    //     Intent myIntent = getIntent();
+    //     Uri docUri = myIntent != null ? myIntent.getData() : null;
 
-        if (docUri == null) {
-                //showInfo(getString(R.string.print_failed)); //???
-        }
+    //     if (docUri == null) {
+    //             //showInfo(getString(R.string.print_failed)); //???
+    //     }
 
-        if (docUri.getScheme() == null)
-            docUri = Uri.parse("file://"+docUri.toString());
+    //     if (docUri.getScheme() == null)
+    //         docUri = Uri.parse("file://"+docUri.toString());
 
-            //???
-    }
+    //         //???
+    // }
 
     private void showInfo(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
@@ -928,39 +890,21 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 	// 	return super.onPrepareOptionsMenu(menu);
 	// }
 
-    @Override
-    protected void onStart() {
-        if (core != null)
-        {
-            core.startAlerts();
-            createAlertWaiter();
-        }
-
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        if (core != null)
-        {
-            destroyAlertWaiter();
-            core.stopAlerts();
-        }
-
-        super.onStop();
-    }
 
     @Override
     public void onBackPressed() {
         if (core.hasChanges()) {
             DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        if (which == AlertDialog.BUTTON_POSITIVE)
-                            if(core.save()==0)
-                                showInfo(getString(R.string.successfully_saved));
-                            else
-                                showInfo(getString(R.string.error_saveing));
-                        finish();
+                        if (which == AlertDialog.BUTTON_POSITIVE) {
+                            core.save();
+                            mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
+                            finish();
+                        }
+                        if (which == AlertDialog.BUTTON_NEGATIVE) {
+                            mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true;
+                            finish();
+                        }
                     }
                 };
             AlertDialog alert = mAlertBuilder.create();
