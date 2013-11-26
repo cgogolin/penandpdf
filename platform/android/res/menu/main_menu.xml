@@ -16,12 +16,6 @@
 	android:showAsAction="never"
 	android:background="?android:selectableItemBackground"
 	/>
-  <item android:id="@+id/menu_copytext"
-	android:icon="@drawable/ic_action_copy"
-	android:title="@string/menu_copytext" 
-	android:showAsAction="never"
-	android:background="?android:selectableItemBackground"
-	/>
   <item android:id="@+id/menu_search"
 	android:icon="@drawable/ic_action_search"
 	android:title="@string/menu_search" 

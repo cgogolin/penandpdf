@@ -3,7 +3,7 @@
   <item android:id="@+id/menu_copytext"
 	android:icon="@drawable/ic_action_copy"
 	android:title="@string/menu_copytext" 
-	android:showAsAction="never"
+	android:showAsAction="always"
 	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_strikeout"

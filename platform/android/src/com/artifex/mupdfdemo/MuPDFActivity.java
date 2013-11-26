@@ -550,6 +550,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                             break;
                         case Selection:
                             mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                            pageView.deselectText();
                             break;
                     }
                     mActionBarMode = ActionBarMode.Main;
@@ -840,7 +841,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 
     
     private void showInfo(String message) {
-        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
     }    
 
     
