@@ -63,8 +63,7 @@ class ThreadPerTaskExecutor implements Executor {
 public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupport, SharedPreferences.OnSharedPreferenceChangeListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener
 {
         /* The core rendering instance */
-//    private final static String[] ActionBarModeStrings = {"Main", "Annot", "Edit", "Search"};
-    enum ActionBarMode {Main, Annot, Edit, Search, Copy};
+    enum ActionBarMode {Main, Annot, Edit, Search, Copy, Selection};
     enum AcceptMode {Highlight, Underline, StrikeOut, Ink, CopyText};
     
     private SearchView searchView = null;
@@ -419,6 +418,9 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                         }   
                     }
                     break;
+                case Selection:
+                    inflater.inflate(R.menu.selection_menu, menu);
+                    break;
                 case Annot:
                 case Edit:
                 case Copy:
@@ -490,21 +492,42 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                     invalidateOptionsMenu();
                     return true;
                 case R.id.menu_highlight:
-                    mAcceptMode = AcceptMode.Highlight;
-                    mDocView.setMode(MuPDFReaderView.Mode.Selecting);
-                    mActionBarMode = ActionBarMode.Annot;
+                    // mAcceptMode = AcceptMode.Highlight;
+                    // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
+                    // mActionBarMode = ActionBarMode.Annot;
+                    pageView.markupSelection(Annotation.Type.HIGHLIGHT);
+                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                    mActionBarMode = ActionBarMode.Main;
                     invalidateOptionsMenu();
                     return true;
                 case R.id.menu_underline:
-                    mAcceptMode = AcceptMode.Underline;
-                    mDocView.setMode(MuPDFReaderView.Mode.Selecting);
-                    mActionBarMode = ActionBarMode.Annot;
+                    // mAcceptMode = AcceptMode.Underline;
+                    // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
+                    // mActionBarMode = ActionBarMode.Annot;
+                    pageView.markupSelection(Annotation.Type.UNDERLINE);
+                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                    mActionBarMode = ActionBarMode.Main;
                     invalidateOptionsMenu();
                     return true;
                 case R.id.menu_strikeout:
-                    mAcceptMode = AcceptMode.StrikeOut;
-                    mDocView.setMode(MuPDFReaderView.Mode.Selecting);
-                    mActionBarMode = ActionBarMode.Annot;
+                    // mAcceptMode = AcceptMode.StrikeOut;
+                    // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
+                    // mActionBarMode = ActionBarMode.Annot;
+                    pageView.markupSelection(Annotation.Type.STRIKEOUT);
+                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                    mActionBarMode = ActionBarMode.Main;
+                    invalidateOptionsMenu();
+                    return true;
+                case R.id.menu_copytext:
+                    // mActionBarMode = ActionBarMode.Copy;
+                    // invalidateOptionsMenu();
+                    // mAcceptMode = AcceptMode.CopyText;
+                    // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
+                    // showInfo(getString(R.string.select_text));
+                    boolean success = pageView.copySelection();
+                    showInfo(success?getString(R.string.copied_to_clipboard):getString(R.string.no_text_selected));
+                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                    mActionBarMode = ActionBarMode.Main;
                     invalidateOptionsMenu();
                     return true;
                 case R.id.menu_cancel:
@@ -525,6 +548,9 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                             SearchTaskResult.set(null);
                             mDocView.resetupChildren();
                             break;
+                        case Selection:
+                            mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                            break;
                     }
                     mActionBarMode = ActionBarMode.Main;
                     invalidateOptionsMenu();
@@ -535,22 +561,22 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                         case Copy:
                             if (pageView != null) {
                                 switch (mAcceptMode) {
-                                    case Highlight:
-                                        pageView.markupSelection(Annotation.Type.HIGHLIGHT);
-                                        break;
-                                    case Underline:
-                                        pageView.markupSelection(Annotation.Type.UNDERLINE);
-                                        break;
-                                    case StrikeOut:
-                                        pageView.markupSelection(Annotation.Type.STRIKEOUT);
-                                        break;
                                     case Ink:
                                         pageView.saveDraw();
                                         break;
-                                    case CopyText:    
-                                        boolean success = pageView.copySelection();
-                                        showInfo(success?getString(R.string.copied_to_clipboard):getString(R.string.no_text_selected));
-                                        break;
+                                    // case Highlight:
+                                    //     pageView.markupSelection(Annotation.Type.HIGHLIGHT);
+                                    //     break;
+                                    // case Underline:
+                                    //     pageView.markupSelection(Annotation.Type.UNDERLINE);
+                                    //     break;
+                                    // case StrikeOut:
+                                    //     pageView.markupSelection(Annotation.Type.STRIKEOUT);
+                                    //     break;
+                                    // case CopyText:    
+                                    //     boolean success = pageView.copySelection();
+                                    //     showInfo(success?getString(R.string.copied_to_clipboard):getString(R.string.no_text_selected));
+                                    //     break;
                                 }
                             }
                             mDocView.setMode(MuPDFReaderView.Mode.Viewing);
@@ -564,13 +590,6 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                     return true;
                 case R.id.menu_print:
                     printDoc();
-                    return true;
-                case R.id.menu_copytext:
-                    mActionBarMode = ActionBarMode.Copy;
-                    invalidateOptionsMenu();
-                    mAcceptMode = AcceptMode.CopyText;
-                    mDocView.setMode(MuPDFReaderView.Mode.Selecting);
-                    showInfo(getString(R.string.select_text));
                     return true;
                 case R.id.menu_search:
                     mActionBarMode = ActionBarMode.Search;
@@ -586,6 +605,11 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                     return true;
                 case R.id.menu_gotopage:
                     showGoToPageDialoge();
+                    return true;
+                case R.id.menu_selection:
+                    mDocView.setMode(MuPDFReaderView.Mode.Selecting);
+                    mActionBarMode = ActionBarMode.Selection;
+                    invalidateOptionsMenu();
                     return true;
                 case R.id.menu_linkback:
                     mDocView.setDisplayedViewIndex(mPageBeforeInternalLinkHit);

@@ -52,8 +52,10 @@ public class MuPDFReaderView extends ReaderView {
 		tapPageMargin = (int)dm.xdpi;
 		if (tapPageMargin < 100)
 			tapPageMargin = 100;
-		if (tapPageMargin > dm.widthPixels/5)
-			tapPageMargin = dm.widthPixels/5;
+                if (tapPageMargin > dm.widthPixels/5)
+                    tapPageMargin = dm.widthPixels/5;
+                if (tapPageMargin > dm.heightPixels/5)
+                    tapPageMargin = dm.heightPixels/5;
 	}
 
     public boolean onSingleTapUp(MotionEvent e)

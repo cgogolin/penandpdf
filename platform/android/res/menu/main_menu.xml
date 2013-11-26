@@ -55,7 +55,7 @@
 	android:showAsAction="always"
 	android:background="?android:selectableItemBackground"
 	/>
-  <item android:id="@+id/menu_strikeout"
+<!--  <item android:id="@+id/menu_strikeout"
 	android:icon="@drawable/ic_action_strikeout"
 	android:title="@string/menu_strikeout" 
 	android:showAsAction="always"
@@ -70,6 +70,12 @@
   <item android:id="@+id/menu_highlight"
 	android:icon="@drawable/ic_action_highlight"
 	android:title="@string/menu_highlight" 
+	android:showAsAction="always"
+	android:background="?android:selectableItemBackground"
+	/>-->
+  <item android:id="@+id/menu_selection"
+	android:icon="@drawable/ic_action_selection"
+	android:title="@string/menu_selection" 
 	android:showAsAction="always"
 	android:background="?android:selectableItemBackground"
 	/>
