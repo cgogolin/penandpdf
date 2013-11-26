@@ -49,6 +49,12 @@
 	android:showAsAction="never"
 	android:background="?android:selectableItemBackground"
 	/>
+  <item android:id="@+id/menu_linkback"
+	android:icon="@drawable/ic_action_back"
+	android:title="@string/menu_linkback" 
+	android:showAsAction="always"
+	android:background="?android:selectableItemBackground"
+	/>
   <item android:id="@+id/menu_strikeout"
 	android:icon="@drawable/ic_action_strikeout"
 	android:title="@string/menu_strikeout" 

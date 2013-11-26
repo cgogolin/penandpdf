@@ -15,4 +15,8 @@ public class LinkInfoRemote extends LinkInfo {
 	public void acceptVisitor(LinkInfoVisitor visitor) {
 		visitor.visitRemote(this);
 	}
+
+    public LinkType type(){
+        return LinkType.Remote;
+    }
 }

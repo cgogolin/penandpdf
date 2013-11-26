@@ -11,4 +11,8 @@ public class LinkInfoExternal extends LinkInfo {
 	public void acceptVisitor(LinkInfoVisitor visitor) {
 		visitor.visitExternal(this);
 	}
+
+    public LinkType type(){
+        return LinkType.External;
+    }
 }

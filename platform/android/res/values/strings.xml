@@ -58,6 +58,7 @@
 	<string name="copy">Copy</string>
 	<string name="format_currently_not_supported">Format currently not supported</string>
 	<string name="toggle_reflow_mode">Toggle reflow mode</string>
+	<string name="menu_linkback">Back before link clicked</string>
 	<string name="menu_next">Next</string>
 	<string name="menu_previous">Previous</string>
 	<string name="menu_settings">Settings</string>

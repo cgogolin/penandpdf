@@ -11,4 +11,8 @@ public class LinkInfoInternal extends LinkInfo {
 	public void acceptVisitor(LinkInfoVisitor visitor) {
 		visitor.visitInternal(this);
 	}
+
+    public LinkType type(){
+        return LinkType.Internal;
+    }
 }

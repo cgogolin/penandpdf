@@ -19,6 +19,7 @@ public class MuPDFReaderView extends ReaderView {
 	private boolean tapDisabled = false;
 	private int tapPageMargin;
 
+        //To be overwritten in MuPDFActivity:
 	protected void onTapMainDocArea() {}
 	protected void onDocMotion() {}
 	protected void onHit(Hit item) {};
@@ -26,6 +27,10 @@ public class MuPDFReaderView extends ReaderView {
 	public void setLinksEnabled(boolean b) {
 		mLinksEnabled = b;
 		resetupChildren();
+	}
+
+    	public boolean linksEnabled() {
+            return mLinksEnabled;
 	}
 
 	public void setMode(Mode m) {
@@ -51,50 +56,51 @@ public class MuPDFReaderView extends ReaderView {
 			tapPageMargin = dm.widthPixels/5;
 	}
 
-	public boolean onSingleTapUp(MotionEvent e) {
-		LinkInfo link = null;
+    public boolean onSingleTapUp(MotionEvent e)
+        {
+            if (mMode == Mode.Viewing && !tapDisabled) {
+                MuPDFView pageView = (MuPDFView) getDisplayedView();
+                if (pageView == null ) return super.onSingleTapUp(e);
 
-		if (mMode == Mode.Viewing && !tapDisabled) {
-			MuPDFView pageView = (MuPDFView) getDisplayedView();
-			Hit item = pageView.passClickEvent(e.getX(), e.getY());
-			onHit(item);
-			if (item == Hit.Nothing) {
-				if (mLinksEnabled && pageView != null
-				&& (link = pageView.hitLink(e.getX(), e.getY())) != null) {
-					link.acceptVisitor(new LinkInfoVisitor() {
-						@Override
-						public void visitInternal(LinkInfoInternal li) {
-							// Clicked on an internal (GoTo) link
-							setDisplayedViewIndex(li.pageNumber);
-						}
-
-						@Override
-						public void visitExternal(LinkInfoExternal li) {
-							Intent intent = new Intent(Intent.ACTION_VIEW, Uri
-									.parse(li.url));
-							mContext.startActivity(intent);
-						}
-
-						@Override
-						public void visitRemote(LinkInfoRemote li) {
-							// Clicked on a remote (GoToR) link
-						}
-					});
-				} else if (e.getX() < tapPageMargin) {
-					super.smartMoveBackwards();
-				} else if (e.getX() > super.getWidth() - tapPageMargin) {
-					super.smartMoveForwards();
-				} else if (e.getY() < tapPageMargin) {
-					super.smartMoveBackwards();
-				} else if (e.getY() > super.getHeight() - tapPageMargin) {
-					super.smartMoveForwards();
-				} else {
-					onTapMainDocArea();
-				}
-			}
-		}
-		return super.onSingleTapUp(e);
-	}
+                Hit item = pageView.passClickEvent(e.getX(), e.getY());
+                onHit(item);
+                
+                LinkInfo link = null;
+                if (mLinksEnabled && (item == Hit.LinkInternal || item == Hit.LinkExternal || item == Hit.LinkRemote) && (link = pageView.hitLink(e.getX(), e.getY())) != null)
+                {
+                    link.acceptVisitor(new LinkInfoVisitor() {
+                            @Override
+                            public void visitInternal(LinkInfoInternal li) {
+                                    // Clicked on an internal (GoTo) link
+                                setDisplayedViewIndex(li.pageNumber);
+                            }                
+                            @Override
+                            public void visitExternal(LinkInfoExternal li) {
+                                    //Clicked on an external link
+                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri
+                                                           .parse(li.url));
+                                mContext.startActivity(intent);
+                            }
+                            @Override
+                            public void visitRemote(LinkInfoRemote li) {
+                                    // Clicked on a remote (GoToR) link
+                            }
+                        });
+                }
+                else if(item == Hit.Nothing)
+                {
+                    if (e.getX() > super.getWidth() - tapPageMargin || e.getY() > super.getHeight() - tapPageMargin) 
+                        super.smartMoveForwards();
+                    else if (e.getX() < tapPageMargin || e.getY() < tapPageMargin) 
+                        super.smartMoveBackwards();
+                    else
+                        onTapMainDocArea();
+                }
+            }
+            
+            return super.onSingleTapUp(e);
+        }
+    
 
 	@Override
 	public boolean onDown(MotionEvent e) {
@@ -248,8 +254,7 @@ public class MuPDFReaderView extends ReaderView {
 	}
 
 	protected void onMoveToChild(int i) {
-		if (SearchTaskResult.get() != null
-				&& SearchTaskResult.get().pageNumber != i) {
+		if (SearchTaskResult.get() != null && SearchTaskResult.get().pageNumber != i) {
 			SearchTaskResult.set(null);
 			resetupChildren();
 		}

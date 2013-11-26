@@ -17,6 +17,7 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 
+
 /* This enum should be kept in line with the cooresponding C enum in mupdf.c */
 enum SignatureState {
 	NoSupport,
@@ -83,6 +84,8 @@ class PassClickResultSignature extends PassClickResult {
 }
 
 public class MuPDFPageView extends PageView implements MuPDFView {
+        private int lastHitAnnotation = 0;
+    
 	final private FilePicker.FilePickerSupport mFilePickerSupport;
 	private final MuPDFCore mCore;
 	private AsyncTask<Void,Void,PassClickResult> mPassClick;
@@ -232,10 +235,6 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	}
 
 	public LinkInfo hitLink(float x, float y) {
-		// Since link highlighting was implemented, the super class
-		// PageView has had sufficient information to be able to
-		// perform this method directly. Making that change would
-		// make MuPDFCore.hitLinkPage superfluous.
 		float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
 		float docRelX = (x - getLeft())/scale;
 		float docRelY = (y - getTop())/scale;
@@ -316,32 +315,53 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		boolean hit = false;
 		int i;
 
+		if (mLinks != null)
+                    for (LinkInfo l: mLinks)
+                        if (l.rect.contains(docRelX, docRelY))
+                        {
+                            deselectAnnotation();
+                            switch(l.type())
+                            {
+                                case Internal:
+                                    return Hit.LinkInternal;
+                                case External:
+                                    return Hit.LinkExternal;
+                                case Remote:
+                                    return Hit.LinkRemote;
+                            }
+                        }
+                
 		if (mAnnotations != null) {
-			for (i = 0; i < mAnnotations.length; i++)
-				if (mAnnotations[i].contains(docRelX, docRelY)) {
-					hit = true;
-					break;
-				}
-
-			if (hit) {
-				switch (mAnnotations[i].type) {
-				case HIGHLIGHT:
-				case UNDERLINE:
-				case SQUIGGLY:
-				case STRIKEOUT:
-				case INK:
-					mSelectedAnnotationIndex = i;
-					setItemSelectBox(mAnnotations[i]);
-					return Hit.Annotation;
-				}
-			}
+                    for (i = 0; i < mAnnotations.length; i++)
+                    {
+                            //If multiple annotations overlap, make sure we
+                            //return a different annotation as hit each
+                            //time we are called 
+                        int j = (i+lastHitAnnotation+1) % mAnnotations.length;
+                        if (mAnnotations[j].contains(docRelX, docRelY)) //Breaks selection of annotations!!!
+                        {
+                            hit = true;
+                            i = lastHitAnnotation = j;
+                            break;
+                        }
+                    }
+                    if (hit) {
+                        switch (mAnnotations[i].type) {
+                            case HIGHLIGHT:
+                            case UNDERLINE:
+                            case SQUIGGLY:
+                            case STRIKEOUT:
+                            case INK:
+                                mSelectedAnnotationIndex = i;
+                                setItemSelectBox(mAnnotations[i]);
+                                return Hit.Annotation;
+                        }
+                    }
 		}
-
-		mSelectedAnnotationIndex = -1;
-		setItemSelectBox(null);
-
-		if (!MuPDFCore.javascriptSupported())
-			return Hit.Nothing;
+                deselectAnnotation();
+                
+                if (!MuPDFCore.javascriptSupported())
+                    return Hit.Nothing;
 
 		if (mWidgetAreas != null) {
 			for (i = 0; i < mWidgetAreas.length && !hit; i++)
@@ -508,8 +528,8 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 			mDeleteAnnotation.execute(mSelectedAnnotationIndex);
 
-			mSelectedAnnotationIndex = -1;
-			setItemSelectBox(null);
+
+                        deselectAnnotation();
 		}
 	}
 
@@ -578,8 +598,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 	private void loadAnnotations() {
 		mAnnotations = null;
-		if (mLoadAnnotations != null)
-			mLoadAnnotations.cancel(true);
+		if (mLoadAnnotations != null) mLoadAnnotations.cancel(true);
 		mLoadAnnotations = new AsyncTask<Void,Void,Annotation[]> () {
 			@Override
 			protected Annotation[] doInBackground(Void... params) {
@@ -591,13 +610,11 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 				mAnnotations = result;
 			}
 		};
-
 		mLoadAnnotations.execute();
 	}
 
 	@Override
 	public void setPage(final int page, PointF size) {
-		loadAnnotations();
 
 		mLoadWidgetAreas = new AsyncTask<Void,Void,RectF[]> () {
 			@Override
@@ -614,6 +631,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		mLoadWidgetAreas.execute();
 
 		super.setPage(page, size);
+                loadAnnotations();//Must be done after super.setPage() otherwise page number is wrong!
 	}
 
 	public void setScale(float scale) {
