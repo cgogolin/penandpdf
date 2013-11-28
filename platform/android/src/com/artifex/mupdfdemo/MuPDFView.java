@@ -14,6 +14,7 @@ public interface MuPDFView {
 	public LinkInfo hitLink(float x, float y);
 	public void selectText(float x0, float y0, float x1, float y1);
 	public void deselectText();
+        public boolean hasSelection();
 	public boolean copySelection();
 	public boolean markupSelection(Annotation.Type type);
 	public void deleteSelectedAnnotation();

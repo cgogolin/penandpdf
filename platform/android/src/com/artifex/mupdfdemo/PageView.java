@@ -462,6 +462,14 @@ public abstract class PageView extends ViewGroup {
 		mSearchView.invalidate();
 	}
 
+    
+    	public boolean hasSelection() {
+            if (mSelectBox == null)
+                return false;
+            else
+                return true;
+        }
+
 	public void selectText(float x0, float y0, float x1, float y1) {
 		float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
 		float docRelX0 = (x0 - getLeft())/scale;

@@ -338,7 +338,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                             //return a different annotation as hit each
                             //time we are called 
                         int j = (i+lastHitAnnotation+1) % mAnnotations.length;
-                        if (mAnnotations[j].contains(docRelX, docRelY)) //Breaks selection of annotations!!!
+                        if (mAnnotations[j].contains(docRelX, docRelY))
                         {
                             hit = true;
                             i = lastHitAnnotation = j;

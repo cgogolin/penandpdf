@@ -26,6 +26,7 @@
 	<string name="edit_annotations">Edit annotations</string>
 	<string name="ink">Ink</string>
 	<string name="save">Save</string>
+	<string name="saveas">Save as</string>
 	<string name="successfully_saved">Successfully saved</string>
 	<string name="error_saveing">Error while saving</string>
 	<string name="print">Print</string>
@@ -36,7 +37,7 @@
 	<string name="entering_reflow_mode">Entering reflow mode</string>
 	<string name="leaving_reflow_mode">Leaving reflow mode</string>
 	<string name="print_failed">Print failed</string>
-	<string name="select_text">Select text</string>
+	<string name="select_text">Select text first</string>
 	<string name="copied_to_clipboard">Copied to clipboard</string>
 	<string name="no_text_selected">No text selected</string>
 	<string name="draw_annotation">Draw annotation</string>

@@ -23,6 +23,7 @@ public class MuPDFReaderView extends ReaderView {
 	protected void onTapMainDocArea() {}
 	protected void onDocMotion() {}
 	protected void onHit(Hit item) {};
+    	protected void onSelectionStatusChanged() {};
 
 	public void setLinksEnabled(boolean b) {
 		mLinksEnabled = b;
@@ -120,9 +121,13 @@ public class MuPDFReaderView extends ReaderView {
 
 			return super.onScroll(e1, e2, distanceX, distanceY);
 		case Selecting:
-			if (pageView != null)
-				pageView.selectText(e1.getX(), e1.getY(), e2.getX(), e2.getY());
-			return true;
+                    if (pageView != null)
+                    {
+                        boolean hadSelection = pageView.hasSelection();
+                        pageView.selectText(e1.getX(), e1.getY(), e2.getX(), e2.getY());
+                        if (hadSelection != pageView.hasSelection()) onSelectionStatusChanged();
+                    }
+                    return true;
 		default:
 			return true;
 		}
@@ -152,7 +157,6 @@ public class MuPDFReaderView extends ReaderView {
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
             boolean useStylus = sharedPref.getBoolean(SettingsActivity.PREF_USE_STYLUS, false);
                 
-                // Add stylus detection here!!!
             int pointerIndexToUse = 0; // by default use the first pointer
 
                 //if in stylus mode use stylus
@@ -200,7 +204,7 @@ public class MuPDFReaderView extends ReaderView {
 
 	private float mX, mY;
 
-	private static final float TOUCH_TOLERANCE = 2;
+    private static final float TOUCH_TOLERANCE = 2;//Shoul be made customizable
 
 	private void touch_start(float x, float y) {
 

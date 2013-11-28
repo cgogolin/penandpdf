@@ -288,6 +288,9 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
     protected void onResume()
         {
             super.onResume();
+
+            mNotSaveOnDestroyThisTime = false;
+            mNotSaveOnPauseThisTime = false;
             
                 //If core was not restored during onCreat()
                 //or is not still present because the app was
@@ -420,6 +423,18 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                     break;
                 case Selection:
                     inflater.inflate(R.menu.selection_menu, menu);
+                    // MuPDFView pageView = (MuPDFView) mDocView.getDisplayedView();
+                    // if(pageView == null || pageView.hasSelection() == false) 
+                    // {
+                    //     MenuItem copytextButton = menu.findItem(R.id.menu_copytext);
+                    //     copytextButton.setEnabled(false).setVisible(false);
+                    //     MenuItem strikeoutButton = menu.findItem(R.id.menu_strikeout);
+                    //     strikeoutButton.setEnabled(false).setVisible(false);
+                    //     MenuItem underlineButton = menu.findItem(R.id.menu_underline);
+                    //     underlineButton.setEnabled(false).setVisible(false);
+                    //     MenuItem highlightButton = menu.findItem(R.id.menu_highlight);
+                    //     highlightButton.setEnabled(false).setVisible(false);
+                    // }
                     break;
                 case Annot:
                 case Edit:
@@ -495,28 +510,40 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                     // mAcceptMode = AcceptMode.Highlight;
                     // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
                     // mActionBarMode = ActionBarMode.Annot;
-                    pageView.markupSelection(Annotation.Type.HIGHLIGHT);
-                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                    mActionBarMode = ActionBarMode.Main;
-                    invalidateOptionsMenu();
+                    if (pageView.hasSelection()) {
+                        pageView.markupSelection(Annotation.Type.HIGHLIGHT);
+                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                        mActionBarMode = ActionBarMode.Main;
+                        invalidateOptionsMenu();
+                    }
+                    else
+                        showInfo(getString(R.string.select_text));
                     return true;
                 case R.id.menu_underline:
                     // mAcceptMode = AcceptMode.Underline;
                     // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
                     // mActionBarMode = ActionBarMode.Annot;
-                    pageView.markupSelection(Annotation.Type.UNDERLINE);
-                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                    mActionBarMode = ActionBarMode.Main;
-                    invalidateOptionsMenu();
+                    if (pageView.hasSelection()) {
+                        pageView.markupSelection(Annotation.Type.UNDERLINE);
+                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                        mActionBarMode = ActionBarMode.Main;
+                        invalidateOptionsMenu();
+                    }
+                    else
+                        showInfo(getString(R.string.select_text));
                     return true;
                 case R.id.menu_strikeout:
                     // mAcceptMode = AcceptMode.StrikeOut;
                     // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
                     // mActionBarMode = ActionBarMode.Annot;
-                    pageView.markupSelection(Annotation.Type.STRIKEOUT);
-                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                    mActionBarMode = ActionBarMode.Main;
-                    invalidateOptionsMenu();
+                    if (pageView.hasSelection()) {
+                        pageView.markupSelection(Annotation.Type.STRIKEOUT);
+                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                        mActionBarMode = ActionBarMode.Main;
+                        invalidateOptionsMenu();
+                    }
+                    else
+                        showInfo(getString(R.string.select_text));
                     return true;
                 case R.id.menu_copytext:
                     // mActionBarMode = ActionBarMode.Copy;
@@ -524,11 +551,15 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                     // mAcceptMode = AcceptMode.CopyText;
                     // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
                     // showInfo(getString(R.string.select_text));
-                    boolean success = pageView.copySelection();
-                    showInfo(success?getString(R.string.copied_to_clipboard):getString(R.string.no_text_selected));
-                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                    mActionBarMode = ActionBarMode.Main;
-                    invalidateOptionsMenu();
+                    if (pageView.hasSelection()) {
+                        boolean success = pageView.copySelection();
+                        showInfo(success?getString(R.string.copied_to_clipboard):getString(R.string.no_text_selected));
+                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                        mActionBarMode = ActionBarMode.Main;
+                        invalidateOptionsMenu();
+                    }
+                    else
+                        showInfo(getString(R.string.select_text));
                     return true;
                 case R.id.menu_cancel:
                     switch (mActionBarMode) {
@@ -603,6 +634,35 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                     if (mQuery != "") search(-1);
                     return true;
                 case R.id.menu_save:
+                    DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                if (which == AlertDialog.BUTTON_POSITIVE) {
+                                    core.save();
+                                    core.onDestroy();
+                                    core = null;
+                                    mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
+                                    onResume();
+                                }
+                                if (which == AlertDialog.BUTTON_NEUTRAL) {
+                                    String path = "/mnt/sdcard/Download/test3.pdf";
+                                    core.saveAs(path);
+                                    core.onDestroy();
+                                    core = null;
+                                    mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
+                                    getIntent().setData(Uri.parse(path));
+                                    onResume();
+                                }
+                                if (which == AlertDialog.BUTTON_NEGATIVE) {
+                                }
+                            }
+                        };
+                    AlertDialog alert = mAlertBuilder.create();
+                    alert.setTitle("MuPDF");
+                    alert.setMessage(getString(R.string.document_has_changes_save_them_));
+                    if (core != null && core.getFileName() != "") alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
+                    alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.saveas), listener);
+                    alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), listener);
+                    alert.show();
                     return true;
                 case R.id.menu_gotopage:
                     showGoToPageDialoge();
@@ -630,7 +690,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
             Uri uri = intent.getData();
             String error = null;
             
-            if(new File(Uri.decode(uri.getEncodedPath())).exists()) //Uri points to a file
+            if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
             {
                 core = openFile(Uri.decode(uri.getEncodedPath()));
             }
@@ -739,6 +799,12 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                             break;
                      }
                 }
+
+                @Override
+                protected void onSelectionStatusChanged() {
+//                    invalidateOptionsMenu();
+                }
+                
             };
         
         mDocView.setAdapter(new MuPDFPageAdapter(this, this, core));

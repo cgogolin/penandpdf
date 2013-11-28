@@ -2494,14 +2494,37 @@ static char *tmp_path(char *path)
 	}
 }
 
+
+/* JNIEXPORT int JNICALL */
+/* JNI_FN(MuPDFCore_saveInternal)(JNIEnv * env, jobject thiz) */
+/* { */
+/*     MuPDFCore_saveAsInternal(""); */
+/* } */
+
+
 JNIEXPORT int JNICALL
-JNI_FN(MuPDFCore_saveInternal)(JNIEnv * env, jobject thiz)
-{
+JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
+{    
         int written = 0;
     
 	globals *glo = get_globals(env, thiz);
 	fz_context *ctx = glo->ctx;
 
+            //Try to get the new path from jpath
+            //If jpath was null we leave new_path = NULL
+        const char *new_path = NULL;
+        if (jpath != NULL) 
+        {
+            new_path = (*env)->GetStringUTFChars(env, jpath, NULL);
+            /* if (new_path != NULL)  */
+            /* { */
+            /*     LOGE("Saving to new file"); */
+            /*     free(glo->current_path); */
+            /*     glo->current_path = fz_strdup(ctx, (char *)new_path); */
+            /* } */
+            /* else LOGE("Saving to old file"); */
+        }
+        
 	if (glo->doc && glo->current_path)
 	{
 		char *tmp;
@@ -2549,11 +2572,16 @@ JNI_FN(MuPDFCore_saveInternal)(JNIEnv * env, jobject thiz)
 			if (written)
 			{
 				close_doc(glo);
-				rename(tmp, glo->current_path);
+                                if (new_path == NULL)
+                                    rename(tmp, glo->current_path);
+                                else
+                                    rename(tmp, new_path);
 			}
 			free(tmp);
 		}
 	}
+        if (jpath != NULL && new_path != NULL) (*env)->ReleaseStringUTFChars(env, jpath, new_path);
+                
         return written-1; //return -1 on error and 0 on success 
 }
 

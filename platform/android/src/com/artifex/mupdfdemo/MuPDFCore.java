@@ -74,7 +74,8 @@ public class MuPDFCore
 	private native void stopAlertsInternal();
 	private native void destroying();
 	private native boolean hasChangesInternal();
-	private native int saveInternal();
+//	private native int saveInternal();
+    	private native int saveAsInternal(String path);
 
         //added by me
 	public native void setInkThickness(float inkThickness);
@@ -317,7 +318,11 @@ public class MuPDFCore
 	}
 
 	public synchronized int save() {
-		return saveInternal();
+            return saveAs(null);
+	}
+
+    	public synchronized int saveAs(String path) {
+            return saveAsInternal(path);
 	}
     
         public String getPath() {

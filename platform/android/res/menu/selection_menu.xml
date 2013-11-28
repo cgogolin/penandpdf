@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+<!--  <item android:id="@+id/menu_selecttextprompt"
+	android:title="@string/menu_selecttextprompt" 
+	android:showAsAction="always"
+	/>-->
   <item android:id="@+id/menu_copytext"
 	android:icon="@drawable/ic_action_copy"
 	android:title="@string/menu_copytext" 

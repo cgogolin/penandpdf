@@ -98,6 +98,10 @@ public class MuPDFReflowView extends WebView implements MuPDFView {
 	public void deselectText() {
 	}
 
+    	public boolean hasSelection() {
+            return false;
+        }
+    
 	public boolean copySelection() {
 		return false;
 	}
