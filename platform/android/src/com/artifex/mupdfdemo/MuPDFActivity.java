@@ -60,7 +60,7 @@ class ThreadPerTaskExecutor implements Executor {
     }
 }
 
-public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupport, SharedPreferences.OnSharedPreferenceChangeListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener
+public class MuPDFActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener, FilePicker.FilePickerSupport
 {
         /* The core rendering instance */
     enum ActionBarMode {Main, Annot, Edit, Search, Copy, Selection};
@@ -76,7 +76,8 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
     
     private final int    OUTLINE_REQUEST=0;
     private final int    PRINT_REQUEST=1;
-    private final int    FILEPICK_REQUEST=2;
+    private final int    FILEPICK_REQUEST = 2;
+    private final int    SAVEAS_REQUEST=3;
     private MuPDFCore    core;
     private MuPDFReaderView mDocView;
     private EditText     mPasswordView;
@@ -644,13 +645,9 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                                     onResume();
                                 }
                                 if (which == AlertDialog.BUTTON_NEUTRAL) {
-                                    String path = "/mnt/sdcard/Download/test3.pdf";
-                                    core.saveAs(path);
-                                    core.onDestroy();
-                                    core = null;
-                                    mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
-                                    getIntent().setData(Uri.parse(path));
-                                    onResume();
+                                    Intent intent = new Intent(getApplicationContext(),ChoosePDFActivity.class);
+                                    intent.setAction(Intent.ACTION_PICK);
+                                    startActivityForResult(intent, SAVEAS_REQUEST);
                                 }
                                 if (which == AlertDialog.BUTTON_NEGATIVE) {
                                 }
@@ -836,7 +833,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         switch (requestCode) {
             case OUTLINE_REQUEST:
                 if (resultCode >= 0)
@@ -846,11 +843,21 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
                 if (resultCode == RESULT_CANCELED)
                     showInfo(getString(R.string.print_failed));
                 break;
-            case FILEPICK_REQUEST:
-                if (mFilePicker != null && resultCode == RESULT_OK)
-                    mFilePicker.onPick(data.getData());
+            case SAVEAS_REQUEST:
+                if (resultCode == RESULT_OK) {
+                    Uri uri = intent.getData();
+                    core.saveAs(uri.toString());
+                    core.onDestroy();
+                    core = null;
+                    mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
+                    getIntent().setData(uri);//Set the uri of this intent so that we load the new file during onResum()
+                    onResume();
+                } else if (resultCode == RESULT_CANCELED)
+                {
+                    showInfo("Aborted");
+                }
         }
-        super.onActivityResult(requestCode, resultCode, data);
+        super.onActivityResult(requestCode, resultCode, intent);
     }
 
 

@@ -27,10 +27,7 @@ import android.widget.ListView;
 import android.preference.PreferenceManager;
 import android.app.ActionBar;
 
-enum Purpose {
-	PickPDF,
-	PickKeyFile
-}
+enum Purpose { ChoosePDF, PickKeyFile, PickFile }
 
 public class ChoosePDFActivity extends ListActivity
 {
@@ -48,12 +45,20 @@ public class ChoosePDFActivity extends ListActivity
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+                Intent intent = getIntent();
+                
                     //Set default preferences on first start
                 PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
                 
-		mPurpose = Intent.ACTION_MAIN.equals(getIntent().getAction()) ? Purpose.PickPDF : Purpose.PickKeyFile;
+//		mPurpose = Intent.ACTION_MAIN.equals(getIntent().getAction()) ? Purpose.ChoosePDF : Purpose.PickKeyFile;
 
-
+                if (Intent.ACTION_MAIN.equals(intent.getAction())) 
+                    mPurpose = Purpose.ChoosePDF;
+                else if (Intent.ACTION_PICK.equals(intent.getAction()))
+                    mPurpose = Purpose.PickFile;
+                else
+                    mPurpose = Purpose.PickKeyFile;
+                
 		String storageState = Environment.getExternalStorageState();
 
 		if (!Environment.MEDIA_MOUNTED.equals(storageState)
@@ -108,29 +113,30 @@ public class ChoosePDFActivity extends ListActivity
 							return false;
 						String fname = file.getName().toLowerCase();
 						switch (mPurpose) {
-						case PickPDF:
+                                                    case ChoosePDF:
+                                                    case PickFile:
 							if (fname.endsWith(".pdf"))
 								return true;
-							if (fname.endsWith(".xps"))
-								return true;
-							if (fname.endsWith(".cbz"))
-								return true;
-							if (fname.endsWith(".png"))
-								return true;
-							if (fname.endsWith(".jpe"))
-								return true;
-							if (fname.endsWith(".jpeg"))
-								return true;
-							if (fname.endsWith(".jpg"))
-								return true;
-							if (fname.endsWith(".jfif"))
-								return true;
-							if (fname.endsWith(".jfif-tbnl"))
-								return true;
-							if (fname.endsWith(".tif"))
-								return true;
-							if (fname.endsWith(".tiff"))
-								return true;
+							// if (fname.endsWith(".xps"))
+							// 	return true;
+							// if (fname.endsWith(".cbz"))
+							// 	return true;
+							// if (fname.endsWith(".png"))
+							// 	return true;
+							// if (fname.endsWith(".jpe"))
+							// 	return true;
+							// if (fname.endsWith(".jpeg"))
+							// 	return true;
+							// if (fname.endsWith(".jpg"))
+							// 	return true;
+							// if (fname.endsWith(".jfif"))
+							// 	return true;
+							// if (fname.endsWith(".jfif-tbnl"))
+							// 	return true;
+							// if (fname.endsWith(".tif"))
+							// 	return true;
+							// if (fname.endsWith(".tiff"))
+							// 	return true;
 							return false;
 						case PickKeyFile:
 							if (fname.endsWith(".pfx"))
@@ -180,6 +186,14 @@ public class ChoosePDFActivity extends ListActivity
 		observer.startWatching();
 	}
 
+    @Override
+    protected void onResume()
+        {
+            super.onResume();
+            mHandler.post(mUpdateFiles);
+        }
+    
+    
     @Override
     public boolean onCreateOptionsMenu(Menu menu) //Inflates the options menu
     {
@@ -235,12 +249,16 @@ public class ChoosePDFActivity extends ListActivity
 		intent.setAction(Intent.ACTION_VIEW);
 		intent.setData(uri);
 		switch (mPurpose) {
-		case PickPDF:
-			// Start an activity to display the PDF file
+                    case ChoosePDF:
+                            // Start an activity to display the PDF file
 			startActivity(intent);
 			break;
-		case PickKeyFile:
-			// Return the uri to the caller
+                    case PickFile:
+                        setResult(RESULT_OK, intent);
+                        finish();
+                        break;
+                    case PickKeyFile:
+                            // Return the uri to the caller
 			setResult(RESULT_OK, intent);
 			finish();
 			break;
