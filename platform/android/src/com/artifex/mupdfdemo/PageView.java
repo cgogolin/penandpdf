@@ -510,17 +510,13 @@ public abstract class PageView extends ViewGroup {
                     //Set ink thickness and color
                 SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
                 inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
-                inkColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, Integer.toString(inkColor))));
-                
-                // highlightColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, Integer.toString(highlightColor))));
-                // underlineColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, Integer.toString(underlineColor))));
-                // strikeoutColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, Integer.toString(strikeoutColor))));
-            
+                inkColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, Integer.toString(inkColor))));            
 		float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
 		float docRelX = (x - getLeft())/scale;
 		float docRelY = (y - getTop())/scale;
 		if (mDrawing == null)
-			mDrawing = new ArrayList<ArrayList<PointF>>();
+                    mDrawing = new ArrayList<ArrayList<PointF>>();
+                
 
 		ArrayList<PointF> arc = new ArrayList<PointF>();
 		arc.add(new PointF(docRelX, docRelY));
@@ -533,17 +529,39 @@ public abstract class PageView extends ViewGroup {
 		float docRelY = (y - getTop())/scale;
 
 		if (mDrawing != null && mDrawing.size() > 0) {
-			ArrayList<PointF> arc = mDrawing.get(mDrawing.size() - 1);
-			arc.add(new PointF(docRelX, docRelY));
-			mSearchView.invalidate();
+                    ArrayList<PointF> arc = mDrawing.get(mDrawing.size() - 1);
+                    arc.add(new PointF(docRelX, docRelY));
+                    mSearchView.invalidate();
 		}
 	}
+
+    public void finishDraw() {
+	if (mDrawing != null && mDrawing.size() > 0) {
+            ArrayList<PointF> arc = mDrawing.get(mDrawing.size() - 1);
+            PointF lastArc = arc.get(0);
+            float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+            if(arc.size() == 1) {
+                arc.add(new PointF(lastArc.x+0.5f*inkThickness,lastArc.y));
+                arc.add(new PointF(lastArc.x+0.5f*inkThickness,lastArc.y+0.5f*inkThickness));
+                arc.add(new PointF(lastArc.x,lastArc.y+0.5f*inkThickness));
+                arc.add(lastArc);
+                arc.add(new PointF(lastArc.x+0.5f*inkThickness,lastArc.y));
+            }
+            mSearchView.invalidate();
+        }
+    }
+    
 
 	public void cancelDraw() {
 		mDrawing = null;
 		mSearchView.invalidate();
 	}
 
+    protected int getDrawingSize()
+        {
+            return mDrawing.size();
+        }
+    
 	protected PointF[][] getDraw() { //This is where ink drawn stuff processed 
 		if (mDrawing == null)
 			return null;

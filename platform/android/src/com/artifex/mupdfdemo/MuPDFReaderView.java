@@ -218,7 +218,6 @@ public class MuPDFReaderView extends ReaderView {
 	}
 
 	private void touch_move(float x, float y) {
-
 		float dx = Math.abs(x - mX);
 		float dy = Math.abs(y - mY);
 		if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE)
@@ -234,8 +233,12 @@ public class MuPDFReaderView extends ReaderView {
 	}
 
 	private void touch_up() {
-
-		// NOOP
+            MuPDFView pageView = (MuPDFView)getDisplayedView();
+            if (pageView != null)
+            {
+                pageView.finishDraw();
+//                pageView.continueDraw(mX+TOUCH_TOLERANCE, mY+TOUCH_TOLERANCE);
+            }
 	}
 
 	protected void onChildSetup(int i, View v) {

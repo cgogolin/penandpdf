@@ -23,6 +23,7 @@ public interface MuPDFView {
 	public void deselectAnnotation();
 	public void startDraw(float x, float y);
 	public void continueDraw(float x, float y);
+        public void finishDraw();
 	public void cancelDraw();
 	public boolean saveDraw();
 	public void setChangeReporter(Runnable reporter);

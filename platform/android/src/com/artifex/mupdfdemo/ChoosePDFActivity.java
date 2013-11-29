@@ -125,8 +125,8 @@ public class ChoosePDFActivity extends ListActivity
 				String appName = res.getString(R.string.app_name);
 				String version = res.getString(R.string.version);
 				String title = res.getString(R.string.picker_title_App_Ver_Dir);
-				setTitle(String.format(title, appName, version, mDirectory));
-
+                                    //setTitle(String.format(title, appName, version, mDirectory));
+                                setTitle(mDirectory.getPath());
 				mParent = mDirectory.getParentFile();
 
 				mDirs = mDirectory.listFiles(new FileFilter() {
