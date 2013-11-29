@@ -22,11 +22,11 @@
 	android:showAsAction="never"
 	android:background="?android:selectableItemBackground"
 	/>
-  <item android:id="@+id/menu_bookmarks"
+<!--  <item android:id="@+id/menu_bookmarks"
 	android:title="@string/menu_bookmarks" 
 	android:showAsAction="never"
 	android:background="?android:selectableItemBackground"
-	/>
+	/>-->
   <item android:id="@+id/menu_print"
 	android:title="@string/menu_print"
 	android:showAsAction="never"

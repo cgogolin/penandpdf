@@ -22,8 +22,11 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuInflater;
+import android.view.KeyEvent;
 import android.widget.ListView;
-//import android.widget.AdapterView.OnItemClickListener;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
 import android.preference.PreferenceManager;
 import android.app.ActionBar;
 
@@ -44,7 +47,7 @@ public class ChoosePDFActivity extends ListActivity
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+                
                 Intent intent = getIntent();
                 
                     //Set default preferences on first start
@@ -58,6 +61,30 @@ public class ChoosePDFActivity extends ListActivity
                     mPurpose = Purpose.PickFile;
                 else
                     mPurpose = Purpose.PickKeyFile;
+
+                setContentView(R.layout.choosepdf);
+
+                if(mPurpose == Purpose.PickFile) {
+                    String filename = intent.getData().getLastPathSegment();
+                    EditText editText = (EditText)findViewById(R.id.newfilenamefield);
+                    editText.setText(filename);
+                    editText.setVisibility(View.VISIBLE);
+                    editText.requestFocus();
+                    editText.setOnEditorActionListener(new OnEditorActionListener() {
+                            @Override
+                            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+
+                                Uri uri = Uri.parse(mDirectory.getPath()+"/"+v.getText());
+                                Intent intent = new Intent(getApplicationContext(),MuPDFActivity.class);
+                                intent.setAction(Intent.ACTION_VIEW);
+                                intent.setData(uri);
+                                setResult(RESULT_OK, intent);
+                                finish();
+                                return true;
+                            }
+                        });
+                }
+                
                 
 		String storageState = Environment.getExternalStorageState();
 
@@ -79,8 +106,13 @@ public class ChoosePDFActivity extends ListActivity
 		}
 
 		if (mDirectory == null)
+                {
+                    if(mPurpose == Purpose.PickFile && intent.getData() != null)
+                        mDirectory = (new File(intent.getData().getPath())).getParentFile();
+                    else    
 			mDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-
+                }
+                
 		// Create a list adapter...
 		adapter = new ChoosePDFAdapter(getLayoutInflater());
 		setListAdapter(adapter);
@@ -164,12 +196,11 @@ public class ChoosePDFActivity extends ListActivity
 
 				adapter.clear();
 				if (mParent != null)
-					adapter.add(new ChoosePDFItem(ChoosePDFItem.Type.PARENT, getString(R.string.parent_directory)));
+                                    adapter.add(new ChoosePDFItem(ChoosePDFItem.Type.PARENT, getString(R.string.parent_directory)));
 				for (File f : mDirs)
-					adapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DIR, f.getName()));
+                                    adapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DIR, f.getName()));
 				for (File f : mFiles)
-					adapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DOC, f.getName()));
-
+                                    adapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DOC, f.getName()));
 				lastPosition();
 			}
 		};

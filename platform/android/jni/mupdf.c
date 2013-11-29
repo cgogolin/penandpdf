@@ -2525,7 +2525,7 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
             /* else LOGE("Saving to old file"); */
         }
         
-	if (glo->doc && glo->current_path)
+	if (glo->doc && (glo->current_path || new_path) )
 	{
 		char *tmp;
 		fz_write_options opts;
@@ -2535,7 +2535,11 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
 		opts.do_garbage = 0;
 		opts.do_linear = 0;
 
-		tmp = tmp_path(glo->current_path);
+                if (new_path != NULL)
+                    tmp = tmp_path((char *)new_path);
+                else
+                    tmp = tmp_path(glo->current_path);
+                
 		if (tmp)
 		{
 			fz_var(written);
@@ -2560,7 +2564,7 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
 
 				if (!err)
 				{
-					fz_write_document(glo->doc, tmp, &opts);
+                                    fz_write_document(glo->doc, tmp, &opts); //I guess this also works if we are working from a buffer...
 					written = 1;
 				}
 			}

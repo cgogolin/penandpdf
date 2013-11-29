@@ -646,6 +646,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                 }
                                 if (which == AlertDialog.BUTTON_NEUTRAL) {
                                     Intent intent = new Intent(getApplicationContext(),ChoosePDFActivity.class);
+                                    if (core.getFileName() != "") intent.setData(Uri.parse(core.getFileName()));
                                     intent.setAction(Intent.ACTION_PICK);
                                     startActivityForResult(intent, SAVEAS_REQUEST);
                                 }
@@ -655,7 +656,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                         };
                     AlertDialog alert = mAlertBuilder.create();
                     alert.setTitle("MuPDF");
-                    alert.setMessage(getString(R.string.document_has_changes_save_them_));
+//                    alert.setMessage(getString(R.string.document_has_changes_save_them_));
                     if (core != null && core.getFileName() != "") alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
                     alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.saveas), listener);
                     alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), listener);
@@ -845,22 +846,52 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 break;
             case SAVEAS_REQUEST:
                 if (resultCode == RESULT_OK) {
-                    Uri uri = intent.getData();
-                    core.saveAs(uri.toString());
-                    core.onDestroy();
-                    core = null;
-                    mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
-                    getIntent().setData(uri);//Set the uri of this intent so that we load the new file during onResum()
-                    onResume();
-                } else if (resultCode == RESULT_CANCELED)
-                {
-                    showInfo("Aborted");
+                    final Uri uri = intent.getData();
+                        //Add more error checking here!!!
+                    if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Warn if file already exists
+                    {
+                        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (which == AlertDialog.BUTTON_POSITIVE) {
+                                        saveAs(uri);
+                                    }
+                                    if (which == AlertDialog.BUTTON_NEGATIVE) {
+                                    }
+                                }
+                            };
+                        AlertDialog alert = mAlertBuilder.create();
+                        alert.setTitle("MuPDF");
+                        alert.setMessage(getString(R.string.overwrite)+" "+uri.toString()+"?");
+                        alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), listener);
+                        alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
+                        alert.show();
+                    }
+                    else
+                    {
+                        saveAs(uri);
+                    }
                 }
+                // else if (resultCode == RESULT_CANCELED)
+                // {
+                //     showInfo("Aborted");
+                // }
         }
         super.onActivityResult(requestCode, resultCode, intent);
     }
 
 
+    private int saveAs(Uri uri)
+        {
+            if (core == null) return 0;
+            int success = core.saveAs(uri.toString());
+            core.onDestroy();
+            core = null;
+            mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
+            getIntent().setData(uri);//Set the uri of this intent so that we load the new file during onResum()
+            onResume();
+            return success;
+        }
+    
     public Object onRetainNonConfigurationInstance()
 	{
             MuPDFCore mycore = core;

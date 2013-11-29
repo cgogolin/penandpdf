@@ -16,6 +16,7 @@
 	<string name="searching_">Searching&#8230;</string>
 	<string name="toggle_links">Highlight and enable links</string>
 	<string name="no_further_occurrences_found">No further occurrences found</string>
+	<string name="enter_new_filename">Select above or enter new fielname</string>
 	<string name="select">Select</string>
 	<string name="search">Search</string>
 	<string name="copy_text">Copy text</string>
@@ -44,6 +45,7 @@
 	<string name="nothing_to_save">Nothing to save</string>
 	<string name="document_has_changes_save_them_">Document has changes. Save them?</string>
 	<string name="cannot_open_document">Cannot open document</string>
+	<string name="overwrite">Overwrite</string>
 <!--	<string name="cannot_open_document_Reason">Cannot open document: %1$s</string>-->
 	<string name="unable_to_interpret_uri">Unable to interpret</string>
 	<string name="reason">Reason</string>
@@ -72,7 +74,7 @@
 	<string name="menu_highlight">Highlight</string>
 	<string name="menu_underline">Underline</string>
 	<string name="menu_copytext">Copy text</string>
-	<string name="menu_save">Save</string>
+	<string name="menu_save">Save...</string>
 	<string name="menu_undo">Undo</string>
 	<string name="menu_accept">accept</string>
 	<string name="menu_cancel">Cancel</string>
