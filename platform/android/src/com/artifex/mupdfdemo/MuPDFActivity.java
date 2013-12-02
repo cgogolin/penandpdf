@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.File;
 import java.util.concurrent.Executor;
 
+import java.util.Set;
+
 import com.artifex.mupdfdemo.ReaderView.ViewMapper;
 
 import android.app.Activity;
@@ -336,7 +338,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     });
             }
             
-            if (core != null && core.getFileName() != "" && mDocView != null) {
+            if (core != null && core.getFileName() != null && mDocView != null) {
                 SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
                 SharedPreferences.Editor edit = prefs.edit();
                 edit.putInt("page"+core.getFileName(), mDocView.getDisplayedViewIndex());
@@ -352,7 +354,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             if(core != null && !isChangingConfigurations())
             {
                 SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-                if(!mNotSaveOnPauseThisTime && core.hasChanges() && core.getFileName() != "" && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_PAUSE, true))
+                if(!mNotSaveOnPauseThisTime && core.hasChanges() && core.getFileName() != null && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_PAUSE, true))
                 {
                     core.save();
                     core.onDestroy(); //Destroy only if we have saved
@@ -374,7 +376,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             if(core != null && !isChangingConfigurations())
             {
                 SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-                if(!mNotSaveOnDestroyThisTime && core.hasChanges() && core.getFileName() != "" && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_DESTROY, true))
+                if(!mNotSaveOnDestroyThisTime && core.hasChanges() && core.getFileName() != null && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_DESTROY, true))
                     core.save();
                 core.onDestroy(); //Destroy in any case
                 core = null;
@@ -404,7 +406,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     
                         // Set up the share action
                     MenuItem shareItem = menu.findItem(R.id.menu_share);
-                    if (core == null || core.getPath() == "")
+                    if (core == null || core.getPath() == null)
                     {
                         shareItem.setEnabled(false).setVisible(false);
                     }
@@ -417,7 +419,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                             shareIntent.setAction(Intent.ACTION_SEND);
                             shareIntent.setType("plain/text");
                             shareIntent.setType("*/*");
-                            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(core.getPath())));
+                            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(Uri.parse(core.getPath()).getPath())));
                             if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
                         }   
                     }
@@ -646,7 +648,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                 }
                                 if (which == AlertDialog.BUTTON_NEUTRAL) {
                                     Intent intent = new Intent(getApplicationContext(),ChoosePDFActivity.class);
-                                    if (core.getFileName() != "") intent.setData(Uri.parse(core.getFileName()));
+                                    if (core.getFileName() != null) intent.setData(Uri.parse(core.getFileName()));
                                     intent.setAction(Intent.ACTION_PICK);
                                     startActivityForResult(intent, SAVEAS_REQUEST);
                                 }
@@ -657,7 +659,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     AlertDialog alert = mAlertBuilder.create();
                     alert.setTitle("MuPDF");
 //                    alert.setMessage(getString(R.string.document_has_changes_save_them_));
-                    if (core != null && core.getFileName() != "") alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
+                    if (core != null && core.getFileName() != null) alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
                     alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.saveas), listener);
                     alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), listener);
                     alert.show();
@@ -695,15 +697,23 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             else if (uri.toString().startsWith("content://")) //Uri points to a content provider
             {
                 byte buffer[] = null;
-                Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.DATA}, null, null, null); //This should be done asynchonously!
+                Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.DATA, MediaStore.MediaColumns.TITLE}, null, null, null); //This should be done asynchonously!
                 if (cursor != null && cursor.moveToFirst())
                 {
-                    String displayName = "";
-                    String data = "";
+                    String displayName = null;
+                    String data = null;
                     int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
                     int dataIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+                    int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
                     if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
-                    if(dataIndex >= 0) data = cursor.getString(dataIndex);
+                    if(displayName == null && displayNameIndex >= 0) displayName = Uri.parse(cursor.getString(titleIndex)).getLastPathSegment();
+                    
+                    // Bundle extras = intent.getExtras();
+                    // if (extras != null)
+                    //     for (String key : extras.keySet())
+                    //         showInfo(key+" = "+extras.get(key));
+                    
+                    if(dataIndex >= 0) data = cursor.getString(dataIndex);//Can return null!
                     try {
                         InputStream is = getContentResolver().openInputStream(uri);
                         if(is != null)
@@ -753,15 +763,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     public void setupUI() {
         if (core == null) return;
             
-            // Now create the UI.
-            // First create the document view
         mDocView = new MuPDFReaderView(this) {
                 @Override
                 protected void onMoveToChild(int pageNumber) {
-//                    if (core == null) return;
-                    getActionBar().setTitle(
-                        Integer.toString(pageNumber+1)+"/"+Integer.toString(core.countPages())+" "+core.getFileName()
-                                            );
+                    setTitle();
                     super.onMoveToChild(pageNumber);
                 }
 
@@ -824,7 +829,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
             // Reenstate last state if it was recorded
         SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
-        mDocView.setDisplayedViewIndex(prefs.getInt("page"+core.getFileName(), 0));
+        if (core.getFileName() != null)
+            mDocView.setDisplayedViewIndex(prefs.getInt("page"+core.getFileName(), 0));
+        else
+            setTitle(); //Otherwise this is already done by the DocView
         
             // Stick the document view into a parent view
         RelativeLayout layout = new RelativeLayout(this);
@@ -841,8 +849,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     mDocView.setDisplayedViewIndex(resultCode);
                 break;
             case PRINT_REQUEST:
-                if (resultCode == RESULT_CANCELED)
-                    showInfo(getString(R.string.print_failed));
+                // if (resultCode == RESULT_CANCELED)
+                //     showInfo(getString(R.string.print_failed));
                 break;
             case SAVEAS_REQUEST:
                 if (resultCode == RESULT_OK) {
@@ -922,13 +930,18 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
     
     private void printDoc() {
+        // if (core.getFileName() == null)
+        // {
+        //     showInfo(getString(R.string.save_before_print));
+        //     return;
+        // }
         if (!core.fileFormat().startsWith("PDF")) {
             showInfo(getString(R.string.format_currently_not_supported));
             return;
         }
 
-        Intent myIntent = getIntent();
-        Uri docUri = myIntent != null ? myIntent.getData() : null;
+        Intent intent = getIntent();
+        Uri docUri = intent != null ? intent.getData() : null;
 
         if (docUri == null) {
             showInfo(getString(R.string.print_failed));
@@ -1066,6 +1079,14 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         startActivityForResult(intent, FILEPICK_REQUEST);
     }
 
+    private void setTitle() {
+        if (core == null || mDocView == null)  return;
+        int pageNumber = mDocView.getDisplayedViewIndex();
+        String title = Integer.toString(pageNumber+1)+"/"+Integer.toString(core.countPages());
+        if(core.getFileName() != null) title+=" "+core.getFileName();
+        getActionBar().setTitle(title);
+    }
+    
     
     private void hideKeyboard()
     {

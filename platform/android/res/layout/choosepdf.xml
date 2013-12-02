@@ -3,14 +3,16 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:divider="?android:dividerHorizontal"
+    android:showDividers="middle"
+    >
   <ListView
       android:id="@android:id/list"
       android:layout_width="fill_parent"
       android:layout_height="0dp"
       android:layout_weight="1"
       android:gravity="top"
-      android:layout_above="@+id/something"
       />
   <EditText
       android:id="@+id/newfilenamefield"
@@ -22,6 +24,7 @@
       android:imeOptions="actionDone"
       android:drawableLeft="@drawable/ic_doc"
       android:textAppearance="?android:attr/textAppearanceMedium"
-      android:paddingLeft="0px"
+      android:paddingLeft="8dp"
+      android:drawablePadding="12dp"
       />
 </LinearLayout>

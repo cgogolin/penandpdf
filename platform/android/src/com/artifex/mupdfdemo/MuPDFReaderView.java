@@ -115,20 +115,18 @@ public class MuPDFReaderView extends ReaderView {
 			float distanceY) {
 		MuPDFView pageView = (MuPDFView)getDisplayedView();
 		switch (mMode) {
-		case Viewing:
-			if (!tapDisabled)
-				onDocMotion();
-
-			return super.onScroll(e1, e2, distanceX, distanceY);
-		case Selecting:
-                    if (pageView != null)
-                    {
-                        boolean hadSelection = pageView.hasSelection();
-                        pageView.selectText(e1.getX(), e1.getY(), e2.getX(), e2.getY());
-                        if (hadSelection != pageView.hasSelection()) onSelectionStatusChanged();
-                    }
-                    return true;
-		default:
+                    case Viewing:
+                        if (!tapDisabled) onDocMotion();
+                        return super.onScroll(e1, e2, distanceX, distanceY);
+                    case Selecting:
+                        if (pageView != null)
+                        {
+                            boolean hadSelection = pageView.hasSelection();
+                            pageView.selectText(e1.getX(), e1.getY(), e2.getX(), e2.getY());
+                            if (hadSelection != pageView.hasSelection()) onSelectionStatusChanged();
+                        }
+                        return true;
+                    default:
 			return true;
 		}
 	}

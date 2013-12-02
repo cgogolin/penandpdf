@@ -60,6 +60,7 @@
 	<string name="accept">Accept</string>
 	<string name="copy">Copy</string>
 	<string name="format_currently_not_supported">Format currently not supported</string>
+	<string name="save_before_print">Save to a file before printing</string>
 	<string name="toggle_reflow_mode">Toggle reflow mode</string>
 	<string name="menu_linkback">Back before link clicked</string>
 	<string name="menu_next">Next</string>

@@ -65,18 +65,18 @@ public class ChoosePDFActivity extends ListActivity
                 setContentView(R.layout.choosepdf);
 
                 if(mPurpose == Purpose.PickFile) {
-                    String filename = intent.getData().getLastPathSegment();
+                    String filename = null;
+                    if(intent.getData() != null) filename = intent.getData().getLastPathSegment();
                     EditText editText = (EditText)findViewById(R.id.newfilenamefield);
-                    editText.setText(filename);
+                    if(filename != null) editText.setText(filename);
                     editText.setVisibility(View.VISIBLE);
                     editText.requestFocus();
                     editText.setOnEditorActionListener(new OnEditorActionListener() {
                             @Override
                             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-
                                 Uri uri = Uri.parse(mDirectory.getPath()+"/"+v.getText());
                                 Intent intent = new Intent(getApplicationContext(),MuPDFActivity.class);
-                                intent.setAction(Intent.ACTION_VIEW);
+                                intent.setAction(Intent.ACTION_VIEW);//?
                                 intent.setData(uri);
                                 setResult(RESULT_OK, intent);
                                 finish();

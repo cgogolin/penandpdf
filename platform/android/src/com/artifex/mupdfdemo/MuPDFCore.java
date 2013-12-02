@@ -25,8 +25,8 @@ public class MuPDFCore
 	private long globals;
 	private byte fileBuffer[];
 	private String file_format;
-    	private String mPath = "";
-        private String mFileName = "";
+    	private String mPath = null;
+        private String mFileName = null;
     
 	/* The native functions */
 	private native long openFile(String filename);
@@ -88,18 +88,20 @@ public class MuPDFCore
 
 	public MuPDFCore(Context context, String path) throws Exception
 	{
-                mPath = path;
-                int lastSlashPos = path.lastIndexOf('/');
-		mFileName = new String(lastSlashPos == -1 ? path : path.substring(lastSlashPos+1));
-
-		globals = openFile(path);
-		if (globals == 0)
-		{
-			throw new Exception(String.format(context.getString(R.string.cannot_open_file_Path), path));
-		}
-		file_format = fileFormatInternal();
+            if(path == null) throw new Exception(String.format(context.getString(R.string.cannot_open_file_Path), path));
+                
+            mPath = path;
+            int lastSlashPos = path.lastIndexOf('/');
+            mFileName = new String(lastSlashPos == -1 ? path : path.substring(lastSlashPos+1));
+            
+            globals = openFile(path);
+            if (globals == 0)
+            {
+                throw new Exception(String.format(context.getString(R.string.cannot_open_file_Path), path));
+            }
+            file_format = fileFormatInternal();
 	}
-
+    
     public MuPDFCore(Context context, byte buffer[], String displayName) throws Exception
 	{
 		fileBuffer = buffer;

@@ -18,9 +18,7 @@ import android.widget.Scroller;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-public class ReaderView
-		extends AdapterView<Adapter>
-		implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, Runnable {
+public class ReaderView extends AdapterView<Adapter> implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, Runnable {
 	private static final int  MOVING_DIAGONALLY = 0;
 	private static final int  MOVING_LEFT       = 1;
 	private static final int  MOVING_RIGHT      = 2;
@@ -289,23 +287,23 @@ public class ReaderView
 			mapper.applyToView(mChildViews.valueAt(i));
 	}
 
-	public void refresh(boolean reflow) {
-		mReflow = reflow;
+	// public void refresh(boolean reflow) {
+	// 	mReflow = reflow;
 
-		mScale = 1.0f;
-		mXScroll = mYScroll = 0;
+	// 	mScale = 1.0f;
+	// 	mXScroll = mYScroll = 0;
 
-		int numChildren = mChildViews.size();
-		for (int i = 0; i < numChildren; i++) {
-			View v = mChildViews.valueAt(i);
-			onNotInUse(v);
-			removeViewInLayout(v);
-		}
-		mChildViews.clear();
-		mViewCache.clear();
+	// 	int numChildren = mChildViews.size();
+	// 	for (int i = 0; i < numChildren; i++) {
+	// 		View v = mChildViews.valueAt(i);
+	// 		onNotInUse(v);
+	// 		removeViewInLayout(v);
+	// 	}
+	// 	mChildViews.clear();
+	// 	mViewCache.clear();
 
-		requestLayout();
-	}
+	// 	requestLayout();
+	// }
 
 	protected void onChildSetup(int i, View v) {}
 
@@ -413,8 +411,7 @@ public class ReaderView
 	public void onLongPress(MotionEvent e) {
 	}
 
-	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
-			float distanceY) {
+	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
 		if (!mScrollDisabled) {
 			mXScroll -= distanceX;
 			mYScroll -= distanceY;
@@ -812,4 +809,8 @@ public class ReaderView
 		default: throw new NoSuchElementException();
 		}
 	}
+
+        
 }
+
+
