@@ -550,19 +550,25 @@ public abstract class PageView extends ViewGroup {
             mSearchView.invalidate();
         }
     }
+
+
+    public void undoDraw() {
+        if (mDrawing == null || mDrawing.size() == 0) return;
+        mDrawing.remove(mDrawing.size()-1);
+        mSearchView.invalidate();
+    }
     
 
-	public void cancelDraw() {
-		mDrawing = null;
-		mSearchView.invalidate();
-	}
+    public void cancelDraw() {
+        mDrawing = null;
+        mSearchView.invalidate();
+    }
 
-    protected int getDrawingSize()
-        {
-            return mDrawing.size();
-        }
+    public int getDrawingSize() {
+        return mDrawing.size();
+    }
     
-	protected PointF[][] getDraw() { //This is where ink drawn stuff processed 
+    protected PointF[][] getDraw() { //This is where ink drawn stuff processed 
 		if (mDrawing == null)
 			return null;
 

@@ -75,6 +75,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private boolean mNotSaveOnDestroyThisTime = false;
     private boolean mNotSaveOnPauseThisTime = false;
     private int mPageBeforeInternalLinkHit = -1;
+    private boolean mCanUndo = false;
     
     private final int    OUTLINE_REQUEST=0;
     private final int    PRINT_REQUEST=1;
@@ -444,7 +445,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 case Copy:
                     inflater.inflate(R.menu.annot_menu, menu);
                     MenuItem undoButton = menu.findItem(R.id.menu_undo);
-                    undoButton.setEnabled(false).setVisible(false);
+                    if (!mCanUndo) undoButton.setEnabled(false).setVisible(false);
                     break;
                 case Search:
                     inflater.inflate(R.menu.search_menu, menu);
@@ -499,6 +500,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             MuPDFView pageView = (MuPDFView) mDocView.getDisplayedView();
             switch (item.getItemId()) 
             {
+                case R.id.menu_undo:
+                    pageView.undoDraw();
+                    mDocView.onNumberOfStrokesChanged(pageView.getDrawingSize());
+                    return true;
                 case R.id.menu_settings:
                     Intent intent = new Intent(this,SettingsActivity.class);
                     startActivity(intent);
@@ -572,6 +577,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                 pageView.deselectText();
                                 pageView.cancelDraw();
                             }
+                            mCanUndo = false;
                             mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                             break;
                         case Edit:
@@ -614,6 +620,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                     //     break;
                                 }
                             }
+                            mCanUndo = false;
                             mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                             break;
                         case Edit:
@@ -644,6 +651,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                     core.onDestroy();
                                     core = null;
                                     mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
+                                    onPause();
                                     onResume();
                                 }
                                 if (which == AlertDialog.BUTTON_NEUTRAL) {
@@ -803,9 +811,23 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                      }
                 }
 
+                // @Override
+                // protected void onSelectionStatusChanged() {
+                //     invalidateOptionsMenu();
+                // }
+
                 @Override
-                protected void onSelectionStatusChanged() {
-//                    invalidateOptionsMenu();
+                protected void onNumberOfStrokesChanged(int numberOfStrokes) {
+                    if (numberOfStrokes>0 && mCanUndo == false) 
+                    {
+                        mCanUndo = true;
+                        invalidateOptionsMenu();
+                    }
+                    else if(numberOfStrokes == 0 && mCanUndo == true)
+                    {
+                        mCanUndo = false;
+                        invalidateOptionsMenu();
+                    }
                 }
                 
             };
@@ -896,6 +918,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             core = null;
             mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
             getIntent().setData(uri);//Set the uri of this intent so that we load the new file during onResum()
+            onPause();
             onResume();
             return success;
         }

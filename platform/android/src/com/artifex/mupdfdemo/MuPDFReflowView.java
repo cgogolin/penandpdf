@@ -119,10 +119,17 @@ public class MuPDFReflowView extends WebView implements MuPDFView {
         public void finishDraw() {
         }
     
+        public void undoDraw() {
+        }
+    
 	public void cancelDraw() {
 	}
 
-	public boolean saveDraw() {
+        public int getDrawingSize() {
+            return 0;
+        }
+
+        public boolean saveDraw() {
 		return false;
 	}
 
