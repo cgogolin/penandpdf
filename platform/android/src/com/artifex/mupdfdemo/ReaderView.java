@@ -34,7 +34,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
     private static final int  GAP               = 20;
 
     private static final float MIN_SCALE        = 1.0f;
-    private static final float MAX_SCALE        = 5.0f;
+    private static final float MAX_SCALE        = 10.0f;
     private static final float REFLOW_SCALE_FACTOR = 0.5f;
         
     private Adapter           mAdapter;
@@ -49,9 +49,9 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
     private boolean           mUserInteracting;  // Whether the user is interacting
     private boolean           mScaling;    // Whether the user is currently pinch zooming
     private float             mScale     = 1.0f; //mScale = 1.0 corresponds to "fit to screen"
-    private float             mNewNormalizedScale = 0.0f;//Set in setScale() and accounted for in ???
-    // private int               mNewXScroll = 0;//Set in setXScroll() and accounted for in onSizeChanged
-    // private int               mNewYScroll = 0;//Set in setYScroll() and accounted for in onSizeChanged
+    private float             mNewNormalizedScale = 0.0f;//Set in setScale() and accounted for in onLayout()
+    private float             mNewNormalizedXScroll = 0;//Set in setScroll() and accounted for in onLayout()
+    private float             mNewNormalizedYScroll = 0;//Set in setScroll() and accounted for in onLayout()
     private int               mXScroll;    // Scroll amounts recorded from events and then accounted for in onLayout.
     private int               mYScroll;    
     private boolean           mReflow = false;
@@ -332,11 +332,19 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         }
     }
 
+    @Override
     public boolean onDown(MotionEvent arg0) {
         mScroller.forceFinished(true);
+        // View cv = mChildViews.get(mCurrent);
+        // if (cv != null)
+        // {
+        //     float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
+        //     Toast.makeText(getContext(), "In onDown() x="+(cv.getLeft()/(float)cv.getMeasuredWidth())+" y="+(cv.getTop()/(float)cv.getMeasuredHeight()),Toast.LENGTH_SHORT).show();
+        // }
         return true;
     }
 
+    @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
                            float velocityY) {
         if (mScrollDisabled)
@@ -395,6 +403,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
     public void onLongPress(MotionEvent e) {
     }
 
+    @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
         if (!mScrollDisabled) {
             mXScroll -= distanceX;
@@ -625,28 +634,41 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
             cvLeft = cvOffset.x;
             cvTop  = cvOffset.y;
         } else {
-                //If the child view was already present we will adjust it by scroll amounts.
+                //Set mXScroll, mYScroll and mScale from the values set in setScale() and setScroll()
+            if(!changed && !notPresent && !mReflow && cv != null)
+            {
+//                boolean needLayout = false;
+                float scale_factor = mReflow ? REFLOW_SCALE_FACTOR : 1.0f;
+                float min_scale = MIN_SCALE * scale_factor;
+                float max_scale = MAX_SCALE * scale_factor;
+                float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
+                float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
+                if(mNewNormalizedScale != 0.0f)
+                {
+                    Log.i("MyActivity", "In onLayout() taking care of scale");
+                    mScale = Math.min(Math.max(mNewNormalizedScale*scaleCorrection, min_scale), max_scale); // I still don't understand how exactly this is pased on to the view in the end...
+                    mNewNormalizedScale = 0.0f;
+                }
+                if (mNewNormalizedXScroll != 0.0f || mNewNormalizedYScroll != 0.0f)
+                {
+//                    Log.i("MyActivity", "In onLayout() taking care of scroll");
+                    int XScroll = (int)(mNewNormalizedXScroll*cv.getMeasuredWidth()*mScale);
+                    int YScroll = (int)(mNewNormalizedYScroll*cv.getMeasuredHeight()*mScale);
+//                    Toast.makeText(getContext(), "In onLayout() taking care of scroll: "+mXScroll+" "+mYScroll, Toast.LENGTH_SHORT).show();
+                    mNewNormalizedXScroll = mNewNormalizedYScroll = 0;
+                    mScrollerLastX = mScrollerLastY = 0;
+                    mScroller.startScroll(0, 0, XScroll, YScroll, 0);
+                    post(this);
+                }
+            }
+            
+                //If the child view was already present we will adjust it by the scroll amounts.
             cvLeft = cv.getLeft() + mXScroll;
             cvTop  = cv.getTop()  + mYScroll;
         }
         
             //Reset scroll amounts
         mXScroll = mYScroll = 0;
-
-            //Rescale the child if necessary
-        if(!changed && !notPresent && !mReflow && mNewNormalizedScale != 0.0f && cv != null)
-        {
-            float scale_factor = mReflow ? REFLOW_SCALE_FACTOR : 1.0f;
-            float min_scale = MIN_SCALE * scale_factor;
-            float max_scale = MAX_SCALE * scale_factor;
-            float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
-            float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
-//            Log.i("MyActivity", "In onLayout() scaleCorrection="+scaleCorrection);
-            mScale = Math.min(Math.max(mNewNormalizedScale*scaleCorrection, min_scale), max_scale);
-            mNewNormalizedScale = 0.0f;
-                //We must do another passs of layouting
-            requestLayout();
-        }
         
             //Calculate right and bottom (this probably takes into accout the scale of the child)
         cvRight  = cvLeft + cv.getMeasuredWidth();
@@ -879,29 +901,39 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         }
         
         
-        public int getXScroll()
+        public float getNormalizedXScroll()
         {
             View cv = getDisplayedView();
-            if (cv != null) return cv.getLeft();
+            if (cv != null) {
+//                float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
+// //                float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
+//                return (float)cv.getLeft()/scale;
+                return cv.getLeft()/(float)cv.getMeasuredWidth();
+            }
             else return 0;
         }
-        public int getYScroll()
+        public float getNormalizedYScroll()
         {
             View cv = getDisplayedView();
-            if (cv != null) return cv.getTop();
+            if (cv != null) {
+//                 float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
+// //                float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
+//                 return (float)cv.getTop()/scale;
+                return cv.getTop()/(float)cv.getMeasuredHeight();
+            }
             else return 0;
         }
 
-        public void setScale(float normalizedScale) //If normalizedScale=0.0 nothing happens the values set here are taken care of during ???
+        public void setScale(float normalizedScale) //If normalizedScale=0.0 nothing happens!!!
         {
 //            Log.i("MyActivity", "In setScale() normalizedScale="+normalizedScale);
             mNewNormalizedScale = normalizedScale;
         }            
         
-        public void setScroll(int xScroll, int yScroll)
+        public void setScroll(float normalizedXScroll, float normalizedYScroll) //if normalizedXScroll = normalizedYScroll = 0 nothing happens!!!
         {
-            mXScroll = xScroll;
-            mYScroll = yScroll;
+            mNewNormalizedXScroll = normalizedXScroll;
+            mNewNormalizedYScroll = normalizedYScroll;
         }
 }
 

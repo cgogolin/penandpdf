@@ -345,8 +345,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
                 SharedPreferences.Editor edit = prefs.edit();
                 edit.putFloat("normalizedscale"+filename, mDocView.getNormalizedScale());
-                edit.putInt("xscroll"+filename, mDocView.getXScroll());
-                edit.putInt("yscroll"+filename, mDocView.getYScroll());
+                edit.putFloat("normalizedxscroll"+filename, mDocView.getNormalizedXScroll());
+                edit.putFloat("normalizedyscroll"+filename, mDocView.getNormalizedYScroll());
                 edit.putInt("page"+filename, mDocView.getDisplayedViewIndex());                
                 edit.commit();
             }
@@ -862,7 +862,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         // {
         mDocView.setDisplayedViewIndex(prefs.getInt("page"+filename, 0));
         mDocView.setScale(prefs.getFloat("normalizedscale"+filename, 0.0f)); //If normalizedScale=0.0 nothing happens
-        mDocView.setScroll(prefs.getInt("xscroll"+filename, 0), prefs.getInt("yscroll"+filename, 0));
+        mDocView.setScroll(prefs.getFloat("normalizedxscroll"+filename, 0.0f), prefs.getFloat("normalizedyscroll"+filename, 0.0f));
         // }
         if(core.getFileName() == null) setTitle(); //Otherwise this is already done by the DocView
 
