@@ -651,14 +651,10 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 }
                 if (mNewNormalizedXScroll != 0.0f || mNewNormalizedYScroll != 0.0f)
                 {
-//                    Log.i("MyActivity", "In onLayout() taking care of scroll");
                     int XScroll = (int)(mNewNormalizedXScroll*cv.getMeasuredWidth()*mScale);
                     int YScroll = (int)(mNewNormalizedYScroll*cv.getMeasuredHeight()*mScale);
                     if(cv.getMeasuredHeight() < getHeight()) YScroll += (float)(cv.getMeasuredHeight() - getHeight())/2;
-                    if(cv.getMeasuredWidth()  < getWidth() ) XScroll += (float)(cv.getMeasuredWidth()  - getWidth() )/2;
-                    // int XScroll = (int)(mNewNormalizedXScroll*getWidth()*mScale);
-                    // int YScroll = (int)(mNewNormalizedYScroll*getHeight()*mScale);                    
-//                    Toast.makeText(getContext(), "In onLayout() taking care of scroll: "+mXScroll+" "+mYScroll, Toast.LENGTH_SHORT).show();
+//                    if(cv.getMeasuredWidth()  < getWidth() ) XScroll += (float)(cv.getMeasuredWidth()  - getWidth() )/2;
                     mNewNormalizedXScroll = mNewNormalizedYScroll = 0;
                     mScrollerLastX = mScrollerLastY = 0;
                     mScroller.startScroll(0, 0, XScroll, YScroll, 0);

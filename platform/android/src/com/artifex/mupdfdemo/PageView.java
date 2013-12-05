@@ -250,7 +250,7 @@ public abstract class PageView extends ViewGroup {
 		if (mBusyIndicator == null) {
 			mBusyIndicator = new ProgressBar(mContext);
 			mBusyIndicator.setIndeterminate(true);
-			mBusyIndicator.setBackgroundResource(R.drawable.busy);
+//			mBusyIndicator.setBackgroundResource(R.drawable.busy);
 			addView(mBusyIndicator);
 		}
 
@@ -324,7 +324,7 @@ public abstract class PageView extends ViewGroup {
 				if (mBusyIndicator == null) {
 					mBusyIndicator = new ProgressBar(mContext);
 					mBusyIndicator.setIndeterminate(true);
-					mBusyIndicator.setBackgroundResource(R.drawable.busy);
+//					mBusyIndicator.setBackgroundResource(R.drawable.busy);
 					addView(mBusyIndicator);
 					mBusyIndicator.setVisibility(INVISIBLE);
 					mHandler.postDelayed(new Runnable() {
