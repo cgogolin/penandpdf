@@ -654,6 +654,10 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
 //                    Log.i("MyActivity", "In onLayout() taking care of scroll");
                     int XScroll = (int)(mNewNormalizedXScroll*cv.getMeasuredWidth()*mScale);
                     int YScroll = (int)(mNewNormalizedYScroll*cv.getMeasuredHeight()*mScale);
+                    if(cv.getMeasuredHeight() < getHeight()) YScroll += (float)(cv.getMeasuredHeight() - getHeight())/2;
+                    if(cv.getMeasuredWidth()  < getWidth() ) XScroll += (float)(cv.getMeasuredWidth()  - getWidth() )/2;
+                    // int XScroll = (int)(mNewNormalizedXScroll*getWidth()*mScale);
+                    // int YScroll = (int)(mNewNormalizedYScroll*getHeight()*mScale);                    
 //                    Toast.makeText(getContext(), "In onLayout() taking care of scroll: "+mXScroll+" "+mYScroll, Toast.LENGTH_SHORT).show();
                     mNewNormalizedXScroll = mNewNormalizedYScroll = 0;
                     mScrollerLastX = mScrollerLastY = 0;
@@ -905,10 +909,8 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         {
             View cv = getDisplayedView();
             if (cv != null) {
-//                float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
-// //                float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
-//                return (float)cv.getLeft()/scale;
                 return cv.getLeft()/(float)cv.getMeasuredWidth();
+//                return cv.getLeft()/(float)getWidth();
             }
             else return 0;
         }
@@ -916,10 +918,8 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         {
             View cv = getDisplayedView();
             if (cv != null) {
-//                 float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
-// //                float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
-//                 return (float)cv.getTop()/scale;
                 return cv.getTop()/(float)cv.getMeasuredHeight();
+//                return cv.getTop()/(float)cv.getHeight();
             }
             else return 0;
         }
