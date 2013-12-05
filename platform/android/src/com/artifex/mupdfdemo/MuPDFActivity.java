@@ -339,10 +339,15 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     });
             }
             
-            if (core != null && core.getFileName() != null && mDocView != null) {
+            if (core != null && mDocView != null) {
+                String filename = core.getFileName();
+                if(filename == null) filename = "buffer";
                 SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
                 SharedPreferences.Editor edit = prefs.edit();
-                edit.putInt("page"+core.getFileName(), mDocView.getDisplayedViewIndex());
+                edit.putFloat("normalizedscale"+filename, mDocView.getNormalizedScale());
+                edit.putInt("xscroll"+filename, mDocView.getXScroll());
+                edit.putInt("yscroll"+filename, mDocView.getYScroll());
+                edit.putInt("page"+filename, mDocView.getDisplayedViewIndex());                
                 edit.commit();
             }
             
@@ -848,14 +853,19 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 //                    mDocView.resetupChildren();
                 }
             };
-
+        
             // Reenstate last state if it was recorded
         SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
-        if (core.getFileName() != null)
-            mDocView.setDisplayedViewIndex(prefs.getInt("page"+core.getFileName(), 0));
-        else
-            setTitle(); //Otherwise this is already done by the DocView
-        
+        String filename = core.getFileName();
+        if(filename == null) filename = "buffer";
+        // if (core.getFileName() != null)
+        // {
+        mDocView.setDisplayedViewIndex(prefs.getInt("page"+filename, 0));
+        mDocView.setScale(prefs.getFloat("normalizedscale"+filename, 0.0f)); //If normalizedScale=0.0 nothing happens
+        mDocView.setScroll(prefs.getInt("xscroll"+filename, 0), prefs.getInt("yscroll"+filename, 0));
+        // }
+        if(core.getFileName() == null) setTitle(); //Otherwise this is already done by the DocView
+
             // Stick the document view into a parent view
         RelativeLayout layout = new RelativeLayout(this);
         layout.addView(mDocView);

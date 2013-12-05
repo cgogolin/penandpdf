@@ -116,7 +116,8 @@ public abstract class PageView extends ViewGroup {
 //        public static final int HIGHLIGHT_COLOR = 0x802572AC;
         public static final int HIGHLIGHT_COLOR = 0x4033B5E5;
         public static final int SEARCHRESULTS_COLOR = 0x4033B5E5;
-        public static final int LINK_COLOR = 0x60C7C7C7;
+//        public static final int LINK_COLOR = 0x60C7C7C7;
+        public static final int LINK_COLOR = 0xFF33B5E5;
 //        public static final int BOX_COLOR = 0xFF4444FF;
         public static final int BOX_COLOR = 0xFF33B5E5;
 	private static final int BACKGROUND_COLOR = 0xFFFFFFFF;
@@ -365,6 +366,7 @@ public abstract class PageView extends ViewGroup {
 					}
 
 					if (!mIsBlank && mLinks != null && mHighlightLinks) {
+                                            paint.setStyle(Paint.Style.STROKE);
 						paint.setColor(LINK_COLOR);
 						for (LinkInfo link : mLinks)
 							canvas.drawRect(link.rect.left*scale, link.rect.top*scale,

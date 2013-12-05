@@ -103,8 +103,8 @@
 	<string name="underline_color_summ">Set color for underlining text.</string>
 	<string name="strikeout_color">Strikeout color</string>
 	<string name="strikeout_color_summ">Set color for strinking out text.</string>
-	<string name="fit_width">Fit width</string>
-	<string name="fit_width_summ">Fit the width of the page.</string>
+	<string name="fit_width">Snap to fit width</string>
+	<string name="fit_width_summ">Snaps zoom to fit the width of the page if close.</string>
 
 	<string name="autosave_settings">Autosave</string>
 	<string name="save_on_destroy">Autosave when destroyed</string>

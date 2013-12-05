@@ -11,6 +11,8 @@ import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.preference.PreferenceManager;
 
+import android.util.Log;
+
 public class MuPDFReaderView extends ReaderView {
     enum Mode {Viewing, Selecting, Drawing}
     private final Context mContext;
@@ -239,7 +241,8 @@ public class MuPDFReaderView extends ReaderView {
             onNumberOfStrokesChanged(pageView.getDrawingSize());
         }
     }
-
+    
+    @Override
     protected void onChildSetup(int i, View v) {
         if (SearchTaskResult.get() != null
             && SearchTaskResult.get().pageNumber == i)
@@ -260,7 +263,8 @@ public class MuPDFReaderView extends ReaderView {
                 }
             });
     }
-
+    
+    @Override
     protected void onMoveToChild(int i) {
         if (SearchTaskResult.get() != null && SearchTaskResult.get().pageNumber != i) {
             SearchTaskResult.set(null);
@@ -275,12 +279,14 @@ public class MuPDFReaderView extends ReaderView {
             ((MuPDFView)v).deselectAnnotation();
     }
 
+    @Override
     protected void onSettle(View v) {
             // When the layout has settled ask the page to render
             // in HQ
         ((MuPDFView) v).addHq(false);
     }
 
+    @Override
     protected void onUnsettle(View v) {
             // When something changes making the previous settled view
             // no longer appropriate, tell the page to remove HQ
@@ -294,6 +300,7 @@ public class MuPDFReaderView extends ReaderView {
 
     @Override
     protected void onScaleChild(View v, Float scale) {
+//        Log.i("MyActivity", "In onScaleChild() scale="+scale);
         ((MuPDFView) v).setScale(scale);
     }
 }
