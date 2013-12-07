@@ -683,7 +683,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                     onResume();
                                 }
                                 if (which == AlertDialog.BUTTON_NEUTRAL) {
-                                    Intent intent = new Intent(getApplicationContext(),ChoosePDFActivity.class);
+//                                    Intent intent = new Intent(getApplicationContext(),ChoosePDFActivity.class);
+                                    Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
                                     if (core.getFileName() != null) intent.setData(Uri.parse(core.getFileName()));
                                     intent.setAction(Intent.ACTION_PICK);
                                     startActivityForResult(intent, SAVEAS_REQUEST);

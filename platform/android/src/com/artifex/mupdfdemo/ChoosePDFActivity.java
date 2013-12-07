@@ -223,13 +223,13 @@ public class ChoosePDFActivity extends ListActivity
             // Start initial file scan...
         mHandler.post(mUpdateFiles);
 
-            // ...and observe the directory and scan files upon changes.
-        FileObserver observer = new FileObserver(mDirectory.getPath(), FileObserver.CREATE | FileObserver.DELETE) {
-                public void onEvent(int event, String path) {
-                    mHandler.post(mUpdateFiles);
-                }
-            };
-        observer.startWatching();
+        //     // ...and observe the directory and scan files upon changes.
+        // FileObserver observer = new FileObserver(mDirectory.getPath(), FileObserver.CREATE | FileObserver.DELETE) {
+        //         public void onEvent(int event, String path) {
+        //             mHandler.post(mUpdateFiles);
+        //         }
+        //     };
+        // observer.startWatching();
     }
 
     @Override

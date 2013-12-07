@@ -17,7 +17,7 @@ import android.preference.PreferenceManager;
 
 //enum Purpose { ChoosePDF, PickKeyFile, PickFile }
 
-public class PenAndPDFChooser extends Activity {
+public class PenAndPDFFileChooser extends Activity {
 
     private SwipeFragmentPagerAdapter mFragmentPagerAdapter;
     private ViewPager mViewPager;
@@ -38,15 +38,19 @@ public class PenAndPDFChooser extends Activity {
             mPurpose = Purpose.PickFile;
         else
             mPurpose = Purpose.PickKeyFile;
-
         
             //Setup the UI
         setContentView(R.layout.chooser);
 
         mFragmentPagerAdapter = new SwipeFragmentPagerAdapter(getFragmentManager(), getLayoutInflater());
-        mFragmentPagerAdapter.add(new FileBrowserFragment(getIntent()));
-        mFragmentPagerAdapter.add(new RecentFilesFragment());
-            
+        FileBrowserFragment fileBrowserFragment = new FileBrowserFragment(getIntent());
+        RecentFilesFragment recentFilesFragment = new RecentFilesFragment(getIntent());
+        mFragmentPagerAdapter.add(fileBrowserFragment);
+        mFragmentPagerAdapter.add(recentFilesFragment);
+
+            //Listen for changes in the recent files list
+        getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).registerOnSharedPreferenceChangeListener(recentFilesFragment);
+        
         mViewPager = (ViewPager) findViewById(R.id.pager);
         mViewPager.setAdapter(mFragmentPagerAdapter);
 

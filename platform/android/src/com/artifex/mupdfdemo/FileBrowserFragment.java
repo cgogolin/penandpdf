@@ -206,17 +206,18 @@ public class FileBrowserFragment extends ListFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.filebrowser, container, false);
+        View rootView = inflater.inflate(R.layout.filebrowser, container, false);
 
         mAdapter = new ChoosePDFAdapter(inflater);
         
         if(mPurpose == Purpose.PickFile) {
 //            String filename = null;
 //            if(intent.getData() != null) filename = intent.getData().getLastPathSegment();
-            EditText editText = (EditText)view.findViewById(R.id.newfilenamefield);
+            EditText editText = (EditText)rootView.findViewById(R.id.newfilenamefield);
             if(mFilename != null) editText.setText(mFilename);
             editText.setVisibility(View.VISIBLE);
             editText.requestFocus();
+            editText.setSelection(mFilename.lastIndexOf("."));
             editText.setOnEditorActionListener(new OnEditorActionListener() {
                     @Override
                     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
@@ -235,7 +236,7 @@ public class FileBrowserFragment extends ListFragment {
         // listView.setListAdapter(adapter);
         setListAdapter(mAdapter);
         
-        return view;
+        return rootView;
     }
 
     @Override
