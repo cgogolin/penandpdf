@@ -474,7 +474,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         }
 
             //Snap to page width
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+        SharedPreferences sharedPref = getContext().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
         boolean fitWidth = sharedPref.getBoolean(SettingsActivity.PREF_FIT_WIDTH, false);
         if(fitWidth)
         {
@@ -772,7 +772,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         if (!mReflow) {
                 // Work out a scale that will fit it to this view
             float scale;
-            // SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+            // SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
             // boolean fitWidth = sharedPref.getBoolean(SettingsActivity.PREF_FIT_WIDTH, false);
             // if(fitWidth)
             //     scale = (float)getWidth()/(float)v.getMeasuredWidth();

@@ -265,7 +265,7 @@ public abstract class PageView extends ViewGroup {
 		}
 
                     //Set ink thickness and colors for PageView
-                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
+                SharedPreferences sharedPref = getContext().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
                 inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
                 inkColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, Integer.toString(inkColor))));
                 highlightColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, Integer.toString(highlightColor))));
@@ -510,7 +510,7 @@ public abstract class PageView extends ViewGroup {
 
 	public void startDraw(float x, float y) {
                     //Set ink thickness and color
-                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
+                SharedPreferences sharedPref = getContext().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
                 inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
                 inkColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, Integer.toString(inkColor))));            
 		float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
@@ -585,7 +585,7 @@ public abstract class PageView extends ViewGroup {
 	}
 
 	protected void processSelectedText(TextProcessor tp) {
-            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
+            SharedPreferences sharedPref = getContext().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
             boolean useSmartTextSelection = sharedPref.getBoolean(SettingsActivity.PREF_SMART_TEXT_SELECTION, true);
             if (useSmartTextSelection)
                 (new TextSelector(mText, mSelectBox,docRelXmin,docRelXmax)).select(tp);

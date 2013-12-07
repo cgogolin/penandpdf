@@ -3,7 +3,6 @@ package com.artifex.mupdfdemo;
 import android.os.Bundle;
 import android.app.Activity;
 
-
 public class SettingsActivity extends Activity {
     final static String PREF_USE_STYLUS = "pref_use_stylus";
     final static String PREF_SCROLL_VERTICAL = "pref_scroll_vertical";
@@ -19,6 +18,7 @@ public class SettingsActivity extends Activity {
     final static String PREF_SMART_TEXT_SELECTION = "pref_smart_text_selection";
     final static String PREF_KEEP_SCREEN_ON = "keep_screen_on";
 
+    final static String SHARED_PREFERENCES_STRING = "PenAndPDF";
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {

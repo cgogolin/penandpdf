@@ -155,7 +155,7 @@ public class MuPDFReaderView extends ReaderView {
 
     public boolean onTouchEvent(MotionEvent event) {
 
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
+        SharedPreferences sharedPref = mContext.getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
         boolean useStylus = sharedPref.getBoolean(SettingsActivity.PREF_USE_STYLUS, false);
                 
         int pointerIndexToUse = 0; // by default use the first pointer

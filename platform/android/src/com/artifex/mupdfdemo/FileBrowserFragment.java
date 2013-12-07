@@ -1,5 +1,7 @@
 package com.artifex.mupdfdemo;
 
+import android.app.Activity;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Arrays;
@@ -7,35 +9,36 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-import android.app.AlertDialog;
-import android.app.ListActivity;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
-import android.content.Intent;
-import android.content.res.Resources;
-import android.content.Context;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.Environment;
+
 import android.os.FileObserver;
 import android.os.Handler;
+import android.os.Environment;
+import android.content.Intent;
+import android.app.AlertDialog;
+
+import android.app.Fragment;
+import android.app.ListFragment;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.MenuInflater;
 import android.view.KeyEvent;
+import android.view.ViewGroup;
+import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.widget.ListView;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
-import android.preference.PreferenceManager;
 import android.content.SharedPreferences;
-import android.app.ActionBar;
+import android.content.res.Resources;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+//import android.widget.Toast;
+import android.net.Uri;
 
-enum Purpose { ChoosePDF, PickKeyFile, PickFile }
+//public static class SettingsFragment extends PreferenceFragment {
+public class FileBrowserFragment extends ListFragment {
 
-public class ChoosePDFActivity extends ListActivity
-{
     static private File  mDirectory;
     static private Map<String, Integer> mPositions = new HashMap<String, Integer>();
     private File         mParent;
@@ -43,76 +46,39 @@ public class ChoosePDFActivity extends ListActivity
     private File []      mFiles;
     private Handler	     mHandler;
     private Runnable     mUpdateFiles;
-    private ChoosePDFAdapter adapter;
+    private ChoosePDFAdapter mAdapter;
     private Purpose      mPurpose;
-
-    private RecentFilesList recentFilesList;
+//    private ListView mListView;
+    private String mFilename;
     
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-                
-        Intent intent = getIntent();
-                
-            //Set default preferences on first start
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-                
-//		mPurpose = Intent.ACTION_MAIN.equals(getIntent().getAction()) ? Purpose.ChoosePDF : Purpose.PickKeyFile;
-
+    FileBrowserFragment(Intent intent) {
+        super();
+        
         if (Intent.ACTION_MAIN.equals(intent.getAction())) 
             mPurpose = Purpose.ChoosePDF;
         else if (Intent.ACTION_PICK.equals(intent.getAction()))
             mPurpose = Purpose.PickFile;
         else
             mPurpose = Purpose.PickKeyFile;
-                
-            //Read the recent files list from preferences
-        SharedPreferences prefs = getPreferences(Context.MODE_MULTI_PROCESS);
-        recentFilesList = new RecentFilesList(RecentFilesList.MAX_RECENT_FILES);
-        for (int i = 0; i<recentFilesList.size(); i++)
-        {
-            String recentFile = prefs.getString("recentfile"+i,null);
-            if(recentFile != null) recentFilesList.push(recentFile);
-        }
-        
-        setContentView(R.layout.choosepdf);
 
         if(mPurpose == Purpose.PickFile) {
-            String filename = null;
-            if(intent.getData() != null) filename = intent.getData().getLastPathSegment();
-            EditText editText = (EditText)findViewById(R.id.newfilenamefield);
-            if(filename != null) editText.setText(filename);
-            editText.setVisibility(View.VISIBLE);
-            editText.requestFocus();
-            editText.setOnEditorActionListener(new OnEditorActionListener() {
-                    @Override
-                    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                        Uri uri = Uri.parse(mDirectory.getPath()+"/"+v.getText());
-                        Intent intent = new Intent(getApplicationContext(),MuPDFActivity.class);
-                        intent.setAction(Intent.ACTION_VIEW);//?
-                        intent.setData(uri);
-                        setResult(RESULT_OK, intent);
-                        finish();
-                        return true;
-                    }
-                });
+            mFilename = null;
+            if(intent.getData() != null) mFilename = intent.getData().getLastPathSegment();
         }
-                
-                
+        
         String storageState = Environment.getExternalStorageState();
 
         if (!Environment.MEDIA_MOUNTED.equals(storageState)
             && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(storageState))
         {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
             builder.setTitle(R.string.no_media_warning);
             builder.setMessage(R.string.no_media_hint);
             AlertDialog alert = builder.create();
             alert.setButton(AlertDialog.BUTTON_POSITIVE,getString(R.string.dismiss),
                             new OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
-                                    finish();
+                                    getActivity().finish();
                                 }
                             });
             alert.show();
@@ -126,22 +92,20 @@ public class ChoosePDFActivity extends ListActivity
             else    
                 mDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         }
-                
-            // Create a list adapter...
-        adapter = new ChoosePDFAdapter(getLayoutInflater());
 
-        setListAdapter(adapter);
-
+        
             // ...that is updated dynamically when files are scanned
         mHandler = new Handler();
         mUpdateFiles = new Runnable() {
                 public void run() {
+                    if(!isAdded()) return;
+                    
                     Resources res = getResources();
                     String appName = res.getString(R.string.app_name);
                     String version = res.getString(R.string.version);
                     String title = res.getString(R.string.picker_title_App_Ver_Dir);
                         //setTitle(String.format(title, appName, version, mDirectory));
-                    setTitle(mDirectory.getPath());
+//                    setTitle(mDirectory.getPath());
                     mParent = mDirectory.getParentFile();
 
                     mDirs = mDirectory.listFiles(new FileFilter() {
@@ -209,17 +173,17 @@ public class ChoosePDFActivity extends ListActivity
                             }
                         });
 
-                    adapter.clear();
+                    mAdapter.clear();
                     if (mParent != null)
-                        adapter.add(new ChoosePDFItem(ChoosePDFItem.Type.PARENT, getString(R.string.parent_directory)));
+                        mAdapter.add(new ChoosePDFItem(ChoosePDFItem.Type.PARENT, getString(R.string.parent_directory)));
                     for (File f : mDirs)
-                        adapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DIR, f.getName()));
+                        mAdapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DIR, f.getName()));
                     for (File f : mFiles)
-                        adapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DOC, f.getName()));
+                        mAdapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DOC, f.getName()));
                     lastPosition();
                 }
             };
-
+        
             // Start initial file scan...
         mHandler.post(mUpdateFiles);
 
@@ -232,44 +196,50 @@ public class ChoosePDFActivity extends ListActivity
         observer.startWatching();
     }
 
-    @Override
-    protected void onResume()
-        {
-            super.onResume();
-            mHandler.post(mUpdateFiles);
-        }
-    
-    
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) //Inflates the options menu
-        {
-            MenuInflater inflater = getMenuInflater();
-            inflater.inflate(R.menu.choosepdf_menu, menu);
-            return true;
-        }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) //Handel clicks in the options menu 
-        {
-            switch (item.getItemId()) 
-            {
-                case R.id.menu_settings:
-                    Intent intent = new Intent(this,SettingsActivity.class);
-                    startActivity(intent);
-                    return true;
-                default:
-                    return super.onOptionsItemSelected(item);
-            }
-        }
+    public void onResume() {
+        super.onResume();
+        mHandler.post(mUpdateFiles);
+    }
     
-    private void lastPosition() {
-        String p = mDirectory.getAbsolutePath();
-        if (mPositions.containsKey(p))
-            getListView().setSelection(mPositions.get(p));
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+        View view = inflater.inflate(R.layout.filebrowser, container, false);
+
+        mAdapter = new ChoosePDFAdapter(inflater);
+        
+        if(mPurpose == Purpose.PickFile) {
+//            String filename = null;
+//            if(intent.getData() != null) filename = intent.getData().getLastPathSegment();
+            EditText editText = (EditText)view.findViewById(R.id.newfilenamefield);
+            if(mFilename != null) editText.setText(mFilename);
+            editText.setVisibility(View.VISIBLE);
+            editText.requestFocus();
+            editText.setOnEditorActionListener(new OnEditorActionListener() {
+                    @Override
+                    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                        Uri uri = Uri.parse(mDirectory.getPath()+"/"+v.getText());
+                        Intent intent = new Intent(getActivity(),MuPDFActivity.class);
+                        intent.setAction(Intent.ACTION_VIEW);//?
+                        intent.setData(uri);
+                        getActivity().setResult(Activity.RESULT_OK, intent);
+                        getActivity().finish();
+                        return true;
+                    }
+                });
+        }
+        
+        // ListView listView = view.findViewById(R.id.list);
+        // listView.setListAdapter(adapter);
+        setListAdapter(mAdapter);
+        
+        return view;
     }
 
     @Override
-    protected void onListItemClick(ListView l, View v, int position, long id) {
+    public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
 
         mPositions.put(mDirectory.getAbsolutePath(), getListView().getFirstVisiblePosition());
@@ -291,7 +261,7 @@ public class ChoosePDFActivity extends ListActivity
         position -= mDirs.length;
 
         Uri uri = Uri.parse(mFiles[position].getAbsolutePath());
-        Intent intent = new Intent(this,MuPDFActivity.class);
+        Intent intent = new Intent(getActivity(),MuPDFActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
         intent.setData(uri);
         switch (mPurpose) {
@@ -300,20 +270,39 @@ public class ChoosePDFActivity extends ListActivity
                 startActivity(intent);
                 break;
             case PickFile:
-                setResult(RESULT_OK, intent);
-                finish();
+                getActivity().setResult(Activity.RESULT_OK, intent);
+                getActivity().finish();
                 break;
             case PickKeyFile:
                     // Return the uri to the caller
-                setResult(RESULT_OK, intent);
-                finish();
+                getActivity().setResult(Activity.RESULT_OK, intent);
+                getActivity().finish();
                 break;
         }
     }
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
         mPositions.put(mDirectory.getAbsolutePath(), getListView().getFirstVisiblePosition());
     }
+
+
+    private void lastPosition() {
+        String p = mDirectory.getAbsolutePath();
+        if (mPositions.containsKey(p))
+            getListView().setSelection(mPositions.get(p));
+    }
+
+    
+    // @Override
+    // public View onCreateView(LayoutInflater inflater,
+    //         ViewGroup container, Bundle savedInstanceState) {
+    //     // The last two arguments ensure LayoutParams are inflated
+    //     // properly.
+    //     View rootView = inflater.inflate(
+    //             R.layout.browsefiles, container, false);
+    //     ((EditText) rootView.findViewById(R.id.newfilenamefield)).setText("bla");
+    //     return rootView;
+    // }
 }

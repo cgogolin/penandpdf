@@ -54,8 +54,6 @@ import android.provider.MediaStore.MediaColumns;
 
 import android.text.InputType;
 
-
-
 class ThreadPerTaskExecutor implements Executor {
     public void execute(Runnable r) {
         new Thread(r).start();
@@ -63,7 +61,7 @@ class ThreadPerTaskExecutor implements Executor {
 }
 
 public class MuPDFActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener, FilePicker.FilePickerSupport
-{
+{       
         /* The core rendering instance */
     enum ActionBarMode {Main, Annot, Edit, Search, Copy, Selection};
     enum AcceptMode {Highlight, Underline, StrikeOut, Ink, CopyText};
@@ -76,7 +74,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private boolean mNotSaveOnPauseThisTime = false;
     private int mPageBeforeInternalLinkHit = -1;
     private boolean mCanUndo = false;
-    
+
+//    private RecentFilesList recentFiles;    
     private final int    OUTLINE_REQUEST=0;
     private final int    PRINT_REQUEST=1;
     private final int    FILEPICK_REQUEST = 2;
@@ -260,9 +259,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             super.onCreate(savedInstanceState);
             
                 //Set default preferences on first start
-            PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-            PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
-            onSharedPreferenceChanged(PreferenceManager.getDefaultSharedPreferences(this),""); //Call this once so I don't need to duplicate code
+            PreferenceManager.setDefaultValues(this, SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS, R.xml.preferences, false);
+            
+            getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).registerOnSharedPreferenceChangeListener(this);
+            onSharedPreferenceChanged(getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS),""); //Call this once so I don't need to duplicate code
             
                 //Get the ActionBarMode, AcceptMode and PageBeforeInternalLinkHit from the bundle
             if(savedInstanceState != null)
@@ -305,7 +305,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 SearchTaskResult.set(null);
                 createAlertWaiter();
                 core.startAlerts();
-                core.onSharedPreferenceChanged(PreferenceManager.getDefaultSharedPreferences(this),"");
+                core.onSharedPreferenceChanged(getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS),"");
                 setupUI();
             }
             else //Something went wrong
@@ -340,14 +340,37 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             }
             
             if (core != null && mDocView != null) {
+
+                String path = core.getPath();
+                SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
+                SharedPreferences.Editor edit = prefs.edit();
+                
+                if(path != null)
+                {
+                        //Read the recent files list from preferences
+                    RecentFilesList recentFilesList = new RecentFilesList(RecentFilesList.MAX_RECENT_FILES);
+                    for (int i = 0; i<RecentFilesList.MAX_RECENT_FILES; i++)
+                    {
+                        String recentFile = prefs.getString("recentfile"+i,null);
+                        if(recentFile != null) recentFilesList.push(recentFile);
+                    }
+                    
+                        //Add the current file
+                    if(!recentFilesList.contains(path)) recentFilesList.push(path);
+                        //Write the recent files list
+                    for (int i = 0; i<recentFilesList.size(); i++)
+                    {
+                        edit.putString("recentfile"+i,recentFilesList.get(i));
+                    }
+                }
+
                 String filename = core.getFileName();
                 if(filename == null) filename = "buffer";
-                SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
-                SharedPreferences.Editor edit = prefs.edit();
                 edit.putFloat("normalizedscale"+filename, mDocView.getNormalizedScale());
                 edit.putFloat("normalizedxscroll"+filename, mDocView.getNormalizedXScroll());
                 edit.putFloat("normalizedyscroll"+filename, mDocView.getNormalizedYScroll());
-                edit.putInt("page"+filename, mDocView.getDisplayedViewIndex());                
+                edit.putInt("page"+filename, mDocView.getDisplayedViewIndex());
+                
                 edit.commit();
             }
             
@@ -359,7 +382,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             
             if(core != null && !isChangingConfigurations())
             {
-                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+                SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
                 if(!mNotSaveOnPauseThisTime && core.hasChanges() && core.getFileName() != null && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_PAUSE, true))
                 {
                     core.save();
@@ -377,11 +400,11 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
     protected void onDestroy() //There is no guarantee that this is ever called!!!
 	{
-            PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
+            getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).unregisterOnSharedPreferenceChangeListener(this);
 
             if(core != null && !isChangingConfigurations())
             {
-                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+                SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
                 if(!mNotSaveOnDestroyThisTime && core.hasChanges() && core.getFileName() != null && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_DESTROY, true))
                     core.save();
                 core.onDestroy(); //Destroy in any case
@@ -855,7 +878,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             };
         
             // Reenstate last state if it was recorded
-        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences prefs = getPreferences(Context.MODE_MULTI_PROCESS);
         String filename = core.getFileName();
         if(filename == null) filename = "buffer";
         // if (core.getFileName() != null)
@@ -950,15 +973,16 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         outState.putInt("PageBeforeInternalLinkHit", mPageBeforeInternalLinkHit);
     }
 
-    
+    @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPref, String key) {
+        
         if (sharedPref.getBoolean(SettingsActivity.PREF_KEEP_SCREEN_ON, false ))
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         else
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         
         if(core != null) core.onSharedPreferenceChanged(sharedPref, key);
-            //mDocView.resetupChildren();//This should be used to set preferences in page views...
+            //mDocView.onSharedPreferenceChanged(sharedPref, key);//This should be used to set preferences in page views...
     }    
 
     
