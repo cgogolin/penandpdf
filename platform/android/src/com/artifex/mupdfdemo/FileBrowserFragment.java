@@ -13,6 +13,7 @@ import java.util.Map;
 import android.os.FileObserver;
 import android.os.Handler;
 import android.os.Environment;
+import android.os.Bundle;
 import android.content.Intent;
 import android.app.AlertDialog;
 
@@ -39,35 +40,86 @@ import android.net.Uri;
 //public static class SettingsFragment extends PreferenceFragment {
 public class FileBrowserFragment extends ListFragment {
 
-    static private File  mDirectory;
-    static private Map<String, Integer> mPositions = new HashMap<String, Integer>();
-    private File         mParent;
-    private File []      mDirs;
-    private File []      mFiles;
-    private Handler	     mHandler;
-    private Runnable     mUpdateFiles;
-    private ChoosePDFAdapter mAdapter;
-    private Purpose      mPurpose;
-//    private ListView mListView;
-    private String mFilename;
+    private enum Purpose { ChoosePDF, PickKeyFile, PickFile }
     
-    FileBrowserFragment(Intent intent) {
-        super();
-        
-        if (Intent.ACTION_MAIN.equals(intent.getAction())) 
-            mPurpose = Purpose.ChoosePDF;
-        else if (Intent.ACTION_PICK.equals(intent.getAction()))
-            mPurpose = Purpose.PickFile;
-        else
-            mPurpose = Purpose.PickKeyFile;
+    static private File mDirectory;
+    static private Map<String, Integer> mPositions = new HashMap<String, Integer>();
+    private File  mParent;
+    private File[] mDirs;
+    private File[] mFiles;
+    private Handler mHandler;
+    private Runnable mUpdateFiles;
+    private ChoosePDFAdapter mAdapter;
+    private Purpose mPurpose;
+    private String mFilename;
 
-        if(mPurpose == Purpose.PickFile) {
-            mFilename = null;
-            if(intent.getData() != null) mFilename = intent.getData().getLastPathSegment();
+    static final String PURPOSE = "purpose";
+    static final String FILENAME = "filename";
+    static final String DIRECTORY = "directory";
+    
+    public static final FileBrowserFragment newInstance(Intent intent) {
+        
+            //Collect data from intent
+        Purpose purpose;
+        if (Intent.ACTION_MAIN.equals(intent.getAction())) 
+            purpose = Purpose.ChoosePDF;
+        else if (Intent.ACTION_PICK.equals(intent.getAction()))
+            purpose = Purpose.PickFile;
+        else
+            purpose = Purpose.PickKeyFile;
+        
+        String filename = null;
+        if(purpose == Purpose.PickFile) {
+            if(intent.getData() != null) filename = intent.getData().getLastPathSegment();
         }
         
-        String storageState = Environment.getExternalStorageState();
+        File directory;
+        if(purpose == Purpose.PickFile && intent.getData() != null)
+            directory = (new File(intent.getData().getPath())).getParentFile();
+        else    
+            directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        
+            //Put the collected data in a Bundle
+        Bundle bundle = new Bundle(3);
+        bundle.putString(PURPOSE,purpose.toString());
+        bundle.putString(FILENAME,filename);
+        bundle.putString(DIRECTORY,directory.getAbsolutePath());
+            //Pass it to the Fragment and return 
+        FileBrowserFragment fileBrowserFragment = new FileBrowserFragment();
+        fileBrowserFragment.setArguments(bundle);
+        return fileBrowserFragment;
+    }
+    
 
+    @Override
+    public void onSaveInstanceState(Bundle bundle) {
+        super.onSaveInstanceState(bundle);
+        bundle.putString(PURPOSE,mPurpose.toString());
+        bundle.putString(FILENAME,mFilename);
+        bundle.putString(DIRECTORY,mDirectory.getAbsolutePath());
+    }
+
+    
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        
+            //Retrieve the data that was set with setArguments()
+        if(getArguments() != null) 
+        {
+            mFilename = getArguments().getString(FILENAME);
+            mPurpose = Purpose.valueOf(getArguments().getString(PURPOSE));
+            mDirectory = new File(getArguments().getString(DIRECTORY));
+        }
+        else if(savedInstanceState != null)
+        {
+            mFilename = savedInstanceState.getString(FILENAME);
+            mPurpose = Purpose.valueOf(savedInstanceState.getString(PURPOSE));
+            mDirectory = new File(savedInstanceState.getString(DIRECTORY));
+        }
+            
+            //Check storage state
+        String storageState = Environment.getExternalStorageState();
         if (!Environment.MEDIA_MOUNTED.equals(storageState)
             && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(storageState))
         {
@@ -84,17 +136,8 @@ public class FileBrowserFragment extends ListFragment {
             alert.show();
             return;
         }
-
-        if (mDirectory == null)
-        {
-            if(mPurpose == Purpose.PickFile && intent.getData() != null)
-                mDirectory = (new File(intent.getData().getPath())).getParentFile();
-            else    
-                mDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        }
-
         
-            // ...that is updated dynamically when files are scanned
+            // Create a new handler that is updated dynamically when files are scanned
         mHandler = new Handler();
         mUpdateFiles = new Runnable() {
                 public void run() {
@@ -128,31 +171,13 @@ public class FileBrowserFragment extends ListFragment {
                                     case PickFile:
                                         if (fname.endsWith(".pdf"))
                                             return true;
-                                            // if (fname.endsWith(".xps"))
-                                            // 	return true;
-                                            // if (fname.endsWith(".cbz"))
-                                            // 	return true;
-                                            // if (fname.endsWith(".png"))
-                                            // 	return true;
-                                            // if (fname.endsWith(".jpe"))
-                                            // 	return true;
-                                            // if (fname.endsWith(".jpeg"))
-                                            // 	return true;
-                                            // if (fname.endsWith(".jpg"))
-                                            // 	return true;
-                                            // if (fname.endsWith(".jfif"))
-                                            // 	return true;
-                                            // if (fname.endsWith(".jfif-tbnl"))
-                                            // 	return true;
-                                            // if (fname.endsWith(".tif"))
-                                            // 	return true;
-                                            // if (fname.endsWith(".tiff"))
-                                            // 	return true;
-                                        return false;
+                                        else
+                                            return false;
                                     case PickKeyFile:
                                         if (fname.endsWith(".pfx"))
                                             return true;
-                                        return false;
+                                        else
+                                            return false;
                                     default:
                                         return false;
                                 }
@@ -211,8 +236,6 @@ public class FileBrowserFragment extends ListFragment {
         mAdapter = new ChoosePDFAdapter(inflater);
         
         if(mPurpose == Purpose.PickFile) {
-//            String filename = null;
-//            if(intent.getData() != null) filename = intent.getData().getLastPathSegment();
             EditText editText = (EditText)rootView.findViewById(R.id.newfilenamefield);
             if(mFilename != null) editText.setText(mFilename);
             editText.setVisibility(View.VISIBLE);
@@ -294,16 +317,4 @@ public class FileBrowserFragment extends ListFragment {
         if (mPositions.containsKey(p))
             getListView().setSelection(mPositions.get(p));
     }
-
-    
-    // @Override
-    // public View onCreateView(LayoutInflater inflater,
-    //         ViewGroup container, Bundle savedInstanceState) {
-    //     // The last two arguments ensure LayoutParams are inflated
-    //     // properly.
-    //     View rootView = inflater.inflate(
-    //             R.layout.browsefiles, container, false);
-    //     ((EditText) rootView.findViewById(R.id.newfilenamefield)).setText("bla");
-    //     return rootView;
-    // }
 }

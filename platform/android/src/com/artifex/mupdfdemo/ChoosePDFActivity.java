@@ -32,10 +32,12 @@ import android.preference.PreferenceManager;
 import android.content.SharedPreferences;
 import android.app.ActionBar;
 
-enum Purpose { ChoosePDF, PickKeyFile, PickFile }
+//enum Purpose { ChoosePDF, PickKeyFile, PickFile }
 
 public class ChoosePDFActivity extends ListActivity
 {
+    private enum Purpose { ChoosePDF, PickKeyFile, PickFile }
+    
     static private File  mDirectory;
     static private Map<String, Integer> mPositions = new HashMap<String, Integer>();
     private File         mParent;
@@ -69,12 +71,13 @@ public class ChoosePDFActivity extends ListActivity
                 
             //Read the recent files list from preferences
         SharedPreferences prefs = getPreferences(Context.MODE_MULTI_PROCESS);
-        recentFilesList = new RecentFilesList(RecentFilesList.MAX_RECENT_FILES);
-        for (int i = 0; i<recentFilesList.size(); i++)
-        {
-            String recentFile = prefs.getString("recentfile"+i,null);
-            if(recentFile != null) recentFilesList.push(recentFile);
-        }
+        // recentFilesList = new RecentFilesList(RecentFilesList.MAX_RECENT_FILES);
+        // for (int i = 0; i<recentFilesList.size(); i++)
+        // {
+        //     String recentFile = prefs.getString("recentfile"+i,null);
+        //     if(recentFile != null) recentFilesList.push(recentFile);
+        // }
+        recentFilesList = new RecentFilesList(prefs);
         
         setContentView(R.layout.choosepdf);
 

@@ -15,42 +15,29 @@ import android.content.Intent;
 
 import android.preference.PreferenceManager;
 
-//enum Purpose { ChoosePDF, PickKeyFile, PickFile }
-
 public class PenAndPDFFileChooser extends Activity {
 
     private SwipeFragmentPagerAdapter mFragmentPagerAdapter;
     private ViewPager mViewPager;
 
-    private Purpose      mPurpose;
+    private String mFilename = null;
     
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
                 
                 //Set default preferences on first start
         PreferenceManager.setDefaultValues(this, SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS, R.xml.preferences, false);
-        
-            //Determine why we were started
-        Intent intent = getIntent();
-        if (Intent.ACTION_MAIN.equals(intent.getAction())) 
-            mPurpose = Purpose.ChoosePDF;
-        else if (Intent.ACTION_PICK.equals(intent.getAction()))
-            mPurpose = Purpose.PickFile;
-        else
-            mPurpose = Purpose.PickKeyFile;
-        
+
             //Setup the UI
         setContentView(R.layout.chooser);
-
+            //Create the fragment adapter
         mFragmentPagerAdapter = new SwipeFragmentPagerAdapter(getFragmentManager(), getLayoutInflater());
-        FileBrowserFragment fileBrowserFragment = new FileBrowserFragment(getIntent());
-        RecentFilesFragment recentFilesFragment = new RecentFilesFragment(getIntent());
+            //Add the fragments
+        FileBrowserFragment fileBrowserFragment = FileBrowserFragment.newInstance(getIntent());
+        RecentFilesFragment recentFilesFragment = RecentFilesFragment.newInstance(getIntent());
         mFragmentPagerAdapter.add(fileBrowserFragment);
         mFragmentPagerAdapter.add(recentFilesFragment);
-
-            //Listen for changes in the recent files list
-        getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).registerOnSharedPreferenceChangeListener(recentFilesFragment);
-        
+            //Add the fragment adapter to he view
         mViewPager = (ViewPager) findViewById(R.id.pager);
         mViewPager.setAdapter(mFragmentPagerAdapter);
 
@@ -61,18 +48,12 @@ public class PenAndPDFFileChooser extends Activity {
             // Create a tab listener that is called when the user changes tabs.
         ActionBar.TabListener tabListener = new ActionBar.TabListener() {
                 public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
-                        // When the tab is selected, switch to the
-                        // corresponding page in the ViewPager.
                     mViewPager.setCurrentItem(tab.getPosition());
                 }
                 
-                public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
-                        // hide the given tab
-                }
+                public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {}
                 
-                public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
-                        // probably ignore this event
-                }
+                public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {}
             };
         
             // Add 2 tabs, specifying the tab's text and TabListener
@@ -99,8 +80,7 @@ public class PenAndPDFFileChooser extends Activity {
             new ViewPager.SimpleOnPageChangeListener() {
                 @Override
                 public void onPageSelected(int position) {
-                        // When swiping between pages, select the
-                        // corresponding tab.
+                        //When swiping between pages, select the corresponding tab.
                     getActionBar().setSelectedNavigationItem(position);
                 }
             });
@@ -108,25 +88,23 @@ public class PenAndPDFFileChooser extends Activity {
 
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) //Inflates the options menu
-        {
-            MenuInflater inflater = getMenuInflater();
-            inflater.inflate(R.menu.choosepdf_menu, menu);
-            return true;
-        }
+    public boolean onCreateOptionsMenu(Menu menu) {//Inflates the options menu
+        
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.choosepdf_menu, menu);
+        return true;
+    }
     
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) //Handel clicks in the options menu 
+    public boolean onOptionsItemSelected(MenuItem item) {//Handel clicks in the options menu
+        switch (item.getItemId()) 
         {
-            switch (item.getItemId()) 
-            {
-                case R.id.menu_settings:
-                    Intent intent = new Intent(this,SettingsActivity.class);
-                    startActivity(intent);
-                    return true;
-                default:
-                    return super.onOptionsItemSelected(item);
-            }
+            case R.id.menu_settings:
+                Intent intent = new Intent(this,SettingsActivity.class);
+                startActivity(intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-    
+    }   
 }

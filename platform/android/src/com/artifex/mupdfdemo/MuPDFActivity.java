@@ -75,7 +75,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private int mPageBeforeInternalLinkHit = -1;
     private boolean mCanUndo = false;
 
-//    private RecentFilesList recentFiles;    
     private final int    OUTLINE_REQUEST=0;
     private final int    PRINT_REQUEST=1;
     private final int    FILEPICK_REQUEST = 2;
@@ -284,8 +283,9 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
 
     // @Override
-    // protected void onStart()
-    //     {}
+    // protected void onStart() {
+    // super.onStart();
+    // }
 
     
     @Override
@@ -324,8 +324,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
 
         @Override
-    protected void onPause()
-        {
+        protected void onPause() {
             super.onPause();
             
             if (mSearchTask != null) mSearchTask.stop();
@@ -348,20 +347,22 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 if(path != null)
                 {
                         //Read the recent files list from preferences
-                    RecentFilesList recentFilesList = new RecentFilesList(RecentFilesList.MAX_RECENT_FILES);
-                    for (int i = 0; i<RecentFilesList.MAX_RECENT_FILES; i++)
-                    {
-                        String recentFile = prefs.getString("recentfile"+i,null);
-                        if(recentFile != null) recentFilesList.push(recentFile);
-                    }
+                    RecentFilesList recentFilesList = new RecentFilesList(prefs);
+                    // RecentFilesList recentFilesList = new RecentFilesList(RecentFilesList.MAX_RECENT_FILES);
+                    // for (int i = 0; i<RecentFilesList.MAX_RECENT_FILES; i++)
+                    // {
+                    //     String recentFile = prefs.getString("recentfile"+i,null);
+                    //     if(recentFile != null && recentFile.isFile() && recentFile.canRead() && ) recentFilesList.push(recentFile);
+                    // }
                     
                         //Add the current file
-                    if(!recentFilesList.contains(path)) recentFilesList.push(path);
+                    recentFilesList.push(path);
                         //Write the recent files list
-                    for (int i = 0; i<recentFilesList.size(); i++)
-                    {
-                        edit.putString("recentfile"+i,recentFilesList.get(i));
-                    }
+                    recentFilesList.write(edit);
+                    // for (int i = 0; i<recentFilesList.size(); i++)
+                    // {
+                    //     edit.putString("recentfile"+i,recentFilesList.get(i));
+                    // }
                 }
 
                 String filename = core.getFileName();
@@ -394,12 +395,15 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     
 
     // @Override
-    // protected void onStop()
-    //     {}
+    // protected void onStop() {
+    //     super.onStop():
+    // }
 
-
-    protected void onDestroy() //There is no guarantee that this is ever called!!!
-	{
+    @Override
+    protected void onDestroy() {//There is no guarantee that this is ever called!!!
+	
+        super.onDestroy();
+            
             getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).unregisterOnSharedPreferenceChangeListener(this);
 
             if(core != null && !isChangingConfigurations())
@@ -423,6 +427,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     @Override
     public boolean onCreateOptionsMenu(Menu menu) //Inflates the options menu
         {
+            super.onCreateOptionsMenu(menu);
+            
             MenuInflater inflater = getMenuInflater();
             switch (mActionBarMode)
             {
@@ -499,225 +505,224 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             mDocView.resetupChildren();
             return false;
         }
+
     
     @Override
-    public boolean onQueryTextChange(String query) //For search
-        { //This is a hacky way to determine when the user has reset the text field with the X button 
-            if ( query.length() == 0 && oldQueryText.length() > 1) {
-                SearchTaskResult.set(null);
-                mDocView.resetupChildren();
-            }
-            oldQueryText = query;
-            return false;
+    public boolean onQueryTextChange(String query) {//For search
+            //This is a hacky way to determine when the user has reset the text field with the X button 
+        if ( query.length() == 0 && oldQueryText.length() > 1) {
+            SearchTaskResult.set(null);
+            mDocView.resetupChildren();
         }
+        oldQueryText = query;
+        return false;
+    }
 
     @Override 
-    public boolean onQueryTextSubmit(String query) //For search
+    public boolean onQueryTextSubmit(String query) {//For search
+        if(mQuery != query)
         {
-            if(mQuery != query)
-            {
-                mQuery = query;
-                search(1);
-            }
-            return true; //We handle this here and don't want to call onNewIntent()
+            mQuery = query;
+            search(1);
         }
+        return true; //We handle this here and don't want to call onNewIntent()
+    }
     
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) //Handel clicks in the options menu 
+    public boolean onOptionsItemSelected(MenuItem item) { //Handel clicks in the options menu 
+        MuPDFView pageView = (MuPDFView) mDocView.getDisplayedView();
+        switch (item.getItemId()) 
         {
-            MuPDFView pageView = (MuPDFView) mDocView.getDisplayedView();
-            switch (item.getItemId()) 
-            {
-                case R.id.menu_undo:
-                    pageView.undoDraw();
-                    mDocView.onNumberOfStrokesChanged(pageView.getDrawingSize());
-                    return true;
-                case R.id.menu_settings:
-                    Intent intent = new Intent(this,SettingsActivity.class);
-                    startActivity(intent);
-                    return true;
-                case R.id.menu_draw:
-                    mAcceptMode = AcceptMode.Ink;
-                    mDocView.setMode(MuPDFReaderView.Mode.Drawing);
-                    mActionBarMode = ActionBarMode.Annot;
-                    invalidateOptionsMenu();
-                    return true;
-                case R.id.menu_highlight:
+            case R.id.menu_undo:
+                pageView.undoDraw();
+                mDocView.onNumberOfStrokesChanged(pageView.getDrawingSize());
+                return true;
+            case R.id.menu_settings:
+                Intent intent = new Intent(this,SettingsActivity.class);
+                startActivity(intent);
+                return true;
+            case R.id.menu_draw:
+                mAcceptMode = AcceptMode.Ink;
+                mDocView.setMode(MuPDFReaderView.Mode.Drawing);
+                mActionBarMode = ActionBarMode.Annot;
+                invalidateOptionsMenu();
+                return true;
+            case R.id.menu_highlight:
                     // mAcceptMode = AcceptMode.Highlight;
                     // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
                     // mActionBarMode = ActionBarMode.Annot;
-                    if (pageView.hasSelection()) {
-                        pageView.markupSelection(Annotation.Type.HIGHLIGHT);
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                        mActionBarMode = ActionBarMode.Main;
-                        invalidateOptionsMenu();
-                    }
-                    else
-                        showInfo(getString(R.string.select_text));
-                    return true;
-                case R.id.menu_underline:
+                if (pageView.hasSelection()) {
+                    pageView.markupSelection(Annotation.Type.HIGHLIGHT);
+                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                    mActionBarMode = ActionBarMode.Main;
+                    invalidateOptionsMenu();
+                }
+                else
+                    showInfo(getString(R.string.select_text));
+                return true;
+            case R.id.menu_underline:
                     // mAcceptMode = AcceptMode.Underline;
                     // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
                     // mActionBarMode = ActionBarMode.Annot;
-                    if (pageView.hasSelection()) {
-                        pageView.markupSelection(Annotation.Type.UNDERLINE);
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                        mActionBarMode = ActionBarMode.Main;
-                        invalidateOptionsMenu();
-                    }
-                    else
-                        showInfo(getString(R.string.select_text));
-                    return true;
-                case R.id.menu_strikeout:
+                if (pageView.hasSelection()) {
+                    pageView.markupSelection(Annotation.Type.UNDERLINE);
+                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                    mActionBarMode = ActionBarMode.Main;
+                    invalidateOptionsMenu();
+                }
+                else
+                    showInfo(getString(R.string.select_text));
+                return true;
+            case R.id.menu_strikeout:
                     // mAcceptMode = AcceptMode.StrikeOut;
                     // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
                     // mActionBarMode = ActionBarMode.Annot;
-                    if (pageView.hasSelection()) {
-                        pageView.markupSelection(Annotation.Type.STRIKEOUT);
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                        mActionBarMode = ActionBarMode.Main;
-                        invalidateOptionsMenu();
-                    }
-                    else
-                        showInfo(getString(R.string.select_text));
-                    return true;
-                case R.id.menu_copytext:
+                if (pageView.hasSelection()) {
+                    pageView.markupSelection(Annotation.Type.STRIKEOUT);
+                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                    mActionBarMode = ActionBarMode.Main;
+                    invalidateOptionsMenu();
+                }
+                else
+                    showInfo(getString(R.string.select_text));
+                return true;
+            case R.id.menu_copytext:
                     // mActionBarMode = ActionBarMode.Copy;
                     // invalidateOptionsMenu();
                     // mAcceptMode = AcceptMode.CopyText;
                     // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
                     // showInfo(getString(R.string.select_text));
-                    if (pageView.hasSelection()) {
-                        boolean success = pageView.copySelection();
-                        showInfo(success?getString(R.string.copied_to_clipboard):getString(R.string.no_text_selected));
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                        mActionBarMode = ActionBarMode.Main;
-                        invalidateOptionsMenu();
-                    }
-                    else
-                        showInfo(getString(R.string.select_text));
-                    return true;
-                case R.id.menu_cancel:
-                    switch (mActionBarMode) {
-                        case Annot:
-                        case Copy:
-                            if (pageView != null) {
+                if (pageView.hasSelection()) {
+                    boolean success = pageView.copySelection();
+                    showInfo(success?getString(R.string.copied_to_clipboard):getString(R.string.no_text_selected));
+                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                    mActionBarMode = ActionBarMode.Main;
+                    invalidateOptionsMenu();
+                }
+                else
+                    showInfo(getString(R.string.select_text));
+                return true;
+            case R.id.menu_cancel:
+                switch (mActionBarMode) {
+                    case Annot:
+                    case Copy:
+                        if (pageView != null) {
                                 pageView.deselectText();
                                 pageView.cancelDraw();
+                        }
+                        mCanUndo = false;
+                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                        break;
+                    case Edit:
+                        if (pageView != null)
+                            pageView.deleteSelectedAnnotation();
+                        break;
+                    case Search:
+                        SearchTaskResult.set(null);
+                        mDocView.resetupChildren();
+                        break;
+                    case Selection:
+                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                        pageView.deselectText();
+                        break;
+                }
+                mActionBarMode = ActionBarMode.Main;
+                invalidateOptionsMenu();
+                return true;
+            case R.id.menu_accept:
+                switch (mActionBarMode) {
+                    case Annot:
+                    case Copy:
+                        if (pageView != null) {
+                            switch (mAcceptMode) {
+                                case Ink:
+                                    pageView.saveDraw();
+                                    break;
+                                        // case Highlight:
+                                        //     pageView.markupSelection(Annotation.Type.HIGHLIGHT);
+                                        //     break;
+                                        // case Underline:
+                                        //     pageView.markupSelection(Annotation.Type.UNDERLINE);
+                                        //     break;
+                                        // case StrikeOut:
+                                        //     pageView.markupSelection(Annotation.Type.STRIKEOUT);
+                                        //     break;
+                                        // case CopyText:    
+                                        //     boolean success = pageView.copySelection();
+                                        //     showInfo(success?getString(R.string.copied_to_clipboard):getString(R.string.no_text_selected));
+                                        //     break;
                             }
-                            mCanUndo = false;
-                            mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                            break;
-                        case Edit:
-                            if (pageView != null)
-                                pageView.deleteSelectedAnnotation();
-                            break;
-                        case Search:
-                            SearchTaskResult.set(null);
-                            mDocView.resetupChildren();
-                            break;
-                        case Selection:
-                            mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                            pageView.deselectText();
-                            break;
-                    }
-                    mActionBarMode = ActionBarMode.Main;
-                    invalidateOptionsMenu();
-                    return true;
-                case R.id.menu_accept:
-                    switch (mActionBarMode) {
-                        case Annot:
-                        case Copy:
-                            if (pageView != null) {
-                                switch (mAcceptMode) {
-                                    case Ink:
-                                        pageView.saveDraw();
-                                        break;
-                                    // case Highlight:
-                                    //     pageView.markupSelection(Annotation.Type.HIGHLIGHT);
-                                    //     break;
-                                    // case Underline:
-                                    //     pageView.markupSelection(Annotation.Type.UNDERLINE);
-                                    //     break;
-                                    // case StrikeOut:
-                                    //     pageView.markupSelection(Annotation.Type.STRIKEOUT);
-                                    //     break;
-                                    // case CopyText:    
-                                    //     boolean success = pageView.copySelection();
-                                    //     showInfo(success?getString(R.string.copied_to_clipboard):getString(R.string.no_text_selected));
-                                    //     break;
-                                }
+                        }
+                        mCanUndo = false;
+                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                        break;
+                    case Edit:
+                        if (pageView != null)
+                            pageView.deselectAnnotation();
+                }
+                mActionBarMode = ActionBarMode.Main;
+                invalidateOptionsMenu();
+                return true;
+            case R.id.menu_print:
+                printDoc();
+                return true;
+            case R.id.menu_search:
+                mActionBarMode = ActionBarMode.Search;
+                invalidateOptionsMenu();
+                return true;
+            case R.id.menu_next:
+                if (mQuery != "") search(1);
+                return true;
+            case R.id.menu_previous:
+                if (mQuery != "") search(-1);
+                return true;
+            case R.id.menu_save:
+                DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (which == AlertDialog.BUTTON_POSITIVE) {
+                                core.save();
+                                core.onDestroy();
+                                core = null;
+                                mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
+                                onPause();
+                                onResume();
                             }
-                            mCanUndo = false;
-                            mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                            break;
-                        case Edit:
-                            if (pageView != null)
-                                pageView.deselectAnnotation();
-                    }
-                    mActionBarMode = ActionBarMode.Main;
-                    invalidateOptionsMenu();
-                    return true;
-                case R.id.menu_print:
-                    printDoc();
-                    return true;
-                case R.id.menu_search:
-                    mActionBarMode = ActionBarMode.Search;
-                    invalidateOptionsMenu();
-                    return true;
-                case R.id.menu_next:
-                    if (mQuery != "") search(1);
-                    return true;
-                case R.id.menu_previous:
-                    if (mQuery != "") search(-1);
-                    return true;
-                case R.id.menu_save:
-                    DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                if (which == AlertDialog.BUTTON_POSITIVE) {
-                                    core.save();
-                                    core.onDestroy();
-                                    core = null;
-                                    mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
-                                    onPause();
-                                    onResume();
-                                }
-                                if (which == AlertDialog.BUTTON_NEUTRAL) {
+                            if (which == AlertDialog.BUTTON_NEUTRAL) {
 //                                    Intent intent = new Intent(getApplicationContext(),ChoosePDFActivity.class);
-                                    Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
-                                    if (core.getFileName() != null) intent.setData(Uri.parse(core.getFileName()));
-                                    intent.setAction(Intent.ACTION_PICK);
-                                    startActivityForResult(intent, SAVEAS_REQUEST);
-                                }
-                                if (which == AlertDialog.BUTTON_NEGATIVE) {
-                                }
+                                Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
+                                if (core.getFileName() != null) intent.setData(Uri.parse(core.getFileName()));
+                                intent.setAction(Intent.ACTION_PICK);
+                                startActivityForResult(intent, SAVEAS_REQUEST);
                             }
-                        };
-                    AlertDialog alert = mAlertBuilder.create();
-                    alert.setTitle("MuPDF");
+                            if (which == AlertDialog.BUTTON_NEGATIVE) {
+                            }
+                        }
+                    };
+                AlertDialog alert = mAlertBuilder.create();
+                alert.setTitle("MuPDF");
 //                    alert.setMessage(getString(R.string.document_has_changes_save_them_));
-                    if (core != null && core.getFileName() != null) alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
-                    alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.saveas), listener);
-                    alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), listener);
-                    alert.show();
-                    return true;
-                case R.id.menu_gotopage:
-                    showGoToPageDialoge();
-                    return true;
-                case R.id.menu_selection:
-                    mDocView.setMode(MuPDFReaderView.Mode.Selecting);
-                    mActionBarMode = ActionBarMode.Selection;
-                    invalidateOptionsMenu();
-                    return true;
-                case R.id.menu_linkback:
-                    mDocView.setDisplayedViewIndex(mPageBeforeInternalLinkHit);
-                    mPageBeforeInternalLinkHit = -1;
-                    invalidateOptionsMenu();
-                    return true;
-                default:
-                    return super.onOptionsItemSelected(item);
-            }
+                if (core != null && core.getFileName() != null) alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
+                alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.saveas), listener);
+                alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), listener);
+                alert.show();
+                return true;
+            case R.id.menu_gotopage:
+                showGoToPageDialoge();
+                return true;
+            case R.id.menu_selection:
+                mDocView.setMode(MuPDFReaderView.Mode.Selecting);
+                mActionBarMode = ActionBarMode.Selection;
+                invalidateOptionsMenu();
+                return true;
+            case R.id.menu_linkback:
+                mDocView.setDisplayedViewIndex(mPageBeforeInternalLinkHit);
+                mPageBeforeInternalLinkHit = -1;
+                invalidateOptionsMenu();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
+    }
 
 
     public void setupCore() {
