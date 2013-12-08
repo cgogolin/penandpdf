@@ -73,7 +73,7 @@ public class FileBrowserFragment extends ListFragment {
             if(intent.getData() != null) filename = intent.getData().getLastPathSegment();
         }
         
-        File directory;
+        File directory = null;
         if(purpose == Purpose.PickFile && intent.getData() != null)
             directory = (new File(intent.getData().getPath())).getParentFile();
         else    
@@ -83,7 +83,7 @@ public class FileBrowserFragment extends ListFragment {
         Bundle bundle = new Bundle(3);
         bundle.putString(PURPOSE,purpose.toString());
         bundle.putString(FILENAME,filename);
-        bundle.putString(DIRECTORY,directory.getAbsolutePath());
+        if(directory !=null) bundle.putString(DIRECTORY,directory.getAbsolutePath());
             //Pass it to the Fragment and return 
         FileBrowserFragment fileBrowserFragment = new FileBrowserFragment();
         fileBrowserFragment.setArguments(bundle);
@@ -117,8 +117,12 @@ public class FileBrowserFragment extends ListFragment {
             mPurpose = Purpose.valueOf(savedInstanceState.getString(PURPOSE));
             mDirectory = new File(savedInstanceState.getString(DIRECTORY));
         }
-            
-            //Check storage state
+        if(mDirectory == null)
+        {
+            mDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        }
+
+        
         String storageState = Environment.getExternalStorageState();
         if (!Environment.MEDIA_MOUNTED.equals(storageState)
             && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(storageState))

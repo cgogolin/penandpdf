@@ -75,6 +75,7 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
         super.onResume();
             //Listen for changes in the recent files list
         getActivity().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS).registerOnSharedPreferenceChangeListener(this);
+        loadRecentFilesList();
     }
 
 
@@ -93,10 +94,12 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
 
         final LayoutInflater layoutInflater = inflater; //used to pass on the inflator to the Adapter
             //Create the RecentFilesAdapter (an ArrayListAdapter)
-//        mRecentFilesAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, recentFilesList) {
         mRecentFilesAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
+                    //Reverse the order (This a hack!!!)
+                position = getCount() - 1 - position;
+                
                 View view;
                 if (convertView == null) {
                     view = layoutInflater.inflate(R.layout.picker_entry, null);
@@ -105,9 +108,8 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
                 }
                 ((TextView)view.findViewById(R.id.name)).setText(getItem(position));
                 ((ImageView)view.findViewById(R.id.icon)).setImageResource(R.drawable.ic_doc);
-//                ((ImageView)view.findViewById(R.id.icon)).setColorFilter(Color.argb(255, 0, 0, 0));
                 return view;
-            }    
+            }
         };
         
         loadRecentFilesList();
@@ -149,25 +151,19 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
     
     public void onSharedPreferenceChanged(SharedPreferences sharedPref, String key) {
         loadRecentFilesList();
-        mRecentFilesAdapter.notifyDataSetChanged();
     }
 
     
     private void loadRecentFilesList() {
-        if (getActivity() == null) return;
+        if (getActivity() == null || mRecentFilesAdapter == null) return;
         
             //Read the recent files list from preferences
         SharedPreferences prefs = getActivity().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
         RecentFilesList recentFilesList = new RecentFilesList(prefs);
-        // RecentFilesList recentFilesList = new RecentFilesList(RecentFilesList.MAX_RECENT_FILES);
-        // for (int i = 0; i<RecentFilesList.MAX_RECENT_FILES; i++)
-        // {
-        //     String recentPath = prefs.getString("recentfile"+i,null);
-        //     if(recentPath != null) recentFilesList.push(recentPath);
-        // }
         
-        if(mRecentFilesAdapter != null)
-            mRecentFilesAdapter.clear();
-            mRecentFilesAdapter.addAll(recentFilesList.toArray(new String[recentFilesList.size()]));
-        }
+        mRecentFilesAdapter.clear();
+        mRecentFilesAdapter.addAll(recentFilesList.toArray(new String[recentFilesList.size()]));
+        mRecentFilesAdapter.notifyDataSetChanged();
     }
+    
+}

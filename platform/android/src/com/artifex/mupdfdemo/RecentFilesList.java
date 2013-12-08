@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import android.content.SharedPreferences;
 import java.io.File;
 
-public class RecentFilesList extends LinkedList<String> {
+public class RecentFilesList extends LinkedList<String> { //Probably not the mode appropriate list type...
 
     static final int MAX_RECENT_FILES=10;
     
@@ -15,6 +15,7 @@ public class RecentFilesList extends LinkedList<String> {
             String recentFileString = prefs.getString("recentfile"+i,null);
             if(recentFileString != null)
             {
+                    //Make sure we add only actual files
 //                File recentFile = new File(recentFileString);
 //                if(recentFile != null && recentFile.isFile() && recentFile.canRead()) push(recentFileString);
 //                if(recentFile != null)
@@ -32,11 +33,12 @@ public class RecentFilesList extends LinkedList<String> {
         
     @Override
     public void push(String recentFileString) {
-        if(contains(recentFileString))
-        {
-            super.push(recentFileString);
-            while (size() > MAX_RECENT_FILES) { removeLast(); }
-          
-        }
+//        if(!contains(recentFileString))
+            //Make sure we don't put duplicates
+        remove(recentFileString);
+            //Add
+        super.push(recentFileString);
+            //Remove elements until lenght is short enough
+        while (size() > MAX_RECENT_FILES) { removeLast(); }
     }
 }
