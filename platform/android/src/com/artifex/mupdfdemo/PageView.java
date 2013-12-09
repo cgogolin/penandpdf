@@ -114,7 +114,8 @@ class TextSelector {
 
 public abstract class PageView extends ViewGroup {
 //        public static final int HIGHLIGHT_COLOR = 0x802572AC;
-        public static final int HIGHLIGHT_COLOR = 0x4033B5E5;
+//        public static final int HIGHLIGHT_COLOR = 0x4033B5E5;
+        public static final int HIGHLIGHT_COLOR = 0x8033B5E5;
         public static final int SEARCHRESULTS_COLOR = 0x4033B5E5;
 //        public static final int LINK_COLOR = 0x60C7C7C7;
         public static final int LINK_COLOR = 0xFF33B5E5;
@@ -375,8 +376,9 @@ public abstract class PageView extends ViewGroup {
 					}
 
 					if (mSelectBox != null && mText != null) {
-						paint.setColor(HIGHLIGHT_COLOR);
-						processSelectedText(new TextProcessor() {
+                                            paint.setStyle(Paint.Style.FILL);
+                                            paint.setColor(HIGHLIGHT_COLOR);
+                                            processSelectedText(new TextProcessor() {
 							RectF rect;
 
 							public void onStartLine() {
