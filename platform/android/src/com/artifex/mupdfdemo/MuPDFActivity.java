@@ -341,7 +341,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             if (core != null && mDocView != null) {
 
                 String path = core.getPath();
-                SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
+                SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
                 SharedPreferences.Editor edit = prefs.edit();
                 
                 if(path != null)
@@ -885,15 +885,14 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             };
         
             // Reenstate last state if it was recorded
-        SharedPreferences prefs = getPreferences(Context.MODE_MULTI_PROCESS);
+        SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
         String filename = core.getFileName();
         if(filename == null) filename = "buffer";
-        // if (core.getFileName() != null)
-        // {
+
         mDocView.setDisplayedViewIndex(prefs.getInt("page"+filename, 0));
         mDocView.setScale(prefs.getFloat("normalizedscale"+filename, 0.0f)); //If normalizedScale=0.0 nothing happens
         mDocView.setScroll(prefs.getFloat("normalizedxscroll"+filename, 0.0f), prefs.getFloat("normalizedyscroll"+filename, 0.0f));
-        // }
+
         if(core.getFileName() == null) setTitle(); //Otherwise this is already done by the DocView
 
             // Stick the document view into a parent view

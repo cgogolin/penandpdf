@@ -70,7 +70,8 @@ public class ChoosePDFActivity extends ListActivity
             mPurpose = Purpose.PickKeyFile;
                 
             //Read the recent files list from preferences
-        SharedPreferences prefs = getPreferences(Context.MODE_MULTI_PROCESS);
+//        SharedPreferences prefs = getPreferences(Context.MODE_MULTI_PROCESS);
+        SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
         // recentFilesList = new RecentFilesList(RecentFilesList.MAX_RECENT_FILES);
         // for (int i = 0; i<recentFilesList.size(); i++)
         // {
