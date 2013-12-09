@@ -76,14 +76,13 @@ public class FileBrowserFragment extends ListFragment {
         File directory = null;
         if(purpose == Purpose.PickFile && intent.getData() != null)
             directory = (new File(intent.getData().getPath())).getParentFile();
-        else    
-            directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        
+            
             //Put the collected data in a Bundle
         Bundle bundle = new Bundle(3);
-        bundle.putString(PURPOSE,purpose.toString());
-        bundle.putString(FILENAME,filename);
-        if(directory !=null) bundle.putString(DIRECTORY,directory.getAbsolutePath());
+        if(purpose != null) bundle.putString(PURPOSE,purpose.toString());
+        if(filename != null) bundle.putString(FILENAME,filename);
+        if(directory != null) bundle.putString(DIRECTORY,directory.getAbsolutePath());
+        
             //Pass it to the Fragment and return 
         FileBrowserFragment fileBrowserFragment = new FileBrowserFragment();
         fileBrowserFragment.setArguments(bundle);
@@ -109,63 +108,60 @@ public class FileBrowserFragment extends ListFragment {
         {
             mFilename = getArguments().getString(FILENAME);
             mPurpose = Purpose.valueOf(getArguments().getString(PURPOSE));
-            mDirectory = new File(getArguments().getString(DIRECTORY));
+            if(getArguments().getString(DIRECTORY) != null) mDirectory = new File(getArguments().getString(DIRECTORY));
         }
         else if(savedInstanceState != null)
         {
             mFilename = savedInstanceState.getString(FILENAME);
             mPurpose = Purpose.valueOf(savedInstanceState.getString(PURPOSE));
-            mDirectory = new File(savedInstanceState.getString(DIRECTORY));
+            if(savedInstanceState.getString(DIRECTORY) != null) mDirectory = new File(savedInstanceState.getString(DIRECTORY));
         }
+            //If we didn't get a directory we default to downloads
         if(mDirectory == null)
-        {
-            mDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        }
-
+            mDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);    
         
-        String storageState = Environment.getExternalStorageState();
-        if (!Environment.MEDIA_MOUNTED.equals(storageState)
-            && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(storageState))
-        {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setTitle(R.string.no_media_warning);
-            builder.setMessage(R.string.no_media_hint);
-            AlertDialog alert = builder.create();
-            alert.setButton(AlertDialog.BUTTON_POSITIVE,getString(R.string.dismiss),
-                            new OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    getActivity().finish();
-                                }
-                            });
-            alert.show();
-            return;
-        }
+        // String storageState = Environment.getExternalStorageState();
+        // if (!Environment.MEDIA_MOUNTED.equals(storageState)
+        //     && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(storageState))
+        // {
+        //     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        //     builder.setTitle(R.string.no_media_warning);
+        //     builder.setMessage(R.string.no_media_hint);
+        //     AlertDialog alert = builder.create();
+        //     alert.setButton(AlertDialog.BUTTON_POSITIVE,getString(R.string.dismiss),
+        //                     new OnClickListener() {
+        //                         public void onClick(DialogInterface dialog, int which) {
+        //                             getActivity().finish();
+        //                         }
+        //                     });
+        //     alert.show();
+        //     return;
+        // }
         
             // Create a new handler that is updated dynamically when files are scanned
         mHandler = new Handler();
         mUpdateFiles = new Runnable() {
                 public void run() {
                     if(!isAdded()) return;
-                    
+                    if(mDirectory==null) return;
+
+                        //Set the title from the current direcory
                     Resources res = getResources();
                     String appName = res.getString(R.string.app_name);
                     String version = res.getString(R.string.version);
                     String title = res.getString(R.string.picker_title_App_Ver_Dir);
-                        //setTitle(String.format(title, appName, version, mDirectory));
-//                    setTitle(mDirectory.getPath());
+                    getActivity().setTitle(mDirectory.getPath());
+
+                        //Get the parent directory and the directories and files
                     mParent = mDirectory.getParentFile();
-
                     mDirs = mDirectory.listFiles(new FileFilter() {
-
                             public boolean accept(File file) {
                                 return file.isDirectory();
                             }
                         });
                     if (mDirs == null)
                         mDirs = new File[0];
-
                     mFiles = mDirectory.listFiles(new FileFilter() {
-
                             public boolean accept(File file) {
                                 if (file.isDirectory())
                                     return false;
@@ -177,11 +173,11 @@ public class FileBrowserFragment extends ListFragment {
                                             return true;
                                         else
                                             return false;
-                                    case PickKeyFile:
-                                        if (fname.endsWith(".pfx"))
-                                            return true;
-                                        else
-                                            return false;
+                                    // case PickKeyFile:
+                                    //     if (fname.endsWith(".pfx"))
+                                    //         return true;
+                                    //     else
+                                    //         return false;
                                     default:
                                         return false;
                                 }
@@ -190,18 +186,19 @@ public class FileBrowserFragment extends ListFragment {
                     if (mFiles == null)
                         mFiles = new File[0];
 
+                        //Sort the file and directory lists
                     Arrays.sort(mFiles, new Comparator<File>() {
                             public int compare(File arg0, File arg1) {
                                 return arg0.getName().compareToIgnoreCase(arg1.getName());
                             }
                         });
-
                     Arrays.sort(mDirs, new Comparator<File>() {
                             public int compare(File arg0, File arg1) {
                                 return arg0.getName().compareToIgnoreCase(arg1.getName());
                             }
                         });
 
+                        //Add them to the adapter
                     mAdapter.clear();
                     if (mParent != null)
                         mAdapter.add(new ChoosePDFItem(ChoosePDFItem.Type.PARENT, getString(R.string.parent_directory)));
@@ -215,7 +212,6 @@ public class FileBrowserFragment extends ListFragment {
         
             // Start initial file scan...
         mHandler.post(mUpdateFiles);
-
             // ...and observe the directory and scan files upon changes.
         FileObserver observer = new FileObserver(mDirectory.getPath(), FileObserver.CREATE | FileObserver.DELETE) {
                 public void onEvent(int event, String path) {
@@ -320,5 +316,10 @@ public class FileBrowserFragment extends ListFragment {
         String p = mDirectory.getAbsolutePath();
         if (mPositions.containsKey(p))
             getListView().setSelection(mPositions.get(p));
+    }
+
+    void goToDir(File dir) {
+            mDirectory = dir;
+            mHandler.post(mUpdateFiles);
     }
 }

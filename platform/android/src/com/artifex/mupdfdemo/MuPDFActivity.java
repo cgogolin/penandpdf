@@ -343,28 +343,15 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 String path = core.getPath();
                 SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
                 SharedPreferences.Editor edit = prefs.edit();
-                
                 if(path != null)
                 {
                         //Read the recent files list from preferences
-                    RecentFilesList recentFilesList = new RecentFilesList(prefs);
-                    // RecentFilesList recentFilesList = new RecentFilesList(RecentFilesList.MAX_RECENT_FILES);
-                    // for (int i = 0; i<RecentFilesList.MAX_RECENT_FILES; i++)
-                    // {
-                    //     String recentFile = prefs.getString("recentfile"+i,null);
-                    //     if(recentFile != null && recentFile.isFile() && recentFile.canRead() && ) recentFilesList.push(recentFile);
-                    // }
-                    
+                    RecentFilesList recentFilesList = new RecentFilesList(prefs);                    
                         //Add the current file
                     recentFilesList.push(path);
                         //Write the recent files list
                     recentFilesList.write(edit);
-                    // for (int i = 0; i<recentFilesList.size(); i++)
-                    // {
-                    //     edit.putString("recentfile"+i,recentFilesList.get(i));
-                    // }
                 }
-
                 String filename = core.getFileName();
                 if(filename == null) filename = "buffer";
                 edit.putFloat("normalizedscale"+filename, mDocView.getNormalizedScale());
@@ -680,11 +667,14 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             if (which == AlertDialog.BUTTON_POSITIVE) {
-                                core.save();
-                                core.onDestroy();
-                                core = null;
-                                mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
                                 onPause();
+                                    //If we have not saved during on pause do it now
+                                if(core != null)
+                                {
+                                    core.save();
+                                    core.onDestroy(); //Destroy only if we have saved
+                                    core = null;
+                                }
                                 onResume();
                             }
                             if (which == AlertDialog.BUTTON_NEUTRAL) {
@@ -952,12 +942,16 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private int saveAs(Uri uri)
         {
             if (core == null) return 0;
+                //Do not overwrite the current fiele during onPause()
+            mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; 
+            onPause();
+                //Save to the new location
             int success = core.saveAs(uri.toString());
             core.onDestroy();
             core = null;
-            mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
-            getIntent().setData(uri);//Set the uri of this intent so that we load the new file during onResum()
-            onPause();
+                //Set the uri of this intent so that we load the new file during onResum()...
+            getIntent().setData(uri);
+                //... and resume
             onResume();
             return success;
         }

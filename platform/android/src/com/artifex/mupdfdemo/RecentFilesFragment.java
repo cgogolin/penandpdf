@@ -1,5 +1,7 @@
 package com.artifex.mupdfdemo;
 
+import java.io.File;
+
 import android.graphics.Color;
 import android.app.Fragment;
 import android.app.ListFragment;
@@ -20,10 +22,16 @@ import android.widget.TextView;
 import android.widget.ImageView;
 import android.net.Uri;
 import android.content.Intent;
+import java.util.Collections;
+import java.util.ListIterator;
 
 //public static class SettingsFragment extends PreferenceFragment {
 public class RecentFilesFragment extends ListFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
+    public interface goToDirInterface {
+        public void goToDir(File dir);
+    }
+    
     private enum Purpose { ChoosePDF, PickKeyFile, PickFile }
     
     private ArrayAdapter<String> mRecentFilesAdapter;
@@ -33,6 +41,8 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
     static final String FILENAME = "filename";
     static final String DIRECTORY = "directory";
 
+    private int numDirectories = 0;
+    
     public static final RecentFilesFragment newInstance(Intent intent) {
             //Collect data from intent
         Purpose purpose;
@@ -96,10 +106,7 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
             //Create the RecentFilesAdapter (an ArrayListAdapter)
         mRecentFilesAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1) {
             @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                    //Reverse the order (This a hack!!!)
-                position = getCount() - 1 - position;
-                
+            public View getView(int position, View convertView, ViewGroup parent) {                
                 View view;
                 if (convertView == null) {
                     view = layoutInflater.inflate(R.layout.picker_entry, null);
@@ -124,9 +131,18 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
+
+        Uri uri = Uri.parse(mRecentFilesAdapter.getItem(position));
         
         if (mRecentFilesAdapter == null ) return;
-        Uri uri = Uri.parse(mRecentFilesAdapter.getItem(position));
+
+            //A directory was clicked and we are in pick a file mode
+        if(mPurpose == Purpose.PickFile && position < numDirectories)
+        {
+            ((goToDirInterface)getActivity()).goToDir(new File(uri.getPath()));
+            return;
+        }
+
         Intent intent = new Intent(getActivity(),MuPDFActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
         intent.setData(uri);
@@ -160,7 +176,24 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
             //Read the recent files list from preferences
         SharedPreferences prefs = getActivity().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
         RecentFilesList recentFilesList = new RecentFilesList(prefs);
-        
+
+            //Add the directories of the most recent files to the list if we were asked to pick a file
+        RecentFilesList recentDirectoriesList = new RecentFilesList();
+        if(mPurpose == Purpose.PickFile)
+        {
+            ListIterator<String> iterartor = recentFilesList.listIterator(0);
+            while (iterartor.hasNext()) {
+                String file = iterartor.next();
+                recentDirectoriesList.push(file.substring(0,file.lastIndexOf("/")));
+            }
+            recentFilesList.addAll(recentDirectoriesList);
+        }
+        numDirectories = recentDirectoriesList.size();
+
+            //Make newest elements appear first
+        Collections.reverse(recentFilesList);
+
+            //Update the data in the adapter
         mRecentFilesAdapter.clear();
         mRecentFilesAdapter.addAll(recentFilesList.toArray(new String[recentFilesList.size()]));
         mRecentFilesAdapter.notifyDataSetChanged();

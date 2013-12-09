@@ -487,7 +487,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 float max_scale = MAX_SCALE * scale_factor;
                 float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
                 float fitWidthScale = (float)getWidth()/(cv.getMeasuredWidth()*scale);
-                if ( Math.abs(mScale - fitWidthScale) <= 0.2) //Should maybe be 
+                if ( Math.abs(mScale - fitWidthScale) <= 0.15 && fitWidthScale >= 1.15) 
                 {
                     mScale = Math.min(Math.max(fitWidthScale, min_scale), max_scale);
                     // float factor = mScale/previousScale;
@@ -495,6 +495,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                     // float viewFocusY = (float)getHeight()/2;
                     // mXScroll += viewFocusX - viewFocusX * factor;
                     // mYScroll += viewFocusY - viewFocusY * factor;
+                    mScroller.forceFinished(true);
                     mXScroll = -cv.getLeft();
                     mYScroll = 0;
                     requestLayout();

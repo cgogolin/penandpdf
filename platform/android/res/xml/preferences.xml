@@ -12,7 +12,7 @@
 	  android:key="pref_save_on_pause"
 	  android:title="@string/save_on_pause"
 	  android:summary="@string/save_on_pause_summ"
-	  android:defaultValue="true" />
+	  android:defaultValue="false" />
     </PreferenceCategory>
     <PreferenceCategory 
         android:title="@string/markup_settings"
@@ -26,7 +26,7 @@
 	  android:key="pref_smart_text_selection"
 	  android:title="@string/use_smart_text_selection"
 	  android:summary="@string/use_smart_text_selection_summ"
-	  android:defaultValue="true" />
+	  android:defaultValue="false" />
     </PreferenceCategory>
     <PreferenceCategory 
         android:title="@string/display_settings"
@@ -40,7 +40,7 @@
 	  android:key="pref_fit_width"
 	  android:title="@string/fit_width"
 	  android:summary="@string/fit_width_summ"
-	  android:defaultValue="false" />
+	  android:defaultValue="true" />
 <!--      <CheckBoxPreference
 	  android:key="pref_scroll_vertical"
 	  android:title="@string/scroll_vertical"
