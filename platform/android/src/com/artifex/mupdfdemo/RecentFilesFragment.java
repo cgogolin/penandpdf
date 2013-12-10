@@ -114,7 +114,10 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
                     view = convertView;
                 }
                 ((TextView)view.findViewById(R.id.name)).setText(getItem(position));
-                ((ImageView)view.findViewById(R.id.icon)).setImageResource(R.drawable.ic_doc);
+                if(position < numDirectories)
+                    ((ImageView)view.findViewById(R.id.icon)).setImageResource(R.drawable.ic_dir);  
+                else
+                    ((ImageView)view.findViewById(R.id.icon)).setImageResource(R.drawable.ic_doc);
                 return view;
             }
         };
