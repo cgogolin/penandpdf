@@ -351,15 +351,12 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     recentFilesList.push(path);
                         //Write the recent files list
                     recentFilesList.write(edit);
+                        //Save the current viewport
+                    saveViewport(edit, path);
                 }
-                String filename = core.getFileName();
-                if(filename == null) filename = "buffer";
-                edit.putFloat("normalizedscale"+filename, mDocView.getNormalizedScale());
-                edit.putFloat("normalizedxscroll"+filename, mDocView.getNormalizedXScroll());
-                edit.putFloat("normalizedyscroll"+filename, mDocView.getNormalizedYScroll());
-                edit.putInt("page"+filename, mDocView.getDisplayedViewIndex());
-                
-                edit.commit();
+//                String filename = core.getFileName();
+                // String path = core.getFileName();
+                // if(path != null) saveViewport(edit, path);
             }
             
             if (core != null)
@@ -373,7 +370,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
                 if(!mNotSaveOnPauseThisTime && core.hasChanges() && core.getFileName() != null && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_PAUSE, true))
                 {
-                    core.save();
+                    boolean success = core.save();
+                    if(!success) showInfo(getString(R.string.error_saveing));
                     core.onDestroy(); //Destroy only if we have saved
                     core = null;
                 }
@@ -397,7 +395,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             {
                 SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
                 if(!mNotSaveOnDestroyThisTime && core.hasChanges() && core.getFileName() != null && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_DESTROY, true))
-                    core.save();
+                {
+                    boolean success = core.save();
+                    if(!success) showInfo(getString(R.string.error_saveing));
+                }
                 core.onDestroy(); //Destroy in any case
                 core = null;
             }
@@ -524,6 +525,21 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 pageView.undoDraw();
                 mDocView.onNumberOfStrokesChanged(pageView.getDrawingSize());
                 return true;
+            case R.id.menu_addpage:
+                    //Insert a new blank page at the end
+                if(core!=null) core.insertBlankPageAtEnd();
+                onPause();
+                if(core!=null)
+                {
+                    boolean success = core.save();
+                    if(!success) showInfo(getString(R.string.error_saveing));
+                    core.onDestroy();
+                    core = null;
+                }
+                onResume();
+                    //Switch to the newly inserted page
+                mDocView.setDisplayedViewIndex(core.countPages()-1);
+                return true;                
             case R.id.menu_settings:
                 Intent intent = new Intent(this,SettingsActivity.class);
                 startActivity(intent);
@@ -671,7 +687,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                     //If we have not saved during on pause do it now
                                 if(core != null)
                                 {
-                                    core.save();
+                                    boolean success = core.save();
+                                    if(!success) showInfo(getString(R.string.error_saveing));
                                     core.onDestroy(); //Destroy only if we have saved
                                     core = null;
                                 }
@@ -683,7 +700,9 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                 if (core.getPath() != null) intent.setData(Uri.parse(core.getPath()));
                                 else if (core.getFileName() != null) intent.setData(Uri.parse(core.getFileName()));
                                 intent.setAction(Intent.ACTION_PICK);
+                                mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //Do not save when we are paused for the new request
                                 startActivityForResult(intent, SAVEAS_REQUEST);
+                
                             }
                             if (which == AlertDialog.BUTTON_NEGATIVE) {
                             }
@@ -875,14 +894,13 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             };
         
             // Reenstate last state if it was recorded
-        SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-        String filename = core.getFileName();
-        if(filename == null) filename = "buffer";
-
-        mDocView.setDisplayedViewIndex(prefs.getInt("page"+filename, 0));
-        mDocView.setScale(prefs.getFloat("normalizedscale"+filename, 0.0f)); //If normalizedScale=0.0 nothing happens
-        mDocView.setScroll(prefs.getFloat("normalizedxscroll"+filename, 0.0f), prefs.getFloat("normalizedyscroll"+filename, 0.0f));
-
+        String path = core.getPath();
+        if(path != null) {
+            SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS); 
+            setViewport(prefs,path);
+        }
+        
+        
         if(core.getFileName() == null) setTitle(); //Otherwise this is already done by the DocView
 
             // Stick the document view into a parent view
@@ -912,7 +930,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                         DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
                                     if (which == AlertDialog.BUTTON_POSITIVE) {
-                                        saveAs(uri);
+                                        boolean success = saveAs(uri);
+                                        if(!success) showInfo(getString(R.string.error_saveing));
                                     }
                                     if (which == AlertDialog.BUTTON_NEGATIVE) {
                                     }
@@ -927,7 +946,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     }
                     else
                     {
-                        saveAs(uri);
+                        boolean success = saveAs(uri);
+                        if(!success) showInfo(getString(R.string.error_saveing));
                     }
                 }
                 // else if (resultCode == RESULT_CANCELED)
@@ -939,14 +959,20 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     }
 
 
-    private int saveAs(Uri uri)
+    private boolean saveAs(Uri uri)
         {
-            if (core == null) return 0;
+            if (core == null) return false;
+            
                 //Do not overwrite the current fiele during onPause()
             mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; 
             onPause();
-                //Save to the new location
-            int success = core.saveAs(uri.toString());
+                //Save the viewport under the new name
+            SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+            SharedPreferences.Editor edit = prefs.edit();
+                //Save the current viewport
+            saveViewport(edit, uri.getPath());
+                //Save the file to the new location
+            boolean success = core.saveAs(uri.toString());
             core.onDestroy();
             core = null;
                 //Set the uri of this intent so that we load the new file during onResum()...
@@ -955,6 +981,22 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             onResume();
             return success;
         }
+
+    private void saveViewport(SharedPreferences.Editor edit, String path) {
+        edit.putFloat("normalizedscale"+path, mDocView.getNormalizedScale());
+        edit.putFloat("normalizedxscroll"+path, mDocView.getNormalizedXScroll());
+        edit.putFloat("normalizedyscroll"+path, mDocView.getNormalizedYScroll());
+        edit.putInt("page"+path, mDocView.getDisplayedViewIndex());
+        edit.commit();
+    }
+
+
+    private void setViewport(SharedPreferences prefs, String path) {
+        mDocView.setScale(prefs.getFloat("normalizedscale"+path, 0.0f)); //If normalizedScale=0.0 nothing happens
+        mDocView.setScroll(prefs.getFloat("normalizedxscroll"+path, 0.0f), prefs.getFloat("normalizedyscroll"+path, 0.0f));
+        mDocView.setDisplayedViewIndex(prefs.getInt("page"+path, 0));
+    }
+    
     
     public Object onRetainNonConfigurationInstance()
 	{
@@ -1107,7 +1149,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         if (which == AlertDialog.BUTTON_POSITIVE) {
-                            core.save();
+                            boolean success = core.save();
+                            if(!success) showInfo(getString(R.string.error_saveing));
                             mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
                             finish();
                         }

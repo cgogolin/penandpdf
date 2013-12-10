@@ -16,7 +16,7 @@
       android:label="@string/app_name"
       android:icon="@drawable/icon"
       android:hardwareAccelerated="true">
-    <activity
+<!--    <activity
 	android:name="ChoosePDFActivity"
 	android:theme="@android:style/Theme.Holo.Light.DarkActionBar"
 	android:label="MuPDF old">
@@ -29,8 +29,7 @@
 	<action android:name="android.intent.action.PICK" />
 	<category android:name="android.intent.category.DEFAULT" />
       </intent-filter>
-    </activity>
-
+    </activity>-->
     <activity
 	android:name="PenAndPDFFileChooser"
 	android:theme="@android:style/Theme.Holo.Light.DarkActionBar"

@@ -84,6 +84,7 @@
 	<string name="menu_cancel">Cancel</string>
 	<string name="menu_gotopage">Go to page</string>
 	<string name="menu_selection">Select text</string>
+	<string name="menu_addpage">Add page</string>
 	<string name="settings_title">Settings</string>
 	<string name="markup_settings">Markup settings</string>
 	<string name="display_settings">Display settings</string>
