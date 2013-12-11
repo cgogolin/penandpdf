@@ -140,7 +140,8 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
         if (mRecentFilesAdapter == null ) return;
 
             //A directory was clicked and we are in pick a file mode
-        if(mPurpose == Purpose.PickFile && position < numDirectories)
+//        if(mPurpose == Purpose.PickFile && position < numDirectories)
+        if(position < numDirectories)
         {
             ((goToDirInterface)getActivity()).goToDir(new File(uri.getPath()));
             return;

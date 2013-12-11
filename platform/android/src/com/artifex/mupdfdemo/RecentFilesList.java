@@ -8,14 +8,14 @@ import java.io.File;
 
 public class RecentFilesList extends LinkedList<String> implements List<String> { //Probably not the mode appropriate list type...
 
-    static final int MAX_RECENT_FILES=10;
+    static final int MAX_RECENT_FILES=20;
 
     public RecentFilesList() {
         super();
     }
     
     public RecentFilesList(SharedPreferences prefs) {
-        for (int i = 0; i<MAX_RECENT_FILES; i++)
+        for (int i = MAX_RECENT_FILES-1; i>=0; i--) //Read in revers order because we use push
         {
             String recentFileString = prefs.getString("recentfile"+i,null);
             if(recentFileString != null)

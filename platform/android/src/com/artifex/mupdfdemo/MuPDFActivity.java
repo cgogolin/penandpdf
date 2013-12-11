@@ -924,7 +924,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             case SAVEAS_REQUEST:
                 if (resultCode == RESULT_OK) {
                     final Uri uri = intent.getData();
-                        //Add more error checking here!!!
                     if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Warn if file already exists
                     {
                         DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
