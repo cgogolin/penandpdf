@@ -983,18 +983,19 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         }
 
     private void saveViewport(SharedPreferences.Editor edit, String path) {
+        edit.putInt("page"+path, mDocView.getDisplayedViewIndex());
         edit.putFloat("normalizedscale"+path, mDocView.getNormalizedScale());
         edit.putFloat("normalizedxscroll"+path, mDocView.getNormalizedXScroll());
         edit.putFloat("normalizedyscroll"+path, mDocView.getNormalizedYScroll());
-        edit.putInt("page"+path, mDocView.getDisplayedViewIndex());
         edit.commit();
     }
 
 
     private void setViewport(SharedPreferences prefs, String path) {
+        mDocView.setDisplayedViewIndex(prefs.getInt("page"+path, 0));
         mDocView.setScale(prefs.getFloat("normalizedscale"+path, 0.0f)); //If normalizedScale=0.0 nothing happens
         mDocView.setScroll(prefs.getFloat("normalizedxscroll"+path, 0.0f), prefs.getFloat("normalizedyscroll"+path, 0.0f));
-        mDocView.setDisplayedViewIndex(prefs.getInt("page"+path, 0));
+
     }
     
     

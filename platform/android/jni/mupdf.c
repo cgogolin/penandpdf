@@ -1469,7 +1469,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
         float zoom = glo->resolution / 72;
         zoom = 1.0 / zoom;
         fz_scale(&ctm, zoom, zoom);
-//		pt_cls = (*env)->FindClass(env, "android.graphics.PointF");
+//        pt_cls = (*env)->FindClass(env, "android.graphics.PointF");
         pt_cls = (*env)->FindClass(env, "android/graphics/PointF");
         if (pt_cls == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "FindClass");
         x_fid = (*env)->GetFieldID(env, pt_cls, "x", "F");
@@ -1485,16 +1485,18 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
         {
                 //Modifiedy by Christian Gogolin to fix the order of the points in the quad points of highlight annotations
             jobject opt;
-                /* if(type == FZ_ANNOT_HIGHLIGHT && (i == 2 || i == 3) ) */
-                /* { */
-                /*     if(i == 2) */
-                /*         opt = (*env)->GetObjectArrayElement(env, points, 3); */
-                /*     if(i == 3) */
-                /*         opt = (*env)->GetObjectArrayElement(env, points, 2); */
-                /* } */
-                /* else */
-            opt = (*env)->GetObjectArrayElement(env, points, i);
-                    
+            if(type == FZ_ANNOT_HIGHLIGHT)
+            {
+                if(i%4 == 2)
+                    opt = (*env)->GetObjectArrayElement(env, points, i+1);
+                else if(i%4 == 3)
+                    opt = (*env)->GetObjectArrayElement(env, points, i-1);
+                else
+                    opt = (*env)->GetObjectArrayElement(env, points, i);
+            }
+            else
+                opt = (*env)->GetObjectArrayElement(env, points, i);
+            
             pts[i].x = opt ? (*env)->GetFloatField(env, opt, x_fid) : 0.0f;
             pts[i].y = opt ? (*env)->GetFloatField(env, opt, y_fid) : 0.0f;
             fz_transform_point(&pts[i], &ctm);
@@ -1504,7 +1506,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
         annot = (fz_annot *)pdf_create_annot(idoc, (pdf_page *)pc->page, type); //in pdf-annot.c
         pdf_set_markup_annot_quadpoints(idoc, (pdf_annot *)annot, pts, n); //in pdf-annot.c
         if(type == FZ_ANNOT_HIGHLIGHT) 
-            pdf_set_markup_appearance_highlight(idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height); //in pdf-appearance.c
+            pdf_set_markup_appearance_highlight(idoc, (pdf_annot *)annot, color, &alpha, line_thickness, line_height); //in pdf-appearance.c
         else
             pdf_set_markup_appearance(idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height); //in pdf-appearance.c
                 

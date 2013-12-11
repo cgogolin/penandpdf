@@ -1449,7 +1449,7 @@ quadpoints(pdf_document *doc, pdf_obj *annot, int *nout)
 	return qp;
 }
 
-void pdf_set_markup_appearance(pdf_document *doc, pdf_annot *annot, float color[3], float alpha, float line_thickness, float line_height)
+void pdf_set_markup_appearance(pdf_document *doc, pdf_annot *annot, float* color, float alpha, float line_thickness, float line_height)
 {
 	fz_context *ctx = doc->ctx;
 	const fz_matrix *page_ctm = &annot->page->ctm;
@@ -1540,8 +1540,14 @@ void pdf_set_markup_appearance(pdf_document *doc, pdf_annot *annot, float color[
 }
 
 
-void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, float color[3], float alpha, float line_thickness, float line_height)
+/* This is the wiredest bug I have ever come across. If I change the 'float* alpha' to 'float alpha' and try to call this function as follows */
+/* pdf_set_markup_appearance_highlight(idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height); */
+/* the value of apha doesn't make it accross properly. I have NO idea what is causing this. */
+
+void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, float* color, float *alphap, float line_thickness, float line_height)
 {
+    float alpha = *alphap;
+        
         //Add color
     pdf_obj *color_obj = pdf_new_array(doc, 3);
     int j;
@@ -1549,8 +1555,7 @@ void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, fl
     for (j = 0; j < 3; j++)
         pdf_array_push_drop(color_obj, pdf_new_real(doc, color[j]));
 
-
-    	fz_context *ctx = doc->ctx;
+    fz_context *ctx = doc->ctx;
 	const fz_matrix *page_ctm = &annot->page->ctm;
 	fz_path *path = NULL;
 	fz_stroke_state *stroke = NULL;
@@ -1573,38 +1578,46 @@ void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, fl
 		rect.x0 = rect.x1 = qp[0].x;
 		rect.y0 = rect.y1 = qp[0].y;
 		for (i = 0; i < n; i++)
-			fz_include_point_in_rect(&rect, &qp[i]);
+                    fz_include_point_in_rect(&rect, &qp[i]);
 
 		strike_list = fz_new_display_list(ctx);
 		dev = fz_new_list_device(ctx, strike_list);
 
 		for (i = 0; i < n; i += 4)
 		{
-			fz_point pt0 = qp[i];
-			fz_point pt1 = qp[i+1];
+			/* fz_point pt0 = qp[i]; */
+			/* fz_point pt1 = qp[i+1]; */
 			fz_point up;
 			float thickness;
 
-			up.x = qp[i+2].x - qp[i+1].x;
-			up.y = qp[i+2].y - qp[i+1].y;
+			/* up.x = qp[i+2].x - qp[i+1].x; */
+			/* up.y = qp[i+2].y - qp[i+1].y; */
 
-			pt0.x += line_height * up.x;
-			pt0.y += line_height * up.y;
-			pt1.x += line_height * up.x;
-			pt1.y += line_height * up.y;
+			/* pt0.x += line_height * up.x; */
+			/* pt0.y += line_height * up.y; */
+			/* pt1.x += line_height * up.x; */
+			/* pt1.y += line_height * up.y; */
 
-			thickness = sqrtf(up.x * up.x + up.y * up.y) * line_thickness;
-
+			/* thickness = sqrtf(up.x * up.x + up.y * up.y) * line_thickness; */
+                        //New
+                        fz_point pt0;
+                        fz_point pt1;
+                        thickness = qp[i+3].y - qp[i].y;
+                        pt0.x = qp[i].x;
+                        pt0.y = qp[i].y + 0.5*thickness;
+			pt1.x = qp[i+1].x;
+                        pt1.y = qp[i+1].y + 0.5*thickness;
+                        
 			if (!stroke || fz_abs(stroke->linewidth - thickness) < SMALL_FLOAT)
 			{
 				if (stroke)
 				{
 					// assert(path)
-					fz_stroke_path(dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
-					fz_drop_stroke_state(ctx, stroke);
-					stroke = NULL;
-					fz_free_path(ctx, path);
-					path = NULL;
+                                    fz_stroke_path(dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
+                                    fz_drop_stroke_state(ctx, stroke);
+                                    stroke = NULL;
+                                    fz_free_path(ctx, path);
+                                    path = NULL;
 				}
 
 				stroke = fz_new_stroke_state(ctx);
@@ -1618,7 +1631,7 @@ void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, fl
 
 		if (stroke)
 		{
-			fz_stroke_path(dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
+                    fz_stroke_path(dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
 		}
 
 		fz_transform_rect(&rect, page_ctm);

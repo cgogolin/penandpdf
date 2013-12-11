@@ -182,15 +182,15 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
 
             //Add the directories of the most recent files to the list if we were asked to pick a file
         RecentFilesList recentDirectoriesList = new RecentFilesList();
-        if(mPurpose == Purpose.PickFile)
-        {
+        // if(mPurpose == Purpose.PickFile)
+        // {
             ListIterator<String> iterartor = recentFilesList.listIterator(0);
             while (iterartor.hasNext()) {
                 String file = iterartor.next();
                 recentDirectoriesList.push(file.substring(0,file.lastIndexOf("/")));
             }
             recentFilesList.addAll(recentDirectoriesList);
-        }
+        // }
         numDirectories = recentDirectoriesList.size();
 
             //Make newest elements appear first
