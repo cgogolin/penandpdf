@@ -190,12 +190,12 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
                 String file = iterartor.next();
                 recentDirectoriesList.push(file.substring(0,file.lastIndexOf("/")));
             }
-            recentFilesList.addAll(recentDirectoriesList);
+            recentFilesList.addAll(0,recentDirectoriesList);
         // }
         numDirectories = recentDirectoriesList.size();
 
             //Make newest elements appear first
-        Collections.reverse(recentFilesList);
+//        Collections.reverse(recentFilesList);
 
             //Update the data in the adapter
         mRecentFilesAdapter.clear();

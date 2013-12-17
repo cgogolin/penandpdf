@@ -148,7 +148,7 @@ public class FileBrowserFragment extends ListFragment {
                         //Set the title from the current direcory
                     Resources res = getResources();
                     String appName = res.getString(R.string.app_name);
-                    String version = res.getString(R.string.version);
+//                    String version = res.getString(R.string.version);
                     String title = res.getString(R.string.picker_title_App_Ver_Dir);
                     getActivity().setTitle(mDirectory.getPath());
 
