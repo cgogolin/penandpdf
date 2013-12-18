@@ -1,4 +1,4 @@
-//  -*- compile-command: cd ~/src/android/mupdf/platform/android && ant clean && ~/src/android/android-ndk-r9/ndk-build && ant debug && cp bin/MuPDF-debug.apk /home/cgogolin/Dropbox/galaxynote8/ -*-
+// compile-command: cd ~/src/android/mupdf/platform/android && ant clean && ~/src/android/android-ndk-r9/ndk-build && ant debug && cp bin/MuPDF-debug.apk /home/cgogolin/Dropbox/galaxynote8/ 
 
 package com.artifex.mupdfdemo;
 
@@ -709,7 +709,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                         }
                     };
                 AlertDialog alert = mAlertBuilder.create();
-                alert.setTitle("MuPDF");
+                alert.setTitle(getString(R.string.app_label));
 //                    alert.setMessage(getString(R.string.document_has_changes_save_them_));
                 if (core != null && core.getFileName() != null) alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
                 alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.saveas), listener);
@@ -901,7 +901,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         }
         
         
-        if(core.getFileName() == null) setTitle(); //Otherwise this is already done by the DocView
+//        if(core.getFileName() == null) setTitle(); //Otherwise this is already done by the DocView
+        setTitle();
 
             // Stick the document view into a parent view
         RelativeLayout layout = new RelativeLayout(this);

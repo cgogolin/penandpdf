@@ -171,10 +171,10 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         int docHeight = v.getMeasuredHeight();
 
         int xOffset, yOffset;
-        if (bottom >= docHeight) {
-                // We are flush with the bottom. Advance to next column.
-            if (right + screenWidth > docWidth) {
-                    // No room for another column - go to next page
+        if (bottom >= docHeight || screenHeight >= 0.8*docHeight ) // We are flush with the bottom or the user can see almost all of the page -> advance to next column.
+        {
+            if (right + screenWidth > docWidth || screenWidth >= 0.8*docWidth ) // No room for another column or the user can see almost the wholepage -> go to next page
+            {
                 View nv = mChildViews.get(mCurrent+1);
                 if (nv == null) // No page to advance to
                     return;
@@ -184,12 +184,25 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 int nextDocHeight = nv.getMeasuredHeight();
 
                     // Allow for the next page maybe being shorter than the screen is high
-                yOffset = (nextDocHeight < screenHeight ? ((nextDocHeight - screenHeight)>>1) : 0);
-
-                if (nextDocWidth < screenWidth) {
-                        // Next page is too narrow to fill the screen. Scroll to the top, centred.
+//                yOffset = (nextDocHeight < screenHeight ? ((nextDocHeight - screenHeight)>>1) : 0);
+                if(nextDocHeight < screenHeight)
+                {
+                    yOffset = ((nextDocHeight - screenHeight)>>1);
+                } else if(screenHeight >= 0.8*docHeight)
+                {
+                    yOffset = top;
+                }
+                else
+                {
+                    yOffset = 0;
+                }
+                
+                if (nextDocWidth < screenWidth) // Next page is too narrow to fill the screen. Scroll to the top, centred.
+                {
                     xOffset = (nextDocWidth - screenWidth)>>1;
-                } else {
+                }
+                else
+                {
                         // Reset X back to the left hand column
                     xOffset = right % screenWidth;
                         // Adjust in case the previous page is less wide
@@ -239,13 +252,14 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         int left  = -(v.getLeft() + mXScroll + remainingX);
         int top   = -(v.getTop()  + mYScroll + remainingY);
             // docWidth/Height are the width/height of the scaled document e.g. 2000x3000
+        int docWidth  = v.getMeasuredWidth();
         int docHeight = v.getMeasuredHeight();
 
         int xOffset, yOffset;
-        if (top <= 0) {
-                // We are flush with the top. Step back to previous column.
-            if (left < screenWidth) {
-                    /* No room for previous column - go to previous page */
+        if (top <= 0 || screenHeight >= 0.8*docHeight) // We are flush with the top or the user can see almost all of the page -> step back to previous column.
+        {          
+            if (left < screenWidth || screenWidth >= 0.8*docWidth) // No room for previous column or the user can see almost the wholepage -> go to previous page 
+            {
                 View pv = mChildViews.get(mCurrent-1);
                 if (pv == null) /* No page to advance to */
                     return;
@@ -253,7 +267,18 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 int prevDocHeight = pv.getMeasuredHeight();
 
                     // Allow for the next page maybe being shorter than the screen is high
-                yOffset = (prevDocHeight < screenHeight ? ((prevDocHeight - screenHeight)>>1) : 0);
+//                yOffset = (prevDocHeight < screenHeight ? ((prevDocHeight - screenHeight)>>1) : 0);
+                if(prevDocHeight < screenHeight)
+                {
+                    yOffset = ((prevDocHeight - screenHeight)>>1);
+                } else if(screenHeight >= 0.8*docHeight)
+                {
+                    yOffset = top - prevDocHeight+screenHeight ;
+                }
+                else
+                {
+                    yOffset = 0;
+                }
 
                 int prevLeft  = -(pv.getLeft() + mXScroll);
                 int prevTop  = -(pv.getTop() + mYScroll);
@@ -851,9 +876,9 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
     }
 
     private static int directionOfTravel(float vx, float vy) {
-        if (Math.abs(vx) > 2 * Math.abs(vy))
+        if (Math.abs(vx) > 3 * Math.abs(vy))
             return (vx > 0) ? MOVING_RIGHT : MOVING_LEFT;
-        else if (Math.abs(vy) > 2 * Math.abs(vx))
+        else if (Math.abs(vy) > 3 * Math.abs(vx))
             return (vy > 0) ? MOVING_DOWN : MOVING_UP;
         else
             return MOVING_DIAGONALLY;
