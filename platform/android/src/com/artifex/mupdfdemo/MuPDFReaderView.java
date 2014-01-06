@@ -22,10 +22,11 @@ public class MuPDFReaderView extends ReaderView {
     private int tapPageMargin;
 
         //To be overwritten in MuPDFActivity:
+    protected void onMoveToChild(int pageNumber) {}
     protected void onTapMainDocArea() {}
     protected void onDocMotion() {}
     protected void onHit(Hit item) {};
-    protected void onSelectionStatusChanged() {};
+//    protected void onSelectionStatusChanged() {};
     protected void onNumberOfStrokesChanged(int numberOfStrokes) {};
 
     public void setLinksEnabled(boolean b) {
@@ -126,7 +127,7 @@ public class MuPDFReaderView extends ReaderView {
                 {
                     boolean hadSelection = pageView.hasSelection();
                     pageView.selectText(e1.getX(), e1.getY(), e2.getX(), e2.getY());
-                    if (hadSelection != pageView.hasSelection()) onSelectionStatusChanged();
+//                    if (hadSelection != pageView.hasSelection()) onSelectionStatusChanged();
                 }
                 return true;
             default:
@@ -263,14 +264,15 @@ public class MuPDFReaderView extends ReaderView {
                 }
             });
     }
-    
-    @Override
-    protected void onMoveToChild(int i) {
-        if (SearchTaskResult.get() != null && SearchTaskResult.get().pageNumber != i) {
-            SearchTaskResult.set(null);
-            resetupChildren();
-        }
-    }
+
+        //This is overwritten in MuPDFActivity... strange...
+    // @Override
+    // protected void onMoveToChild(int i) { 
+    //     if (SearchTaskResult.get() != null && SearchTaskResult.get().pageNumber != i) {
+    //         SearchTaskResult.set(null);
+    //         resetupChildren();
+    //     }
+    // }
 
     @Override
     protected void onMoveOffChild(int i) {

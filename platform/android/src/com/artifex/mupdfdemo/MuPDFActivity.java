@@ -73,6 +73,9 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private boolean mNotSaveOnDestroyThisTime = false;
     private boolean mNotSaveOnPauseThisTime = false;
     private int mPageBeforeInternalLinkHit = -1;
+    private float mNormalizedScaleBeforeInternalLinkHit = 1.0f;
+    private float mNormalizedXScrollBeforeInternalLinkHit = 0;
+    private float mNormalizedYScrollBeforeInternalLinkHit = 0;
     private boolean mCanUndo = false;
 
     private final int    OUTLINE_REQUEST=0;
@@ -269,7 +272,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     //We don't want to do this at the moment because we can't save what was selected ar drawn so easily 
                     // mActionBarMode = ActionBarMode.valueOf(savedInstanceState.getString("ActionBarMode", ActionBarMode.Main.toString ()));
                     // mAcceptMode = AcceptMode.valueOf(savedInstanceState.getString("AcceptMode", AcceptMode.Highlight.toString ()));
-                mPageBeforeInternalLinkHit = savedInstanceState.getInt("PageBeforeInternalLinkHit", -1);
+                mPageBeforeInternalLinkHit = savedInstanceState.getInt("PageBeforeInternalLinkHit", mPageBeforeInternalLinkHit);
+                mNormalizedScaleBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedScaleBeforeInternalLinkHit", mNormalizedScaleBeforeInternalLinkHit);
+                mNormalizedXScrollBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedXScrollBeforeInternalLinkHit", mNormalizedXScrollBeforeInternalLinkHit);
+                mNormalizedYScrollBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedYScrollBeforeInternalLinkHit", mNormalizedYScrollBeforeInternalLinkHit);
             }
             
                 //Initialize the alert builder
@@ -725,7 +731,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 invalidateOptionsMenu();
                 return true;
             case R.id.menu_linkback:
-                mDocView.setDisplayedViewIndex(mPageBeforeInternalLinkHit);
+                setViewport(mPageBeforeInternalLinkHit,mNormalizedScaleBeforeInternalLinkHit, mNormalizedXScrollBeforeInternalLinkHit, mNormalizedYScrollBeforeInternalLinkHit);
+                // mDocView.setDisplayedViewIndex(mPageBeforeInternalLinkHit);
+                // mDocView.setScale(mNormalizedScaleBeforeInternalLinkHit);
+                // mDocView.setScroll(mNormalizedXScrollBeforeInternalLinkHit, mNormalizedYScrollBeforeInternalLinkHit);
                 mPageBeforeInternalLinkHit = -1;
                 invalidateOptionsMenu();
                 return true;
@@ -819,7 +828,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 @Override
                 protected void onMoveToChild(int pageNumber) {
                     setTitle();
-                    super.onMoveToChild(pageNumber);
+                    if (SearchTaskResult.get() != null && SearchTaskResult.get().pageNumber != pageNumber) {
+                        SearchTaskResult.set(null);
+                        resetupChildren();
+                    }
                 }
 
                 @Override
@@ -848,7 +860,12 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                             invalidateOptionsMenu();
                             break;
                         case LinkInternal:
-                            if(mDocView.linksEnabled()) mPageBeforeInternalLinkHit = getDisplayedViewIndex();
+                            if(mDocView.linksEnabled()) {
+                                mPageBeforeInternalLinkHit = getDisplayedViewIndex();
+                                mNormalizedScaleBeforeInternalLinkHit = getNormalizedScale();
+                                mNormalizedXScrollBeforeInternalLinkHit = getNormalizedXScroll();
+                                mNormalizedYScrollBeforeInternalLinkHit = getNormalizedYScroll();
+                            }
                             mActionBarMode = ActionBarMode.Main;
                             invalidateOptionsMenu();
                             break;
@@ -992,12 +1009,17 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
 
     private void setViewport(SharedPreferences prefs, String path) {
-        mDocView.setDisplayedViewIndex(prefs.getInt("page"+path, 0));
-        mDocView.setScale(prefs.getFloat("normalizedscale"+path, 0.0f)); //If normalizedScale=0.0 nothing happens
-        mDocView.setScroll(prefs.getFloat("normalizedxscroll"+path, 0.0f), prefs.getFloat("normalizedyscroll"+path, 0.0f));
-
+        setViewport(prefs.getInt("page"+path, 0),prefs.getFloat("normalizedscale"+path, 0.0f),prefs.getFloat("normalizedxscroll"+path, 0.0f), prefs.getFloat("normalizedyscroll"+path, 0.0f));
+        // mDocView.setDisplayedViewIndex(prefs.getInt("page"+path, 0));
+        // mDocView.setScale(prefs.getFloat("normalizedscale"+path, 0.0f)); //If normalizedScale=0.0 nothing happens
+        // mDocView.setScroll(prefs.getFloat("normalizedxscroll"+path, 0.0f), prefs.getFloat("normalizedyscroll"+path, 0.0f));
     }
-    
+
+    private void setViewport(int page, float normalizedscale, float normalizedxscroll, float normalizedyscroll) {
+        mDocView.setDisplayedViewIndex(page);
+        mDocView.setScale(normalizedscale); //If normalizedScale=0.0 nothing happens
+        mDocView.setScroll(normalizedxscroll, normalizedyscroll);
+    }
     
     public Object onRetainNonConfigurationInstance()
 	{
@@ -1014,6 +1036,9 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         outState.putString("ActionBarMode", mActionBarMode.toString());
         outState.putString("AcceptMode", mAcceptMode.toString());
         outState.putInt("PageBeforeInternalLinkHit", mPageBeforeInternalLinkHit);
+        outState.putFloat("NormalizedScaleBeforeInternalLinkHit", mNormalizedScaleBeforeInternalLinkHit);
+        outState.putFloat("NormalizedXScrollBeforeInternalLinkHit", mNormalizedXScrollBeforeInternalLinkHit);
+        outState.putFloat("NormalizedYScrollBeforeInternalLinkHit", mNormalizedYScrollBeforeInternalLinkHit);   
     }
 
     @Override
@@ -1146,6 +1171,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
     @Override
     public void onBackPressed() {
+        if (mActionBarMode == ActionBarMode.Annot) return;
+        
         if (core.hasChanges()) {
             DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
@@ -1159,12 +1186,15 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                             mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true;
                             finish();
                         }
+                        if (which == AlertDialog.BUTTON_NEUTRAL) {
+                        }
                     }
                 };
             AlertDialog alert = mAlertBuilder.create();
             alert.setTitle("MuPDF");
             alert.setMessage(getString(R.string.document_has_changes_save_them_));
             alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), listener);
+            alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
             alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
             alert.show();
         } else {

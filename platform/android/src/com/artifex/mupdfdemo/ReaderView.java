@@ -322,7 +322,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
 
         //To be overwritten in MuPDFReaderView
     protected void onChildSetup(int i, View v) {}
-    protected void onMoveToChild(int i) {}
+    protected void onMoveToChild(int pageNumber) {}
     protected void onMoveOffChild(int i) {}
     protected void onSettle(View v) {};
     protected void onUnsettle(View v) {};
@@ -585,7 +585,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         Point cvOffset;
         
         if (!mResetLayout) {
-                // Move to next or previous if current is sufficiently off center
+                // Move to next if current is sufficiently off center
             if (cv != null) {
                 cvOffset = subScreenSizeOffset(cv);
                     // cv.getRight() may be out of date with the current scale
@@ -600,7 +600,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                     mCurrent++;
                     onMoveToChild(mCurrent);
                 }
-
+                    // Move to previous if current is sufficiently off center
                 if (cv.getLeft() - cvOffset.x - GAP/2 + mXScroll >= getWidth()/2 && mCurrent > 0) {
                     postUnsettle(cv);
                         // post to invoke test for end of animation
@@ -629,7 +629,9 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                     mChildViews.remove(ai);
                 }
             }
-        } else { //Were asked to reset the layout (this happens for example when setDisplayedViewIndex() is called)
+        }
+        else //Were asked to reset the layout (this happens for example when setDisplayedViewIndex() is called)
+        { 
             mResetLayout = false;
             mXScroll = mYScroll = 0;
             
@@ -671,7 +673,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
                 if(mNewNormalizedScale != 0.0f)
                 {
-                    Log.i("MyActivity", "In onLayout() taking care of scale");
+//                    Log.i("MyActivity", "In onLayout() taking care of scale");
                     mScale = Math.min(Math.max(mNewNormalizedScale*scaleCorrection, min_scale), max_scale); // I still don't understand how exactly this is pased on to the view in the end...
                     mNewNormalizedScale = 0.0f;
                 }
@@ -683,12 +685,14 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
 //                    if(cv.getMeasuredWidth()  < getWidth() ) XScroll += (float)(cv.getMeasuredWidth()  - getWidth() )/2;
                     mNewNormalizedXScroll = mNewNormalizedYScroll = 0;
                     mScrollerLastX = mScrollerLastY = 0;
+                    mXScroll = mYScroll = 0;
+                    mScroller.forceFinished(true);
                     mScroller.startScroll(0, 0, XScroll, YScroll, 0);
                     post(this);
                 }
             }
             
-                //If the child view was already present we will adjust it by the scroll amounts.
+                //If the child view was already present we adjust it by the scroll amounts.
             cvLeft = cv.getLeft() + mXScroll;
             cvTop  = cv.getTop()  + mYScroll;
         }
