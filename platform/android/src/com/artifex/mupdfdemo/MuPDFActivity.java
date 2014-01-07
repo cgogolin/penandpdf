@@ -731,10 +731,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 invalidateOptionsMenu();
                 return true;
             case R.id.menu_linkback:
+//                setViewport(mPageBeforeInternalLinkHit,mNormalizedScaleBeforeInternalLinkHit, mNormalizedXScrollBeforeInternalLinkHit, mNormalizedYScrollBeforeInternalLinkHit);
                 setViewport(mPageBeforeInternalLinkHit,mNormalizedScaleBeforeInternalLinkHit, mNormalizedXScrollBeforeInternalLinkHit, mNormalizedYScrollBeforeInternalLinkHit);
-                // mDocView.setDisplayedViewIndex(mPageBeforeInternalLinkHit);
-                // mDocView.setScale(mNormalizedScaleBeforeInternalLinkHit);
-                // mDocView.setScroll(mNormalizedXScrollBeforeInternalLinkHit, mNormalizedYScrollBeforeInternalLinkHit);
                 mPageBeforeInternalLinkHit = -1;
                 invalidateOptionsMenu();
                 return true;

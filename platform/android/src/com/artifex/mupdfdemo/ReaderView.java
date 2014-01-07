@@ -679,16 +679,20 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 }
                 if (mNewNormalizedXScroll != 0.0f || mNewNormalizedYScroll != 0.0f)
                 {
-                    int XScroll = (int)(mNewNormalizedXScroll*cv.getMeasuredWidth()*mScale);
-                    int YScroll = (int)(mNewNormalizedYScroll*cv.getMeasuredHeight()*mScale);
+                    int XScroll = (int)(mNewNormalizedXScroll*cv.getMeasuredWidth()*mScale*scale);
+                    int YScroll = (int)(mNewNormalizedYScroll*cv.getMeasuredHeight()*mScale*scale);
                     if(cv.getMeasuredHeight() < getHeight()) YScroll += (float)(cv.getMeasuredHeight() - getHeight())/2;
 //                    if(cv.getMeasuredWidth()  < getWidth() ) XScroll += (float)(cv.getMeasuredWidth()  - getWidth() )/2;
                     mNewNormalizedXScroll = mNewNormalizedYScroll = 0;
-                    mScrollerLastX = mScrollerLastY = 0;
-                    mXScroll = mYScroll = 0;
-                    mScroller.forceFinished(true);
-                    mScroller.startScroll(0, 0, XScroll, YScroll, 0);
-                    post(this);
+
+//                    Toast.makeText(getContext(), "XScroll="+XScroll+" mScale="+mScale+" scale="+scale+" scaleCorrection="+scaleCorrection,Toast.LENGTH_LONG).show();
+                    
+                    scrollToPos(XScroll, YScroll);
+                    // mScrollerLastX = mScrollerLastY = 0;
+                    // mXScroll = mYScroll = 0;
+                    // mScroller.forceFinished(true);
+                    // mScroller.startScroll(0, 0, XScroll, YScroll, 0);
+                    // post(this);
                 }
             }
             
@@ -960,6 +964,15 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         {
             mNewNormalizedXScroll = normalizedXScroll;
             mNewNormalizedYScroll = normalizedYScroll;
+        }
+
+        protected void scrollToPos(int XScroll, int YScroll)
+        {
+            mScrollerLastX = mScrollerLastY = 0;
+            mXScroll = mYScroll = 0;
+            mScroller.forceFinished(true);
+            mScroller.startScroll(0, 0, XScroll, YScroll, 0);
+            post(this);
         }
 }
 
