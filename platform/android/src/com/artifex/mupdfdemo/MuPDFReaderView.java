@@ -79,8 +79,17 @@ public class MuPDFReaderView extends ReaderView {
                             @Override
                             public void visitInternal(LinkInfoInternal li) {
                                     // Clicked on an internal (GoTo) link
-                                setDisplayedViewIndex(li.pageNumber);
-//                                scrollToPos((int)-li.rect.centerX(),(int)-li.rect.centerY());
+                                if(li.rect != null)
+                                {
+                                    int XScroll = (int)(-li.rect.centerX()*getCurrentWidth()*getmScale()*getScale());
+                                    int YScroll = (int)(-li.rect.centerY()*getCurrentHeight()*getmScale()*getScale());
+                                    setDisplayedViewIndex(li.pageNumber);
+                                    scrollToPos(XScroll, YScroll);
+                                }
+                                else
+                                {
+                                    setDisplayedViewIndex(li.pageNumber);
+                                }
                             }                
                             @Override
                             public void visitExternal(LinkInfoExternal li) {

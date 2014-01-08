@@ -974,5 +974,31 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
             mScroller.startScroll(0, 0, XScroll, YScroll, 0);
             post(this);
         }
+
+        public float getmScale()
+        {
+            return mScale;
+        }
+        
+        public float getScale()
+        {
+            View cv = mChildViews.get(mCurrent);
+            float scale_factor = mReflow ? REFLOW_SCALE_FACTOR : 1.0f;
+            float min_scale = MIN_SCALE * scale_factor;
+            float max_scale = MAX_SCALE * scale_factor;
+            return Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
+        }
+
+        public float getCurrentWidth()
+        {
+            View cv = mChildViews.get(mCurrent);
+            return cv.getMeasuredWidth();
+        }
+
+        public float getCurrentHeight()
+        {
+            View cv = mChildViews.get(mCurrent);
+            return cv.getMeasuredHeight();
+        }
 }
 
