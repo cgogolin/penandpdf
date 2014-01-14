@@ -1730,7 +1730,7 @@ JNI_FN(MuPDFCore_getPageLinksInternal)(JNIEnv * env, jobject thiz, int pageNumbe
     if (linkInfoExternalClass == NULL) return NULL;
     linkInfoRemoteClass = (*env)->FindClass(env, PACKAGENAME "/LinkInfoRemote");
     if (linkInfoRemoteClass == NULL) return NULL;
-    ctorInternal = (*env)->GetMethodID(env, linkInfoInternalClass, "<init>", "(FFFFI)V");
+    ctorInternal = (*env)->GetMethodID(env, linkInfoInternalClass, "<init>", "(FFFFIFFFFI)V");
     if (ctorInternal == NULL) return NULL;
     ctorExternal = (*env)->GetMethodID(env, linkInfoExternalClass, "<init>", "(FFFFLjava/lang/String;)V");
     if (ctorExternal == NULL) return NULL;
@@ -1775,9 +1775,7 @@ JNI_FN(MuPDFCore_getPageLinksInternal)(JNIEnv * env, jobject thiz, int pageNumbe
         {
             case FZ_LINK_GOTO:
             {
-                linkInfo = (*env)->NewObject(env, linkInfoInternalClass, ctorInternal,
-                                             (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1,
-                                             link->dest.ld.gotor.page);
+                linkInfo = (*env)->NewObject(env, linkInfoInternalClass, ctorInternal,(float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1,link->dest.ld.gotor.page,link->dest.ld.gotor.lt.x, link->dest.ld.gotor.lt.y , link->dest.ld.gotor.rb.x , link->dest.ld.gotor.rb.y, link->dest.ld.gotor.flags);
                 break;
             }
 

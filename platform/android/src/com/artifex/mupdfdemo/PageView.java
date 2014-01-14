@@ -788,6 +788,11 @@ public abstract class PageView extends ViewGroup {
 		return true;
 	}
 
+        public float getScale()
+        {
+            return mSourceScale*(float)getWidth()/(float)mSize.x;
+        }
+    
     // public void setInkThickness(float inkThickness){
     //     this.inkThickness = inkThickness;
     // }

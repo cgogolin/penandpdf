@@ -10,6 +10,7 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.preference.PreferenceManager;
+import android.widget.Toast;
 
 import android.util.Log;
 
@@ -79,17 +80,30 @@ public class MuPDFReaderView extends ReaderView {
                             @Override
                             public void visitInternal(LinkInfoInternal li) {
                                     // Clicked on an internal (GoTo) link
-                                if(li.rect != null)
-                                {
-                                    int XScroll = (int)(-li.rect.centerX()*getCurrentWidth()*getmScale()*getScale());
-                                    int YScroll = (int)(-li.rect.centerY()*getCurrentHeight()*getmScale()*getScale());
-                                    setDisplayedViewIndex(li.pageNumber);
-                                    scrollToPos(XScroll, YScroll);
-                                }
-                                else
-                                {
-                                    setDisplayedViewIndex(li.pageNumber);
-                                }
+                                setDisplayedViewIndex(li.pageNumber);
+                                
+//                                 if(li.target != null)
+//                                 {
+//                                     if((li.targetFlags & LinkInfoInternal.fz_link_flag_r_is_zoom) == LinkInfoInternal.fz_link_flag_r_is_zoom)
+//                                     {
+//                                         int XScroll = 0;
+//                                         int YScroll = 0;
+//                                         if((li.targetFlags & LinkInfoInternal.fz_link_flag_l_valid) == LinkInfoInternal.fz_link_flag_l_valid)  
+//                                             XScroll = (int)(-li.target.left*getScale());
+//                                         if((li.targetFlags & LinkInfoInternal.fz_link_flag_t_valid) == LinkInfoInternal.fz_link_flag_t_valid)  
+//                                             YScroll = (int)(-li.target.top*getScale());
+//                                         Toast.makeText(getContext(), "XScroll="+XScroll+" YScroll="+YScroll+" flags="+li.targetFlags,Toast.LENGTH_SHORT).show();
+//                                         scrollToPos(XScroll,YScroll);
+// //                                        if((li.targetFlags & LinkInfoInternal.fz_link_flag_r_valid) == LinkInfoInternal.fz_link_flag_r_valid)
+//                                     }
+//                                     else
+//                                         Toast.makeText(getContext(), "unhandled flags="+li.targetFlags ,Toast.LENGTH_SHORT).show();
+// //                                    setDisplayedViewIndex(li.pageNumber);
+//                                 }
+//                                 else
+//                                 {
+// //                                    setDisplayedViewIndex(li.pageNumber);
+//                                 }
                             }                
                             @Override
                             public void visitExternal(LinkInfoExternal li) {
@@ -275,13 +289,13 @@ public class MuPDFReaderView extends ReaderView {
     }
 
         //This is overwritten in MuPDFActivity... strange...
-    // @Override
-    // protected void onMoveToChild(int i) { 
-    //     if (SearchTaskResult.get() != null && SearchTaskResult.get().pageNumber != i) {
-    //         SearchTaskResult.set(null);
-    //         resetupChildren();
-    //     }
-    // }
+        // @Override
+        // protected void onMoveToChild(int i) { 
+        //     if (SearchTaskResult.get() != null && SearchTaskResult.get().pageNumber != i) {
+        //         SearchTaskResult.set(null);
+        //         resetupChildren();
+        //     }
+        // }
 
     @Override
     protected void onMoveOffChild(int i) {

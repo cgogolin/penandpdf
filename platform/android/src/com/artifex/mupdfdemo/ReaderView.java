@@ -60,6 +60,10 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
     private final Scroller    mScroller;
     private int               mScrollerLastX;
     private int               mScrollerLastY;
+
+    private int previousFocusX;
+    private int previousFocusY;
+    
     private boolean           mScrollDisabled;
 
     static abstract class ViewMapper {
@@ -358,20 +362,14 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
     }
 
     @Override
-    public boolean onDown(MotionEvent arg0) {
+        public boolean onDown(MotionEvent arg0) {
         mScroller.forceFinished(true);
-        // View cv = mChildViews.get(mCurrent);
-        // if (cv != null)
-        // {
-        //     float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
-        //     Toast.makeText(getContext(), "In onDown() x="+(cv.getLeft()/(float)cv.getMeasuredWidth())+" y="+(cv.getTop()/(float)cv.getMeasuredHeight()),Toast.LENGTH_SHORT).show();
-        // }
         return true;
     }
 
     @Override
-    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
-                           float velocityY) {
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+                               float velocityY) {
         if (mScrollDisabled)
             return true;
 
@@ -429,7 +427,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
     }
 
     @Override
-    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
         if (!mScrollDisabled) {
             mXScroll -= distanceX;
             mYScroll -= distanceY;
@@ -446,7 +444,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
     }
     
     @Override
-    public boolean onScaleBegin(ScaleGestureDetector detector) {
+        public boolean onScaleBegin(ScaleGestureDetector detector) {
         mScaling = true;
             // Ignore any scroll amounts yet to be accounted for: the
             // screen is not showing the effect of them, so they can
@@ -455,11 +453,14 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
             // Avoid jump at end of scaling by disabling scrolling
             // until the next start of gesture
         mScrollDisabled = true;
+        
+        previousFocusX = (int)detector.getFocusX();
+        previousFocusY = (int)detector.getFocusY();
         return true;
     }
 
     @Override 
-    public boolean onScale(ScaleGestureDetector detector) {
+        public boolean onScale(ScaleGestureDetector detector) {
         float previousScale = mScale;
         float scale_factor = mReflow ? REFLOW_SCALE_FACTOR : 1.0f;
         float min_scale = MIN_SCALE * scale_factor;
@@ -479,8 +480,10 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 int viewFocusX = (int)detector.getFocusX() - (v.getLeft() + mXScroll);
                 int viewFocusY = (int)detector.getFocusY() - (v.getTop() + mYScroll);
                     // Scroll to maintain the focus point
-                mXScroll += viewFocusX - viewFocusX * factor;
-                mYScroll += viewFocusY - viewFocusY * factor;
+                mXScroll += viewFocusX - viewFocusX * factor - previousFocusX + (int)detector.getFocusX();
+                mYScroll += viewFocusY - viewFocusY * factor - previousFocusY + (int)detector.getFocusY();
+                previousFocusX = (int)detector.getFocusX();
+                previousFocusY = (int)detector.getFocusY();            
                 requestLayout();
             }
         }
@@ -488,7 +491,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
     }
 
     @Override
-    public void onScaleEnd(ScaleGestureDetector detector) {
+        public void onScaleEnd(ScaleGestureDetector detector) {
         if (mReflow) {
             applyToChildren(new ViewMapper() {
                     @Override
@@ -515,11 +518,11 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 if ( Math.abs(mScale - fitWidthScale) <= 0.15 && fitWidthScale >= 1.15) 
                 {
                     mScale = Math.min(Math.max(fitWidthScale, min_scale), max_scale);
-                    // float factor = mScale/previousScale;
-                    // float viewFocusX = (float)getWidth()/2;
-                    // float viewFocusY = (float)getHeight()/2;
-                    // mXScroll += viewFocusX - viewFocusX * factor;
-                    // mYScroll += viewFocusY - viewFocusY * factor;
+                        // float factor = mScale/previousScale;
+                        // float viewFocusX = (float)getWidth()/2;
+                        // float viewFocusY = (float)getHeight()/2;
+                        // mXScroll += viewFocusX - viewFocusX * factor;
+                        // mYScroll += viewFocusY - viewFocusY * factor;
                     mScroller.forceFinished(true);
                     mXScroll = -cv.getLeft();
                     mYScroll = 0;
@@ -688,11 +691,11 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
 //                    Toast.makeText(getContext(), "XScroll="+XScroll+" mScale="+mScale+" scale="+scale+" scaleCorrection="+scaleCorrection,Toast.LENGTH_LONG).show();
                     
                     scrollToPos(XScroll, YScroll);
-                    // mScrollerLastX = mScrollerLastY = 0;
-                    // mXScroll = mYScroll = 0;
-                    // mScroller.forceFinished(true);
-                    // mScroller.startScroll(0, 0, XScroll, YScroll, 0);
-                    // post(this);
+                        // mScrollerLastX = mScrollerLastY = 0;
+                        // mXScroll = mYScroll = 0;
+                        // mScroller.forceFinished(true);
+                        // mScroller.startScroll(0, 0, XScroll, YScroll, 0);
+                        // post(this);
                 }
             }
             
@@ -806,11 +809,11 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         if (!mReflow) {
                 // Work out a scale that will fit it to this view
             float scale;
-            // SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-            // boolean fitWidth = sharedPref.getBoolean(SettingsActivity.PREF_FIT_WIDTH, false);
-            // if(fitWidth)
-            //     scale = (float)getWidth()/(float)v.getMeasuredWidth();
-            // else
+                // SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+                // boolean fitWidth = sharedPref.getBoolean(SettingsActivity.PREF_FIT_WIDTH, false);
+                // if(fitWidth)
+                //     scale = (float)getWidth()/(float)v.getMeasuredWidth();
+                // else
             scale = Math.min((float)getWidth()/(float)v.getMeasuredWidth(),(float)getHeight()/(float)v.getMeasuredHeight()); //This makes scale=1.0 correspond to fit to screen
                 // Use the fitting values scaled by our current scale factor
             v.measure(View.MeasureSpec.EXACTLY | (int)(v.getMeasuredWidth()*scale*mScale),
@@ -902,103 +905,90 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
             default: throw new NoSuchElementException();
         }
     }
-
-        // public int[] getViewPort()
-        // {
-        //     View currentView = getDisplayedView();
-        //     if(currentView != null)
-        //     {
-        //         // int[] viewPort = new int[] {currentView.getLeft(),currentView.getTop(),currentView.getRight(),currentView.getBottom()};
-        //         // return viewPort;
-                
-        //         return new int[] {currentView.getLeft(),currentView.getTop(),currentView.getRight(),currentView.getBottom()};
-        //     }
-        //     else
-        //         return null;
-        // }
-
-        // public void setViewPort(int[] viewPort)
-        // {
-        //     View currentView = getDisplayedView();
-        //     if(currentView != null && viewPort.length == 4 && viewPort[0]-viewPort[2] != 0 && viewPort[1] - viewPort[3] != 0)
-        //         currentView.layout(viewPort[0], viewPort[1], viewPort[2], viewPort[3]);
-        // }
+        
+    public float getNormalizedScale() 
+    {
+        View cv = getDisplayedView();
+        float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
+        float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
+        return mScale/scaleCorrection;
+    }
         
         
-        public float getNormalizedScale() 
-        {
-            View cv = getDisplayedView();
-            float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
-            float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
-//            Log.i("MyActivity", "In getNormalizedScale() scaleCorrection="+scaleCorrection);
-            return mScale/scaleCorrection;
+    public float getNormalizedXScroll()
+    {
+        View cv = getDisplayedView();
+        if (cv != null) {
+            return cv.getLeft()/(float)cv.getMeasuredWidth();
         }
-        
-        
-        public float getNormalizedXScroll()
-        {
-            View cv = getDisplayedView();
-            if (cv != null) {
-                return cv.getLeft()/(float)cv.getMeasuredWidth();
-//                return cv.getLeft()/(float)getWidth();
-            }
-            else return 0;
-        }
-        public float getNormalizedYScroll()
-        {
-            View cv = getDisplayedView();
-            if (cv != null) {
-                return cv.getTop()/(float)cv.getMeasuredHeight();
+        else return 0;
+    }
+    public float getNormalizedYScroll()
+    {
+        View cv = getDisplayedView();
+        if (cv != null) {
+            return cv.getTop()/(float)cv.getMeasuredHeight();
 //                return cv.getTop()/(float)cv.getHeight();
-            }
-            else return 0;
         }
+        else return 0;
+    }
 
-        public void setScale(float normalizedScale) //If normalizedScale=0.0 nothing happens!!!
-        {
+    public void setScale(float normalizedScale) //If normalizedScale=0.0 nothing happens!!!
+    {
 //            Log.i("MyActivity", "In setScale() normalizedScale="+normalizedScale);
-            mNewNormalizedScale = normalizedScale;
-        }            
+        mNewNormalizedScale = normalizedScale;
+    }            
         
-        public void setScroll(float normalizedXScroll, float normalizedYScroll) //if normalizedXScroll = normalizedYScroll = 0 nothing happens!!!
-        {
-            mNewNormalizedXScroll = normalizedXScroll;
-            mNewNormalizedYScroll = normalizedYScroll;
-        }
+    public void setScroll(float normalizedXScroll, float normalizedYScroll) //if normalizedXScroll = normalizedYScroll = 0 nothing happens!!!
+    {
+        mNewNormalizedXScroll = normalizedXScroll;
+        mNewNormalizedYScroll = normalizedYScroll;
+    }
+    
+    protected void scrollToPos(int XScroll, int YScroll)
+    {
+        mScrollerLastX = mScrollerLastY = 0;
+        mXScroll = mYScroll = 0;
+        mScroller.forceFinished(true);
+        mScroller.startScroll(0, 0, XScroll, YScroll, 0);
+        post(this);
+    }
 
-        protected void scrollToPos(int XScroll, int YScroll)
-        {
-            mScrollerLastX = mScrollerLastY = 0;
-            mXScroll = mYScroll = 0;
-            mScroller.forceFinished(true);
-            mScroller.startScroll(0, 0, XScroll, YScroll, 0);
-            post(this);
-        }
+    // protected void scrollToCenterPos(int XScroll, int YScroll)
+    // {
+    //     mScrollerLastX = mScrollerLastY = 0;
+    //     mXScroll = mYScroll = 0;
+    //     mScroller.forceFinished(true);
+    //     mScroller.startScroll(0, 0, XScroll+getWidth()/2, YScroll+getHeight()/2, 0);
+    //     post(this);
+    // }
 
-        public float getmScale()
-        {
-            return mScale;
-        }
+    public float getmScale()
+    {
+        return mScale;
+    }
         
-        public float getScale()
-        {
-            View cv = mChildViews.get(mCurrent);
-            float scale_factor = mReflow ? REFLOW_SCALE_FACTOR : 1.0f;
-            float min_scale = MIN_SCALE * scale_factor;
-            float max_scale = MAX_SCALE * scale_factor;
-            return Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
-        }
+    public float getScale()
+    {
+            // View cv = mChildViews.get(mCurrent);
+            // float scale_factor = mReflow ? REFLOW_SCALE_FACTOR : 1.0f;
+            // float min_scale = MIN_SCALE * scale_factor;
+            // float max_scale = MAX_SCALE * scale_factor;
+            // return Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
+//        return ((PageView)mChildViews.get(mCurrent)).getScale();
+        return ((PageView)getDisplayedView()).getScale();
+    }
 
-        public float getCurrentWidth()
-        {
-            View cv = mChildViews.get(mCurrent);
-            return cv.getMeasuredWidth();
-        }
+        // public float getCurrentWidth()
+        // {
+        //     View cv = mChildViews.get(mCurrent);
+        //     return cv.getMeasuredWidth();
+        // }
 
-        public float getCurrentHeight()
-        {
-            View cv = mChildViews.get(mCurrent);
-            return cv.getMeasuredHeight();
-        }
+        // public float getCurrentHeight()
+        // {
+        //     View cv = mChildViews.get(mCurrent);
+        //     return cv.getMeasuredHeight();
+        // }
 }
 
