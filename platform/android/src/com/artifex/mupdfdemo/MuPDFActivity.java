@@ -1015,8 +1015,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
     private void setViewport(int page, float normalizedscale, float normalizedxscroll, float normalizedyscroll) {
         mDocView.setDisplayedViewIndex(page);
-        mDocView.setScale(normalizedscale); //If normalizedScale=0.0 nothing happens
-        mDocView.setScroll(normalizedxscroll, normalizedyscroll);
+        mDocView.setNormalizedScale(normalizedscale);
+        mDocView.setNormalizedScroll(normalizedxscroll, normalizedyscroll);
     }
     
     public Object onRetainNonConfigurationInstance()

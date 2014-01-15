@@ -81,29 +81,36 @@ public class MuPDFReaderView extends ReaderView {
                             public void visitInternal(LinkInfoInternal li) {
                                     // Clicked on an internal (GoTo) link
                                 setDisplayedViewIndex(li.pageNumber);
-                                
-//                                 if(li.target != null)
-//                                 {
-//                                     if((li.targetFlags & LinkInfoInternal.fz_link_flag_r_is_zoom) == LinkInfoInternal.fz_link_flag_r_is_zoom)
-//                                     {
-//                                         int XScroll = 0;
-//                                         int YScroll = 0;
-//                                         if((li.targetFlags & LinkInfoInternal.fz_link_flag_l_valid) == LinkInfoInternal.fz_link_flag_l_valid)  
-//                                             XScroll = (int)(-li.target.left*getScale());
-//                                         if((li.targetFlags & LinkInfoInternal.fz_link_flag_t_valid) == LinkInfoInternal.fz_link_flag_t_valid)  
-//                                             YScroll = (int)(-li.target.top*getScale());
-//                                         Toast.makeText(getContext(), "XScroll="+XScroll+" YScroll="+YScroll+" flags="+li.targetFlags,Toast.LENGTH_SHORT).show();
-//                                         scrollToPos(XScroll,YScroll);
-// //                                        if((li.targetFlags & LinkInfoInternal.fz_link_flag_r_valid) == LinkInfoInternal.fz_link_flag_r_valid)
-//                                     }
-//                                     else
-//                                         Toast.makeText(getContext(), "unhandled flags="+li.targetFlags ,Toast.LENGTH_SHORT).show();
-// //                                    setDisplayedViewIndex(li.pageNumber);
-//                                 }
-//                                 else
-//                                 {
-// //                                    setDisplayedViewIndex(li.pageNumber);
-//                                 }
+                                if(li.target != null)
+                                {
+                                        //Scroll the left top to the right position
+                                    if((li.targetFlags & LinkInfoInternal.fz_link_flag_l_valid) == LinkInfoInternal.fz_link_flag_l_valid)  
+                                        setDocRelXScroll(li.target.left);
+                                    if((li.targetFlags & LinkInfoInternal.fz_link_flag_t_valid) == LinkInfoInternal.fz_link_flag_t_valid)
+                                        setDocRelYScroll(li.target.top);
+                                    
+                                        //If the link target is of /XYZ type r is zoom
+                                    if( (li.targetFlags & LinkInfoInternal.fz_link_flag_r_is_zoom) == LinkInfoInternal.fz_link_flag_r_is_zoom )
+                                    {
+                                        Toast.makeText(getContext(), "zoom="+li.target.right, Toast.LENGTH_SHORT).show();
+                                            //Should scroll here
+                                    }
+                                    
+                                    if( (li.targetFlags & LinkInfoInternal.fz_link_flag_fit_h) == LinkInfoInternal.fz_link_flag_fit_h && (li.targetFlags & LinkInfoInternal.fz_link_flag_fit_v) == LinkInfoInternal.fz_link_flag_fit_v )
+                                    {
+                                        setScale(1.0f);
+                                    }
+                                    else if( (li.targetFlags & LinkInfoInternal.fz_link_flag_fit_h) == LinkInfoInternal.fz_link_flag_fit_h )
+                                    {
+                                            //Fit width
+                                    }
+                                    else if( (li.targetFlags & LinkInfoInternal.fz_link_flag_fit_v) == LinkInfoInternal.fz_link_flag_fit_v )
+                                    {
+                                            //Fit height
+                                    }
+                                        //NOTE: FitR is not handled!!!
+                                        //Toast.makeText(getContext(), "unhandled flags="+li.targetFlags ,Toast.LENGTH_SHORT).show();
+                                }
                             }                
                             @Override
                             public void visitExternal(LinkInfoExternal li) {
