@@ -715,7 +715,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                         }
                     };
                 AlertDialog alert = mAlertBuilder.create();
-                alert.setTitle(getString(R.string.app_label));
+                alert.setTitle(getString(R.string.app_name));
 //                    alert.setMessage(getString(R.string.document_has_changes_save_them_));
                 if (core != null && core.getFileName() != null) alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
                 alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.saveas), listener);

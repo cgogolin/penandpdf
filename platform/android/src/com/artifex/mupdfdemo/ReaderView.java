@@ -109,10 +109,10 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
 
     public void setDisplayedViewIndex(int i) {
         if (0 <= i && i < mAdapter.getCount()) {
-            onMoveOffChild(mCurrent);
+//            onMoveOffChild(mCurrent);
 //            mCurrent = i;
             mNewCurrent = i;
-            onMoveToChild(i);
+//            onMoveToChild(i);
             mResetLayout = true;
             mHasNewCurrent = true;
             requestLayout();
@@ -597,7 +597,9 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         
         if(mHasNewCurrent)
         {
+            onMoveOffChild(mCurrent);
             mCurrent = mNewCurrent;
+            onMoveToChild(mCurrent);
             mHasNewCurrent = false;
         }
         

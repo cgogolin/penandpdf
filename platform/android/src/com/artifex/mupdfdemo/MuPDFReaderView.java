@@ -89,11 +89,12 @@ public class MuPDFReaderView extends ReaderView {
                                     if((li.targetFlags & LinkInfoInternal.fz_link_flag_t_valid) == LinkInfoInternal.fz_link_flag_t_valid)
                                         setDocRelYScroll(li.target.top);
                                     
-                                        //If the link target is of /XYZ type r is zoom
-                                    if( (li.targetFlags & LinkInfoInternal.fz_link_flag_r_is_zoom) == LinkInfoInternal.fz_link_flag_r_is_zoom )
+                                        //If the link target is of /XYZ type r might be a zoom value
+                                    if( (li.targetFlags & LinkInfoInternal.fz_link_flag_r_is_zoom) == LinkInfoInternal.fz_link_flag_r_is_zoom && (li.targetFlags & LinkInfoInternal.fz_link_flag_r_valid) == LinkInfoInternal.fz_link_flag_r_valid )
                                     {
                                         Toast.makeText(getContext(), "zoom="+li.target.right, Toast.LENGTH_SHORT).show();
-                                            //Should scroll here
+                                        if(li.target.right > 0 && li.target.right <= 1.0f)
+                                            setScale(li.target.right);
                                     }
                                     
                                     if( (li.targetFlags & LinkInfoInternal.fz_link_flag_fit_h) == LinkInfoInternal.fz_link_flag_fit_h && (li.targetFlags & LinkInfoInternal.fz_link_flag_fit_v) == LinkInfoInternal.fz_link_flag_fit_v )
