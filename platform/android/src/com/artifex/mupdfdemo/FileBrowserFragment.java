@@ -34,6 +34,7 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Button;
 //import android.widget.Toast;
 import android.net.Uri;
 
@@ -236,7 +237,7 @@ public class FileBrowserFragment extends ListFragment {
         mAdapter = new ChoosePDFAdapter(inflater);
         
         if(mPurpose == Purpose.PickFile) {
-            EditText editText = (EditText)rootView.findViewById(R.id.newfilenamefield);
+            final EditText editText = (EditText)rootView.findViewById(R.id.newfilenamefield);
             if(mFilename != null) editText.setText(mFilename);
             editText.setVisibility(View.VISIBLE);
             editText.requestFocus();
@@ -245,23 +246,38 @@ public class FileBrowserFragment extends ListFragment {
                     @Override
                     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                         Uri uri = Uri.parse(mDirectory.getPath()+"/"+v.getText());
-                        Intent intent = new Intent(getActivity(),MuPDFActivity.class);
-                        intent.setAction(Intent.ACTION_VIEW);//?
-                        intent.setData(uri);
-                        getActivity().setResult(Activity.RESULT_OK, intent);
-                        getActivity().finish();
+                        passUriBack(uri);
+                        // Intent intent = new Intent(getActivity(),MuPDFActivity.class);
+                        // intent.setAction(Intent.ACTION_VIEW);//?
+                        // intent.setData(uri);
+                        // getActivity().setResult(Activity.RESULT_OK, intent);
+                        // getActivity().finish();
                         return true;
+                    }
+                });
+            Button saveButton = (Button)rootView.findViewById(R.id.savebutton);
+            saveButton.setVisibility(View.VISIBLE);
+            saveButton.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        Uri uri = Uri.parse(mDirectory.getPath()+"/"+editText.getText());
+                        passUriBack(uri);
                     }
                 });
         }
         
-        // ListView listView = view.findViewById(R.id.list);
-        // listView.setListAdapter(adapter);
         setListAdapter(mAdapter);
         
         return rootView;
     }
-
+    
+    private void passUriBack(Uri uri){
+        Intent intent = new Intent(getActivity(),MuPDFActivity.class);
+        intent.setAction(Intent.ACTION_VIEW);//?
+        intent.setData(uri);
+        getActivity().setResult(Activity.RESULT_OK, intent);
+        getActivity().finish();
+    }
+    
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);

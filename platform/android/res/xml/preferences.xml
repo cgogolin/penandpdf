@@ -61,7 +61,7 @@
 	  android:summary="@string/ink_thickness_summ"
 	  android:numeric="decimal"
 	  android:digits="0123456789."
-	  android:defaultValue="2" />
+	  android:defaultValue="1.9" />
       <!--The following are populated in SettingsFragment.java-->
       <ListPreference
 	  android:key="pref_ink_color"

@@ -19,7 +19,7 @@ public class SettingsFragment extends PreferenceFragment {
         preferenceManager.setSharedPreferencesName(SettingsActivity.SHARED_PREFERENCES_STRING);
         preferenceManager.setSharedPreferencesMode(Context.MODE_MULTI_PROCESS);
         
-        // Load the preferences from an XML resource
+            // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.preferences);
 
         ListPreference prefInkColor = (ListPreference) findPreference("pref_ink_color");

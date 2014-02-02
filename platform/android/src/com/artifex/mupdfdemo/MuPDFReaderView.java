@@ -128,9 +128,13 @@ public class MuPDFReaderView extends ReaderView {
                 }
                 else if(item == Hit.Nothing)
                 {
-                    if (e.getX() > super.getWidth() - tapPageMargin || e.getY() > super.getHeight() - tapPageMargin) 
+                    if (e.getX() > super.getWidth() - tapPageMargin) 
                         super.smartMoveForwards();
-                    else if (e.getX() < tapPageMargin || e.getY() < tapPageMargin) 
+                    else if (e.getX() < tapPageMargin) 
+                        super.smartMoveBackwards();
+                    else if (e.getY() > super.getHeight() - tapPageMargin) 
+                        super.smartMoveForwards();
+                    else if (e.getY() < tapPageMargin) 
                         super.smartMoveBackwards();
                     else
                         onTapMainDocArea();
@@ -296,7 +300,7 @@ public class MuPDFReaderView extends ReaderView {
             });
     }
 
-        //This is overwritten in MuPDFActivity... strange...
+        //This is overwritten again in MuPDFActivity... 
         // @Override
         // protected void onMoveToChild(int i) { 
         //     if (SearchTaskResult.get() != null && SearchTaskResult.get().pageNumber != i) {

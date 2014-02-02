@@ -357,12 +357,12 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     recentFilesList.push(path);
                         //Write the recent files list
                     recentFilesList.write(edit);
-                        //Save the current viewport
-                    saveViewport(edit, path);
                 }
-//                String filename = core.getFileName();
-                // String path = core.getFileName();
-                // if(path != null) saveViewport(edit, path);
+                    //Save the current viewport
+                if(path != null)
+                    saveViewport(edit, path);
+                else
+                    saveViewport(edit, core.getFileName());
             }
             
             if (core != null)
@@ -909,11 +909,13 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             };
         
             // Reenstate last state if it was recorded
-        String path = core.getPath();
-        if(path != null) {
-            SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS); 
-            setViewport(prefs,path);
-        }
+        String path = core.getPath(); //Can be null
+        SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+        if(path != null)
+            setViewport(prefs, path);
+        else
+            setViewport(prefs, core.getFileName());
+            
         
         
 //        if(core.getFileName() == null) setTitle(); //Otherwise this is already done by the DocView
@@ -998,6 +1000,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         }
 
     private void saveViewport(SharedPreferences.Editor edit, String path) {
+        if(path == null) path = "/nopath";
         edit.putInt("page"+path, mDocView.getDisplayedViewIndex());
         edit.putFloat("normalizedscale"+path, mDocView.getNormalizedScale());
         edit.putFloat("normalizedxscroll"+path, mDocView.getNormalizedXScroll());
@@ -1007,6 +1010,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
 
     private void setViewport(SharedPreferences prefs, String path) {
+        if(path == null) path = "/nopath";
         setViewport(prefs.getInt("page"+path, 0),prefs.getFloat("normalizedscale"+path, 0.0f),prefs.getFloat("normalizedxscroll"+path, 0.0f), prefs.getFloat("normalizedyscroll"+path, 0.0f));
         // mDocView.setDisplayedViewIndex(prefs.getInt("page"+path, 0));
         // mDocView.setScale(prefs.getFloat("normalizedscale"+path, 0.0f)); //If normalizedScale=0.0 nothing happens
