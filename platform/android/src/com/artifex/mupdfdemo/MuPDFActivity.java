@@ -519,6 +519,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             mQuery = query;
             search(1);
         }
+        mDocView.requestFocus();
+        hideKeyboard();
         return true; //We handle this here and don't want to call onNewIntent()
     }
     

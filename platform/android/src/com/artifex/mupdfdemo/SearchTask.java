@@ -7,6 +7,8 @@ import android.content.DialogInterface;
 import android.graphics.RectF;
 import android.os.Handler;
 
+import android.widget.Toast;
+
 class ProgressDialogX extends ProgressDialog {
 	public ProgressDialogX(Context context) {
 		super(context);
@@ -30,14 +32,14 @@ public abstract class SearchTask {
 	private final Context mContext;
 	private final MuPDFCore mCore;
 	private final Handler mHandler;
-	private final AlertDialog.Builder mAlertBuilder;
+//	private final AlertDialog.Builder mAlertBuilder;
 	private AsyncTask<Void,Integer,SearchTaskResult> mSearchTask;
 
 	public SearchTask(Context context, MuPDFCore core) {
 		mContext = context;
 		mCore = core;
 		mHandler = new Handler();
-		mAlertBuilder = new AlertDialog.Builder(context);
+//		mAlertBuilder = new AlertDialog.Builder(context);
 	}
 
 	protected abstract void onTextFound(SearchTaskResult result);
@@ -90,11 +92,12 @@ public abstract class SearchTask {
 				if (result != null) {
 				    onTextFound(result);
 				} else {
-					mAlertBuilder.setTitle(SearchTaskResult.get() == null ? R.string.text_not_found : R.string.no_further_occurrences_found);
-					AlertDialog alert = mAlertBuilder.create();
-					alert.setButton(AlertDialog.BUTTON_POSITIVE, mContext.getString(R.string.dismiss),
-							(DialogInterface.OnClickListener)null);
-					alert.show();
+					// mAlertBuilder.setTitle(SearchTaskResult.get() == null ? R.string.text_not_found : R.string.no_further_occurrences_found);
+					// AlertDialog alert = mAlertBuilder.create();
+					// alert.setButton(AlertDialog.BUTTON_POSITIVE, mContext.getString(R.string.dismiss),
+					// 		(DialogInterface.OnClickListener)null);
+					// alert.show();
+                                    Toast.makeText(mContext, (SearchTaskResult.get() == null ? R.string.text_not_found : R.string.no_further_occurrences_found), Toast.LENGTH_SHORT).show();
 				}
 			}
 
