@@ -481,6 +481,9 @@ pdf_dev_color(pdf_device *pdev, fz_colorspace *colorspace, float *color, int str
 static void
 pdf_dev_alpha(pdf_device *pdev, float alpha, int stroke)
 {
+        int doBmMultiply = (alpha < 0 ? 1 : 0); //We use the sign of alpha to encode that we want BM/multiply as there seems to be no easy to add an additiona parameter to pdf_dev_stroke_path() withoug more extensive modifications to fitz. This is an ugly hack!
+        if(doBmMultiply) alpha = -alpha;
+        
 	int i;
 	fz_context *ctx = pdev->ctx;
 	pdf_document *doc = pdev->doc;
@@ -518,10 +521,10 @@ pdf_dev_alpha(pdf_device *pdev, float alpha, int stroke)
 		fz_try(ctx)
 		{
 			char text[32];
+                        if(doBmMultiply) pdf_dict_puts_drop(o, "BM", pdf_new_name(doc, "Multiply"));
 			pdf_dict_puts_drop(o, (stroke ? "CA" : "ca"), pdf_new_real(doc, alpha));
 			ref = pdf_new_ref(doc, o);
 			snprintf(text, sizeof(text), "ExtGState/Alp%d", i);
-//                        snprintf(text, sizeof(text), "ExtGState/R%d", i); //Christian Gogolin 
 			pdf_dict_putp(pdev->resources, text, ref);
 		}
 		fz_always(ctx)

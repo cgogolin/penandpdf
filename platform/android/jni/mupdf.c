@@ -1436,7 +1436,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
             color[0] = glo->highlightColor[0];
             color[1] = glo->highlightColor[1];
             color[2] = glo->highlightColor[2];
-            alpha = 0.5;
+            alpha = -0.5; //The negative sign encodes that we want BM/Multiply to be set, which makes the highlight appear "behind" the text of a pdf.
             line_thickness = 1.0;
             line_height = 0.5;
             break;
