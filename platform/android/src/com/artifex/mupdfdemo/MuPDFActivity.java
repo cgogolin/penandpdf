@@ -710,7 +710,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                 intent.setAction(Intent.ACTION_PICK);
                                 mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //Do not save when we are paused for the new request
                                 startActivityForResult(intent, SAVEAS_REQUEST);
-                
                             }
                             if (which == AlertDialog.BUTTON_NEGATIVE) {
                             }
@@ -950,7 +949,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                 public void onClick(DialogInterface dialog, int which) {
                                     if (which == AlertDialog.BUTTON_POSITIVE) {
                                         boolean success = saveAs(uri);
-                                        if(!success) showInfo(getString(R.string.error_saveing));
+                                        if(!success)
+                                            showInfo(getString(R.string.error_saveing));
+                                        else
+                                            invalidateOptionsMenu();
                                     }
                                     if (which == AlertDialog.BUTTON_NEGATIVE) {
                                     }
@@ -966,7 +968,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     else
                     {
                         boolean success = saveAs(uri);
-                        if(!success) showInfo(getString(R.string.error_saveing));
+                        if(!success)
+                            showInfo(getString(R.string.error_saveing));
+                        else
+                            invalidateOptionsMenu();
                     }
                 }
                 // else if (resultCode == RESULT_CANCELED)

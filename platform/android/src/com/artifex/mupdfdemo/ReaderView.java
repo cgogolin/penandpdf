@@ -2,6 +2,8 @@ package com.artifex.mupdfdemo;
 
 import android.os.Parcelable;
 
+import java.lang.Math;
+
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
@@ -191,7 +193,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         int xOffset, yOffset;
         if (bottom >= docHeight || screenHeight >= 0.8*docHeight ) // We are flush with the bottom or the user can see almost all of the page -> advance to next column.
         {
-            if (right + screenWidth > docWidth || screenWidth >= 0.8*docWidth ) // No room for another column or the user can see almost the wholepage -> go to next page
+            if (right + 0.4*screenWidth > docWidth || screenWidth >= 0.8*docWidth ) // No room for another column or the user can see almost the wholepage -> go to next page
             {
                 View nv = mChildViews.get(mCurrent+1);
                 if (nv == null) // No page to advance to
@@ -222,7 +224,12 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 else
                 {
                         // Reset X back to the left hand column
-                    xOffset = right % screenWidth;
+//                    xOffset = right % screenWidth;
+                    if(screenWidth >= 0.8*docWidth)
+                        xOffset = left;
+                    else
+                        xOffset = 0;
+                    
                         // Adjust in case the previous page is less wide
                     if (xOffset + screenWidth > nextDocWidth)
                         xOffset = nextDocWidth - screenWidth;
@@ -231,7 +238,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 yOffset -= nextTop;
             } else {
                     // Move to top of next column
-                xOffset = screenWidth;
+                xOffset = Math.min(screenWidth, docWidth - right);
                 yOffset = screenHeight - bottom;
             }
         } else {
@@ -276,7 +283,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         int xOffset, yOffset;
         if (top <= 0 || screenHeight >= 0.8*docHeight) // We are flush with the top or the user can see almost all of the page -> step back to previous column.
         {          
-            if (left < screenWidth || screenWidth >= 0.8*docWidth) // No room for previous column or the user can see almost the wholepage -> go to previous page 
+            if (left < 0.4 * screenWidth || screenWidth >= 0.8*docWidth) // No room for previous column or the user can see almost the wholepage -> go to previous page 
             {
                 View pv = mChildViews.get(mCurrent-1);
                 if (pv == null) /* No page to advance to */
@@ -305,7 +312,12 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                     xOffset = (prevDocWidth - screenWidth)>>1;
                 } else {
                         // Reset X back to the right hand column
-                    xOffset = (left > 0 ? left % screenWidth : 0);
+//                    xOffset = (left > 0 ? left % screenWidth : 0);
+                    if(screenWidth >= 0.8*docWidth)
+                        xOffset = left;
+                    else
+                        xOffset = docWidth-screenWidth;
+                        // Adjust in case the next page is less wide
                     if (xOffset + screenWidth > prevDocWidth)
                         xOffset = prevDocWidth - screenWidth;
                     while (xOffset + screenWidth*2 < prevDocWidth)
@@ -315,7 +327,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 yOffset -= prevTop-prevDocHeight+screenHeight;
             } else {
                     // Move to bottom of previous column
-                xOffset = -screenWidth;
+                xOffset = - Math.min(screenWidth,left);
                 yOffset = docHeight - screenHeight + top;
             }
         } else {
