@@ -85,10 +85,9 @@ public class MuPDFReaderView extends ReaderView {
                                 {
                                         //Scroll the left top to the right position
                                     if((li.targetFlags & LinkInfoInternal.fz_link_flag_l_valid) == LinkInfoInternal.fz_link_flag_l_valid)  
-                                        setDocRelXScroll(li.target.left);
+                                        setDocRelXScroll(2*li.target.left); //The 2 doesn't make sense
                                     if((li.targetFlags & LinkInfoInternal.fz_link_flag_t_valid) == LinkInfoInternal.fz_link_flag_t_valid)
-                                        setDocRelYScroll(li.target.top);
-                                    
+                                        setDocRelYScroll(2*li.target.top); //The 2 doesn't make any sense                                   
                                         //If the link target is of /XYZ type r might be a zoom value
                                     if( (li.targetFlags & LinkInfoInternal.fz_link_flag_r_is_zoom) == LinkInfoInternal.fz_link_flag_r_is_zoom && (li.targetFlags & LinkInfoInternal.fz_link_flag_r_valid) == LinkInfoInternal.fz_link_flag_r_valid )
                                     {

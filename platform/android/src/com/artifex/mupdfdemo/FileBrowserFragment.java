@@ -207,6 +207,7 @@ public class FileBrowserFragment extends ListFragment {
                         mAdapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DIR, f.getName()));
                     for (File f : mFiles)
                         mAdapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DOC, f.getName()));
+                    mAdapter.notifyDataSetChanged();
                     lastPosition();
                 }
             };

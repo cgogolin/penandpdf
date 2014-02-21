@@ -42,7 +42,8 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
     private Adapter           mAdapter;
     private int               mCurrent;    // Adapter's index for the current view
     private int               mNewCurrent;
-    private boolean           mHasNewCurrent = false; 
+    private boolean           mHasNewCurrent = false;
+    private boolean           mNextScrollWithCenter = false;
     private boolean           mResetLayout;
     private final SparseArray<View>
         mChildViews = new SparseArray<View>(3);
@@ -722,15 +723,14 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 {
                     mHasNewNormalizedXScroll = true;
                     mHasNewDocRelXScroll = false;
-                    mNewNormalizedXScroll = -2*mNewDocRelXScroll*((PageView)cv).getScale()/(cv.getMeasuredWidth()*mScale*scale);
+                    mNewNormalizedXScroll = -mNewDocRelXScroll*((PageView)cv).getScale()/(cv.getMeasuredWidth()*mScale*scale);
                 }
 
                 if (mHasNewDocRelYScroll)
                 {
                     mHasNewNormalizedYScroll = true;
                     mHasNewDocRelYScroll = false;
-                    mNewNormalizedYScroll = 2*mNewDocRelYScroll*((PageView)cv).getScale()/(cv.getMeasuredHeight()*mScale*scale) - 1.0f;
-//                    Toast.makeText(getContext(), "mNewDocRelYScroll="+mNewDocRelYScroll+" getScale="+((PageView)cv).getScale()+" getMeasuredHeight="+(cv.getMeasuredHeight()+" mScale="+mScale+" scale="+scale) ,Toast.LENGTH_LONG).show();
+                    mNewNormalizedYScroll = mNewDocRelYScroll*((PageView)cv).getScale()/(cv.getMeasuredHeight()*mScale*scale) - 1.0f;
                 }
                     
                 if (mHasNewNormalizedXScroll || mHasNewNormalizedYScroll)
@@ -750,6 +750,13 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                         mHasNewNormalizedYScroll = false;
                     }
 //                    mNewNormalizedXScroll = mNewNormalizedYScroll = 0;
+
+                    if(mNextScrollWithCenter)
+                    {
+                        mNextScrollWithCenter = false;
+                        XScroll+=getWidth()/2;
+                        YScroll+=getHeight()/2;
+                    }
                     scrollToPos(XScroll, YScroll);
                 }
             }
@@ -1023,7 +1030,6 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
     {
         mHasNewDocRelXScroll = true;
         mNewDocRelXScroll = docRelXScroll;
-//        setNormalizedXScroll(docRelXScroll/(cv.getMeasuredWidth()*mScale));
         requestLayout();
     }
 
@@ -1031,8 +1037,12 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
     {
         mHasNewDocRelYScroll = true;
         mNewDocRelYScroll = docRelYScroll;
-//        setNormalizedYScroll(docRelYScroll/(cv.getMeasuredHeight()*mScale));
         requestLayout();
+    }
+
+    public void doNextScrollWithCenter()
+    {
+        mNextScrollWithCenter = true;
     }
     
     private void scrollToPos(int XScroll, int YScroll)
@@ -1083,5 +1093,13 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         //     View cv = mChildViews.get(mCurrent);
         //     return cv.getMeasuredHeight();
         // }
+
+    // public float getCurrentPageHeight()
+    // {
+    //     View cv = getDisplayedView();
+    //     if(cv == null) return 0.0f;
+    //     float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
+    //     return cv.getMeasuredHeight()*scale;
+    // }
 }
 

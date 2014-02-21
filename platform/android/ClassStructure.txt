@@ -1,3 +1,5 @@
+The information in this file is outdated and only partially correct!!!
+
 MuPDFActivity
 ~~~~~~~~~~~~~
 
