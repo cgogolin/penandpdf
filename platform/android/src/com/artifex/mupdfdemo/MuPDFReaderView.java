@@ -1,18 +1,20 @@
 package com.artifex.mupdfdemo;
 
+import android.util.SparseArray;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
-
-import android.util.Log;
+import android.graphics.RectF;
 
 public class MuPDFReaderView extends ReaderView {
     enum Mode {Viewing, Selecting, Drawing}
@@ -22,6 +24,8 @@ public class MuPDFReaderView extends ReaderView {
     private boolean tapDisabled = false;
     private int tapPageMargin;
 
+    private SparseArray<SearchTaskResult> SearchTaskResults = new SparseArray<SearchTaskResult>();
+    
         //To be overwritten in MuPDFActivity:
     protected void onMoveToChild(int pageNumber) {}
     protected void onTapMainDocArea() {}
@@ -276,14 +280,67 @@ public class MuPDFReaderView extends ReaderView {
             onNumberOfStrokesChanged(pageView.getDrawingSize());
         }
     }
+
+    public void addSearchResult(SearchTaskResult result) {
+        SearchTaskResults.put(result.getPageNumber(),result);
+    }
+
+    
+    public void clearSearchResults() {
+        SearchTaskResults.clear();
+    }
+
+    public boolean hasSearchResults() {
+        return SearchTaskResults.size() !=0 ? true : false;
+    }    
+
+    public void goToNextSearchResult(int direction) {
+        RectF resultRect = null;
+        int resultPage = -1;
+        SearchTaskResult resultOnCurrentPage = SearchTaskResults.get(getDisplayedViewIndex());
+        if(resultOnCurrentPage!=null && resultOnCurrentPage.incrementFocus(direction)) //There is a result on the current page in the right direction
+        {
+            resultRect = SearchTaskResults.get(getDisplayedViewIndex()).getFocusedSearchBox();
+        }
+        else 
+        {
+            for(int i = 0, size = SearchTaskResults.size(); i < size; i++)
+            {
+                SearchTaskResult result = SearchTaskResults.valueAt(direction == 1 ? i : size-1-i);
+                if(direction*result.getPageNumber() > direction*getDisplayedViewIndex())
+                {
+                    if(direction == 1)
+                        result.focusFirst();
+                    else
+                        result.focusLast();
+                    resultPage = result.getPageNumber();
+                    resultRect = result.getFocusedSearchBox();
+                    break;
+                };
+            }
+        }
+
+        if(resultPage!=-1)
+        {
+            setDisplayedViewIndex(resultPage);
+        }
+        if(resultRect!=null)
+        {
+            doNextScrollWithCenter();
+            setDocRelXScroll(resultRect.centerX()); 
+//            setDocRelYScroll(core.getPageSize(getDisplayedViewIndex()).y-resultRect.centerY());
+            setDocRelYScroll(resultRect.centerY());
+        }
+    }
+    
     
     @Override
     protected void onChildSetup(int i, View v) {
-        if (SearchTaskResult.get() != null
-            && SearchTaskResult.get().pageNumber == i)
-            ((MuPDFView) v).setSearchBoxes(SearchTaskResult.get().searchBoxes);
+
+        if (SearchTaskResults.get(i) != null) //replace SearchTaskResult.get() by appropriate method
+            ((MuPDFView) v).setSearchTaskResult(SearchTaskResults.get(i));
         else
-            ((MuPDFView) v).setSearchBoxes(null);
+            ((MuPDFView) v).setSearchTaskResult(null);
 
         ((MuPDFView) v).setLinkHighlighting(mLinksEnabled);
 

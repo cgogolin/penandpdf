@@ -192,9 +192,9 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         int docHeight = v.getMeasuredHeight();
 
         int xOffset, yOffset;
-        if (bottom >= docHeight || screenHeight >= 0.8*docHeight ) // We are flush with the bottom or the user can see almost all of the page -> advance to next column.
+        if (bottom >= docHeight || screenHeight >= 0.8*docHeight) // We are flush with the bottom or the user can see almost all of the page -> advance to next column.
         {
-            if (right + 0.4*screenWidth > docWidth || screenWidth >= 0.8*docWidth ) // No room for another column or the user can see almost the wholepage -> go to next page
+            if (right + 0.4*screenWidth > docWidth || screenWidth >= 0.7*docWidth ) // No room for another column or the user can see almost the wholepage -> go to next page
             {
                 View nv = mChildViews.get(mCurrent+1);
                 if (nv == null) // No page to advance to
@@ -226,7 +226,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 {
                         // Reset X back to the left hand column
 //                    xOffset = right % screenWidth;
-                    if(screenWidth >= 0.8*docWidth)
+                    if(screenWidth >= 0.7*docWidth)
                         xOffset = left;
                     else
                         xOffset = 0;
@@ -282,9 +282,9 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
         int docHeight = v.getMeasuredHeight();
 
         int xOffset, yOffset;
-        if (top <= 0 || screenHeight >= 0.8*docHeight) // We are flush with the top or the user can see almost all of the page -> step back to previous column.
+        if (top <= 0 || screenHeight >= 0.8*docHeight ) // We are flush with the top or the user can see almost all of the page -> step back to previous column.
         {          
-            if (left < 0.4 * screenWidth || screenWidth >= 0.8*docWidth) // No room for previous column or the user can see almost the wholepage -> go to previous page 
+            if (left < 0.4 * screenWidth || screenWidth >= 0.7*docWidth) // No room for previous column or the user can see almost the wholepage -> go to previous page 
             {
                 View pv = mChildViews.get(mCurrent-1);
                 if (pv == null) /* No page to advance to */
@@ -314,7 +314,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 } else {
                         // Reset X back to the right hand column
 //                    xOffset = (left > 0 ? left % screenWidth : 0);
-                    if(screenWidth >= 0.8*docWidth)
+                    if(screenWidth >= 0.7*docWidth)
                         xOffset = left;
                     else
                         xOffset = docWidth-screenWidth;
@@ -730,7 +730,8 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
                 {
                     mHasNewNormalizedYScroll = true;
                     mHasNewDocRelYScroll = false;
-                    mNewNormalizedYScroll = mNewDocRelYScroll*((PageView)cv).getScale()/(cv.getMeasuredHeight()*mScale*scale) - 1.0f;
+//                    mNewNormalizedYScroll = mNewDocRelYScroll*((PageView)cv).getScale()/(cv.getMeasuredHeight()*mScale*scale) - 1.0f;
+                    mNewNormalizedYScroll = -mNewDocRelYScroll*((PageView)cv).getScale()/(cv.getMeasuredHeight()*mScale*scale);
                 }
                     
                 if (mHasNewNormalizedXScroll || mHasNewNormalizedYScroll)

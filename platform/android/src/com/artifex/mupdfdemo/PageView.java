@@ -141,7 +141,8 @@ public abstract class PageView extends ViewGroup {
 	private       ImageView mPatch;
 	private       Bitmap    mPatchBm;
 	private       AsyncTask<PatchInfo,Void,PatchInfo> mDrawPatch;
-	private       RectF     mSearchBoxes[];
+//	private       RectF     mSearchBoxes[];
+    private SearchTaskResult mSearchTaskResult = null;
 	protected     LinkInfo  mLinks[];
 	private       RectF     mSelectBox;
 	private       TextWord  mText[][];
@@ -222,7 +223,8 @@ public abstract class PageView extends ViewGroup {
 		mPatchViewSize = null;
 		mPatchArea = null;
 
-		mSearchBoxes = null;
+//		mSearchBoxes = null;
+                mSearchTaskResult = null;
 		mLinks = null;
 		mSelectBox = null;
 		mText = null;
@@ -358,12 +360,17 @@ public abstract class PageView extends ViewGroup {
 					final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
 					final Paint paint = new Paint();
 
-					if (!mIsBlank && mSearchBoxes != null) {
+					if (!mIsBlank && mSearchTaskResult != null) {
 						paint.setColor(SEARCHRESULTS_COLOR);
-						for (RectF rect : mSearchBoxes)
-							canvas.drawRect(rect.left*scale, rect.top*scale,
+						for (RectF rect : mSearchTaskResult.getSearchBoxes())
+                                                    canvas.drawRect(rect.left*scale, rect.top*scale,
 									        rect.right*scale, rect.bottom*scale,
 									        paint);
+                                                RectF rect = mSearchTaskResult.getFocusedSearchBox();
+                                                if(rect != null)
+                                                    canvas.drawRect(rect.left*scale, rect.top*scale,
+                                                                    rect.right*scale, rect.bottom*scale,
+                                                                    paint);
 					}
 
 					if (!mIsBlank && mLinks != null && mHighlightLinks) {
@@ -445,11 +452,11 @@ public abstract class PageView extends ViewGroup {
 		requestLayout();
 	}
 
-	public void setSearchBoxes(RectF searchBoxes[]) {
-		mSearchBoxes = searchBoxes;
-		if (mSearchView != null)
-			mSearchView.invalidate();
-	}
+	// public void setSearchBoxes(RectF searchBoxes[]) {
+	// 	mSearchBoxes = searchBoxes;
+	// 	if (mSearchView != null)
+	// 		mSearchView.invalidate();
+	// }
 
 	public void setLinkHighlighting(boolean f) {
 		mHighlightLinks = f;
@@ -791,6 +798,12 @@ public abstract class PageView extends ViewGroup {
         public float getScale()
         {
             return mSourceScale*(float)getWidth()/(float)mSize.x;
+        }
+
+
+    public void setSearchTaskResult(SearchTaskResult searchTaskResult)
+        {
+            mSearchTaskResult = searchTaskResult;
         }
     
     // public void setInkThickness(float inkThickness){

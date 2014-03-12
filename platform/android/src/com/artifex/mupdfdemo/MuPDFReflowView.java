@@ -136,6 +136,9 @@ public class MuPDFReflowView extends WebView implements MuPDFView {
 	public void setSearchBoxes(RectF[] searchBoxes) {
 	}
 
+    	public void setSearchTaskResult(SearchTaskResult result) {
+	}
+
 	public void setLinkHighlighting(boolean f) {
 	}
 

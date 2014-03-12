@@ -3,24 +3,63 @@ package com.artifex.mupdfdemo;
 import android.graphics.RectF;
 
 public class SearchTaskResult {
-	public final String txt;
-	public final int   pageNumber;
-	public final RectF searchBoxes[];
-        public final int direction;
-	static private SearchTaskResult singleton;
+    private String text;
+    private int   pageNumber;
+    private RectF searchBoxes[];
+    private int focus = -1;
+    private int direction;
+    
+    public SearchTaskResult(String text, int pageNumber, RectF[] searchBoxes, int direction) {
+        this.text = text;
+        this.pageNumber = pageNumber;
+	this.searchBoxes = searchBoxes;
+        this.direction = direction;
+    }
 
-    SearchTaskResult(String _txt, int _pageNumber, RectF _searchBoxes[], int _direction) {
-		txt = _txt;
-		pageNumber = _pageNumber;
-		searchBoxes = _searchBoxes;
-                direction = _direction;
-	}
+    public String getText() {
+        return text;
+    }
 
-	static public SearchTaskResult get() {
-		return singleton;
-	}
+    public int getPageNumber() {
+        return pageNumber;
+    }
 
-	static public void set(SearchTaskResult r) {
-		singleton = r;
-	}
+    public RectF[] getSearchBoxes() {
+        return searchBoxes;
+    }
+
+    public RectF getFocusedSearchBox() {
+        if(focus >= 0 && focus < searchBoxes.length)
+            return searchBoxes[focus];
+        else
+            return null;
+    }
+    
+    public int getFocus() {
+        return focus;
+    }
+
+    public void setFocus(int focus) {
+        if(focus >= -1 && focus < searchBoxes.length)
+            this.focus = focus;
+    }
+
+    public void focusFirst() {
+        if(searchBoxes.length > 0)
+            this.focus = 0;
+    }
+
+    public void focusLast() {
+            this.focus = searchBoxes.length -1;
+    }
+
+    public boolean incrementFocus(int direction) {
+        if(focus+direction >= 0 && focus+direction < searchBoxes.length)
+        {
+            focus+=direction;
+            return true;
+        }
+        else
+            return false;
+    }
 }
