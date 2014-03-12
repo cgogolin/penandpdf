@@ -72,7 +72,6 @@ public abstract class SearchTask {
         stop();
 
         final int increment = direction;
-//        final int startIndex = searchPage == -1 ? displayPage : searchPage + increment;
         final int startIndex = displayPage;
 
         final ProgressDialogX progressDialog = new ProgressDialogX(mContext);
@@ -113,7 +112,7 @@ public abstract class SearchTask {
                         {
                             firstResult = result;
                             publishProgress(-1); //Hides the progress dialoge as soon as the first results are found
-//                            goToResult(firstResult);
+                            goToResult(firstResult);
                         }
                     }
                     index += increment;

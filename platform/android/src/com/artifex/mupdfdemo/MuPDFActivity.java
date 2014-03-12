@@ -900,7 +900,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             //Enable link highlighting by default
         mDocView.setLinksEnabled(true);
 
-        final MuPDFActivity activity  = getActivity();
+        final MuPDFActivity activity  = this;
         mSearchTask = new SearchTask(this, core) {
                 @Override
                 protected void onTextFound(SearchTaskResult result) { //Is called when the search task finds mathing text on a page
