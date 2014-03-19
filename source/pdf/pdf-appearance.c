@@ -1486,17 +1486,18 @@ void pdf_set_markup_appearance(pdf_document *doc, pdf_annot *annot, float* color
 			fz_point up;
 			float thickness;
 
-			up.x = qp[i+2].x - qp[i+1].x;
-			up.y = qp[i+2].y - qp[i+1].y;
+			up.x = qp[i+2].x - qp[i+1].x; //width
+			up.y = qp[i+2].y - qp[i+1].y; //height
 
 			pt0.x += line_height * up.x;
 			pt0.y += line_height * up.y;
 			pt1.x += line_height * up.x;
 			pt1.y += line_height * up.y;
-
+                        
 			thickness = sqrtf(up.x * up.x + up.y * up.y) * line_thickness;
 
-			if (!stroke || fz_abs(stroke->linewidth - thickness) < SMALL_FLOAT)
+//			if (!stroke || fz_abs(stroke->linewidth - thickness) < SMALL_FLOAT)
+                        if (!stroke || stroke->linewidth != thickness)
 			{
 				if (stroke)
 				{
@@ -1585,21 +1586,8 @@ void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, fl
 
 		for (i = 0; i < n; i += 4)
 		{
-			/* fz_point pt0 = qp[i]; */
-			/* fz_point pt1 = qp[i+1]; */
 			fz_point up;
 			float thickness;
-
-			/* up.x = qp[i+2].x - qp[i+1].x; */
-			/* up.y = qp[i+2].y - qp[i+1].y; */
-
-			/* pt0.x += line_height * up.x; */
-			/* pt0.y += line_height * up.y; */
-			/* pt1.x += line_height * up.x; */
-			/* pt1.y += line_height * up.y; */
-
-			/* thickness = sqrtf(up.x * up.x + up.y * up.y) * line_thickness; */
-                        //New
                         fz_point pt0;
                         fz_point pt1;
                         thickness = qp[i+3].y - qp[i].y;
@@ -1608,7 +1596,8 @@ void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, fl
 			pt1.x = qp[i+1].x;
                         pt1.y = qp[i+1].y + 0.5*thickness;
                         
-			if (!stroke || fz_abs(stroke->linewidth - thickness) < SMALL_FLOAT)
+//			if (!stroke || fz_abs(stroke->linewidth - thickness) < SMALL_FLOAT)
+                        if (!stroke || stroke->linewidth != thickness)
 			{
 				if (stroke)
 				{

@@ -727,7 +727,6 @@ pdf_create_annot(pdf_document *doc, pdf_page *page, fz_annot_type type)
 			pdf_dict_puts_drop(page->me, "Annots", annot_arr);
 		}
 
-                    //Christian Gogolin
                 pdf_dict_puts_drop(annot_obj, "F", pdf_new_int(doc, 4)); //Make annotations printable
                 if (type == FZ_ANNOT_HIGHLIGHT) {
                         //Say that we want this to be renderd "behind" the text
@@ -736,8 +735,7 @@ pdf_create_annot(pdf_document *doc, pdf_page *page, fz_annot_type type)
                 const char* creator = "CreatedByMuPdf";
                 pdf_dict_puts_drop(annot_obj, "NM", pdf_new_string(doc, creator, strlen(creator)));
 
-                
-		pdf_dict_puts_drop(annot_obj, "Type", pdf_new_name(doc, "Annot"));
+                pdf_dict_puts_drop(annot_obj, "Type", pdf_new_name(doc, "Annot"));
 
 		pdf_dict_puts_drop(annot_obj, "Subtype", pdf_new_name(doc, type_str));
 		pdf_dict_puts_drop(annot_obj, "Rect", pdf_new_rect(doc, &rect));

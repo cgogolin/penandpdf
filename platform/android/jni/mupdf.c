@@ -1483,7 +1483,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
 
         for (i = 0; i < n; i++)
         {
-                //Modifiedy by Christian Gogolin to fix the order of the points in the quad points of highlight annotations
+                //Fix the order of the points in the quad points of highlight annotations
             jobject opt;
             if(type == FZ_ANNOT_HIGHLIGHT)
             {
@@ -1502,7 +1502,6 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
             fz_transform_point(&pts[i], &ctm);
         }
 
-            //Christian Gogolin
         annot = (fz_annot *)pdf_create_annot(idoc, (pdf_page *)pc->page, type); //in pdf-annot.c
         pdf_set_markup_annot_quadpoints(idoc, (pdf_annot *)annot, pts, n); //in pdf-annot.c
         if(type == FZ_ANNOT_HIGHLIGHT) 
