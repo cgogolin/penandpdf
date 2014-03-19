@@ -439,6 +439,8 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 					text.append('\n');
 				text.append(line);
 			}
+
+                        public void onEndText() {};
 		});
 
 		if (text.length() == 0)
@@ -474,13 +476,14 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 			public void onEndLine() {
 				if (!rect.isEmpty()) {
-                                        //Christian Gogolin switched the following two lines back:
                                         quadPoints.add(new PointF(rect.left, rect.bottom));
                                         quadPoints.add(new PointF(rect.right, rect.bottom));
 					quadPoints.add(new PointF(rect.right, rect.top));
 					quadPoints.add(new PointF(rect.left, rect.top));
 				}
 			}
+                        
+                        public void onEndText() {};
 		});
 
 		if (quadPoints.size() == 0)

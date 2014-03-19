@@ -150,9 +150,15 @@ public class MuPDFReaderView extends ReaderView {
 
     @Override
     public boolean onDown(MotionEvent e) {
+        switch (mMode) {
+            case Selecting:
+                MuPDFView pageView = (MuPDFView)getDisplayedView();
+                if(pageView!=null) pageView.deselectText();
+        }
         return super.onDown(e);
     }
 
+    @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
                             float distanceY) {
         MuPDFView pageView = (MuPDFView)getDisplayedView();
