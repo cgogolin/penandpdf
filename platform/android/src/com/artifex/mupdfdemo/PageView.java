@@ -116,12 +116,13 @@ class TextSelector {
 
 public abstract class PageView extends ViewGroup {
     public static final int HIGHLIGHT_COLOR = 0x8033B5E5;
-    public static final int GRAYEDOUT_COLOR = 0x40000000;
-    public static final int SEARCHRESULTS_COLOR = 0x4033B5E5;
+    public static final int GRAYEDOUT_COLOR = 0x30000000;
+    public static final int SEARCHRESULTS_COLOR = 0x3033B5E5;
     public static final int HIGHLIGHTED_SEARCHRESULT_COLOR = 0xFF33B5E5;
     public static final int LINK_COLOR = 0xFF33B5E5;
     public static final int BOX_COLOR = 0xFF33B5E5;
-    private static final int BACKGROUND_COLOR = 0xFFFFFFFF;
+//    private static final int BACKGROUND_COLOR = 0xFFFFFFFF;
+    private static final int BACKGROUND_COLOR = 0xFFF0F0F0;
     private static final int PROGRESS_DIALOG_DELAY = 200;
     protected final Context   mContext;
     protected     int       mPageNumber;
@@ -369,15 +370,19 @@ public abstract class PageView extends ViewGroup {
                             {
                                 paint.setColor(HIGHLIGHTED_SEARCHRESULT_COLOR);
                                 paint.setStyle(Paint.Style.STROKE);
+                                paint.setAntiAlias(true);
+                                paint.setStrokeWidth(2 * scale);
                                 canvas.drawRect(rect.left*scale, rect.top*scale,
                                                 rect.right*scale, rect.bottom*scale,
                                                 paint);
+                                paint.setAntiAlias(false);
                             }
                         }
 
                         if (!mIsBlank && mLinks != null && mHighlightLinks) {
                             paint.setStyle(Paint.Style.STROKE);
                             paint.setColor(LINK_COLOR);
+                            paint.setStrokeWidth(0);
                             for (LinkInfo link : mLinks)
                                 canvas.drawRect(link.rect.left*scale, link.rect.top*scale,
                                                 link.rect.right*scale, link.rect.bottom*scale,
@@ -387,6 +392,7 @@ public abstract class PageView extends ViewGroup {
                         if (mSelectBox != null && mText != null) {
                             paint.setStyle(Paint.Style.FILL);
                             paint.setColor(HIGHLIGHT_COLOR);
+                            paint.setStrokeWidth(0);
                             processSelectedText(new TextProcessor() {
                                     RectF rect;
                                     float docRelXmaxSelection = Float.NEGATIVE_INFINITY;
@@ -410,7 +416,7 @@ public abstract class PageView extends ViewGroup {
                                     }
 
                                     public void onEndText() {
-                                            //Give visual feddback on the selection region
+                                            //Give visual feedback on the selection region
                                         SharedPreferences sharedPref = getContext().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
                                         boolean useSmartTextSelection = sharedPref.getBoolean(SettingsActivity.PREF_SMART_TEXT_SELECTION, true);
                                         if (useSmartTextSelection)
@@ -427,6 +433,7 @@ public abstract class PageView extends ViewGroup {
                         if (mItemSelectBox != null) {
                             paint.setStyle(Paint.Style.STROKE);
                             paint.setColor(BOX_COLOR);
+                            paint.setStrokeWidth(0);
                             canvas.drawRect(mItemSelectBox.left*scale, mItemSelectBox.top*scale, mItemSelectBox.right*scale, mItemSelectBox.bottom*scale, paint);
                         }
 
