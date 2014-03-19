@@ -42,13 +42,12 @@ class ProgressDialogX extends ProgressDialog {
 }
 
 public abstract class SearchTask {
-    private static final int SEARCH_PROGRESS_DELAY = 500;
-    private final Context mContext;
+    private static final int SEARCH_PROGRESS_DELAY = 1000;
+    protected final Context mContext;
     private final MuPDFCore mCore;
     private final Handler mHandler;
-    private SearchTaskResult firstResult;
     private AsyncTask<Void,Integer,SearchTaskResult> mSearchTask;
-
+    
     public SearchTask(Context context, MuPDFCore core) {
         mContext = context;
         mCore = core;
@@ -57,16 +56,8 @@ public abstract class SearchTask {
 
     protected abstract void onTextFound(SearchTaskResult result);
     protected abstract void goToResult(SearchTaskResult result);
-
-    public void stop() {
-        if (mSearchTask != null) {
-            mSearchTask.cancel(true);
-            mSearchTask = null;
-        }
-        firstResult = null;
-    }
-
-    public void go(final String text, int direction, int displayPage) {
+    
+    public void start(final String text, int direction, int displayPage) {
         if (mCore == null)
             return;
         stop();
@@ -76,8 +67,10 @@ public abstract class SearchTask {
 
         final ProgressDialogX progressDialog = new ProgressDialogX(mContext);
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.setProgressPercentFormat(null);
         progressDialog.setTitle(mContext.getString(R.string.searching_));
         progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                @Override
                 public void onCancel(DialogInterface dialog) {
                     stop();
                 }
@@ -86,23 +79,31 @@ public abstract class SearchTask {
 
         mSearchTask = new AsyncTask<Void,Integer,SearchTaskResult>() {
             @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                progressDialog.setProgress(startIndex);
+                mHandler.postDelayed(new Runnable() {
+                        public void run() {
+                            if(!(progressDialog.isCancelled() || progressDialog.isDismissed() ))
+                            {
+                                progressDialog.show();
+                            }
+                        }
+                    }, SEARCH_PROGRESS_DELAY);
+            }
+            
+            @Override
             protected SearchTaskResult doInBackground(Void... params) {
+                SearchTaskResult firstResult = null;
                 int index = startIndex;
-                while (0 <= index && index < mCore.countPages() && !isCancelled()) {
-                    Log.v("SearchTask", "searching page " + index);
-                    
+                do
+                {
                     publishProgress(index+1);
+//                    Log.v("SearchTask", "searching page " + (index+1));
                     RectF searchHits[] = mCore.searchPage(index, text);
-
                     if (searchHits != null && searchHits.length > 0)
                     {
-                        Log.v("SearchTask", searchHits.length+" hits fonud");
-                        float pageHeight = mCore.getPageSize(index).y;
-                        // for(RectF hit : searchHits) //Mirror the y coordinate
-                        // {
-                        //     hit.set(hit.left, pageHeight - hit.top, hit.right, pageHeight - hit.bottom);
-                        // }
-                        SearchTaskResult result = new SearchTaskResult(text, index, searchHits, increment);
+                        final SearchTaskResult result = new SearchTaskResult(text, index, searchHits, increment);
                         if(increment == 1)
                             result.focusFirst();
                         else
@@ -111,54 +112,60 @@ public abstract class SearchTask {
                         if(firstResult == null)
                         {
                             firstResult = result;
-                            publishProgress(-1); //Hides the progress dialoge as soon as the first results are found
-                            goToResult(firstResult);
+                            mHandler.post(new Runnable() 
+                                {
+                                    @Override
+                                    public void run() {
+                                       progressDialog.dismiss();
+                                       goToResult(result);
+                                    }
+                                }
+                                );
                         }
                     }
-                    index += increment;
+                    index = (index+increment % mCore.countPages() + mCore.countPages()) % mCore.countPages();
                 }
+                while(index != (startIndex % mCore.countPages() + mCore.countPages()) % mCore.countPages() && !isCancelled());
+                    
                 return firstResult;
-//                return SearchTaskResult.get();
             }
 
             @Override
             protected void onPostExecute(SearchTaskResult result) {
+                super.onPostExecute(result);
                 progressDialog.cancel();
-                if (result == null) {
-                    Toast.makeText(mContext, R.string.text_not_found, Toast.LENGTH_SHORT).show();
-                }
+                if(result == null) Toast.makeText(mContext, R.string.text_not_found, Toast.LENGTH_SHORT).show();
             }
 
             @Override
             protected void onCancelled() {
+                super.onCancelled();
                 progressDialog.cancel();
             }
 
             @Override
-            protected void onProgressUpdate(Integer... values) {
-                if(values[0].intValue() == -1)
-                {
-                    progressDialog.dismiss();
-                }
-                else
-                    progressDialog.setProgress(values[0].intValue());
+            protected void onProgressUpdate(Integer... page) {
+                super.onProgressUpdate(page);
+                progressDialog.setProgress(page[0]);
             }
-
-            // @Override
-            // protected void onPreExecute() {
-            //     super.onPreExecute();
-            //     progressDialog.setProgress(startIndex);
-            //     mHandler.postDelayed(new Runnable() {
-            //             public void run() {
-            //                 if(!(progressDialog.isCancelled() || progressDialog.isDismissed() ))
-            //                 {
-            //                     progressDialog.show();
-            //                 }
-            //             }
-            //         }, SEARCH_PROGRESS_DELAY);
-            // }
         };
 
         mSearchTask.execute();
     }
+
+    public void stop() {
+        if (mSearchTask != null) {
+            mSearchTask.cancel(true);
+            mSearchTask = null;
+        }
+    }
+
 }
+
+
+                        // //Mirror the y coordinate
+                        // float pageHeight = mCore.getPageSize(index).y;
+                        // for(RectF hit : searchHits) 
+                        // {
+                        //     hit.set(hit.left, pageHeight - hit.top, hit.right, pageHeight - hit.bottom);
+                        // }

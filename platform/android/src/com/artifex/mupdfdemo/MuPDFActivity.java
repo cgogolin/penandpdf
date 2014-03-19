@@ -10,6 +10,7 @@ import java.util.Set;
 
 import com.artifex.mupdfdemo.ReaderView.ViewMapper;
 
+import android.util.Log;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -68,8 +69,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     enum AcceptMode {Highlight, Underline, StrikeOut, Ink, CopyText};
     
     private SearchView searchView = null;
-    private String oldQueryText = "";
-    private String mQuery = "";
+    private String latestTextInSearchBox = "";
+    private String textOfLastSearch = "";
 //    private int mCurrentSearchResultOnPage = 0;
     private ShareActionProvider mShareActionProvider = null;
     private boolean mNotSaveOnDestroyThisTime = false;
@@ -310,7 +311,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             if (core == null) setupCore();
             if (core != null) //OK, so apparently we have a valid pdf open
             {
-//                SearchTaskResult.set(null);
                 if(mDocView!=null) mDocView.clearSearchResults();
                 createAlertWaiter();
                 core.startAlerts();
@@ -481,37 +481,38 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         }
 
     @Override
-    public boolean onClose() {//X button in search box
-            // Make the ReaderView act on the change to mSearchTaskResult
-            // via overridden onChildSetup method.
-        mDocView.clearSearchResults();
-        mDocView.resetupChildren();
+    public boolean onClose() {//???
+        // Log.v("MuPDFActivity", "onClose()");
+        //     Make the ReaderView act via overridden onChildSetup method.
+        // if (mSearchTask != null) mSearchTask.stop();
+        // mDocView.clearSearchResults();
+        // mDocView.resetupChildren();
         return false;
     }
 
     
     @Override
-    public boolean onQueryTextChange(String query) {//For search
-        mQuery = query;
+    public boolean onQueryTextChange(String query) {//Called when string in search box has changed
             //This is a hacky way to determine when the user has reset the text field with the X button 
-        if ( query.length() == 0 && oldQueryText.length() > 1) {
-            mDocView.clearSearchResults();
-            mDocView.resetupChildren();
+        if (query.length() == 0 && latestTextInSearchBox.length() > 1) {
+            if (mSearchTask != null) mSearchTask.stop();
+            if(mDocView.hasSearchResults())
+            {
+                mDocView.clearSearchResults();
+                mDocView.resetupChildren();
+            }
         }
-        oldQueryText = query;
+        latestTextInSearchBox = query;
         return false;
     }
 
     @Override 
     public boolean onQueryTextSubmit(String query) {//For search
-        // if(mQuery != query)
-        // {
-        mQuery = query;
-        search(1);
-        // }
         mDocView.requestFocus();
         hideKeyboard();
-        return true; //We handle this here and don't want to call onNewIntent()
+        if(!textOfLastSearch.equals(query)) //only perform a search if the query has changed    
+            search(1);
+        return true; //We handle this here and don't want onNewIntent() to be called
     }
     
     @Override
@@ -619,8 +620,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                             pageView.deleteSelectedAnnotation();
                         break;
                     case Search:
-                        if (mSearchTask != null) mSearchTask.stop();
                         hideKeyboard();
+                        if (mSearchTask != null) mSearchTask.stop();
                         mDocView.clearSearchResults();
                         mDocView.resetupChildren();
                         break;
@@ -674,14 +675,14 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 invalidateOptionsMenu();
                 return true;
             case R.id.menu_next:
-                if (mQuery != "")
+                if (!latestTextInSearchBox.equals(""))
                 {
                     hideKeyboard();
                     search(1);
                 }
                 return true;
             case R.id.menu_previous:
-                if (mQuery != "")
+                if (!latestTextInSearchBox.equals(""))
                 {
                     hideKeyboard();
                     search(-1);
@@ -900,38 +901,30 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             //Enable link highlighting by default
         mDocView.setLinksEnabled(true);
 
-        final MuPDFActivity activity  = this;
+//        final MuPDFActivity activity  = this;
         mSearchTask = new SearchTask(this, core) {
                 @Override
-                protected void onTextFound(SearchTaskResult result) { //Is called when the search task finds mathing text on a page
-                        // Make the ReaderView act on the change to SearchTaskResult
-                        // via overridden onChildSetup method.
+                protected void onTextFound(SearchTaskResult result) {
                     mDocView.addSearchResult(result);
-                    mDocView.resetupChildren();
+//                    mDocView.resetupChildren();
                 }
                 
                 @Override
-                protected void goToResult(SearchTaskResult _result) { //Is called when the search task finds the first page with mathing text
-
-                    final SearchTaskResult result = _result;
-                    
-                    activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                
-                                
-                                    // Ask the ReaderView to move to the resulting page
-                                mDocView.setDisplayedViewIndex(result.getPageNumber());
-                                    // ... and the region on the page
-                                RectF resultRect = result.getFocusedSearchBox();
-                                if(resultRect!=null)
-                                {
-                                    mDocView.doNextScrollWithCenter();
-                                    mDocView.setDocRelXScroll(resultRect.left);
-                                    mDocView.setDocRelYScroll(core.getPageSize(mDocView.getDisplayedViewIndex()).y-resultRect.top);
-                                }
-                            }
-                        });
+                protected void goToResult(SearchTaskResult result) {
+                        //Make the docview show the hits
+                    mDocView.resetupChildren();
+                        // Ask the ReaderView to move to the resulting page
+                    if(mDocView.getDisplayedViewIndex() != result.getPageNumber())
+                        mDocView.setDisplayedViewIndex(result.getPageNumber());
+                        // ... and the region on the page
+                    RectF resultRect = result.getFocusedSearchBox();
+                    if(resultRect!=null)
+                    {
+                        mDocView.doNextScrollWithCenter();
+                        mDocView.setDocRelXScroll(resultRect.left);
+//                        mDocView.setDocRelYScroll(core.getPageSize(mDocView.getDisplayedViewIndex()).y-resultRect.top);
+                        mDocView.setDocRelYScroll(resultRect.top);
+                    }
                 }
             };
         
@@ -1175,58 +1168,16 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
     
     private void search(int direction) {
-        if(mDocView.hasSearchResults())
+//        Log.i("SearchTask", "search() with textOfLastSearch="+textOfLastSearch+" latestTextInSearchBox"+latestTextInSearchBox+" mDocView.hasSearchResults()="+mDocView.hasSearchResults());
+        if(mDocView.hasSearchResults() && textOfLastSearch.equals(latestTextInSearchBox))
             mDocView.goToNextSearchResult(direction);
         else
         {
-            int displayPage = mDocView.getDisplayedViewIndex();
-//            int searchPage = r != null ? r.pageNumber : -1;
-//            int searchPage = displayPage;
-            mSearchTask.go(mQuery, direction, displayPage);
+            mSearchTask.start(latestTextInSearchBox, direction, mDocView.getDisplayedViewIndex());
+            textOfLastSearch = latestTextInSearchBox;
         }
-        
-        
-//         int displayPage = mDocView.getDisplayedViewIndex();
-//         SearchTaskResult r = SearchTaskResult.get();
-
-//         if( r != null && r.pageNumber == displayPage && r.searchBoxes.length > r.getCurrentSearchBox()+direction && r.getCurrentSearchBox()+direction >= 0 ) //There still are results on the current page
-//         {
-//             r.setCurrentSearchBox(r.getCurrentSearchBox()+direction);
-//             RectF resultRect = r.searchBoxes[r.getCurrentSearchBox()];
-//             mDocView.doNextScrollWithCenter();
-//             mDocView.setDocRelXScroll(resultRect.centerX()); 
-//             mDocView.setDocRelYScroll(core.getPageSize(displayPage).y-resultRect.centerY());
-// //            showInfo("number "+r.getCurrentSearchBox()+" on page "+r.pageNumber+" at "+resultRect.left+" "+resultRect.top+" (page height="+core.getPageSize(displayPage).y+")");
-//         }
-//         else if(displayPage+direction < core.countPages() && displayPage+direction >= 0) //Try to find more on a differnt page
-//         {
-//             int searchPage = r != null ? r.pageNumber : -1;
-//             mSearchTask.go(mQuery, direction, displayPage, searchPage);
-//         }
     }
-
-	// @Override
-	// public boolean onSearchRequested() {
-	// 	if (mButtonsVisible && mTopBarMode == TopBarMode.Search) {
-	// 		hideButtons();
-	// 	} else {
-	// 		showButtons();
-	// 		searchModeOn();
-	// 	}
-	// 	return super.onSearchRequested();
-	// }
-
-	// @Override
-	// public boolean onPrepareOptionsMenu(Menu menu) {
-	// 	if (mButtonsVisible && mTopBarMode != TopBarMode.Search) {
-	// 		hideButtons();
-	// 	} else {
-	// 		showButtons();
-	// 		searchModeOff();
-	// 	}
-	// 	return super.onPrepareOptionsMenu(menu);
-	// }
-
+    
 
     @Override
     public void onBackPressed() {
@@ -1288,7 +1239,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     
     private void hideKeyboard()
     {
-        InputMethodManager inputMethodManager = (InputMethodManager)  getSystemService(INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if(inputMethodManager!=null && getCurrentFocus() != null) inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
     }
 }

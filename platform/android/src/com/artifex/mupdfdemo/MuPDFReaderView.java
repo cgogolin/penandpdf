@@ -89,9 +89,9 @@ public class MuPDFReaderView extends ReaderView {
                                 {
                                         //Scroll the left top to the right position
                                     if((li.targetFlags & LinkInfoInternal.fz_link_flag_l_valid) == LinkInfoInternal.fz_link_flag_l_valid)  
-                                        setDocRelXScroll(2*li.target.left); //The 2 doesn't make sense
+                                        setDocRelXScroll(li.target.left);
                                     if((li.targetFlags & LinkInfoInternal.fz_link_flag_t_valid) == LinkInfoInternal.fz_link_flag_t_valid)
-                                        setDocRelYScroll(2*li.target.top); //The 2 doesn't make any sense                                   
+                                        setDocRelYScroll(li.target.top);
                                         //If the link target is of /XYZ type r might be a zoom value
                                     if( (li.targetFlags & LinkInfoInternal.fz_link_flag_r_is_zoom) == LinkInfoInternal.fz_link_flag_r_is_zoom && (li.targetFlags & LinkInfoInternal.fz_link_flag_r_valid) == LinkInfoInternal.fz_link_flag_r_valid )
                                     {
@@ -327,17 +327,19 @@ public class MuPDFReaderView extends ReaderView {
         if(resultRect!=null)
         {
             doNextScrollWithCenter();
-            setDocRelXScroll(resultRect.centerX()); 
-//            setDocRelYScroll(core.getPageSize(getDisplayedViewIndex()).y-resultRect.centerY());
+            setDocRelXScroll(resultRect.centerX());
             setDocRelYScroll(resultRect.centerY());
+        }
+        else
+        {
+                //Notify user that more results might be coming if the searchTask ist still running
         }
     }
     
     
     @Override
     protected void onChildSetup(int i, View v) {
-
-        if (SearchTaskResults.get(i) != null) //replace SearchTaskResult.get() by appropriate method
+        if (SearchTaskResults.get(i) != null)
             ((MuPDFView) v).setSearchTaskResult(SearchTaskResults.get(i));
         else
             ((MuPDFView) v).setSearchTaskResult(null);

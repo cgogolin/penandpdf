@@ -8,6 +8,7 @@ import android.graphics.Bitmap.Config;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 public class MuPDFCore
 {
@@ -228,7 +229,17 @@ public class MuPDFCore
     }
 
     public synchronized LinkInfo [] getPageLinks(int page) {
-        return getPageLinksInternal(page);
+        LinkInfo[] pageLinks = getPageLinksInternal(page);
+            // To flip the y cooridnate of all link targets to make coordiante system consistent with thr link rect and coordinates of search results
+        for (LinkInfo link: pageLinks)
+            if(link.type() == LinkType.Internal)
+            {
+//                Log.v("Core", "internal link with left="+((LinkInfoInternal)link).target.left+" top="+((LinkInfoInternal)link).target.top+" on page of height="+getPageSize(((LinkInfoInternal)link).pageNumber).y);
+                ((LinkInfoInternal)link).target.top = getPageSize(((LinkInfoInternal)link).pageNumber).y - 2*((LinkInfoInternal)link).target.top ; //The 2 doesn't make any sense                                   
+
+                ((LinkInfoInternal)link).target.bottom = getPageSize(((LinkInfoInternal)link).pageNumber).y - 2*((LinkInfoInternal)link).target.bottom; //The 2 doesn't make any sense                                   
+            }
+        return pageLinks;
     }
 
     public synchronized RectF [] getWidgetAreas(int page) {
