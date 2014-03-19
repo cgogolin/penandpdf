@@ -329,6 +329,7 @@ public class MuPDFReaderView extends ReaderView {
             doNextScrollWithCenter();
             setDocRelXScroll(resultRect.centerX());
             setDocRelYScroll(resultRect.centerY());
+            resetupChildren();
         }
         else
         {

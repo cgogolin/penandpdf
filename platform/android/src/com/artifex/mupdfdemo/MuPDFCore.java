@@ -235,9 +235,11 @@ public class MuPDFCore
             if(link.type() == LinkType.Internal)
             {
 //                Log.v("Core", "internal link with left="+((LinkInfoInternal)link).target.left+" top="+((LinkInfoInternal)link).target.top+" on page of height="+getPageSize(((LinkInfoInternal)link).pageNumber).y);
-                ((LinkInfoInternal)link).target.top = getPageSize(((LinkInfoInternal)link).pageNumber).y - 2*((LinkInfoInternal)link).target.top ; //The 2 doesn't make any sense                                   
-
-                ((LinkInfoInternal)link).target.bottom = getPageSize(((LinkInfoInternal)link).pageNumber).y - 2*((LinkInfoInternal)link).target.bottom; //The 2 doesn't make any sense                                   
+                    //The 2s doesn't make any sense...
+                ((LinkInfoInternal)link).target.left = 2*((LinkInfoInternal)link).target.left; 
+                ((LinkInfoInternal)link).target.top = getPageSize(((LinkInfoInternal)link).pageNumber).y - 2*((LinkInfoInternal)link).target.top ;
+                ((LinkInfoInternal)link).target.right = 2*((LinkInfoInternal)link).target.right;
+                ((LinkInfoInternal)link).target.bottom = getPageSize(((LinkInfoInternal)link).pageNumber).y - 2*((LinkInfoInternal)link).target.bottom; 
             }
         return pageLinks;
     }

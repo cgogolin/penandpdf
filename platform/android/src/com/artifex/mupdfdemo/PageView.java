@@ -113,13 +113,10 @@ class TextSelector {
 }
 
 public abstract class PageView extends ViewGroup {
-//        public static final int HIGHLIGHT_COLOR = 0x802572AC;
-//        public static final int HIGHLIGHT_COLOR = 0x4033B5E5;
         public static final int HIGHLIGHT_COLOR = 0x8033B5E5;
         public static final int SEARCHRESULTS_COLOR = 0x4033B5E5;
-//        public static final int LINK_COLOR = 0x60C7C7C7;
+        public static final int HIGHLIGHTED_SEARCHRESULT_COLOR = 0xFF33B5E5;
         public static final int LINK_COLOR = 0xFF33B5E5;
-//        public static final int BOX_COLOR = 0xFF4444FF;
         public static final int BOX_COLOR = 0xFF33B5E5;
 	private static final int BACKGROUND_COLOR = 0xFFFFFFFF;
 	private static final int PROGRESS_DIALOG_DELAY = 200;
@@ -368,9 +365,12 @@ public abstract class PageView extends ViewGroup {
 									        paint);
                                                 RectF rect = mSearchTaskResult.getFocusedSearchBox();
                                                 if(rect != null)
+                                                {
+                                                    paint.setColor(HIGHLIGHTED_SEARCHRESULT_COLOR);
                                                     canvas.drawRect(rect.left*scale, rect.top*scale,
                                                                     rect.right*scale, rect.bottom*scale,
                                                                     paint);
+                                                }
 					}
 
 					if (!mIsBlank && mLinks != null && mHighlightLinks) {
