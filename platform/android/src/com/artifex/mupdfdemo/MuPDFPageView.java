@@ -11,6 +11,7 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.text.method.PasswordTransformationMethod;
 import android.view.LayoutInflater;
 import android.view.WindowManager;

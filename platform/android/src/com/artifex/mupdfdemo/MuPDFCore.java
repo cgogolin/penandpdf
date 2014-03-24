@@ -280,11 +280,22 @@ public class MuPDFCore
 
                 for (TextChar[] sp: ln) {
                     for (TextChar tc: sp) {
-                        if (tc.c != ' ') {
+                        final int type = Character.getType(tc.c);
+                        if (Character.isWhitespace(tc.c) || type == Character.END_PUNCTUATION || type == Character.FINAL_QUOTE_PUNCTUATION || type == Character.INITIAL_QUOTE_PUNCTUATION || type == Character.OTHER_PUNCTUATION || type == Character.START_PUNCTUATION)
+                        {
+                            if (wd.w.length() > 0) {
+                                wds.add(wd);
+                                wd = new TextWord();
+                            }
+                        }
+                        if (!Character.isWhitespace(tc.c))
+                        {
                             wd.Add(tc);
-                        } else if (wd.w.length() > 0) {
-                            wds.add(wd);
-                            wd = new TextWord();
+                            if (type == Character.END_PUNCTUATION || type == Character.FINAL_QUOTE_PUNCTUATION || type == Character.INITIAL_QUOTE_PUNCTUATION || type == Character.OTHER_PUNCTUATION || type == Character.START_PUNCTUATION)
+                            {
+                                wds.add(wd);
+                                wd = new TextWord();
+                            }
                         }
                     }
                 }

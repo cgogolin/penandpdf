@@ -16,6 +16,7 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.view.View;
 import android.view.ViewGroup;
@@ -121,8 +122,7 @@ public abstract class PageView extends ViewGroup {
     public static final int HIGHLIGHTED_SEARCHRESULT_COLOR = 0xFF33B5E5;
     public static final int LINK_COLOR = 0xFF33B5E5;
     public static final int BOX_COLOR = 0xFF33B5E5;
-//    private static final int BACKGROUND_COLOR = 0xFFFFFFFF;
-    private static final int BACKGROUND_COLOR = 0xFFF0F0F0;
+    private static final int BACKGROUND_COLOR = 0xFFFFFFFF;
     private static final int PROGRESS_DIALOG_DELAY = 200;
     protected final Context   mContext;
     protected     int       mPageNumber;
@@ -142,7 +142,6 @@ public abstract class PageView extends ViewGroup {
     private       ImageView mPatch;
     private       Bitmap    mPatchBm;
     private       AsyncTask<PatchInfo,Void,PatchInfo> mDrawPatch;
-//	private       RectF     mSearchBoxes[];
     private SearchTaskResult mSearchTaskResult = null;
     protected     LinkInfo  mLinks[];
     private       RectF     mSelectBox;
@@ -222,7 +221,6 @@ public abstract class PageView extends ViewGroup {
         mPatchViewSize = null;
         mPatchArea = null;
 
-//		mSearchBoxes = null;
         mSearchTaskResult = null;
         mLinks = null;
         mSelectBox = null;

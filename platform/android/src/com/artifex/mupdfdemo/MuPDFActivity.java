@@ -52,6 +52,7 @@ import android.app.ActionBar;
 import android.app.SearchManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
+import android.os.AsyncTask;
 
 
 import android.text.InputType;
@@ -225,7 +226,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             {
                 core = new MuPDFCore(this, path);
                     // New file: drop the old outline data
-                OutlineActivityData.set(null);
+//                OutlineActivityData.set(null);
             }
             catch (Exception e)
             {
@@ -242,7 +243,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             {
                 core = new MuPDFCore(this, buffer, displayName);
                     // New file: drop the old outline data
-                OutlineActivityData.set(null);
+//                OutlineActivityData.set(null);
             }
             catch (Exception e)
             {

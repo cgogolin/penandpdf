@@ -80,12 +80,6 @@
 	<data android:pathPattern=".*\\.cbz"/>
 	<data android:host="*"/>
       </intent-filter>
-      <!--			<intent-filter>
-	  <action android:name="android.intent.action.SEARCH" />
-	  </intent-filter>
-	  <meta-data android:name="android.app.searchable"
-	  android:resource="@xml/searchable"
-	  />-->
     </activity>
     <activity
 	android:name="SettingsActivity"
@@ -94,11 +88,6 @@
 	android:launchMode="singleTop"
 	>
     </activity>
-<!--    <activity
-	android:name="OutlineActivity"
-	android:theme="@android:style/Theme.Light.NoTitleBar.Fullscreen"
-	android:label="@string/outline_title">
-    </activity>-->
     <activity
 	android:name="PrintDialogActivity"
 	android:theme="@android:style/Theme.Light.NoTitleBar.Fullscreen"

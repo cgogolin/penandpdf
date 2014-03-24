@@ -23,7 +23,8 @@ public class MuPDFReaderView extends ReaderView {
     private Mode mMode = Mode.Viewing;
     private boolean tapDisabled = false;
     private int tapPageMargin;
-
+    private static final int BACKGROUND_COLOR = 0xFFF0F0F0;
+    
     private SparseArray<SearchTaskResult> SearchTaskResults = new SparseArray<SearchTaskResult>();
     
         //To be overwritten in MuPDFActivity:
@@ -50,6 +51,7 @@ public class MuPDFReaderView extends ReaderView {
     public MuPDFReaderView(Activity act) {
         super(act);
         mContext = act;
+        setBackgroundColor(BACKGROUND_COLOR);
             // Get the screen size etc to customise tap margins.
             // We calculate the size of 1 inch of the screen for tapping.
             // On some devices the dpi values returned are wrong, so we

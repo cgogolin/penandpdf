@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Queue;
+import java.util.Deque;
 import java.util.Stack;
 
 // BEGIN android-note
