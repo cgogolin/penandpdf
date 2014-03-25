@@ -25,7 +25,7 @@ import android.preference.PreferenceManager;
 
 import android.util.Log;
 
-public class ReaderView extends AdapterView<Adapter> implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, Runnable {
+abstract public class ReaderView extends AdapterView<Adapter> implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, Runnable {
     private static final int  MOVING_DIAGONALLY = 0;
     private static final int  MOVING_LEFT       = 1;
     private static final int  MOVING_RIGHT      = 2;
@@ -112,10 +112,7 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
 
     public void setDisplayedViewIndex(int i) {
         if (0 <= i && i < mAdapter.getCount()) {
-//            onMoveOffChild(mCurrent);
-//            mCurrent = i;
             mNewCurrent = i;
-//            onMoveToChild(i);
             mResetLayout = true;
             mHasNewCurrent = true;
             requestLayout();
@@ -352,13 +349,13 @@ public class ReaderView extends AdapterView<Adapter> implements GestureDetector.
     }
 
         //To be overwritten in MuPDFReaderView
-    protected void onChildSetup(int i, View v) {}
-    protected void onMoveToChild(int pageNumber) {}
-    protected void onMoveOffChild(int i) {}
-    protected void onSettle(View v) {};
-    protected void onUnsettle(View v) {};
-    protected void onNotInUse(View v) {};
-    protected void onScaleChild(View v, Float scale) {};
+    abstract protected void onChildSetup(int i, View v);
+    abstract protected void onMoveToChild(int pageNumber);
+    abstract protected void onMoveOffChild(int i);
+    abstract protected void onSettle(View v);
+    abstract protected void onUnsettle(View v);
+    abstract protected void onNotInUse(View v);
+    abstract protected void onScaleChild(View v, Float scale);
 
     public View getView(int i) {
         return mChildViews.get(i); //Can return null while waiting for onLayout()!

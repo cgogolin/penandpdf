@@ -53,7 +53,7 @@ import android.app.SearchManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.os.AsyncTask;
-
+import android.view.WindowManager.LayoutParams;
 
 import android.text.InputType;
 
@@ -72,7 +72,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private SearchView searchView = null;
     private String latestTextInSearchBox = "";
     private String textOfLastSearch = "";
-//    private int mCurrentSearchResultOnPage = 0;
     private ShareActionProvider mShareActionProvider = null;
     private boolean mNotSaveOnDestroyThisTime = false;
     private boolean mNotSaveOnPauseThisTime = false;
@@ -242,8 +241,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             try
             {
                 core = new MuPDFCore(this, buffer, displayName);
-                    // New file: drop the old outline data
-//                OutlineActivityData.set(null);
             }
             catch (Exception e)
             {
@@ -303,6 +300,9 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         {
             super.onResume();
 
+                //Reset the action bar mode
+            mActionBarMode = ActionBarMode.Main;
+            
             mNotSaveOnDestroyThisTime = false;
             mNotSaveOnPauseThisTime = false;
             
@@ -539,7 +539,11 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 onResume();
                     //Switch to the newly inserted page
                 mDocView.setDisplayedViewIndex(core.countPages()-1);
-                return true;                
+                return true;
+            case R.id.menu_fullscreen:
+                enterFullscreen();
+//                mActionBarMode = ActionBarMode.Fullscreen;
+                return true;
             case R.id.menu_settings:
                 Intent intent = new Intent(this,SettingsActivity.class);
                 startActivity(intent);
@@ -839,11 +843,32 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 protected void onTapMainDocArea() {
                     if (mActionBarMode == ActionBarMode.Edit) 
                     {
-                        mActionBarMode = ActionBarMode.Main;
                         invalidateOptionsMenu();
+                        mActionBarMode = ActionBarMode.Main;
                     }
+                    // else if (mActionBarMode == ActionBarMode.Fullscreen)
+                    // {
+                    //     exitFullScreen();
+                    //     mActionBarMode = ActionBarMode.Main;
+                    // }
                 }
+                
+                @Override
+                protected void onTapTopLeftMargin() {
+                    if (getActionBar().isShowing())
+                        smartMoveBackwards();
+                    else
+                        mDocView.setDisplayedViewIndex(getDisplayedViewIndex()-1);
+                };
 
+                @Override
+                protected void onBottomRightMargin() {
+                    if (getActionBar().isShowing())
+                        smartMoveForwards();
+                    else
+                        mDocView.setDisplayedViewIndex(getDisplayedViewIndex()+1);
+                };
+                
                 @Override
                 protected void onDocMotion() {
 
@@ -1039,9 +1064,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private void setViewport(SharedPreferences prefs, String path) {
         if(path == null) path = "/nopath";
         setViewport(prefs.getInt("page"+path, 0),prefs.getFloat("normalizedscale"+path, 0.0f),prefs.getFloat("normalizedxscroll"+path, 0.0f), prefs.getFloat("normalizedyscroll"+path, 0.0f));
-        // mDocView.setDisplayedViewIndex(prefs.getInt("page"+path, 0));
-        // mDocView.setScale(prefs.getFloat("normalizedscale"+path, 0.0f)); //If normalizedScale=0.0 nothing happens
-        // mDocView.setScroll(prefs.getFloat("normalizedxscroll"+path, 0.0f), prefs.getFloat("normalizedyscroll"+path, 0.0f));
     }
 
     private void setViewport(int page, float normalizedscale, float normalizedxscroll, float normalizedyscroll) {
@@ -1169,7 +1191,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
     
     private void search(int direction) {
-//        Log.i("SearchTask", "search() with textOfLastSearch="+textOfLastSearch+" latestTextInSearchBox"+latestTextInSearchBox+" mDocView.hasSearchResults()="+mDocView.hasSearchResults());
         if(mDocView.hasSearchResults() && textOfLastSearch.equals(latestTextInSearchBox))
             mDocView.goToNextSearchResult(direction);
         else
@@ -1183,6 +1204,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     @Override
     public void onBackPressed() {
         if (mActionBarMode == ActionBarMode.Annot) return;
+        if (!getActionBar().isShowing()) {
+            exitFullScreen();
+            return;
+        };
         if (mActionBarMode == ActionBarMode.Search) {
             hideKeyboard();
             mDocView.clearSearchResults();
@@ -1242,5 +1267,16 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     {
         InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         if(inputMethodManager!=null && getCurrentFocus() != null) inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+    }
+
+    private void enterFullscreen() {
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getActionBar().hide();
+        mDocView.setScale(1.0f);
+    }
+            
+    private void exitFullScreen() {
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getActionBar().show();
     }
 }

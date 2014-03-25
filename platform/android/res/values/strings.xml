@@ -32,6 +32,7 @@
 	<string name="saveas">Save as</string>
 	<string name="successfully_saved">Successfully saved</string>
 	<string name="error_saveing">Error while saving</string>
+	<string name="exit_fullscreen">Press back to exit fullscreen</string>
 	<string name="print">Print</string>
 	<string name="dismiss">Dismiss</string>
 	<string name="parent_directory">..</string>
@@ -84,6 +85,7 @@
 	<string name="menu_gotopage">Go to page</string>
 	<string name="menu_selection">Select text</string>
 	<string name="menu_addpage">Add page</string>
+	<string name="menu_fullscreen">Fullscreen</string>
 	<string name="settings_title">Settings</string>
 	<string name="markup_settings">Markup settings</string>
 	<string name="display_settings">Display settings</string>

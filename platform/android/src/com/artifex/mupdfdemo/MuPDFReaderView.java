@@ -16,7 +16,7 @@ import android.preference.PreferenceManager;
 import android.widget.Toast;
 import android.graphics.RectF;
 
-public class MuPDFReaderView extends ReaderView {
+abstract public class MuPDFReaderView extends ReaderView {
     enum Mode {Viewing, Selecting, Drawing}
     private final Context mContext;
     private boolean mLinksEnabled = false;
@@ -28,12 +28,13 @@ public class MuPDFReaderView extends ReaderView {
     private SparseArray<SearchTaskResult> SearchTaskResults = new SparseArray<SearchTaskResult>();
     
         //To be overwritten in MuPDFActivity:
-    protected void onMoveToChild(int pageNumber) {}
-    protected void onTapMainDocArea() {}
-    protected void onDocMotion() {}
-    protected void onHit(Hit item) {};
-//    protected void onSelectionStatusChanged() {};
-    protected void onNumberOfStrokesChanged(int numberOfStrokes) {};
+    abstract protected void onMoveToChild(int pageNumber);
+    abstract protected void onTapMainDocArea();
+    abstract protected void onTapTopLeftMargin();
+    abstract protected void onBottomRightMargin();
+    abstract protected void onDocMotion();
+    abstract protected void onHit(Hit item);
+    abstract protected void onNumberOfStrokesChanged(int numberOfStrokes);
 
     public void setLinksEnabled(boolean b) {
         mLinksEnabled = b;
@@ -134,13 +135,17 @@ public class MuPDFReaderView extends ReaderView {
                 else if(item == Hit.Nothing)
                 {
                     if (e.getX() > super.getWidth() - tapPageMargin) 
-                        super.smartMoveForwards();
+//                        super.smartMoveForwards();
+                        onTapTopLeftMargin();
                     else if (e.getX() < tapPageMargin) 
-                        super.smartMoveBackwards();
+//                        super.smartMoveBackwards();
+                        onBottomRightMargin();
                     else if (e.getY() > super.getHeight() - tapPageMargin) 
-                        super.smartMoveForwards();
+//                        super.smartMoveForwards();
+                        onTapTopLeftMargin();
                     else if (e.getY() < tapPageMargin) 
-                        super.smartMoveBackwards();
+//                        super.smartMoveBackwards();
+                        onBottomRightMargin();
                     else
                         onTapMainDocArea();
                 }
@@ -367,15 +372,6 @@ public class MuPDFReaderView extends ReaderView {
             });
     }
 
-        //This is overwritten again in MuPDFActivity... 
-        // @Override
-        // protected void onMoveToChild(int i) { 
-        //     if (SearchTaskResult.get() != null && SearchTaskResult.get().pageNumber != i) {
-        //         SearchTaskResult.set(null);
-        //         resetupChildren();
-        //     }
-        // }
-
     @Override
     protected void onMoveOffChild(int i) {
         View v = getView(i);
@@ -404,7 +400,6 @@ public class MuPDFReaderView extends ReaderView {
 
     @Override
     protected void onScaleChild(View v, Float scale) {
-//        Log.i("MyActivity", "In onScaleChild() scale="+scale);
         ((MuPDFView) v).setScale(scale);
     }
 }

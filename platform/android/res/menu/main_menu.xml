@@ -37,6 +37,11 @@
 	android:showAsAction="never"
 	android:background="?android:selectableItemBackground"
 	/>
+  <item android:id="@+id/menu_fullscreen"
+	android:title="@string/menu_fullscreen"
+	android:showAsAction="never"
+	android:background="?android:selectableItemBackground"
+	/>
   <item android:id="@+id/menu_settings"
 	android:title="@string/menu_settings"
 	android:showAsAction="never"
