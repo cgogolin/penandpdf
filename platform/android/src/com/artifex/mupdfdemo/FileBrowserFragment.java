@@ -1,7 +1,31 @@
 package com.artifex.mupdfdemo;
 
 import android.app.Activity;
-
+import android.app.AlertDialog;
+import android.app.Fragment;
+import android.app.ListFragment;
+import android.content.Context;
+import android.content.DialogInterface.OnClickListener;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.FileObserver;
+import android.os.Handler;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.TextView.OnEditorActionListener;
+import android.widget.TextView;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Arrays;
@@ -9,42 +33,12 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-
-import android.os.FileObserver;
-import android.os.Handler;
-import android.os.Environment;
-import android.os.Bundle;
-import android.content.Intent;
-import android.app.AlertDialog;
-
-import android.app.Fragment;
-import android.app.ListFragment;
-import android.view.View;
-import android.view.KeyEvent;
-import android.view.ViewGroup;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.TextView.OnEditorActionListener;
-import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
-import android.widget.Button;
-//import android.widget.Toast;
-import android.net.Uri;
-
-//public static class SettingsFragment extends PreferenceFragment {
 public class FileBrowserFragment extends ListFragment {
 
     private enum Purpose { ChoosePDF, PickKeyFile, PickFile }
     
-    static private File mDirectory;
-    static private Map<String, Integer> mPositions = new HashMap<String, Integer>();
+    private File mDirectory;
+    private Map<String, Integer> mPositions = new HashMap<String, Integer>();
     private File  mParent;
     private File[] mDirs;
     private File[] mFiles;
@@ -119,25 +113,7 @@ public class FileBrowserFragment extends ListFragment {
         }
             //If we didn't get a directory we default to downloads
         if(mDirectory == null)
-            mDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);    
-        
-        // String storageState = Environment.getExternalStorageState();
-        // if (!Environment.MEDIA_MOUNTED.equals(storageState)
-        //     && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(storageState))
-        // {
-        //     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        //     builder.setTitle(R.string.no_media_warning);
-        //     builder.setMessage(R.string.no_media_hint);
-        //     AlertDialog alert = builder.create();
-        //     alert.setButton(AlertDialog.BUTTON_POSITIVE,getString(R.string.dismiss),
-        //                     new OnClickListener() {
-        //                         public void onClick(DialogInterface dialog, int which) {
-        //                             getActivity().finish();
-        //                         }
-        //                     });
-        //     alert.show();
-        //     return;
-        // }
+            mDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         
             // Create a new handler that is updated dynamically when files are scanned
         mHandler = new Handler();
@@ -149,7 +125,6 @@ public class FileBrowserFragment extends ListFragment {
                         //Set the title from the current direcory
                     Resources res = getResources();
                     String appName = res.getString(R.string.app_name);
-//                    String version = res.getString(R.string.version);
                     String title = res.getString(R.string.picker_title_App_Ver_Dir);
                     getActivity().setTitle(mDirectory.getPath());
 
@@ -174,11 +149,11 @@ public class FileBrowserFragment extends ListFragment {
                                             return true;
                                         else
                                             return false;
-                                    // case PickKeyFile:
-                                    //     if (fname.endsWith(".pfx"))
-                                    //         return true;
-                                    //     else
-                                    //         return false;
+                                    case PickKeyFile:
+                                        if (fname.endsWith(".pfx"))
+                                            return true;
+                                        else
+                                            return false;
                                     default:
                                         return false;
                                 }
@@ -248,11 +223,6 @@ public class FileBrowserFragment extends ListFragment {
                     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                         Uri uri = Uri.parse(mDirectory.getPath()+"/"+v.getText());
                         passUriBack(uri);
-                        // Intent intent = new Intent(getActivity(),MuPDFActivity.class);
-                        // intent.setAction(Intent.ACTION_VIEW);//?
-                        // intent.setData(uri);
-                        // getActivity().setResult(Activity.RESULT_OK, intent);
-                        // getActivity().finish();
                         return true;
                     }
                 });

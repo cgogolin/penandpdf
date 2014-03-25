@@ -15,7 +15,7 @@
  */
 
 package com.artifex.mupdfdemo;
-//package android.support.v13.app; //Taken from here but slightly modified
+//package android.support.v13.app; //Taken from there but slightly modified
 
 import android.app.Fragment;
 import android.app.FragmentManager;

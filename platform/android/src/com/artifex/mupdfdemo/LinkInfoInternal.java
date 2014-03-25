@@ -17,15 +17,15 @@ public class LinkInfoInternal extends LinkInfo {
     static public int fz_link_flag_r_is_zoom = 64; /* rb.x is actually a zoom figure */
     
     public LinkInfoInternal(float l, float t, float r, float b, int p, float ltx, float lty, float rbx, float rby, int flags) {
-		super(l, t, r, b);
-		pageNumber = p;
-                targetFlags = flags;
-                target = new RectF(ltx, lty, rbx, rby);
-	}
+        super(l, t, r, b);
+        pageNumber = p;
+        targetFlags = flags;
+        target = new RectF(ltx, lty, rbx, rby);
+    }
 
-	public void acceptVisitor(LinkInfoVisitor visitor) {
-		visitor.visitInternal(this);
-	}
+    public void acceptVisitor(LinkInfoVisitor visitor) {
+        visitor.visitInternal(this);
+    }
 
     public LinkType type(){
         return LinkType.Internal;

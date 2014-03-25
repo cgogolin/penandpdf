@@ -1250,7 +1250,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     @Override
     public void performPickFor(FilePicker picker) {
         mFilePicker = picker;
-        Intent intent = new Intent(this, ChoosePDFActivity.class);
+//        Intent intent = new Intent(this, ChoosePDFActivity.class);
+        Intent intent = new Intent(this, PenAndPDFFileChooser.class);
         startActivityForResult(intent, FILEPICK_REQUEST);
     }
 

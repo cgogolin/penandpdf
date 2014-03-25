@@ -45,12 +45,10 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     private boolean           mHasNewCurrent = false;
     private boolean           mNextScrollWithCenter = false;
     private boolean           mResetLayout;
-    private final SparseArray<View>
-        mChildViews = new SparseArray<View>(3);
+    private final SparseArray<View> mChildViews = new SparseArray<View>(3);
         // Shadows the children of the adapter view
         // but with more sensible indexing
-    private final LinkedList<View>
-        mViewCache = new LinkedList<View>();
+    private final LinkedList<View> mViewCache = new LinkedList<View>();
     private boolean           mUserInteracting;  // Whether the user is interacting
     private boolean           mScaling;    // Whether the user is currently pinch zooming
     private float             mScale     = 1.0f; //mScale = 1.0 corresponds to "fit to screen"
@@ -66,19 +64,18 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     private boolean           mHasNewDocRelXScroll = false;//Set in setDocRelXScroll() and accounted for in onLayout()
     private boolean           mHasNewDocRelYScroll = false;//Set in setDocRelYScroll() and accounted for in onLayout()
 
+        // Scroll amounts recorded from events and then accounted for in onLayout.
+    private int               mXScroll;    
+    private int               mYScroll;
+    private int               mScrollerLastX;
+    private int               mScrollerLastY;
+    private int previousFocusX;
+    private int previousFocusY;
     
-    private int               mXScroll;    // Scroll amounts recorded from events and then accounted for in onLayout.
-    private int               mYScroll;    
     private boolean           mReflow = false;
     private final GestureDetector mGestureDetector;
     private final ScaleGestureDetector mScaleGestureDetector;
     private final Scroller    mScroller;
-    private int               mScrollerLastX;
-    private int               mScrollerLastY;
-
-    private int previousFocusX;
-    private int previousFocusY;
-    
     private boolean           mScrollDisabled;
 
     static abstract class ViewMapper {
@@ -446,8 +443,9 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
 
         return true;
     }
-
-    public void onLongPress(MotionEvent e) {
+    
+    @Override
+        public void onLongPress(MotionEvent e) {
     }
 
     @Override
@@ -460,10 +458,12 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         return true;
     }
 
-    public void onShowPress(MotionEvent e) {
+    @Override
+        public void onShowPress(MotionEvent e) {
     }
 
-    public boolean onSingleTapUp(MotionEvent e) {
+    @Override
+        public boolean onSingleTapUp(MotionEvent e) {
         return false;
     }
     
@@ -869,11 +869,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         if (!mReflow) {
                 // Work out a scale that will fit it to this view
             float scale;
-                // SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-                // boolean fitWidth = sharedPref.getBoolean(SettingsActivity.PREF_FIT_WIDTH, false);
-                // if(fitWidth)
-                //     scale = (float)getWidth()/(float)v.getMeasuredWidth();
-                // else
             scale = Math.min((float)getWidth()/(float)v.getMeasuredWidth(),(float)getHeight()/(float)v.getMeasuredHeight()); //This makes scale=1.0 correspond to fit to screen
                 // Use the fitting values scaled by our current scale factor
             v.measure(View.MeasureSpec.EXACTLY | (int)(v.getMeasuredWidth()*scale*mScale),
@@ -1054,50 +1049,5 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         mScroller.startScroll(0, 0, XScroll-cv.getLeft(), YScroll-cv.getTop(), 0);
         post(this);
     }
-
-    // protected void scrollToCenterPos(int XScroll, int YScroll)
-    // {
-    //     mScrollerLastX = mScrollerLastY = 0;
-    //     mXScroll = mYScroll = 0;
-    //     mScroller.forceFinished(true);
-    //     mScroller.startScroll(0, 0, XScroll+getWidth()/2, YScroll+getHeight()/2, 0);
-    //     post(this);
-    // }
-
-    // public float getmScale()
-    // {
-    //     return mScale;
-    // }
-        
-//     public float getScale()
-//     {
-//             // View cv = mChildViews.get(mCurrent);
-//             // float scale_factor = mReflow ? REFLOW_SCALE_FACTOR : 1.0f;
-//             // float min_scale = MIN_SCALE * scale_factor;
-//             // float max_scale = MAX_SCALE * scale_factor;
-//             // return Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
-// //        return ((PageView)mChildViews.get(mCurrent)).getScale();
-//         return ((PageView)getDisplayedView()).getScale();
-//     }
-
-        // public float getCurrentWidth()
-        // {
-        //     View cv = mChildViews.get(mCurrent);
-        //     return cv.getMeasuredWidth();
-        // }
-
-        // public float getCurrentHeight()
-        // {
-        //     View cv = mChildViews.get(mCurrent);
-        //     return cv.getMeasuredHeight();
-        // }
-
-    // public float getCurrentPageHeight()
-    // {
-    //     View cv = getDisplayedView();
-    //     if(cv == null) return 0.0f;
-    //     float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
-    //     return cv.getMeasuredHeight()*scale;
-    // }
 }
 
