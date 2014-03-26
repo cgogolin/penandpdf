@@ -2,9 +2,9 @@ package com.artifex.mupdfdemo;
 
 import android.graphics.RectF;
 
-enum LinkType {Internal, External, Remote};
-
 public abstract class LinkInfo {
+    enum LinkType {Internal, External, Remote};
+    
     final public RectF rect;
     
     public LinkInfo(float l, float t, float r, float b) {

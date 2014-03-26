@@ -136,16 +136,16 @@ abstract public class MuPDFReaderView extends ReaderView {
                 {
                     if (e.getX() > super.getWidth() - tapPageMargin) 
 //                        super.smartMoveForwards();
-                        onTapTopLeftMargin();
+                        onBottomRightMargin();
                     else if (e.getX() < tapPageMargin) 
 //                        super.smartMoveBackwards();
-                        onBottomRightMargin();
+                        onTapTopLeftMargin();
                     else if (e.getY() > super.getHeight() - tapPageMargin) 
 //                        super.smartMoveForwards();
-                        onTapTopLeftMargin();
+                        onBottomRightMargin();
                     else if (e.getY() < tapPageMargin) 
 //                        super.smartMoveBackwards();
-                        onBottomRightMargin();
+                        onTapTopLeftMargin();
                     else
                         onTapMainDocArea();
                 }

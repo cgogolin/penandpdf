@@ -3,8 +3,8 @@ import java.util.ArrayList;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
+import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.preference.PreferenceManager;
@@ -79,7 +79,6 @@ public class MuPDFCore
     private native int saveAsInternal(String path);
     private native int insertPageBeforeInternal(int position);
 
-        //added by me
     public native void setInkThickness(float inkThickness);
     public native void setInkColor(float r, float g, float b);
     public native void setHighlightColor(float r, float g, float b);
@@ -232,7 +231,7 @@ public class MuPDFCore
         LinkInfo[] pageLinks = getPageLinksInternal(page);
             // To flip the y cooridnate of all link targets to make coordiante system consistent with thr link rect and coordinates of search results
         for (LinkInfo link: pageLinks)
-            if(link.type() == LinkType.Internal)
+            if(link.type() == LinkInfo.LinkType.Internal)
             {
 //                Log.v("Core", "internal link with left="+((LinkInfoInternal)link).target.left+" top="+((LinkInfoInternal)link).target.top+" on page of height="+getPageSize(((LinkInfoInternal)link).pageNumber).y);
                     //The 2s doesn't make any sense...

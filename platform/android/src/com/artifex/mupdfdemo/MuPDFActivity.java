@@ -2,60 +2,56 @@
 
 package com.artifex.mupdfdemo;
 
-import java.io.InputStream;
-import java.io.File;
-import java.util.concurrent.Executor;
-
-import java.util.Set;
-
-import com.artifex.mupdfdemo.ReaderView.ViewMapper;
-
-import android.util.Log;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.RectF;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
+import android.provider.MediaStore.MediaColumns;
+import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager.LayoutParams;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.view.WindowManager;
-import android.widget.Toast;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
-import android.widget.SeekBar;
-import android.widget.TextView;
-import android.widget.ViewAnimator;
 import android.widget.SearchView;
+import android.widget.SeekBar;
 import android.widget.ShareActionProvider;
-import android.preference.PreferenceManager;
-import android.app.ActionBar;
-import android.app.SearchManager;
-import android.provider.MediaStore;
-import android.provider.MediaStore.MediaColumns;
-import android.os.AsyncTask;
-import android.view.WindowManager.LayoutParams;
-
-import android.text.InputType;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ViewAnimator;
+import com.artifex.mupdfdemo.ReaderView.ViewMapper;
+import java.io.File;
+import java.io.InputStream;
+import java.util.Set;
+import java.util.concurrent.Executor;
 
 class ThreadPerTaskExecutor implements Executor {
     public void execute(Runnable r) {
@@ -65,8 +61,7 @@ class ThreadPerTaskExecutor implements Executor {
 
 public class MuPDFActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener, FilePicker.FilePickerSupport
 {       
-        /* The core rendering instance */
-    enum ActionBarMode {Main, Annot, Edit, Search, Copy, Selection};
+    enum ActionBarMode {Main, Annot, Edit, Search, Copy, Selection, Hidden};
     enum AcceptMode {Highlight, Underline, StrikeOut, Ink, CopyText};
     
     private SearchView searchView = null;
@@ -476,6 +471,9 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     searchView.setIconified(false);
                     searchView.setOnCloseListener(this); //Implemented in: public void onClose(View view)
                     searchView.setOnQueryTextListener(this); //Implemented in: public boolean onQueryTextChange(String query) and public boolean onQueryTextSubmit(String query)
+                case Hidden:
+                    inflater.inflate(R.menu.empty_menu, menu);
+                    break;
                 default:
             }
             return true;
@@ -517,7 +515,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     }
     
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) { //Handel clicks in the options menu 
+    public boolean onOptionsItemSelected(MenuItem item) { //Handel clicks in the options menu
         MuPDFView pageView = (MuPDFView) mDocView.getDisplayedView();
         switch (item.getItemId()) 
         {
@@ -1273,11 +1271,15 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private void enterFullscreen() {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getActionBar().hide();
+        mActionBarMode = ActionBarMode.Hidden;
+        invalidateOptionsMenu();
         mDocView.setScale(1.0f);
     }
             
     private void exitFullScreen() {
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getActionBar().show();
+        mActionBarMode = ActionBarMode.Main;
+        invalidateOptionsMenu();
     }
 }
