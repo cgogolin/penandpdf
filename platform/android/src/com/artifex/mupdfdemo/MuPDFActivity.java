@@ -372,12 +372,14 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             
             if(core != null && !isChangingConfigurations())
             {
-                SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
-                if(!mNotSaveOnPauseThisTime && core.hasChanges() && core.getFileName() != null && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_PAUSE, true))
+//                SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
+//                if(!mNotSaveOnPauseThisTime && core.hasChanges() && core.getFileName() != null && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_PAUSE, true))
+                if(!mNotSaveOnPauseThisTime && core.hasChanges() && core.getFileName() != null && getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).getBoolean(SettingsActivity.PREF_SAVE_ON_PAUSE, true))
                 {
-                    boolean success = core.save();
+//                    boolean success = core.save();
+                    boolean success = save();
                     if(!success) showInfo(getString(R.string.error_saveing));
-                    core.onDestroy(); //Destroy only if we have saved
+                    core.onDestroy(); //Destroy even if not saved as we have no choice
                     core = null;
                 }
             }
@@ -401,10 +403,11 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
                 if(!mNotSaveOnDestroyThisTime && core.hasChanges() && core.getFileName() != null && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_DESTROY, true))
                 {
-                    boolean success = core.save();
+//                    boolean success = core.save();
+                    boolean success = save();
                     if(!success) showInfo(getString(R.string.error_saveing));
                 }
-                core.onDestroy(); //Destroy in any case
+                core.onDestroy(); //Destroy even if not saved as we have no choice
                 core = null;
             }
             
@@ -526,15 +529,18 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             case R.id.menu_addpage:
                     //Insert a new blank page at the end
                 if(core!=null) core.insertBlankPageAtEnd();
-                onPause();
-                if(core!=null)
-                {
-                    boolean success = core.save();
-                    if(!success) showInfo(getString(R.string.error_saveing));
-                    core.onDestroy();
-                    core = null;
-                }
-                onResume();
+                invalidateOptionsMenu();
+                // if(core!=null)
+                // {
+                //     boolean success = save();
+                ////     boolean success = core.save();
+                //     if(!success) showInfo(getString(R.string.error_saveing));
+                //     core.onDestroy();
+                //     core = null;
+                // }
+                // mNotSaveOnPauseThisTime = true;
+                // onPause();
+                // onResume();
                     //Switch to the newly inserted page
                 mDocView.setDisplayedViewIndex(core.countPages()-1);
                 return true;
@@ -695,16 +701,20 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             if (which == AlertDialog.BUTTON_POSITIVE) {
-                                onPause();
-                                    //If we have not saved during on pause do it now
                                 if(core != null)
                                 {
-                                    boolean success = core.save();
-                                    if(!success) showInfo(getString(R.string.error_saveing));
-                                    core.onDestroy(); //Destroy only if we have saved
-                                    core = null;
+//                                    boolean success = core.save();
+                                    boolean success = save();
+                                    if(!success)
+                                        showInfo(getString(R.string.error_saveing));
+                                    else
+                                    {
+                                        onPause();
+                                        core.onDestroy(); //Destroy only if we have saved
+                                        core = null;
+                                        onResume();
+                                    }
                                 }
-                                onResume();
                             }
                             if (which == AlertDialog.BUTTON_NEUTRAL) {
 //                                    Intent intent = new Intent(getApplicationContext(),ChoosePDFActivity.class);
@@ -1040,15 +1050,26 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             saveViewport(edit, uri.getPath());
                 //Save the file to the new location
             boolean success = core.saveAs(uri.toString());
-            core.onDestroy();
-            core = null;
-                //Set the uri of this intent so that we load the new file during onResum()...
-            getIntent().setData(uri);
-                //... and resume
-            onResume();
+            if(success)
+            {
+                core.onDestroy();
+                core = null;
+                    //Set the uri of this intent so that we load the new file during onResum()...
+                getIntent().setData(uri);
+                    //... and resume
+                onResume();
+            }
             return success;
         }
 
+    
+    private boolean save()
+        {
+            if (core == null) return false;
+            return core.save();
+        }
+    
+            
     private void saveViewport(SharedPreferences.Editor edit, String path) {
         if(path == null) path = "/nopath";
         edit.putInt("page"+path, mDocView.getDisplayedViewIndex());
@@ -1219,10 +1240,13 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         if (which == AlertDialog.BUTTON_POSITIVE) {
-                            boolean success = core.save();
-                            if(!success) showInfo(getString(R.string.error_saveing));
                             mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
-                            finish();
+//                            boolean success = core.save();
+                            boolean success = save();
+                            if(!success)
+                                showInfo(getString(R.string.error_saveing));
+                            else
+                                finish();
                         }
                         if (which == AlertDialog.BUTTON_NEGATIVE) {
                             mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true;

@@ -2678,6 +2678,7 @@ JNI_FN(MuPDFCore_insertBlankPageBeforeInternal)(JNIEnv * env, jobject thiz, int 
     page_cache *pc = &glo->pages[glo->current];
     pdf_page * page = pdf_create_page((pdf_document *)doc, pc->media_box, 72, 0);
     pdf_insert_page((pdf_document *)doc, page, position);
+    pdf_finish_edit((pdf_document *)doc);
     pdf_free_page((pdf_document *)doc, page);
     return 0;
 }
@@ -2688,4 +2689,4 @@ JNI_FN(MuPDFCore_insertBlankPageBeforeInternal)(JNIEnv * env, jobject thiz, int 
 
 /* void pdf_insert_page(pdf_document *doc, pdf_page *page, int at); */
 
-/* defined in http://mupdf.com/docs/browse/include/mupdf/pdf/document.h will be usefull for adding pages */
+/* defined in http://mupdf.com/docs/browse/include/mupdf/pdf/document.h are usefull for adding pages */

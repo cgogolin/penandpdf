@@ -21,6 +21,7 @@ public class MuPDFCore
 
 	/* Readable members */
     private int numPages = -1;
+    private boolean numPagesIsUpToDate = false;
     private float pageWidth;
     private float pageHeight;
     private long globals;
@@ -120,9 +121,11 @@ public class MuPDFCore
 
     public  int countPages()
 	{
-            if (numPages < 0)
+            if (numPages < 0 || !numPagesIsUpToDate )
+            {
                 numPages = countPagesSynchronized();
-
+                numPagesIsUpToDate = true;
+            }
             return numPages;
 	}
 
@@ -138,8 +141,8 @@ public class MuPDFCore
 	/* Shim function */
     private void gotoPage(int page)
 	{
-            if (page > numPages-1)
-                page = numPages-1;
+            if (page > countPages()-1)
+                page = countPages()-1;
             else if (page < 0)
                 page = 0;
             gotoPageInternal(page);
@@ -383,6 +386,7 @@ public class MuPDFCore
     }
     
     public boolean insertBlankPageBefore(int position) {
+        numPagesIsUpToDate = false;
         return insertBlankPageBeforeInternal(position) == 0 ? true : false;
     }
 }

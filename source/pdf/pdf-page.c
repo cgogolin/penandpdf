@@ -579,7 +579,9 @@ pdf_insert_page(pdf_document *doc, pdf_page *page, int at)
 			pdf_dict_puts_drop(parent, "Count", pdf_new_int(doc, count + 1));
 			parent = pdf_dict_gets(parent, "Parent");
 		}
-
+                    /* Also adjust the page count in the doc object */
+                doc->page_count = count + 1;
+                doc->dirty = 1;
 	}
 	fz_always(ctx)
 	{
