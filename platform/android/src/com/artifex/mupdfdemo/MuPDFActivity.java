@@ -621,6 +621,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 switch (mActionBarMode) {
                     case Annot:
                     case Copy:
+                        mCanUndo = false;
+                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         if (pageView != null) {
                             switch (mAcceptMode) {
                                 case Ink:
@@ -628,8 +630,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                     break;
                             }
                         }
-                        mCanUndo = false;
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         break;
                     case Edit:
                         if (pageView != null)

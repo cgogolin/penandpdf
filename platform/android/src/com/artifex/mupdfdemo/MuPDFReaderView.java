@@ -206,6 +206,9 @@ abstract public class MuPDFReaderView extends ReaderView {
     }
 
     public boolean onTouchEvent(MotionEvent event) {
+        final MuPDFView pageView = (MuPDFView)getDisplayedView();
+        if (pageView == null) super.onTouchEvent(event);
+            
             // By default use the first pointer
         int pointerIndexToUse = 0; 
             // If in stylus mode use the stylus istead
@@ -230,19 +233,23 @@ abstract public class MuPDFReaderView extends ReaderView {
                 switch(event.getAction())
                 {
                     case MotionEvent.ACTION_DOWN:
-                        touch_start(x, y);
+//                        touch_start(x, y);
+                        pageView.startDraw(x, y);
                         break;
                     case MotionEvent.ACTION_MOVE:
                             //First process "historical" coordinates that were "batched" into this event
                         final int historySize = event.getHistorySize();
                         for (int h = 0; h < historySize; h++) {
-                            touch_move(event.getHistoricalX(pointerIndexToUse,h), event.getHistoricalY(pointerIndexToUse,h));
+                            pageView.continueDraw(event.getHistoricalX(pointerIndexToUse,h), event.getHistoricalY(pointerIndexToUse,h));
                         }
-                        touch_move(x, y);
+//                        touch_move(x, y);
+                        pageView.continueDraw(x, y);
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
-                        touch_up();
+//                        touch_up();
+                        pageView.finishDraw();
+                        onNumberOfStrokesChanged(pageView.getDrawingSize());
                         break;
                 }
             }
@@ -257,30 +264,30 @@ abstract public class MuPDFReaderView extends ReaderView {
         return super.onTouchEvent(event);
     }
 
-    private void touch_start(final float x,final float y) {
-        final MuPDFView pageView = (MuPDFView)getDisplayedView();
-        if (pageView != null)
-        {
-            pageView.startDraw(x, y);
-        }
-    }
+    // private void touch_start(final float x,final float y) {
+    //     final MuPDFView pageView = (MuPDFView)getDisplayedView();
+    //     if (pageView != null)
+    //     {
+    //         pageView.startDraw(x, y);
+    //     }
+    // }
 
-    private void touch_move(final float x, final float y) {
-        final MuPDFView pageView = (MuPDFView)getDisplayedView();
-        if (pageView != null)
-        {
-            pageView.continueDraw(x, y);
-        }
-    }
+    // private void touch_move(final float x, final float y) {
+    //     final MuPDFView pageView = (MuPDFView)getDisplayedView();
+    //     if (pageView != null)
+    //     {
+    //         pageView.continueDraw(x, y);
+    //     }
+    // }
 
-    private void touch_up() {
-        final MuPDFView pageView = (MuPDFView)getDisplayedView();
-        if (pageView != null)
-        {
-            pageView.finishDraw();
-            onNumberOfStrokesChanged(pageView.getDrawingSize());
-        }
-    }
+    // private void touch_up() {
+    //     final MuPDFView pageView = (MuPDFView)getDisplayedView();
+    //     if (pageView != null)
+    //     {
+    //         pageView.finishDraw();
+    //         onNumberOfStrokesChanged(pageView.getDrawingSize());
+    //     }
+    // }
 
     public void addSearchResult(SearchTaskResult result) {
         SearchTaskResults.put(result.getPageNumber(),result);

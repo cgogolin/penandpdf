@@ -561,15 +561,15 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 			@Override
 			protected void onPostExecute(Void result) {
-				loadAnnotations();
-				update();
+                            loadAnnotations();
+                            update();
+                            cancelDraw();
 			}
 
 		};
-                
-		mAddInk.execute(getDraw());
-		cancelDraw();
-
+//		mAddInk.execute(getDraw());
+                mAddInk.execute(path);
+//		cancelDraw();
 		return true;
 	}
 

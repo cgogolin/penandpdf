@@ -148,7 +148,7 @@ public abstract class PageView extends ViewGroup {
     private       TextWord  mText[][];
     private       RectF     mItemSelectBox;
     protected     ArrayList<ArrayList<PointF>> mDrawing;
-    private       View      mSearchView;
+    private       View      mOverlayView;
     private       boolean   mIsBlank;
     private       boolean   mHighlightLinks;
 
@@ -268,8 +268,8 @@ public abstract class PageView extends ViewGroup {
         }
         mIsBlank = false;
             // Highlights may be missing because mIsBlank was true on last draw
-        if (mSearchView != null)
-            mSearchView.invalidate();
+        if (mOverlayView != null)
+            mOverlayView.invalidate();
 
         mPageNumber = page;
         if (mEntire == null) {
@@ -296,8 +296,8 @@ public abstract class PageView extends ViewGroup {
 
             protected void onPostExecute(LinkInfo[] v) {
                 mLinks = v;
-                if (mSearchView != null)
-                    mSearchView.invalidate();
+                if (mOverlayView != null)
+                    mOverlayView.invalidate();
             }
         };
 
@@ -341,8 +341,8 @@ public abstract class PageView extends ViewGroup {
 
         mDrawEntire.execute();
 
-        if (mSearchView == null) {
-            mSearchView = new View(mContext) {
+        if (mOverlayView == null) {
+            mOverlayView = new View(mContext) {
                     @Override
                     protected void onDraw(final Canvas canvas) {
                         super.onDraw(canvas);
@@ -464,21 +464,21 @@ public abstract class PageView extends ViewGroup {
                     }
                 };
 
-            addView(mSearchView);
+            addView(mOverlayView);
         }
         requestLayout();
     }
 
 	// public void setSearchBoxes(RectF searchBoxes[]) {
 	// 	mSearchBoxes = searchBoxes;
-	// 	if (mSearchView != null)
-	// 		mSearchView.invalidate();
+	// 	if (mOverlayView != null)
+	// 		mOverlayView.invalidate();
 	// }
 
     public void setLinkHighlighting(boolean f) {
         mHighlightLinks = f;
-        if (mSearchView != null)
-            mSearchView.invalidate();
+        if (mOverlayView != null)
+            mOverlayView.invalidate();
     }
 
     
@@ -488,7 +488,7 @@ public abstract class PageView extends ViewGroup {
         docRelXmin = Float.POSITIVE_INFINITY;
             
         mSelectBox = null;
-        mSearchView.invalidate();
+        mOverlayView.invalidate();
     }
 
     
@@ -516,7 +516,7 @@ public abstract class PageView extends ViewGroup {
         else
             mSelectBox = new RectF(docRelX1, docRelY1, docRelX0, docRelY0);
 
-        mSearchView.invalidate();
+        mOverlayView.invalidate();
 
         if (mGetText == null) {
             mGetText = new AsyncTask<Void,Void,TextWord[][]>() {
@@ -527,7 +527,7 @@ public abstract class PageView extends ViewGroup {
                 @Override
                 protected void onPostExecute(TextWord[][] result) {
                     mText = result;
-                    mSearchView.invalidate();
+                    mOverlayView.invalidate();
                 }
             };
 
@@ -552,7 +552,7 @@ public abstract class PageView extends ViewGroup {
         if (mDrawing != null && mDrawing.size() > 0) {
             ArrayList<PointF> arc = mDrawing.get(mDrawing.size() - 1);
             arc.add(new PointF(docRelX, docRelY));
-            mSearchView.invalidate();
+            mOverlayView.invalidate();
         }
     }
 
@@ -568,7 +568,7 @@ public abstract class PageView extends ViewGroup {
                 arc.add(new PointF(lastArc.x,lastArc.y+0.5f*inkThickness));
                 arc.add(lastArc);
                 arc.add(new PointF(lastArc.x+0.5f*inkThickness,lastArc.y));
-                mSearchView.invalidate();
+                mOverlayView.invalidate();
             }
         }
     }
@@ -577,13 +577,13 @@ public abstract class PageView extends ViewGroup {
     public void undoDraw() {
         if (mDrawing == null || mDrawing.size() == 0) return;
         mDrawing.remove(mDrawing.size()-1);
-        mSearchView.invalidate();
+        mOverlayView.invalidate();
     }
     
 
     public void cancelDraw() {
         mDrawing = null;
-        mSearchView.invalidate();
+        mOverlayView.invalidate();
     }
 
     public int getDrawingSize() {
@@ -613,8 +613,8 @@ public abstract class PageView extends ViewGroup {
 
     public void setItemSelectBox(RectF rect) {
         mItemSelectBox = rect;
-        if (mSearchView != null)
-            mSearchView.invalidate();
+        if (mOverlayView != null)
+            mOverlayView.invalidate();
     }
 
     @Override
@@ -655,8 +655,8 @@ public abstract class PageView extends ViewGroup {
             mEntire.layout(0, 0, w, h);
         }
 
-        if (mSearchView != null) {
-            mSearchView.layout(0, 0, w, h);
+        if (mOverlayView != null) {
+            mOverlayView.layout(0, 0, w, h);
         }
 
         if (mPatchViewSize != null) {
@@ -714,7 +714,7 @@ public abstract class PageView extends ViewGroup {
                 mPatch = new OpaqueImageView(mContext);
                 mPatch.setScaleType(ImageView.ScaleType.MATRIX);
                 addView(mPatch);
-                mSearchView.bringToFront();
+                mOverlayView.bringToFront();
             }
 
             mDrawPatch = new AsyncTask<PatchInfo,Void,PatchInfo>() {
