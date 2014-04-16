@@ -535,24 +535,20 @@ public abstract class PageView extends ViewGroup {
         }
     }
 
-    public void startDraw(float x, float y) {        
-        float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
-        float docRelX = (x - getLeft())/scale;
-        float docRelY = (y - getTop())/scale;
-        if (mDrawing == null)
-            mDrawing = new ArrayList<ArrayList<PointF>>();
-                
-
+    public void startDraw(final float x, final float y) {        
+        final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+        final float docRelX = (x - getLeft())/scale;
+        final float docRelY = (y - getTop())/scale;
+        if (mDrawing == null) mDrawing = new ArrayList<ArrayList<PointF>>();
         ArrayList<PointF> arc = new ArrayList<PointF>();
         arc.add(new PointF(docRelX, docRelY));
         mDrawing.add(arc);
     }
 
-    public void continueDraw(float x, float y) {
-        float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
-        float docRelX = (x - getLeft())/scale;
-        float docRelY = (y - getTop())/scale;
-
+    public void continueDraw(final float x, final float y) {
+        final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+        final float docRelX = (x - getLeft())/scale;
+        final float docRelY = (y - getTop())/scale;
         if (mDrawing != null && mDrawing.size() > 0) {
             ArrayList<PointF> arc = mDrawing.get(mDrawing.size() - 1);
             arc.add(new PointF(docRelX, docRelY));
@@ -563,17 +559,17 @@ public abstract class PageView extends ViewGroup {
     public void finishDraw() {
 	if (mDrawing != null && mDrawing.size() > 0) {
             ArrayList<PointF> arc = mDrawing.get(mDrawing.size() - 1);
-            PointF lastArc = arc.get(0);
-            float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
                 //Make points look nice
             if(arc.size() == 1) {
+                final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+                final PointF lastArc = arc.get(0);
                 arc.add(new PointF(lastArc.x+0.5f*inkThickness,lastArc.y));
                 arc.add(new PointF(lastArc.x+0.5f*inkThickness,lastArc.y+0.5f*inkThickness));
                 arc.add(new PointF(lastArc.x,lastArc.y+0.5f*inkThickness));
                 arc.add(lastArc);
                 arc.add(new PointF(lastArc.x+0.5f*inkThickness,lastArc.y));
+                mSearchView.invalidate();
             }
-            mSearchView.invalidate();
         }
     }
 

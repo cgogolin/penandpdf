@@ -74,7 +74,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     public boolean onSingleTapUp(MotionEvent e)
         {
             if (mMode == Mode.Viewing && !tapDisabled) {
-                MuPDFView pageView = (MuPDFView) getDisplayedView();
+                MuPDFView pageView = (MuPDFView)getDisplayedView();
                 if (pageView == null ) return super.onSingleTapUp(e);
 
                 Hit item = pageView.passClickEvent(e.getX(), e.getY());
@@ -225,17 +225,23 @@ abstract public class MuPDFReaderView extends ReaderView {
         {
             if (event.getActionIndex() == pointerIndexToUse || !mUseStylus)
             {
-                float x = event.getX(pointerIndexToUse);
-                float y = event.getY(pointerIndexToUse);
-                switch (event.getAction())
+                final float x = event.getX(pointerIndexToUse);
+                final float y = event.getY(pointerIndexToUse);
+                switch(event.getAction())
                 {
                     case MotionEvent.ACTION_DOWN:
                         touch_start(x, y);
                         break;
                     case MotionEvent.ACTION_MOVE:
+                            //First process "historical" coordinates that were "batched" into this event
+                        final int historySize = event.getHistorySize();
+                        for (int h = 0; h < historySize; h++) {
+                            touch_move(event.getHistoricalX(pointerIndexToUse,h), event.getHistoricalY(pointerIndexToUse,h));
+                        }
                         touch_move(x, y);
                         break;
                     case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
                         touch_up();
                         break;
                 }
@@ -251,38 +257,24 @@ abstract public class MuPDFReaderView extends ReaderView {
         return super.onTouchEvent(event);
     }
 
-    private float mX, mY;
-
-//    private static final float TOUCH_TOLERANCE = 2;//Shoul be made customizable
-
-    private void touch_start(float x, float y) {
-
-        MuPDFView pageView = (MuPDFView)getDisplayedView();
+    private void touch_start(final float x,final float y) {
+        final MuPDFView pageView = (MuPDFView)getDisplayedView();
         if (pageView != null)
         {
             pageView.startDraw(x, y);
         }
-        mX = x;
-        mY = y;
     }
 
-    private void touch_move(float x, float y) {
-        float dx = Math.abs(x - mX);
-        float dy = Math.abs(y - mY);
-        // if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE)
-        // {
-            MuPDFView pageView = (MuPDFView)getDisplayedView();
-            if (pageView != null)
-            {
-                pageView.continueDraw(x, y);
-            }
-            mX = x;
-            mY = y;
-         // }
+    private void touch_move(final float x, final float y) {
+        final MuPDFView pageView = (MuPDFView)getDisplayedView();
+        if (pageView != null)
+        {
+            pageView.continueDraw(x, y);
+        }
     }
 
     private void touch_up() {
-        MuPDFView pageView = (MuPDFView)getDisplayedView();
+        final MuPDFView pageView = (MuPDFView)getDisplayedView();
         if (pageView != null)
         {
             pageView.finishDraw();
