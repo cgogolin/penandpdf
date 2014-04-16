@@ -307,10 +307,15 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             if (core == null) setupCore();
             if (core != null) //OK, so apparently we have a valid pdf open
             {
-                if(mDocView!=null) mDocView.clearSearchResults();
+                SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+                if(mDocView!=null)
+                {
+                    mDocView.clearSearchResults();
+                    mDocView.onSharedPreferenceChanged(prefs,"");
+                }
                 createAlertWaiter();
                 core.startAlerts();
-                core.onSharedPreferenceChanged(getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS),"");
+                core.onSharedPreferenceChanged(prefs,"");
                 setupUI();
             }
             else //Something went wrong
@@ -372,11 +377,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             
             if(core != null && !isChangingConfigurations())
             {
-//                SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
-//                if(!mNotSaveOnPauseThisTime && core.hasChanges() && core.getFileName() != null && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_PAUSE, true))
                 if(!mNotSaveOnPauseThisTime && core.hasChanges() && core.getFileName() != null && getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).getBoolean(SettingsActivity.PREF_SAVE_ON_PAUSE, true))
                 {
-//                    boolean success = core.save();
                     boolean success = save();
                     if(!success) showInfo(getString(R.string.error_saveing));
                     core.onDestroy(); //Destroy even if not saved as we have no choice
@@ -403,7 +405,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
                 if(!mNotSaveOnDestroyThisTime && core.hasChanges() && core.getFileName() != null && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_DESTROY, true))
                 {
-//                    boolean success = core.save();
                     boolean success = save();
                     if(!success) showInfo(getString(R.string.error_saveing));
                 }
@@ -530,23 +531,11 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     //Insert a new blank page at the end
                 if(core!=null) core.insertBlankPageAtEnd();
                 invalidateOptionsMenu();
-                // if(core!=null)
-                // {
-                //     boolean success = save();
-                ////     boolean success = core.save();
-                //     if(!success) showInfo(getString(R.string.error_saveing));
-                //     core.onDestroy();
-                //     core = null;
-                // }
-                // mNotSaveOnPauseThisTime = true;
-                // onPause();
-                // onResume();
-                    //Switch to the newly inserted page
+                    //Display the newly inserted page
                 mDocView.setDisplayedViewIndex(core.countPages()-1);
                 return true;
             case R.id.menu_fullscreen:
                 enterFullscreen();
-//                mActionBarMode = ActionBarMode.Fullscreen;
                 return true;
             case R.id.menu_settings:
                 Intent intent = new Intent(this,SettingsActivity.class);
@@ -559,9 +548,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 invalidateOptionsMenu();
                 return true;
             case R.id.menu_highlight:
-                    // mAcceptMode = AcceptMode.Highlight;
-                    // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
-                    // mActionBarMode = ActionBarMode.Annot;
                 if (pageView.hasSelection()) {
                     pageView.markupSelection(Annotation.Type.HIGHLIGHT);
                     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
@@ -572,9 +558,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     showInfo(getString(R.string.select_text));
                 return true;
             case R.id.menu_underline:
-                    // mAcceptMode = AcceptMode.Underline;
-                    // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
-                    // mActionBarMode = ActionBarMode.Annot;
                 if (pageView.hasSelection()) {
                     pageView.markupSelection(Annotation.Type.UNDERLINE);
                     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
@@ -585,9 +568,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     showInfo(getString(R.string.select_text));
                 return true;
             case R.id.menu_strikeout:
-                    // mAcceptMode = AcceptMode.StrikeOut;
-                    // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
-                    // mActionBarMode = ActionBarMode.Annot;
                 if (pageView.hasSelection()) {
                     pageView.markupSelection(Annotation.Type.STRIKEOUT);
                     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
@@ -598,11 +578,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     showInfo(getString(R.string.select_text));
                 return true;
             case R.id.menu_copytext:
-                    // mActionBarMode = ActionBarMode.Copy;
-                    // invalidateOptionsMenu();
-                    // mAcceptMode = AcceptMode.CopyText;
-                    // mDocView.setMode(MuPDFReaderView.Mode.Selecting);
-                    // showInfo(getString(R.string.select_text));
                 if (pageView.hasSelection()) {
                     boolean success = pageView.copySelection();
                     showInfo(success?getString(R.string.copied_to_clipboard):getString(R.string.no_text_selected));
@@ -651,19 +626,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                 case Ink:
                                     pageView.saveDraw();
                                     break;
-                                        // case Highlight:
-                                        //     pageView.markupSelection(Annotation.Type.HIGHLIGHT);
-                                        //     break;
-                                        // case Underline:
-                                        //     pageView.markupSelection(Annotation.Type.UNDERLINE);
-                                        //     break;
-                                        // case StrikeOut:
-                                        //     pageView.markupSelection(Annotation.Type.STRIKEOUT);
-                                        //     break;
-                                        // case CopyText:    
-                                        //     boolean success = pageView.copySelection();
-                                        //     showInfo(success?getString(R.string.copied_to_clipboard):getString(R.string.no_text_selected));
-                                        //     break;
                             }
                         }
                         mCanUndo = false;
@@ -703,7 +665,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                             if (which == AlertDialog.BUTTON_POSITIVE) {
                                 if(core != null)
                                 {
-//                                    boolean success = core.save();
                                     boolean success = save();
                                     if(!success)
                                         showInfo(getString(R.string.error_saveing));
@@ -717,7 +678,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                 }
                             }
                             if (which == AlertDialog.BUTTON_NEUTRAL) {
-//                                    Intent intent = new Intent(getApplicationContext(),ChoosePDFActivity.class);
                                 Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
                                 if (core.getPath() != null) intent.setData(Uri.parse(core.getPath()));
                                 else if (core.getFileName() != null) intent.setData(Uri.parse(core.getFileName()));
@@ -731,7 +691,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     };
                 AlertDialog alert = mAlertBuilder.create();
                 alert.setTitle(getString(R.string.app_name));
-//                    alert.setMessage(getString(R.string.document_has_changes_save_them_));
                 if (core != null && core.getFileName() != null) alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
                 alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.saveas), listener);
                 alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), listener);
@@ -746,7 +705,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 invalidateOptionsMenu();
                 return true;
             case R.id.menu_linkback:
-//                setViewport(mPageBeforeInternalLinkHit,mNormalizedScaleBeforeInternalLinkHit, mNormalizedXScrollBeforeInternalLinkHit, mNormalizedYScrollBeforeInternalLinkHit);
                 setViewport(mPageBeforeInternalLinkHit,mNormalizedScaleBeforeInternalLinkHit, mNormalizedXScrollBeforeInternalLinkHit, mNormalizedYScrollBeforeInternalLinkHit);
                 mPageBeforeInternalLinkHit = -1;
                 invalidateOptionsMenu();
@@ -841,10 +799,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 @Override
                 protected void onMoveToChild(int pageNumber) {
                     setTitle();
-                    // if (SearchTaskResult.get() != null && SearchTaskResult.get().pageNumber != pageNumber) {
-                    //     SearchTaskResult.set(null);
-                    //     resetupChildren();
-                    // }
                 }
 
                 @Override
@@ -854,11 +808,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                         invalidateOptionsMenu();
                         mActionBarMode = ActionBarMode.Main;
                     }
-                    // else if (mActionBarMode == ActionBarMode.Fullscreen)
-                    // {
-                    //     exitFullScreen();
-                    //     mActionBarMode = ActionBarMode.Main;
-                    // }
                 }
                 
                 @Override
@@ -935,12 +884,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             //Enable link highlighting by default
         mDocView.setLinksEnabled(true);
 
-//        final MuPDFActivity activity  = this;
         mSearchTask = new SearchTask(this, core) {
                 @Override
                 protected void onTextFound(SearchTaskResult result) {
                     mDocView.addSearchResult(result);
-//                    mDocView.resetupChildren();
                 }
                 
                 @Override
@@ -956,7 +903,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     {
                         mDocView.doNextScrollWithCenter();
                         mDocView.setDocRelXScroll(resultRect.left);
-//                        mDocView.setDocRelYScroll(core.getPageSize(mDocView.getDisplayedViewIndex()).y-resultRect.top);
                         mDocView.setDocRelYScroll(resultRect.top);
                     }
                 }
@@ -969,12 +915,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             setViewport(prefs, path);
         else
             setViewport(prefs, core.getFileName());
-            
-        
-        
-//        if(core.getFileName() == null) setTitle(); //Otherwise this is already done by the DocView
+            //Set the action bar title
         setTitle();
-
             // Stick the document view into a parent view
         RelativeLayout layout = new RelativeLayout(this);
         layout.addView(mDocView);
@@ -1036,38 +978,36 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     }
 
 
-    private boolean saveAs(Uri uri)
+    private boolean saveAs(Uri uri) {
+        if (core == null) return false;
+        
+            //Do not overwrite the current fiele during onPause()
+        mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; 
+        onPause();
+            //Save the viewport under the new name
+        SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+        SharedPreferences.Editor edit = prefs.edit();
+            //Save the current viewport
+        saveViewport(edit, uri.getPath());
+            //Save the file to the new location
+        boolean success = core.saveAs(uri.toString());
+        if(success)
         {
-            if (core == null) return false;
-            
-                //Do not overwrite the current fiele during onPause()
-            mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; 
-            onPause();
-                //Save the viewport under the new name
-            SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-            SharedPreferences.Editor edit = prefs.edit();
-                //Save the current viewport
-            saveViewport(edit, uri.getPath());
-                //Save the file to the new location
-            boolean success = core.saveAs(uri.toString());
-            if(success)
-            {
-                core.onDestroy();
-                core = null;
-                    //Set the uri of this intent so that we load the new file during onResum()...
-                getIntent().setData(uri);
-                    //... and resume
-                onResume();
-            }
-            return success;
+            core.onDestroy();
+            core = null;
+                //Set the uri of this intent so that we load the new file during onResum()...
+            getIntent().setData(uri);
+                //... and resume
+            onResume();
         }
+        return success;
+    }
 
     
-    private boolean save()
-        {
-            if (core == null) return false;
-            return core.save();
-        }
+    private boolean save() {
+        if (core == null) return false;
+        return core.save();
+    }
     
             
     private void saveViewport(SharedPreferences.Editor edit, String path) {
@@ -1113,14 +1053,15 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPref, String key) {
-        
+            //Take care of some preference changes directly
         if (sharedPref.getBoolean(SettingsActivity.PREF_KEEP_SCREEN_ON, false ))
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         else
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        
+            //Also notify other classes and members of the preference change
+        ReaderView.onSharedPreferenceChanged(sharedPref, key);
+        PageView.onSharedPreferenceChanged(sharedPref, key);
         if(core != null) core.onSharedPreferenceChanged(sharedPref, key);
-            //mDocView.onSharedPreferenceChanged(sharedPref, key);//This should be used to set preferences in page views...
     }    
 
     
@@ -1272,7 +1213,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     @Override
     public void performPickFor(FilePicker picker) {
         mFilePicker = picker;
-//        Intent intent = new Intent(this, ChoosePDFActivity.class);
         Intent intent = new Intent(this, PenAndPDFFileChooser.class);
         startActivityForResult(intent, FILEPICK_REQUEST);
     }

@@ -206,20 +206,16 @@ abstract public class MuPDFReaderView extends ReaderView {
     }
 
     public boolean onTouchEvent(MotionEvent event) {
-
-        SharedPreferences sharedPref = mContext.getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-        boolean useStylus = sharedPref.getBoolean(SettingsActivity.PREF_USE_STYLUS, false);
-                
-        int pointerIndexToUse = 0; // by default use the first pointer
-
-            //if in stylus mode use stylus
-        if (useStylus)
+            // By default use the first pointer
+        int pointerIndexToUse = 0; 
+            // If in stylus mode use the stylus istead
+        if (mUseStylus)
         {
             int pointerIndexOfStylus = -1; 
             for(int pointerIndex = 0; pointerIndex < event.getPointerCount(); pointerIndex++) {
                 if (event.getToolType(pointerIndex) == android.view.MotionEvent.TOOL_TYPE_STYLUS) {
                     pointerIndexOfStylus = pointerIndex;
-                    break; // we simply take the first stylus we find.
+                    break; // We simply take the first stylus we find.
                 }
             }
             pointerIndexToUse = pointerIndexOfStylus; // is pointer index of stylus or -1 if no stylus event occured
@@ -227,7 +223,7 @@ abstract public class MuPDFReaderView extends ReaderView {
             
         if ( mMode == Mode.Drawing )
         {
-            if (event.getActionIndex() == pointerIndexToUse || !useStylus)
+            if (event.getActionIndex() == pointerIndexToUse || !mUseStylus)
             {
                 float x = event.getX(pointerIndexToUse);
                 float y = event.getY(pointerIndexToUse);
@@ -244,7 +240,7 @@ abstract public class MuPDFReaderView extends ReaderView {
                         break;
                 }
             }
-            if (useStylus) return true;
+            if (mUseStylus) return true;
         }
                 
         if ((event.getAction() & event.getActionMasked()) == MotionEvent.ACTION_DOWN)
@@ -257,7 +253,7 @@ abstract public class MuPDFReaderView extends ReaderView {
 
     private float mX, mY;
 
-    private static final float TOUCH_TOLERANCE = 2;//Shoul be made customizable
+//    private static final float TOUCH_TOLERANCE = 2;//Shoul be made customizable
 
     private void touch_start(float x, float y) {
 
@@ -273,8 +269,8 @@ abstract public class MuPDFReaderView extends ReaderView {
     private void touch_move(float x, float y) {
         float dx = Math.abs(x - mX);
         float dy = Math.abs(y - mY);
-        if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE)
-        {
+        // if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE)
+        // {
             MuPDFView pageView = (MuPDFView)getDisplayedView();
             if (pageView != null)
             {
@@ -282,7 +278,7 @@ abstract public class MuPDFReaderView extends ReaderView {
             }
             mX = x;
             mY = y;
-        }
+         // }
     }
 
     private void touch_up() {

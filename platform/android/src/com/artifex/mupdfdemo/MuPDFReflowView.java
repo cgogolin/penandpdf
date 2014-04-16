@@ -1,6 +1,7 @@
 package com.artifex.mupdfdemo;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.RectF;
@@ -197,4 +198,7 @@ public class MuPDFReflowView extends WebView implements MuPDFView {
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+    public void onSharedPreferenceChanged(SharedPreferences sharedPref, String key)
+        {}
 }

@@ -1,5 +1,6 @@
 package com.artifex.mupdfdemo;
 
+import android.content.SharedPreferences;
 import android.graphics.PointF;
 import android.graphics.RectF;
 

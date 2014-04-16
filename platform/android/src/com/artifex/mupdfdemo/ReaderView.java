@@ -38,7 +38,11 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     private static final float MIN_SCALE        = 1.0f;
     private static final float MAX_SCALE        = 10.0f;
     private static final float REFLOW_SCALE_FACTOR = 0.5f;
-        
+
+        //Set in onSharedPreferenceChanged()
+    protected static boolean mUseStylus = false;
+    protected static boolean mFitWidth = false;
+    
     private Adapter           mAdapter;
     private int               mCurrent;    // Adapter's index for the current view
     private int               mNewCurrent;
@@ -526,9 +530,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         }
 
             //Snap to page width
-        SharedPreferences sharedPref = getContext().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-        boolean fitWidth = sharedPref.getBoolean(SettingsActivity.PREF_FIT_WIDTH, false);
-        if(fitWidth)
+        if(mFitWidth)
         {
             View cv = getDisplayedView();
             if(cv != null) 
@@ -1049,5 +1051,9 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         mScroller.startScroll(0, 0, XScroll-cv.getLeft(), YScroll-cv.getTop(), 0);
         post(this);
     }
-}
+
+    public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
+        mUseStylus = sharedPref.getBoolean(SettingsActivity.PREF_USE_STYLUS, false);
+        mFitWidth = sharedPref.getBoolean(SettingsActivity.PREF_FIT_WIDTH, false);
+    }}
 

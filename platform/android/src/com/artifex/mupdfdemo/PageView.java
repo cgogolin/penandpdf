@@ -155,11 +155,14 @@ public abstract class PageView extends ViewGroup {
     private       ProgressBar mBusyIndicator;
     private final Handler   mHandler = new Handler();
 
-    private float inkThickness = 10;
-    private int inkColor = 0x80AC7225;
-    private int highlightColor = 0x80AC7225;
-    private int underlineColor = 0x80AC7225;
-    private int strikeoutColor = 0x80AC7225;
+        //Set in onSharedPreferenceChanged()
+    private static float inkThickness = 10;
+    private static int inkColor = 0x80AC7225;
+    private static int highlightColor = 0x80AC7225;
+    private static int underlineColor = 0x80AC7225;
+    private static int strikeoutColor = 0x80AC7225;
+    private static boolean useSmartTextSelection = false;
+    
     private float docRelXmax = Float.NEGATIVE_INFINITY;
     private float docRelXmin = Float.POSITIVE_INFINITY;
     
@@ -263,15 +266,6 @@ public abstract class PageView extends ViewGroup {
             mDrawEntire.cancel(true);
             mDrawEntire = null;
         }
-
-            //Set ink thickness and colors for PageView
-        SharedPreferences sharedPref = getContext().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-        inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
-        inkColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, Integer.toString(inkColor))));
-        highlightColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, Integer.toString(highlightColor))));
-        underlineColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, Integer.toString(underlineColor))));
-        strikeoutColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, Integer.toString(strikeoutColor))));
-                
         mIsBlank = false;
             // Highlights may be missing because mIsBlank was true on last draw
         if (mSearchView != null)
@@ -414,9 +408,6 @@ public abstract class PageView extends ViewGroup {
                                     }
 
                                     public void onEndText() {
-                                            //Give visual feedback on the selection region
-                                        SharedPreferences sharedPref = getContext().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-                                        boolean useSmartTextSelection = sharedPref.getBoolean(SettingsActivity.PREF_SMART_TEXT_SELECTION, true);
                                         if (useSmartTextSelection)
                                         {
                                             paint.setColor(GRAYEDOUT_COLOR);
@@ -544,11 +535,7 @@ public abstract class PageView extends ViewGroup {
         }
     }
 
-    public void startDraw(float x, float y) {
-            //Set ink thickness and color
-        SharedPreferences sharedPref = getContext().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-        inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
-        inkColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, Integer.toString(inkColor))));            
+    public void startDraw(float x, float y) {        
         float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
         float docRelX = (x - getLeft())/scale;
         float docRelY = (y - getTop())/scale;
@@ -578,6 +565,7 @@ public abstract class PageView extends ViewGroup {
             ArrayList<PointF> arc = mDrawing.get(mDrawing.size() - 1);
             PointF lastArc = arc.get(0);
             float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+                //Make points look nice
             if(arc.size() == 1) {
                 arc.add(new PointF(lastArc.x+0.5f*inkThickness,lastArc.y));
                 arc.add(new PointF(lastArc.x+0.5f*inkThickness,lastArc.y+0.5f*inkThickness));
@@ -621,8 +609,6 @@ public abstract class PageView extends ViewGroup {
     }
 
     protected void processSelectedText(TextProcessor tp) {
-        SharedPreferences sharedPref = getContext().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-        boolean useSmartTextSelection = sharedPref.getBoolean(SettingsActivity.PREF_SMART_TEXT_SELECTION, true);
         if (useSmartTextSelection)
             (new TextSelector(mText, mSelectBox,docRelXmin,docRelXmax)).select(tp);
         else
@@ -832,20 +818,15 @@ public abstract class PageView extends ViewGroup {
         {
             mSearchTaskResult = searchTaskResult;
         }
-    
-        // public void setInkThickness(float inkThickness){
-        //     this.inkThickness = inkThickness;
-        // }
-        // public void setinkColor(int inkColor){
-        //     this.inkColor = inkColor;    
-        // }
-        // public void setHighlightColor(int highlightColor){
-        //     this.highlightColor = highlightColor;
-        // }
-        // public void setUnderlineColor(int underlineColor){
-        //     this.underlineColor = underlineColor;
-        // }
-        // public void setStrikeoutColor(int strikeoutColor){
-        //     this.strikeoutColor = strikeoutColor;
-        // }
+
+    public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
+            //Set ink thickness and colors for PageView
+        inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
+        inkColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, Integer.toString(inkColor))));
+        highlightColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, Integer.toString(highlightColor))));
+        underlineColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, Integer.toString(underlineColor))));
+        strikeoutColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, Integer.toString(strikeoutColor))));
+            //Find out whether or not to use smart text selection
+        useSmartTextSelection = sharedPref.getBoolean(SettingsActivity.PREF_SMART_TEXT_SELECTION, true);
+    }
 }

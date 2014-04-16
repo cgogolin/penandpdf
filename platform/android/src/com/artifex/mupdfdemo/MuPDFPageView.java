@@ -566,8 +566,8 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			}
 
 		};
-
-		mAddInk.execute(getDraw());//This is where ink drawn stuff is saved!!!
+                
+		mAddInk.execute(getDraw());
 		cancelDraw();
 
 		return true;
