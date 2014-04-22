@@ -532,7 +532,6 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 			mDeleteAnnotation.execute(mSelectedAnnotationIndex);
 
-
                         deselectAnnotation();
 		}
 	}

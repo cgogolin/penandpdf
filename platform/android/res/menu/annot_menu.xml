@@ -1,26 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-<!--  <item android:id="@+id/menu_save"
-	android:title="@string/menu_save"
-	android:showAsAction="never"
-	/>
-  <item android:id="@+id/menu_copytext"
-	android:icon="@drawable/ic_action_copy"
-	android:title="@string/menu_copytext" 
-	android:showAsAction="never"
-	/>
-  <item android:id="@+id/menu_print"
-	android:title="@string/menu_print"
-	android:showAsAction="never"
-	/>
-  <item android:id="@+id/menu_share"
-	android:title="@string/menu_share"
-	android:showAsAction="never"
-	/>
-  <item android:id="@+id/menu_settings"
-	android:title="@string/menu_settings"
-	android:showAsAction="never"
-	/>-->
   <item android:id="@+id/menu_undo"
 	android:icon="@drawable/ic_action_undo"
 	android:title="@string/menu_undo" 
@@ -30,6 +9,18 @@
   <item android:id="@+id/menu_cancel"
 	android:icon="@drawable/ic_action_cancel"
 	android:title="@string/menu_cancel" 
+	android:showAsAction="always"
+	android:background="?android:selectableItemBackground"
+	/>
+  <item android:id="@+id/menu_erase"
+	android:icon="@drawable/ic_action_erase"
+	android:title="@string/menu_erase" 
+	android:showAsAction="always"
+	android:background="?android:selectableItemBackground"
+	/>
+  <item android:id="@+id/menu_draw"
+	android:icon="@drawable/ic_action_edit"
+	android:title="@string/menu_draw" 
 	android:showAsAction="always"
 	android:background="?android:selectableItemBackground"
 	/>

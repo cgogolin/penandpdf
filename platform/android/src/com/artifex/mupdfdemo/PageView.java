@@ -554,6 +554,11 @@ public abstract class PageView extends ViewGroup {
             arc.add(new PointF(docRelX, docRelY));
             mOverlayView.invalidate();
         }
+            //Postprocess the current arc
+        // if(arc.size() >= 4)
+        // {
+        //     inkThickness * scale
+        // }
     }
 
     public void finishDraw() {
@@ -590,7 +595,7 @@ public abstract class PageView extends ViewGroup {
         return mDrawing.size();
     }
     
-    protected PointF[][] getDraw() { //This is where ink drawn stuff processed 
+    protected PointF[][] getDraw() {
         if (mDrawing == null)
             return null;
 

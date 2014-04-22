@@ -17,7 +17,7 @@ import android.widget.Toast;
 import android.graphics.RectF;
 
 abstract public class MuPDFReaderView extends ReaderView {
-    enum Mode {Viewing, Selecting, Drawing}
+    enum Mode {Viewing, Selecting, Drawing, Erasing}
     private final Context mContext;
     private boolean mLinksEnabled = false;
     private Mode mMode = Mode.Viewing;
@@ -47,6 +47,10 @@ abstract public class MuPDFReaderView extends ReaderView {
 
     public void setMode(Mode m) {
         mMode = m;
+    }
+
+    public Mode getMode() {
+        return mMode;
     }
 
     public MuPDFReaderView(Activity act) {
@@ -224,7 +228,7 @@ abstract public class MuPDFReaderView extends ReaderView {
             pointerIndexToUse = pointerIndexOfStylus; // is pointer index of stylus or -1 if no stylus event occured
         }
             
-        if ( mMode == Mode.Drawing )
+        if ( mMode == Mode.Drawing || mMode == Mode.Erasing)
         {
             if (event.getActionIndex() == pointerIndexToUse || !mUseStylus)
             {

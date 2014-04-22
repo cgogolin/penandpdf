@@ -62,7 +62,7 @@ class ThreadPerTaskExecutor implements Executor {
 public class MuPDFActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener, FilePicker.FilePickerSupport
 {       
     enum ActionBarMode {Main, Annot, Edit, Search, Copy, Selection, Hidden};
-    enum AcceptMode {Highlight, Underline, StrikeOut, Ink, CopyText};
+//    enum AcceptMode {Highlight, Underline, StrikeOut, Ink, CopyText};
     
     private SearchView searchView = null;
     private String latestTextInSearchBox = "";
@@ -84,7 +84,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private MuPDFReaderView mDocView;
     private EditText     mPasswordView;
     private ActionBarMode   mActionBarMode = ActionBarMode.Main;
-    private AcceptMode   mAcceptMode = AcceptMode.Highlight;
+//    private AcceptMode   mAcceptMode = AcceptMode.Highlight;
     private SearchTask   mSearchTask;
     private AlertDialog.Builder mAlertBuilder;
     private boolean    mLinkHighlight = false;
@@ -262,12 +262,12 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).registerOnSharedPreferenceChangeListener(this);
             onSharedPreferenceChanged(getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS),""); //Call this once so I don't need to duplicate code
             
-                //Get the ActionBarMode, AcceptMode and PageBeforeInternalLinkHit from the bundle
+                //Get various data from the bundle
             if(savedInstanceState != null)
             {
                     //We don't want to do this at the moment because we can't save what was selected ar drawn so easily 
                     // mActionBarMode = ActionBarMode.valueOf(savedInstanceState.getString("ActionBarMode", ActionBarMode.Main.toString ()));
-                    // mAcceptMode = AcceptMode.valueOf(savedInstanceState.getString("AcceptMode", AcceptMode.Highlight.toString ()));
+                    // // mAcceptMode = AcceptMode.valueOf(savedInstanceState.getString("AcceptMode", AcceptMode.Highlight.toString ()));
                 mPageBeforeInternalLinkHit = savedInstanceState.getInt("PageBeforeInternalLinkHit", mPageBeforeInternalLinkHit);
                 mNormalizedScaleBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedScaleBeforeInternalLinkHit", mNormalizedScaleBeforeInternalLinkHit);
                 mNormalizedXScrollBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedXScrollBeforeInternalLinkHit", mNormalizedXScrollBeforeInternalLinkHit);
@@ -463,8 +463,20 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 case Edit:
                 case Copy:
                     inflater.inflate(R.menu.annot_menu, menu);
-                    MenuItem undoButton = menu.findItem(R.id.menu_undo);
-                    if (!mCanUndo) undoButton.setEnabled(false).setVisible(false);
+                    if (!mCanUndo) {
+                        MenuItem undoButton = menu.findItem(R.id.menu_undo);
+                        undoButton.setEnabled(false).setVisible(false);
+                    }
+                    if(mDocView.getMode() != MuPDFReaderView.Mode.Erasing)
+                    {
+                        MenuItem eraseButton = menu.findItem(R.id.menu_erase);
+                        eraseButton.setEnabled(false).setVisible(false);
+                    }
+                    else if(mDocView.getMode() != MuPDFReaderView.Mode.Drawing)
+                    {
+                        MenuItem drawButton = menu.findItem(R.id.menu_draw);
+                        drawButton.setEnabled(false).setVisible(false);
+                    }
                     break;
                 case Search:
                     inflater.inflate(R.menu.search_menu, menu);
@@ -542,9 +554,19 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 startActivity(intent);
                 return true;
             case R.id.menu_draw:
-                mAcceptMode = AcceptMode.Ink;
+                switch (mActionBarMode) {
+                    case Main:
+//                        mAcceptMode = AcceptMode.Ink;
+                        mDocView.setMode(MuPDFReaderView.Mode.Drawing);
+                        mActionBarMode = ActionBarMode.Annot;
+                        invalidateOptionsMenu();
+                    case Annot:
+                        mDocView.setMode(MuPDFReaderView.Mode.Erasing);
+                        invalidateOptionsMenu();
+                }
+                return true;
+            case R.id.menu_erase:
                 mDocView.setMode(MuPDFReaderView.Mode.Drawing);
-                mActionBarMode = ActionBarMode.Annot;
                 invalidateOptionsMenu();
                 return true;
             case R.id.menu_highlight:
@@ -624,11 +646,11 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                         mCanUndo = false;
                         mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         if (pageView != null) {
-                            switch (mAcceptMode) {
-                                case Ink:
-                                    pageView.saveDraw();
-                                    break;
-                            }
+                            // switch (mAcceptMode) {
+                            //     case Ink:
+                            pageView.saveDraw();
+                            //         break;
+                            // }
                         }
                         break;
                     case Edit:
@@ -1044,7 +1066,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         super.onSaveInstanceState(outState);
         
         outState.putString("ActionBarMode", mActionBarMode.toString());
-        outState.putString("AcceptMode", mAcceptMode.toString());
+//        outState.putString("AcceptMode", mAcceptMode.toString());
         outState.putInt("PageBeforeInternalLinkHit", mPageBeforeInternalLinkHit);
         outState.putFloat("NormalizedScaleBeforeInternalLinkHit", mNormalizedScaleBeforeInternalLinkHit);
         outState.putFloat("NormalizedXScrollBeforeInternalLinkHit", mNormalizedXScrollBeforeInternalLinkHit);

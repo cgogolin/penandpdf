@@ -80,8 +80,9 @@
 	<string name="menu_copytext">Copy text</string>
 	<string name="menu_save">Save...</string>
 	<string name="menu_undo">Undo</string>
-	<string name="menu_accept">accept</string>
+	<string name="menu_accept">Accept</string>
 	<string name="menu_cancel">Cancel</string>
+	<string name="menu_erase">Erase</string>
 	<string name="menu_gotopage">Go to page</string>
 	<string name="menu_selection">Select text</string>
 	<string name="menu_addpage">Add page</string>
