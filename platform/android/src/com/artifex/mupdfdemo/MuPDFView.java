@@ -19,13 +19,14 @@ public interface MuPDFView {
     public boolean copySelection();
     public boolean markupSelection(Annotation.Type type);
     public void deleteSelectedAnnotation();
-        //    public void setSearchBoxes(RectF searchBoxes[]);
     public void setSearchTaskResult(SearchTaskResult searchTaskResult);
     public void setLinkHighlighting(boolean f);
     public void deselectAnnotation();
     public void startDraw(float x, float y);
     public void continueDraw(float x, float y);
     public void finishDraw();
+    public void eraseAt(float x, float y);
+    public void finishErase(float x, float y);    
     public void undoDraw();
     public void cancelDraw();
     public int getDrawingSize();

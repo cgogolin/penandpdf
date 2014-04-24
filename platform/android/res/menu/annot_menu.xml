@@ -18,12 +18,13 @@
 	android:showAsAction="always"
 	android:background="?android:selectableItemBackground"
 	/>
-  <item android:id="@+id/menu_draw"
-	android:icon="@drawable/ic_action_edit"
-	android:title="@string/menu_draw" 
-	android:showAsAction="always"
-	android:background="?android:selectableItemBackground"
-	/>
+  <item
+      android:id="@+id/menu_draw"
+      android:actionLayout="@layout/drawing_button"
+      android:title="@string/menu_draw" 
+      android:showAsAction="always"
+      >
+  </item>
   <item android:id="@+id/menu_accept"
 	android:icon="@drawable/ic_action_accept"
 	android:title="@string/menu_accept" 

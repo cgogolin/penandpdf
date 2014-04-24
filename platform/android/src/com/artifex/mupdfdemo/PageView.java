@@ -115,7 +115,7 @@ class TextSelector {
     }
 }
 
-public abstract class PageView extends ViewGroup {
+public abstract class PageView extends ViewGroup implements MuPDFView {
     public static final int HIGHLIGHT_COLOR = 0x8033B5E5;
     public static final int GRAYEDOUT_COLOR = 0x30000000;
     public static final int SEARCHRESULTS_COLOR = 0x3033B5E5;
@@ -155,9 +155,13 @@ public abstract class PageView extends ViewGroup {
     private       ProgressBar mBusyIndicator;
     private final Handler   mHandler = new Handler();
 
+    private PointF eraser = null;
         //Set in onSharedPreferenceChanged()
     private static float inkThickness = 10;
+    private static float eraserThickness = 20;
     private static int inkColor = 0x80AC7225;
+    private static int eraserInnerColor = 0xFFFFFFFF;
+    private static int eraserOuterColor = 0xFF000000;
     private static int highlightColor = 0x80AC7225;
     private static int underlineColor = 0x80AC7225;
     private static int strikeoutColor = 0x80AC7225;
@@ -344,12 +348,13 @@ public abstract class PageView extends ViewGroup {
         if (mOverlayView == null) {
             mOverlayView = new View(mContext) {
                     @Override
+                    //Todo: Optimize this for speed!!!
                     protected void onDraw(final Canvas canvas) {
                         super.onDraw(canvas);
                             // Work out current total scale factor
                             // from source to view
                         final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
-                        final Paint paint = new Paint();
+                        final Paint paint = new Paint();//Should not be done in onDraw()!!!
 
                         if (!mIsBlank && mSearchTaskResult != null) {
                             paint.setColor(SEARCHRESULTS_COLOR);
@@ -434,19 +439,22 @@ public abstract class PageView extends ViewGroup {
                                 ArrayList<PointF> arc = it.next();
                                 if (arc.size() >= 2) {
                                     Iterator<PointF> iit = arc.iterator();
-                                    p = iit.next();
-                                    float mX = p.x * scale;
-                                    float mY = p.y * scale;
-                                    path.moveTo(mX, mY);
-                                    while (iit.hasNext()) {
+                                    if(iit.hasNext())
+                                    {
                                         p = iit.next();
-                                        float x = p.x * scale;
-                                        float y = p.y * scale;
-                                        path.quadTo(mX, mY, (x + mX) / 2, (y + mY) / 2);
-                                        mX = x;
-                                        mY = y;
-                                    }
+                                        float mX = p.x * scale;
+                                        float mY = p.y * scale;
+                                        path.moveTo(mX, mY);
+                                        while (iit.hasNext()) {
+                                            p = iit.next();
+                                            float x = p.x * scale;
+                                            float y = p.y * scale;
+                                            path.quadTo(mX, mY, (x + mX) / 2, (y + mY) / 2);
+                                            mX = x;
+                                            mY = y;
+                                        }
                                     path.lineTo(mX, mY);
+                                    }
                                 }
                             }
 
@@ -458,8 +466,19 @@ public abstract class PageView extends ViewGroup {
                             paint.setStyle(Paint.Style.STROKE);
                             paint.setStrokeWidth(inkThickness * scale);
                             paint.setColor(inkColor);
-
+                            
                             canvas.drawPath(path, paint);
+                        }
+
+                        if (eraser != null) {
+                            paint.setAntiAlias(true);
+                            paint.setDither(true);
+                            paint.setStyle(Paint.Style.FILL);
+                            paint.setColor(eraserInnerColor);
+                            canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, paint);
+                            paint.setStyle(Paint.Style.STROKE);
+                            paint.setColor(eraserOuterColor);
+                            canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, paint);
                         }
                     }
                 };
@@ -560,7 +579,7 @@ public abstract class PageView extends ViewGroup {
         //     inkThickness * scale
         // }
     }
-
+    
     public void finishDraw() {
 	if (mDrawing != null && mDrawing.size() > 0) {
             ArrayList<PointF> arc = mDrawing.get(mDrawing.size() - 1);
@@ -577,7 +596,82 @@ public abstract class PageView extends ViewGroup {
             }
         }
     }
+    
+    public void eraseAt(final float x, final float y) {
+        final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+        final float docRelX = (x - getLeft())/scale;
+        final float docRelY = (y - getTop())/scale;
+        eraser = new PointF(docRelX,docRelY);
+        ArrayList<ArrayList<PointF>> newArcs = new ArrayList<ArrayList<PointF>>();
+        if (mDrawing != null && mDrawing.size() > 0) {
+            for (ArrayList<PointF> arc : mDrawing)
+            {
+                    //Remove points from the beggining
+                PointF lastPointRemovedFromBeginning = null;
+                while(arc.size() > 0 && PointFMath.distance(arc.get(0),eraser) <= eraserThickness)
+                    lastPointRemoved = arc.remove(0);
 
+                    //Remove points from the end
+                PointF lastPointRemovedFromEnd = null;
+                while(arc.size() > 0 && PointFMath.distance(arc.get(arc.size()-1),eraser) <= eraserThickness)
+                    lastPointRemovedFromEnd = arc.remove(arc.size()-1);
+                
+                    //Remove points from the middle of the arc splitting the arc up and saving them in newArcs
+                Iterator<PointF> iter = arc.iterator();
+                boolean lastPointWasUnderEraser = false;
+                boolean pointsWereUnderEraser = false;
+                while (iter.hasNext())
+                {
+                    PointF point = iter.next();
+                    if(PointFMath.distance(point,eraser) <= eraserThickness)
+                    {
+                        iter.remove();
+                        lastPointWasUnderEraser = true;
+                        pointsWereUnderEraser = true;
+                    }
+                    else
+                    {
+                        if(lastPointWasUnderEraser)
+                        {
+                            newArcs.add(new ArrayList<PointF>());
+                        }
+                        if(pointsWereUnderEraser)
+                        {
+                            newArcs.get(newArcs.size()-1).add(point);
+                            iter.remove();
+                        }
+                        lastPointWasUnderEraser = false;
+                    }
+                }
+                    //Reinsert points into arc where it intersects the eraser (should be done eralier but these points must be ignored in the above collision detection...)
+                if(lastPointRemovedFromBeginning != null)
+                {
+                    arc.add(0,PointFMath.pointOnLineCircleIntersection(arc.get(0), lastPointRemovedFromBeginning, eraser, eraserThickness));
+                }
+                if(lastPointRemovedFromEnd != null)
+                {
+                    arc.add(arc.size(),PointFMath.pointOnLineCircleIntersection(arc.get(arc.size()-1), lastPointRemovedFromEnd, eraser, eraserThickness));
+                }
+            }
+            
+            
+                //Add all arcs in newArcs
+            mDrawing.addAll(newArcs);
+                //...and remove all arcs with less then two points...
+            Iterator<ArrayList<PointF>> iter = mDrawing.iterator();
+            while (iter.hasNext()) {
+                if (iter.next().size() < 2) {
+                    iter.remove();
+                }
+            }
+        }
+        mOverlayView.invalidate();
+    }
+
+    public void finishErase(final float x, final float y) {
+        eraseAt(x,y);
+        eraser = null;
+    }
 
     public void undoDraw() {
         if (mDrawing == null || mDrawing.size() == 0) return;
@@ -585,12 +679,11 @@ public abstract class PageView extends ViewGroup {
         mOverlayView.invalidate();
     }
     
-
     public void cancelDraw() {
         mDrawing = null;
         mOverlayView.invalidate();
     }
-
+    
     public int getDrawingSize() {
         return mDrawing.size();
     }
@@ -823,6 +916,7 @@ public abstract class PageView extends ViewGroup {
     public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
             //Set ink thickness and colors for PageView
         inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
+        eraserThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_ERASER_THICKNESS, Float.toString(eraserThickness)));
         inkColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, Integer.toString(inkColor))));
         highlightColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, Integer.toString(highlightColor))));
         underlineColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, Integer.toString(underlineColor))));

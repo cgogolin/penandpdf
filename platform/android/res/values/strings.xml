@@ -48,8 +48,8 @@
 	<string name="nothing_to_save">Nothing to save</string>
 	<string name="document_has_changes_save_them_">Document has changes. Save them?</string>
 	<string name="cannot_open_document">Cannot open document</string>
+	<string name="cannot_open_document_Reason">Cannot open document: %1$s</string>
 	<string name="overwrite">Overwrite</string>
-<!--	<string name="cannot_open_document_Reason">Cannot open document: %1$s</string>-->
 	<string name="unable_to_interpret_uri">Unable to interpret</string>
 	<string name="reason">Reason</string>
 	<string name="cannot_open_file_Path">Cannot open file: %1$s</string>
@@ -99,8 +99,10 @@
 	<string name="scroll_vertical_summ">Scroll pages vertically.</string>
 	<string name="scroll_continuous">Scroll continuous</string>
 	<string name="scroll_continuous_summ">Enable continuous scrolling.</string>
-	<string name="ink_thickness">Line thickness</string>
+	<string name="ink_thickness">Ink thickness</string>
 	<string name="ink_thickness_summ">Set line thickness for free hand drawing.</string>
+	<string name="eraser_thickness">Eraser thickness</string>
+	<string name="eraser_thickness_summ">Set the thickness of the eraser.</string>
 	<string name="ink_color">Ink color</string>
 	<string name="ink_color_summ">Set color for free hand drawing.</string>
 	<string name="highlight_color">Highlight color</string>

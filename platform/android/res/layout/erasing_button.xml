@@ -1,0 +1,26 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		xmlns:tools="http://schemas.android.com/tools"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		>
+  <ImageButton
+      android:id="@+id/draw_image_button"
+      android:layout_width="?android:attr/actionBarSize"
+      android:layout_height="?android:attr/actionBarSize"
+      android:paddingLeft="10dp"
+      android:paddingRight="10dp"
+      android:layout_centerVertical="true"
+      android:layout_centerHorizontal="true"
+      android:src="@drawable/ic_action_erase"
+      android:background="?android:selectableItemBackground"
+      />
+</RelativeLayout>
+
+
+<!--      
+     android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+-->

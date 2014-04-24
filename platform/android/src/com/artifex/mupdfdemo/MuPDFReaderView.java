@@ -227,17 +227,16 @@ abstract public class MuPDFReaderView extends ReaderView {
             }
             pointerIndexToUse = pointerIndexOfStylus; // is pointer index of stylus or -1 if no stylus event occured
         }
-            
-        if ( mMode == Mode.Drawing || mMode == Mode.Erasing)
+        
+        if (event.getActionIndex() == pointerIndexToUse || !mUseStylus)
         {
-            if (event.getActionIndex() == pointerIndexToUse || !mUseStylus)
+            final float x = event.getX(pointerIndexToUse);
+            final float y = event.getY(pointerIndexToUse);
+            if ( mMode == Mode.Drawing )
             {
-                final float x = event.getX(pointerIndexToUse);
-                final float y = event.getY(pointerIndexToUse);
                 switch(event.getAction())
                 {
                     case MotionEvent.ACTION_DOWN:
-//                        touch_start(x, y);
                         pageView.startDraw(x, y);
                         break;
                     case MotionEvent.ACTION_MOVE:
@@ -246,14 +245,26 @@ abstract public class MuPDFReaderView extends ReaderView {
                         for (int h = 0; h < historySize; h++) {
                             pageView.continueDraw(event.getHistoricalX(pointerIndexToUse,h), event.getHistoricalY(pointerIndexToUse,h));
                         }
-//                        touch_move(x, y);
                         pageView.continueDraw(x, y);
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
-//                        touch_up();
                         pageView.finishDraw();
                         onNumberOfStrokesChanged(pageView.getDrawingSize());
+                        break;
+                }
+            }
+            else if(mMode == Mode.Erasing) //This breaks the undo functionality!!!
+            {
+                switch(event.getAction())
+                {
+                    case MotionEvent.ACTION_DOWN:
+                    case MotionEvent.ACTION_MOVE:
+                        pageView.eraseAt(x, y);
+                        break;
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        pageView.finishErase(x,y);
                         break;
                 }
             }
@@ -267,31 +278,6 @@ abstract public class MuPDFReaderView extends ReaderView {
 
         return super.onTouchEvent(event);
     }
-
-    // private void touch_start(final float x,final float y) {
-    //     final MuPDFView pageView = (MuPDFView)getDisplayedView();
-    //     if (pageView != null)
-    //     {
-    //         pageView.startDraw(x, y);
-    //     }
-    // }
-
-    // private void touch_move(final float x, final float y) {
-    //     final MuPDFView pageView = (MuPDFView)getDisplayedView();
-    //     if (pageView != null)
-    //     {
-    //         pageView.continueDraw(x, y);
-    //     }
-    // }
-
-    // private void touch_up() {
-    //     final MuPDFView pageView = (MuPDFView)getDisplayedView();
-    //     if (pageView != null)
-    //     {
-    //         pageView.finishDraw();
-    //         onNumberOfStrokesChanged(pageView.getDrawingSize());
-    //     }
-    // }
 
     public void addSearchResult(SearchTaskResult result) {
         SearchTaskResults.put(result.getPageNumber(),result);

@@ -31,6 +31,8 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
 import android.view.WindowManager;
@@ -61,7 +63,7 @@ class ThreadPerTaskExecutor implements Executor {
 
 public class MuPDFActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener, FilePicker.FilePickerSupport
 {       
-    enum ActionBarMode {Main, Annot, Edit, Search, Copy, Selection, Hidden};
+    enum ActionBarMode {Main, Annot, Edit, Search, Selection, Hidden};
 //    enum AcceptMode {Highlight, Underline, StrikeOut, Ink, CopyText};
     
     private SearchView searchView = null;
@@ -460,8 +462,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     inflater.inflate(R.menu.selection_menu, menu);
                     break;
                 case Annot:
-                case Edit:
-                case Copy:
                     inflater.inflate(R.menu.annot_menu, menu);
                     if (!mCanUndo) {
                         MenuItem undoButton = menu.findItem(R.id.menu_undo);
@@ -472,11 +472,34 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                         MenuItem eraseButton = menu.findItem(R.id.menu_erase);
                         eraseButton.setEnabled(false).setVisible(false);
                     }
-                    else if(mDocView.getMode() != MuPDFReaderView.Mode.Drawing)
+                    if(mDocView.getMode() != MuPDFReaderView.Mode.Drawing)
                     {
                         MenuItem drawButton = menu.findItem(R.id.menu_draw);
                         drawButton.setEnabled(false).setVisible(false);
                     }
+                    else
+                    {
+                        MenuItem drawButton = menu.findItem(R.id.menu_draw);
+                        View drawButtonActionView = drawButton.getActionView();
+                        ImageButton drawImageButton = (ImageButton)drawButtonActionView.findViewById(R.id.draw_image_button);
+                        drawImageButton.setOnClickListener(new OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    mDocView.setMode(MuPDFReaderView.Mode.Erasing);
+                                    invalidateOptionsMenu();
+                                }
+                            });
+                        drawImageButton.setOnLongClickListener(new OnLongClickListener() {
+                                @Override
+                                public boolean onLongClick(View v) {
+                                    showInfo("long click");
+                                    return true;
+                                }
+                            });
+                    }
+                    break;
+                case Edit:
+                    inflater.inflate(R.menu.edit_menu, menu);
                     break;
                 case Search:
                     inflater.inflate(R.menu.search_menu, menu);
@@ -554,16 +577,9 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 startActivity(intent);
                 return true;
             case R.id.menu_draw:
-                switch (mActionBarMode) {
-                    case Main:
-//                        mAcceptMode = AcceptMode.Ink;
-                        mDocView.setMode(MuPDFReaderView.Mode.Drawing);
-                        mActionBarMode = ActionBarMode.Annot;
-                        invalidateOptionsMenu();
-                    case Annot:
-                        mDocView.setMode(MuPDFReaderView.Mode.Erasing);
-                        invalidateOptionsMenu();
-                }
+                mDocView.setMode(MuPDFReaderView.Mode.Drawing);
+                mActionBarMode = ActionBarMode.Annot;
+                invalidateOptionsMenu();
                 return true;
             case R.id.menu_erase:
                 mDocView.setMode(MuPDFReaderView.Mode.Drawing);
@@ -613,7 +629,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             case R.id.menu_cancel:
                 switch (mActionBarMode) {
                     case Annot:
-                    case Copy:
+//                    case Copy:
                         if (pageView != null) {
                                 pageView.deselectText();
                                 pageView.cancelDraw();
@@ -642,7 +658,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             case R.id.menu_accept:
                 switch (mActionBarMode) {
                     case Annot:
-                    case Copy:
+//                    case Copy:
                         mCanUndo = false;
                         mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         if (pageView != null) {
