@@ -116,13 +116,16 @@ class TextSelector {
 }
 
 public abstract class PageView extends ViewGroup implements MuPDFView {
-    public static final int HIGHLIGHT_COLOR = 0x8033B5E5;
-    public static final int GRAYEDOUT_COLOR = 0x30000000;
-    public static final int SEARCHRESULTS_COLOR = 0x3033B5E5;
-    public static final int HIGHLIGHTED_SEARCHRESULT_COLOR = 0xFF33B5E5;
-    public static final int LINK_COLOR = 0xFF33B5E5;
-    public static final int BOX_COLOR = 0xFF33B5E5;
+    private static final int HIGHLIGHT_COLOR = 0x8033B5E5;
+    private static final int GRAYEDOUT_COLOR = 0x30000000;
+    private static final int SEARCHRESULTS_COLOR = 0x3033B5E5;
+    private static final int HIGHLIGHTED_SEARCHRESULT_COLOR = 0xFF33B5E5;
+    private static final int LINK_COLOR = 0xFF33B5E5;
+    private static final int BOX_COLOR = 0xFF33B5E5;
     private static final int BACKGROUND_COLOR = 0xFFFFFFFF;
+    private static final int ERASER_INNER_COLOR = 0xFFFFFFFF;
+    private static final int ERASER_OUTER_COLOR = 0xFF000000;
+    
     private static final int PROGRESS_DIALOG_DELAY = 200;
     protected final Context   mContext;
     protected     int       mPageNumber;
@@ -160,8 +163,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private static float inkThickness = 10;
     private static float eraserThickness = 20;
     private static int inkColor = 0x80AC7225;
-    private static int eraserInnerColor = 0xFFFFFFFF;
-    private static int eraserOuterColor = 0xFF000000;
     private static int highlightColor = 0x80AC7225;
     private static int underlineColor = 0x80AC7225;
     private static int strikeoutColor = 0x80AC7225;
@@ -347,6 +348,90 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
         if (mOverlayView == null) {
             mOverlayView = new View(mContext) {
+                    private final Paint searchResultPaint = new Paint();
+                    private final Paint highlightedSearchResultPaint = new Paint();
+                    private final Paint linksPaint = new Paint();
+                    private final Paint selectBoxPaint = new Paint();
+                    private final Paint selectOverlayPaint = new Paint();
+                    private final Paint itemSelectBoxPaint = new Paint();
+                    private final Paint drawingPaint = new Paint();
+                    private final Paint eraserInnerPaint = new Paint();
+                    private final Paint eraserOuterPaint = new Paint();
+//                    private final TextProcessor textSelectionDrawer;
+                    
+                        {
+                            searchResultPaint.setColor(SEARCHRESULTS_COLOR);
+                            
+                            highlightedSearchResultPaint.setColor(HIGHLIGHTED_SEARCHRESULT_COLOR);
+                            highlightedSearchResultPaint.setStyle(Paint.Style.STROKE);
+                            highlightedSearchResultPaint.setAntiAlias(true);
+                            
+                            linksPaint.setColor(LINK_COLOR);
+                            linksPaint.setStyle(Paint.Style.STROKE);
+                            linksPaint.setStrokeWidth(0);
+                            
+                            selectBoxPaint.setColor(HIGHLIGHT_COLOR);
+                            selectBoxPaint.setStyle(Paint.Style.FILL);
+                            selectBoxPaint.setStrokeWidth(0);
+                            
+                            selectOverlayPaint.setColor(GRAYEDOUT_COLOR);
+                            selectOverlayPaint.setStyle(Paint.Style.FILL);
+                            
+                            itemSelectBoxPaint.setColor(BOX_COLOR);
+                            itemSelectBoxPaint.setStyle(Paint.Style.STROKE);
+                            itemSelectBoxPaint.setStrokeWidth(0);
+                            
+                            drawingPaint.setAntiAlias(true);
+                            drawingPaint.setDither(true);
+                            drawingPaint.setStrokeJoin(Paint.Join.ROUND);
+                            drawingPaint.setStrokeCap(Paint.Cap.ROUND);
+                            drawingPaint.setStyle(Paint.Style.STROKE);
+                            
+                            eraserInnerPaint.setAntiAlias(true);
+                            eraserInnerPaint.setDither(true);
+                            eraserInnerPaint.setStyle(Paint.Style.FILL);
+                            eraserInnerPaint.setColor(ERASER_INNER_COLOR);
+                            
+                            eraserOuterPaint.setAntiAlias(true);
+                            eraserOuterPaint.setDither(true);
+                            eraserOuterPaint.setStyle(Paint.Style.STROKE);
+                            eraserOuterPaint.setColor(ERASER_OUTER_COLOR);
+                            
+//                             textSelectionDrawer = new TextProcessor() {
+//                                     RectF rect;
+//                                     float docRelXmaxSelection = Float.NEGATIVE_INFINITY;
+//                                     float docRelXminSelection = Float.POSITIVE_INFINITY;
+//                                     final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+                                    
+//                                     public void onStartLine() {
+//                                         rect = new RectF();
+//                                     }
+                                    
+//                                     public void onWord(TextWord word) {
+//                                         rect.union(word);
+//                                     }
+                                    
+//                                     public void onEndLine() {
+//                                         if (!rect.isEmpty())
+//                                         {
+//                                             canvas.drawRect(rect.left*scale, rect.top*scale, rect.right*scale, rect.bottom*scale, selectBoxPaint);
+//                                             docRelXmaxSelection = Math.max(docRelXmaxSelection,Math.max(rect.right,docRelXmax));
+//                                             docRelXminSelection = Math.min(docRelXminSelection,Math.min(rect.left,docRelXmin));
+//                                         }
+//                                     }
+                                    
+//                                     public void onEndText() {
+//                                         if (useSmartTextSelection)
+//                                         {
+// //                                            paint.setColor(GRAYEDOUT_COLOR);
+// //                                            paint.setStyle(Paint.Style.FILL);
+//                                             canvas.drawRect(0, 0, docRelXminSelection*scale, getHeight(), selectOverlayPaint);
+//                                             canvas.drawRect(docRelXmaxSelection*scale, 0, getWidth(), getHeight(), selectOverlayPaint);
+//                                         }
+//                                     }
+//                                 };
+                        }
+                    
                     @Override
                     //Todo: Optimize this for speed!!!
                     protected void onDraw(final Canvas canvas) {
@@ -354,43 +439,43 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                             // Work out current total scale factor
                             // from source to view
                         final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
-                        final Paint paint = new Paint();//Should not be done in onDraw()!!!
+//                        final Paint paint = new Paint();//Should not be done in onDraw()!!!
 
                         if (!mIsBlank && mSearchTaskResult != null) {
-                            paint.setColor(SEARCHRESULTS_COLOR);
+//                            paint.setColor(SEARCHRESULTS_COLOR);
                             for (RectF rect : mSearchTaskResult.getSearchBoxes())
                                 canvas.drawRect(rect.left*scale, rect.top*scale,
                                                 rect.right*scale, rect.bottom*scale,
-                                                paint);
+                                                searchResultPaint);
                             RectF rect = mSearchTaskResult.getFocusedSearchBox();
                             if(rect != null)
                             {
-                                paint.setColor(HIGHLIGHTED_SEARCHRESULT_COLOR);
-                                paint.setStyle(Paint.Style.STROKE);
-                                paint.setAntiAlias(true);
-                                paint.setStrokeWidth(2 * scale);
+//                                paint.setColor(HIGHLIGHTED_SEARCHRESULT_COLOR);
+//                                paint.setStyle(Paint.Style.STROKE);
+//                                paint.setAntiAlias(true);
+                                highlightedSearchResultPaint.setStrokeWidth(2 * scale);
                                 canvas.drawRect(rect.left*scale, rect.top*scale,
                                                 rect.right*scale, rect.bottom*scale,
-                                                paint);
-                                paint.setAntiAlias(false);
+                                                highlightedSearchResultPaint);
+//                                paint.setAntiAlias(false);
                             }
                         }
 
                         if (!mIsBlank && mLinks != null && mHighlightLinks) {
-                            paint.setStyle(Paint.Style.STROKE);
-                            paint.setColor(LINK_COLOR);
-                            paint.setStrokeWidth(0);
+//                            paint.setStyle(Paint.Style.STROKE);
+//                            paint.setColor(LINK_COLOR);
+//                            paint.setStrokeWidth(0);
                             for (LinkInfo link : mLinks)
                                 canvas.drawRect(link.rect.left*scale, link.rect.top*scale,
                                                 link.rect.right*scale, link.rect.bottom*scale,
-                                                paint);
+                                                linksPaint);
                         }
 
                         if (mSelectBox != null && mText != null) {
-                            paint.setStyle(Paint.Style.FILL);
-                            paint.setColor(HIGHLIGHT_COLOR);
-                            paint.setStrokeWidth(0);
-                            processSelectedText(new TextProcessor() {
+//                            paint.setStyle(Paint.Style.FILL);
+//                            paint.setColor(HIGHLIGHT_COLOR);
+//                            paint.setStrokeWidth(0);
+                            processSelectedText(new TextProcessor() { //Needs access to canvas and scale so must be instanciated in onDraw even though this is not optimal in terms of speed
                                     RectF rect;
                                     float docRelXmaxSelection = Float.NEGATIVE_INFINITY;
                                     float docRelXminSelection = Float.POSITIVE_INFINITY;
@@ -406,7 +491,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                                     public void onEndLine() {
                                         if (!rect.isEmpty())
                                         {
-                                            canvas.drawRect(rect.left*scale, rect.top*scale, rect.right*scale, rect.bottom*scale, paint);
+                                            canvas.drawRect(rect.left*scale, rect.top*scale, rect.right*scale, rect.bottom*scale, selectBoxPaint);
                                             docRelXmaxSelection = Math.max(docRelXmaxSelection,Math.max(rect.right,docRelXmax));
                                             docRelXminSelection = Math.min(docRelXminSelection,Math.min(rect.left,docRelXmin));
                                         }
@@ -415,20 +500,20 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                                     public void onEndText() {
                                         if (useSmartTextSelection)
                                         {
-                                            paint.setColor(GRAYEDOUT_COLOR);
-                                            paint.setStyle(Paint.Style.FILL);
-                                            canvas.drawRect(0, 0, docRelXminSelection*scale, getHeight(), paint);
-                                            canvas.drawRect(docRelXmaxSelection*scale, 0, getWidth(), getHeight(), paint);
+//                                            paint.setColor(GRAYEDOUT_COLOR);
+//                                            paint.setStyle(Paint.Style.FILL);
+                                            canvas.drawRect(0, 0, docRelXminSelection*scale, getHeight(), selectOverlayPaint);
+                                            canvas.drawRect(docRelXmaxSelection*scale, 0, getWidth(), getHeight(), selectOverlayPaint);
                                         }
                                     }
                                 });
                         }
 
                         if (mItemSelectBox != null) {
-                            paint.setStyle(Paint.Style.STROKE);
-                            paint.setColor(BOX_COLOR);
-                            paint.setStrokeWidth(0);
-                            canvas.drawRect(mItemSelectBox.left*scale, mItemSelectBox.top*scale, mItemSelectBox.right*scale, mItemSelectBox.bottom*scale, paint);
+//                            paint.setStyle(Paint.Style.STROKE);
+//                            paint.setColor(BOX_COLOR);
+//                            paint.setStrokeWidth(0);
+                            canvas.drawRect(mItemSelectBox.left*scale, mItemSelectBox.top*scale, mItemSelectBox.right*scale, mItemSelectBox.bottom*scale, itemSelectBoxPaint);
                         }
 
                         if (mDrawing != null) {
@@ -458,27 +543,25 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                                 }
                             }
 
-                            paint.setAntiAlias(true);
-                            paint.setDither(true);
-                            paint.setStrokeJoin(Paint.Join.ROUND);
-                            paint.setStrokeCap(Paint.Cap.ROUND);
-
-                            paint.setStyle(Paint.Style.STROKE);
-                            paint.setStrokeWidth(inkThickness * scale);
-                            paint.setColor(inkColor);
-                            
-                            canvas.drawPath(path, paint);
+//                            paint.setAntiAlias(true);
+//                            paint.setDither(true);
+//                            paint.setStrokeJoin(Paint.Join.ROUND);
+//                            paint.setStrokeCap(Paint.Cap.ROUND);
+//                            paint.setStyle(Paint.Style.STROKE);
+                            drawingPaint.setStrokeWidth(inkThickness * scale);
+                            drawingPaint.setColor(inkColor);  //Should be done only on settings change                          
+                            canvas.drawPath(path, drawingPaint);
                         }
 
                         if (eraser != null) {
-                            paint.setAntiAlias(true);
-                            paint.setDither(true);
-                            paint.setStyle(Paint.Style.FILL);
-                            paint.setColor(eraserInnerColor);
-                            canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, paint);
-                            paint.setStyle(Paint.Style.STROKE);
-                            paint.setColor(eraserOuterColor);
-                            canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, paint);
+//                            paint.setAntiAlias(true);
+//                            paint.setDither(true);
+//                            paint.setStyle(Paint.Style.FILL);
+//                            paint.setColor(eraserInnerColor);
+                            canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, eraserInnerPaint);
+//                            paint.setStyle(Paint.Style.STROKE);
+//                            paint.setColor(eraserOuterColor);
+                            canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, eraserOuterPaint);
                         }
                     }
                 };
@@ -659,54 +742,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 {
                     arc.add(arc.size(),pointToAddToArc);
                 }
-
-
-                // boolean lastPointWasUnderEraser = false;
-                // boolean pointsWereUnderEraser = false;
-                // PointF firstPointRemoved = null;
-                // PointF lastPointRemoved = null;
-                // PointF lastPoint = null;
-                // while (iter.hasNext())
-                // {
-                //     PointF point = iter.next();
-                    
-                    
-                //     if(PointFMath.distance(point,eraser) <= eraserThickness)
-                //     {
-                //         if(!pointsWereUnderEraser) firstPointRemoved = point;
-                //         lastPointRemoved = point;
-                //         iter.remove();
-                //             //Add a point to the end of the last new arc where it intersects the eraser
-                //         if(pointsWereUnderEraser && !lastPointWasUnderEraser)
-                //         {
-                //             ArrayList<PointF> lastNewArc = newArcs.get(newArcs.size()-1);
-                //             lastNewArc.add(lastNewArc.size(),PointFMath.LineSegmentCircleIntersection(lastNewArc.get(lastNewArc.size()-1) , point, eraser, eraserThickness).enter);
-                //         }
-                //         lastPointWasUnderEraser = true;
-                //         pointsWereUnderEraser = true;
-                //     }
-                //     else
-                //     {
-                //         if(lastPointWasUnderEraser)
-                //         {
-                //             newArcs.add(new ArrayList<PointF>());
-                //                 //Add a point to the beginning of the new arc where it intersects the eraser
-                //             newArcs.get(newArcs.size()-1).add(0,PointFMath.LineSegmentCircleIntersection(point, lastPointRemoved, eraser, eraserThickness).enter);
-                //         }
-                //         if(pointsWereUnderEraser)
-                //         {
-                //             newArcs.get(newArcs.size()-1).add(point);
-                //             iter.remove();
-                //         }
-                //         lastPointWasUnderEraser = false;
-                //     }
-                //     lastPoint = point;
-                // }
-                //     //If arc still contains some points add a point where it first intersected with the eraser
-                // if(firstPointRemoved != null && arc.size() > 0)
-                // {
-                //     arc.add(arc.size(),PointFMath.LineSegmentCircleIntersection(arc.get(arc.size()-1), firstPointRemoved, eraser, eraserThickness).enter);
-                // }
             }
                 //Finally add all arcs in newArcs
             mDrawing.addAll(newArcs);
