@@ -606,26 +606,25 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         if (mDrawing != null && mDrawing.size() > 0) {
             for (ArrayList<PointF> arc : mDrawing)
             {
-                    //Remove points from the beggining
-                PointF lastPointRemovedFromBeginning = null;
-                while(arc.size() > 0 && PointFMath.distance(arc.get(0),eraser) <= eraserThickness)
-                    lastPointRemoved = arc.remove(0);
-
-                    //Remove points from the end
-                PointF lastPointRemovedFromEnd = null;
-                while(arc.size() > 0 && PointFMath.distance(arc.get(arc.size()-1),eraser) <= eraserThickness)
-                    lastPointRemovedFromEnd = arc.remove(arc.size()-1);
-                
-                    //Remove points from the middle of the arc splitting the arc up and saving them in newArcs
                 Iterator<PointF> iter = arc.iterator();
                 boolean lastPointWasUnderEraser = false;
                 boolean pointsWereUnderEraser = false;
+                PointF firstPointRemoved = null;
+                PointF lastPointRemoved = null;
                 while (iter.hasNext())
                 {
                     PointF point = iter.next();
                     if(PointFMath.distance(point,eraser) <= eraserThickness)
                     {
+                        if(!pointsWereUnderEraser) firstPointRemoved = point;
+                        lastPointRemoved = point;
                         iter.remove();
+                            //Add a point to the end of the last new arc where it intersects the eraser
+                        if(pointsWereUnderEraser && !lastPointWasUnderEraser)
+                        {
+                            ArrayList<PointF> lastNewArc = newArcs.get(newArcs.size()-1);
+                            lastNewArc.add(lastNewArc.size(),PointFMath.pointOnLineCircleIntersection(lastNewArc.get(lastNewArc.size()-1) , point, eraser, eraserThickness));
+                        }
                         lastPointWasUnderEraser = true;
                         pointsWereUnderEraser = true;
                     }
@@ -634,6 +633,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                         if(lastPointWasUnderEraser)
                         {
                             newArcs.add(new ArrayList<PointF>());
+                                //Add a point to the beginning of the new arc where it intersects the eraser
+                            newArcs.get(newArcs.size()-1).add(0,PointFMath.pointOnLineCircleIntersection(point, lastPointRemoved, eraser, eraserThickness));
                         }
                         if(pointsWereUnderEraser)
                         {
@@ -643,14 +644,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                         lastPointWasUnderEraser = false;
                     }
                 }
-                    //Reinsert points into arc where it intersects the eraser (should be done eralier but these points must be ignored in the above collision detection...)
-                if(lastPointRemovedFromBeginning != null)
+                    //If arc still contains some points add a point where it first intersected with the eraser
+                if(firstPointRemoved != null && arc.size() > 0)
                 {
-                    arc.add(0,PointFMath.pointOnLineCircleIntersection(arc.get(0), lastPointRemovedFromBeginning, eraser, eraserThickness));
-                }
-                if(lastPointRemovedFromEnd != null)
-                {
-                    arc.add(arc.size(),PointFMath.pointOnLineCircleIntersection(arc.get(arc.size()-1), lastPointRemovedFromEnd, eraser, eraserThickness));
+                    arc.add(arc.size(),PointFMath.pointOnLineCircleIntersection(arc.get(arc.size()-1), firstPointRemoved, eraser, eraserThickness));
                 }
             }
             
