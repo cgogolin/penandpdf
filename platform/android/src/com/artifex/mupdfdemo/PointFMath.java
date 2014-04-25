@@ -2,13 +2,31 @@ package com.artifex.mupdfdemo;
 
 import android.graphics.PointF;
 
-class PointFMath 
+class LineSegmentCircleIntersectionResult
+{
+    final public boolean inside;
+    final public boolean tangent;
+    final public boolean intersects;
+    final public PointF enter;
+    final public PointF exit;
+    
+    LineSegmentCircleIntersectionResult(boolean inside, boolean tangent, boolean intersects, PointF enter, PointF exit) {
+        this.inside = inside;
+        this.tangent = tangent;
+        this.intersects = intersects;
+        this.enter=enter;
+        this.exit=exit;
+    }
+}
+
+
+public class PointFMath 
 {
     public static float distance(PointF A, PointF B) {
         return new PointF(A.x - B.x, A.y - B.y).length();
     }
-
-    public static PointF pointOnLineCircleIntersection(PointF A, PointF B, PointF C, float radius) {
+    
+    public static LineSegmentCircleIntersectionResult LineSegmentCircleIntersection(PointF A, PointF B, PointF C, float radius) {
             //Adapted from http://keith-hair.net/blog/2008/08/05/line-to-circle-intersection-data/
         boolean inside = false;
         boolean tangent = false;
@@ -47,7 +65,7 @@ class PointFMath
                 }			
             }
 	}
-	return enter;
+	return new LineSegmentCircleIntersectionResult(inside, tangent, intersects, enter, exit);
     }
 
     public static PointF interpolate(PointF A, PointF B, float f) {

@@ -607,48 +607,104 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             for (ArrayList<PointF> arc : mDrawing)
             {
                 Iterator<PointF> iter = arc.iterator();
-                boolean lastPointWasUnderEraser = false;
-                boolean pointsWereUnderEraser = false;
-                PointF firstPointRemoved = null;
-                PointF lastPointRemoved = null;
+                PointF pointToAddToArc = null;
+                PointF lastPoint = null;
+                boolean newArcHasBeenCreated = false;
+                if(iter.hasNext()) lastPoint = iter.next();
+                    //Remove the first point if under eraser
+                if(PointFMath.distance(lastPoint,eraser) <= eraserThickness) iter.remove();
                 while (iter.hasNext())
                 {
                     PointF point = iter.next();
-                    if(PointFMath.distance(point,eraser) <= eraserThickness)
+                    LineSegmentCircleIntersectionResult result = PointFMath.LineSegmentCircleIntersection(lastPoint , point, eraser, eraserThickness);
+                        //Act according to how the segment overlaps with the eraser
+                    if(result.intersects)
                     {
-                        if(!pointsWereUnderEraser) firstPointRemoved = point;
-                        lastPointRemoved = point;
-                        iter.remove();
-                            //Add a point to the end of the last new arc where it intersects the eraser
-                        if(pointsWereUnderEraser && !lastPointWasUnderEraser)
+                            //If the segment enters...
+                        if(result.enter != null)
                         {
-                            ArrayList<PointF> lastNewArc = newArcs.get(newArcs.size()-1);
-                            lastNewArc.add(lastNewArc.size(),PointFMath.pointOnLineCircleIntersection(lastNewArc.get(lastNewArc.size()-1) , point, eraser, eraserThickness));
-                        }
-                        lastPointWasUnderEraser = true;
-                        pointsWereUnderEraser = true;
-                    }
-                    else
-                    {
-                        if(lastPointWasUnderEraser)
-                        {
-                            newArcs.add(new ArrayList<PointF>());
-                                //Add a point to the beginning of the new arc where it intersects the eraser
-                            newArcs.get(newArcs.size()-1).add(0,PointFMath.pointOnLineCircleIntersection(point, lastPointRemoved, eraser, eraserThickness));
-                        }
-                        if(pointsWereUnderEraser)
-                        {
-                            newArcs.get(newArcs.size()-1).add(point);
+                                //...remove the point from the arc...
                             iter.remove();
+                                //...and either add the entry point to the current new arc or save it for later to add it to the end of the current arc
+                            if(newArcHasBeenCreated)
+                                newArcs.get(newArcs.size()-1).add(newArcs.get(newArcs.size()-1).size(),result.enter);
+                            else
+                                pointToAddToArc = result.enter;
                         }
-                        lastPointWasUnderEraser = false;
+                        
+                            //If the segment exits start a new arc with the exit point
+                        if(result.exit != null) {
+                            newArcHasBeenCreated = true;
+                            newArcs.add(new ArrayList<PointF>());
+                            newArcs.get(newArcs.size()-1).add(0,result.exit);
+                        }
                     }
+                    else if(result.inside)
+                    {
+                            //Remove the point from the arc
+                        iter.remove();
+                    }
+                    else if(newArcHasBeenCreated)
+                    {
+                            //If we have already a new arc transfer the points
+                        newArcs.get(newArcs.size()-1).add(point);
+                        iter.remove();
+                    }
+                    lastPoint = point;
                 }
-                    //If arc still contains some points add a point where it first intersected with the eraser
-                if(firstPointRemoved != null && arc.size() > 0)
+                    //If arc still contains points add the first entry point at the end
+                if(arc.size() > 0 && pointToAddToArc != null)
                 {
-                    arc.add(arc.size(),PointFMath.pointOnLineCircleIntersection(arc.get(arc.size()-1), firstPointRemoved, eraser, eraserThickness));
+                    arc.add(arc.size(),pointToAddToArc);
                 }
+
+
+                // boolean lastPointWasUnderEraser = false;
+                // boolean pointsWereUnderEraser = false;
+                // PointF firstPointRemoved = null;
+                // PointF lastPointRemoved = null;
+                // PointF lastPoint = null;
+                // while (iter.hasNext())
+                // {
+                //     PointF point = iter.next();
+                    
+                    
+                //     if(PointFMath.distance(point,eraser) <= eraserThickness)
+                //     {
+                //         if(!pointsWereUnderEraser) firstPointRemoved = point;
+                //         lastPointRemoved = point;
+                //         iter.remove();
+                //             //Add a point to the end of the last new arc where it intersects the eraser
+                //         if(pointsWereUnderEraser && !lastPointWasUnderEraser)
+                //         {
+                //             ArrayList<PointF> lastNewArc = newArcs.get(newArcs.size()-1);
+                //             lastNewArc.add(lastNewArc.size(),PointFMath.LineSegmentCircleIntersection(lastNewArc.get(lastNewArc.size()-1) , point, eraser, eraserThickness).enter);
+                //         }
+                //         lastPointWasUnderEraser = true;
+                //         pointsWereUnderEraser = true;
+                //     }
+                //     else
+                //     {
+                //         if(lastPointWasUnderEraser)
+                //         {
+                //             newArcs.add(new ArrayList<PointF>());
+                //                 //Add a point to the beginning of the new arc where it intersects the eraser
+                //             newArcs.get(newArcs.size()-1).add(0,PointFMath.LineSegmentCircleIntersection(point, lastPointRemoved, eraser, eraserThickness).enter);
+                //         }
+                //         if(pointsWereUnderEraser)
+                //         {
+                //             newArcs.get(newArcs.size()-1).add(point);
+                //             iter.remove();
+                //         }
+                //         lastPointWasUnderEraser = false;
+                //     }
+                //     lastPoint = point;
+                // }
+                //     //If arc still contains some points add a point where it first intersected with the eraser
+                // if(firstPointRemoved != null && arc.size() > 0)
+                // {
+                //     arc.add(arc.size(),PointFMath.LineSegmentCircleIntersection(arc.get(arc.size()-1), firstPointRemoved, eraser, eraserThickness).enter);
+                // }
             }
             
             

@@ -64,7 +64,6 @@ class ThreadPerTaskExecutor implements Executor {
 public class MuPDFActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener, FilePicker.FilePickerSupport
 {       
     enum ActionBarMode {Main, Annot, Edit, Search, Selection, Hidden};
-//    enum AcceptMode {Highlight, Underline, StrikeOut, Ink, CopyText};
     
     private SearchView searchView = null;
     private String latestTextInSearchBox = "";
@@ -86,7 +85,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private MuPDFReaderView mDocView;
     private EditText     mPasswordView;
     private ActionBarMode   mActionBarMode = ActionBarMode.Main;
-//    private AcceptMode   mAcceptMode = AcceptMode.Highlight;
     private SearchTask   mSearchTask;
     private AlertDialog.Builder mAlertBuilder;
     private boolean    mLinkHighlight = false;
@@ -269,7 +267,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             {
                     //We don't want to do this at the moment because we can't save what was selected ar drawn so easily 
                     // mActionBarMode = ActionBarMode.valueOf(savedInstanceState.getString("ActionBarMode", ActionBarMode.Main.toString ()));
-                    // // mAcceptMode = AcceptMode.valueOf(savedInstanceState.getString("AcceptMode", AcceptMode.Highlight.toString ()));
                 mPageBeforeInternalLinkHit = savedInstanceState.getInt("PageBeforeInternalLinkHit", mPageBeforeInternalLinkHit);
                 mNormalizedScaleBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedScaleBeforeInternalLinkHit", mNormalizedScaleBeforeInternalLinkHit);
                 mNormalizedXScrollBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedXScrollBeforeInternalLinkHit", mNormalizedXScrollBeforeInternalLinkHit);
@@ -662,11 +659,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                         mCanUndo = false;
                         mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         if (pageView != null) {
-                            // switch (mAcceptMode) {
-                            //     case Ink:
                             pageView.saveDraw();
-                            //         break;
-                            // }
                         }
                         break;
                     case Edit:
@@ -1082,7 +1075,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         super.onSaveInstanceState(outState);
         
         outState.putString("ActionBarMode", mActionBarMode.toString());
-//        outState.putString("AcceptMode", mAcceptMode.toString());
         outState.putInt("PageBeforeInternalLinkHit", mPageBeforeInternalLinkHit);
         outState.putFloat("NormalizedScaleBeforeInternalLinkHit", mNormalizedScaleBeforeInternalLinkHit);
         outState.putFloat("NormalizedXScrollBeforeInternalLinkHit", mNormalizedXScrollBeforeInternalLinkHit);
