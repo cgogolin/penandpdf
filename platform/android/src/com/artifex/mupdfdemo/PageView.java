@@ -620,11 +620,12 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                         //Act according to how the segment overlaps with the eraser
                     if(result.intersects)
                     {
+                            //...remove the point from the arc...
+                        iter.remove();
+                        
                             //If the segment enters...
                         if(result.enter != null)
                         {
-                                //...remove the point from the arc...
-                            iter.remove();
                                 //...and either add the entry point to the current new arc or save it for later to add it to the end of the current arc
                             if(newArcHasBeenCreated)
                                 newArcs.get(newArcs.size()-1).add(newArcs.get(newArcs.size()-1).size(),result.enter);
@@ -636,7 +637,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                         if(result.exit != null) {
                             newArcHasBeenCreated = true;
                             newArcs.add(new ArrayList<PointF>());
-                            newArcs.get(newArcs.size()-1).add(0,result.exit);
+                            newArcs.get(newArcs.size()-1).add(result.exit);
+                            newArcs.get(newArcs.size()-1).add(point);
                         }
                     }
                     else if(result.inside)
@@ -647,8 +649,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                     else if(newArcHasBeenCreated)
                     {
                             //If we have already a new arc transfer the points
-                        newArcs.get(newArcs.size()-1).add(point);
                         iter.remove();
+                        newArcs.get(newArcs.size()-1).add(point);
                     }
                     lastPoint = point;
                 }
@@ -706,9 +708,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 //     arc.add(arc.size(),PointFMath.LineSegmentCircleIntersection(arc.get(arc.size()-1), firstPointRemoved, eraser, eraserThickness).enter);
                 // }
             }
-            
-            
-                //Add all arcs in newArcs
+                //Finally add all arcs in newArcs
             mDrawing.addAll(newArcs);
                 //...and remove all arcs with less then two points...
             Iterator<ArrayList<PointF>> iter = mDrawing.iterator();
