@@ -259,8 +259,10 @@ abstract public class MuPDFReaderView extends ReaderView {
                 switch(event.getAction())
                 {
                     case MotionEvent.ACTION_DOWN:
+                        pageView.startErase(x, y);
+                        break;
                     case MotionEvent.ACTION_MOVE:
-                        pageView.eraseAt(x, y);
+                        pageView.continueErase(x, y);
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:

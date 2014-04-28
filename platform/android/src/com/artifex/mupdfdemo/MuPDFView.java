@@ -25,8 +25,9 @@ public interface MuPDFView {
     public void startDraw(float x, float y);
     public void continueDraw(float x, float y);
     public void finishDraw();
-    public void eraseAt(float x, float y);
-    public void finishErase(float x, float y);    
+    public void startErase(float x, float y);
+    public void continueErase(float x, float y);
+    public void finishErase(float x, float y);
     public void undoDraw();
     public void cancelDraw();
     public int getDrawingSize();

@@ -201,10 +201,14 @@ public class MuPDFReflowView extends WebView implements MuPDFView {
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPref, String key)
         {}
-
-    public void eraseAt(final float x, final float y)
+    
+    public void startErase(float x, float y)
         {}
-
-    public void finishErase(final float x, final float y)
+    
+    public void continueErase(float x, float y)
         {}
+    
+    public void finishErase(float x, float y)
+        {}
+    
 }

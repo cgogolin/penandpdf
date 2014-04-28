@@ -2,6 +2,9 @@ package com.artifex.mupdfdemo;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Deque;
+//import java.util.Collections;
+import java.util.LinkedList;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -151,6 +154,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private       TextWord  mText[][];
     private       RectF     mItemSelectBox;
     protected     ArrayList<ArrayList<PointF>> mDrawing;
+    protected     Deque<ArrayList<ArrayList<PointF>>> mDrawingHistory = new LinkedList<ArrayList<ArrayList<PointF>>>();
     private       View      mOverlayView;
     private       boolean   mIsBlank;
     private       boolean   mHighlightLinks;
@@ -637,7 +641,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         }
     }
 
-    public void startDraw(final float x, final float y) {        
+    public void startDraw(final float x, final float y) {
+        savemDrawingToHistory();
+            
         final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
         final float docRelX = (x - getLeft())/scale;
         final float docRelY = (y - getTop())/scale;
@@ -679,8 +685,14 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
         }
     }
+
+    public void startErase(final float x, final float y) {
+        savemDrawingToHistory();
+        
+        continueErase(x,y);
+    }
     
-    public void eraseAt(final float x, final float y) {
+    public void continueErase(final float x, final float y) {
         final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
         final float docRelX = (x - getLeft())/scale;
         final float docRelY = (y - getTop())/scale;
@@ -757,23 +769,28 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void finishErase(final float x, final float y) {
-        eraseAt(x,y);
+        continueErase(x,y);
         eraser = null;
     }
 
     public void undoDraw() {
-        if (mDrawing == null || mDrawing.size() == 0) return;
-        mDrawing.remove(mDrawing.size()-1);
+        // if (mDrawing == null || mDrawing.size() == 0) return;
+        // mDrawing.remove(mDrawing.size()-1);
+        if(mDrawingHistory.size()>0)
+            mDrawing = mDrawingHistory.pop();
+        else
+            mDrawing = null;
         mOverlayView.invalidate();
     }
     
     public void cancelDraw() {
         mDrawing = null;
+        mDrawingHistory.clear();
         mOverlayView.invalidate();
     }
     
     public int getDrawingSize() {
-        return mDrawing.size();
+        return mDrawing == null ? 0 : mDrawing.size();
     }
     
     protected PointF[][] getDraw() {
@@ -1012,4 +1029,17 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             //Find out whether or not to use smart text selection
         useSmartTextSelection = sharedPref.getBoolean(SettingsActivity.PREF_SMART_TEXT_SELECTION, true);
     }
+
+    private void savemDrawingToHistory(){
+        if(mDrawing != null)
+        {
+            ArrayList<ArrayList<PointF>> mDrawingCopy = new ArrayList<ArrayList<PointF>>(mDrawing.size());
+            for(int i = 0; i < mDrawing.size(); i++)
+            {
+                mDrawingCopy.add(new ArrayList<PointF>(mDrawing.get(i)));
+            }
+            mDrawingHistory.push(mDrawingCopy);
+        }
+    }
+    
 }

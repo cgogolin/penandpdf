@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import android.content.SharedPreferences;
 import java.io.File;
 
-public class RecentFilesList extends LinkedList<String> implements List<String> { //Probably not the mode appropriate list type...
+public class RecentFilesList extends LinkedList<String> implements List<String> { //Probably not the most appropriate list type...
 
     static final int MAX_RECENT_FILES=20;
 
