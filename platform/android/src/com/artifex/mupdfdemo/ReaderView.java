@@ -112,10 +112,14 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     }
 
     public void setDisplayedViewIndex(int i) {
+        setDisplayedViewIndex(i, true);
+    }
+    
+    public void setDisplayedViewIndex(int i, boolean countsAsNewCurrent) {
         if (0 <= i && i < mAdapter.getCount()) {
             mNewCurrent = i;
             mResetLayout = true;
-            mHasNewCurrent = true;
+            mHasNewCurrent = countsAsNewCurrent;
             requestLayout();
         }
     }
@@ -824,10 +828,10 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     }
 
     @Override
-	public void setAdapter(Adapter adapter) {
+        public void setAdapter(Adapter adapter) {
         mAdapter = adapter;
-        mChildViews.clear();
-        removeAllViewsInLayout();
+//        mChildViews.clear(); //This AdapterView should only clear its children if notifyDataSetChanged() is called on its adapter!
+//        removeAllViewsInLayout();
         requestLayout();
     }
 
@@ -1055,5 +1059,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
         mUseStylus = sharedPref.getBoolean(SettingsActivity.PREF_USE_STYLUS, false);
         mFitWidth = sharedPref.getBoolean(SettingsActivity.PREF_FIT_WIDTH, false);
-    }}
+    }
+}
 

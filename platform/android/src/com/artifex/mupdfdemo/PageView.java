@@ -242,7 +242,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     public void releaseResources() {
         reinit();
-
         if (mBusyIndicator != null) {
             removeView(mBusyIndicator);
             mBusyIndicator = null;

@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -16,10 +18,12 @@ import android.preference.PreferenceManager;
 import android.widget.Toast;
 import android.graphics.RectF;
 
+import android.util.Log;
+
 abstract public class MuPDFReaderView extends ReaderView {
     enum Mode {Viewing, Selecting, Drawing, Erasing}
     private final Context mContext;
-    private boolean mLinksEnabled = false;
+    private boolean mLinksEnabled = true;
     private Mode mMode = Mode.Viewing;
     private boolean tapDisabled = false;
     private int tapPageMargin;
@@ -139,16 +143,12 @@ abstract public class MuPDFReaderView extends ReaderView {
                 else if(item == Hit.Nothing)
                 {
                     if (e.getX() > super.getWidth() - tapPageMargin) 
-//                        super.smartMoveForwards();
                         onBottomRightMargin();
                     else if (e.getX() < tapPageMargin) 
-//                        super.smartMoveBackwards();
                         onTapTopLeftMargin();
                     else if (e.getY() > super.getHeight() - tapPageMargin) 
-//                        super.smartMoveForwards();
                         onBottomRightMargin();
                     else if (e.getY() < tapPageMargin) 
-//                        super.smartMoveBackwards();
                         onTapTopLeftMargin();
                     else
                         onTapMainDocArea();
@@ -254,7 +254,7 @@ abstract public class MuPDFReaderView extends ReaderView {
                         break;
                 }
             }
-            else if(mMode == Mode.Erasing) //This breaks the undo functionality!!!
+            else if(mMode == Mode.Erasing)
             {
                 switch(event.getAction())
                 {
@@ -270,7 +270,6 @@ abstract public class MuPDFReaderView extends ReaderView {
                         break;
                 }
             }
-            if (mUseStylus) return true;
         }
                 
         if ((event.getAction() & event.getActionMasked()) == MotionEvent.ACTION_DOWN)
@@ -388,5 +387,31 @@ abstract public class MuPDFReaderView extends ReaderView {
     @Override
     protected void onScaleChild(View v, Float scale) {
         ((MuPDFView) v).setScale(scale);
+    }
+
+
+    @Override
+    public Parcelable onSaveInstanceState() {
+        Log.v("MuPDFReaderView", "onSaveInstanceState()");
+        
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("superInstanceState", super.onSaveInstanceState());
+            //Save
+        bundle.putString("mMode", mMode.toString());
+
+        return bundle;
+    }
+    
+    @Override
+    public void onRestoreInstanceState(Parcelable state) {
+//        Log.v("MuPDFReaderView", "onRestoreInstanceState()");      
+        if (state instanceof Bundle) {
+            Bundle bundle = (Bundle) state;
+                //Load 
+            mMode = Mode.valueOf(bundle.getString("mMode"));
+
+            state = bundle.getParcelable("superInstanceState");
+        }
+        super.onRestoreInstanceState(state);
     }
 }

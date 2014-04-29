@@ -19,6 +19,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore.MediaColumns;
 import android.provider.MediaStore;
@@ -71,6 +72,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private ShareActionProvider mShareActionProvider = null;
     private boolean mNotSaveOnDestroyThisTime = false;
     private boolean mNotSaveOnPauseThisTime = false;
+    private boolean mDocViewNeedsNewAdapter = false;
     private int mPageBeforeInternalLinkHit = -1;
     private float mNormalizedScaleBeforeInternalLinkHit = 1.0f;
     private float mNormalizedXScrollBeforeInternalLinkHit = 0;
@@ -83,6 +85,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private final int    SAVEAS_REQUEST=3;
     private MuPDFCore    core;
     private MuPDFReaderView mDocView;
+    Parcelable mDocViewParcelable;
     private EditText     mPasswordView;
     private ActionBarMode   mActionBarMode = ActionBarMode.Main;
     private SearchTask   mSearchTask;
@@ -265,12 +268,12 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 //Get various data from the bundle
             if(savedInstanceState != null)
             {
-                    //We don't want to do this at the moment because we can't save what was selected ar drawn so easily 
-                    // mActionBarMode = ActionBarMode.valueOf(savedInstanceState.getString("ActionBarMode", ActionBarMode.Main.toString ()));
+                mActionBarMode = ActionBarMode.valueOf(savedInstanceState.getString("ActionBarMode", ActionBarMode.Main.toString ()));
                 mPageBeforeInternalLinkHit = savedInstanceState.getInt("PageBeforeInternalLinkHit", mPageBeforeInternalLinkHit);
                 mNormalizedScaleBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedScaleBeforeInternalLinkHit", mNormalizedScaleBeforeInternalLinkHit);
                 mNormalizedXScrollBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedXScrollBeforeInternalLinkHit", mNormalizedXScrollBeforeInternalLinkHit);
                 mNormalizedYScrollBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedYScrollBeforeInternalLinkHit", mNormalizedYScrollBeforeInternalLinkHit);
+                mDocViewParcelable = savedInstanceState.getParcelable("mDocView");
             }
             
                 //Initialize the alert builder
@@ -278,7 +281,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             
                 //Get the core saved with onRetainNonConfigurationInstance()
             if (core == null) {
-            core = (MuPDFCore)getLastNonConfigurationInstance();
+                core = (MuPDFCore)getLastNonConfigurationInstance();
+                if(core != null) mDocViewNeedsNewAdapter = true;
             }
         }
 
@@ -295,15 +299,19 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             super.onResume();
 
                 //Reset the action bar mode
-            mActionBarMode = ActionBarMode.Main;
+//            mActionBarMode = ActionBarMode.Main;
             
             mNotSaveOnDestroyThisTime = false;
             mNotSaveOnPauseThisTime = false;
             
-                //If core was not restored during onCreat()
-                //or is not still present because the app was
+                //If the core was not restored during onCreat() 
+                //or if it is not still present because the app was
                 //only paused and save on pause is off set it up now
-            if (core == null) setupCore();
+            if (core == null) {
+                mDocViewNeedsNewAdapter = true;
+                setupCore();
+            }
+            
             if (core != null) //OK, so apparently we have a valid pdf open
             {
                 SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
@@ -312,10 +320,17 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     mDocView.clearSearchResults();
                     mDocView.onSharedPreferenceChanged(prefs,"");
                 }
+                
+                    //Start receiving alerts
                 createAlertWaiter();
                 core.startAlerts();
+                
+                    //Make the core read the current preferences
                 core.onSharedPreferenceChanged(prefs,"");
+                    //Setup the UI
                 setupUI();
+                    //Setup the mSearchTask
+                setupSearchTask();
             }
             else //Something went wrong
             {
@@ -329,6 +344,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                 });
                 alert.show();
             }
+            invalidateOptionsMenu();
         }
 
 
@@ -337,18 +353,18 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             super.onPause();
             
             if (mSearchTask != null) mSearchTask.stop();
-            
-            if(mDocView != null)
-            {
-                mDocView.applyToChildren(new ReaderView.ViewMapper() {
-                        void applyToView(View view) {
-                            ((MuPDFView)view).releaseBitmaps();
-                        }
-                    });
-            }
+
+                //Currently this is irreversible so we don't release the bitmaps!!!
+            // if(mDocView != null)
+            // {
+            //     mDocView.applyToChildren(new ReaderView.ViewMapper() {
+            //             void applyToView(View view) {
+            //                 ((MuPDFView)view).releaseBitmaps();
+            //             }
+            //         });
+            // }
             
             if (core != null && mDocView != null) {
-
                 String path = core.getPath();
                 SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
                 SharedPreferences.Editor edit = prefs.edit();
@@ -367,7 +383,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 else
                     saveViewport(edit, core.getFileName());
             }
-            
+
+                //Stop receiving alerts
             if (core != null)
             {
                 destroyAlertWaiter();
@@ -746,7 +763,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     }
 
 
-    public void setupCore() {
+    public void setupCore() {//Called during onResume()
         Intent intent = getIntent();
         if (Intent.ACTION_VIEW.equals(intent.getAction()))
         {
@@ -821,101 +838,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             core = null;
         }
     }
-    
-    
-    public void setupUI() {
-        if (core == null) return;
-            
-        mDocView = new MuPDFReaderView(this) {
-                @Override
-                protected void onMoveToChild(int pageNumber) {
-                    setTitle();
-                }
 
-                @Override
-                protected void onTapMainDocArea() {
-                    if (mActionBarMode == ActionBarMode.Edit) 
-                    {
-                        invalidateOptionsMenu();
-                        mActionBarMode = ActionBarMode.Main;
-                    }
-                }
-                
-                @Override
-                protected void onTapTopLeftMargin() {
-                    if (getActionBar().isShowing())
-                        smartMoveBackwards();
-                    else
-                        mDocView.setDisplayedViewIndex(getDisplayedViewIndex()-1);
-                };
-
-                @Override
-                protected void onBottomRightMargin() {
-                    if (getActionBar().isShowing())
-                        smartMoveForwards();
-                    else
-                        mDocView.setDisplayedViewIndex(getDisplayedViewIndex()+1);
-                };
-                
-                @Override
-                protected void onDocMotion() {
-
-                }
-
-                @Override
-                protected void onHit(Hit item) {
-                    switch(item){
-                        case Annotation:
-                            mActionBarMode = ActionBarMode.Edit;
-                            invalidateOptionsMenu();
-                            break;
-                        case Nothing:
-                            if(mActionBarMode != ActionBarMode.Search)
-                            {
-                                mActionBarMode = ActionBarMode.Main;
-                                invalidateOptionsMenu();
-                            }
-                            break;
-                        case LinkInternal:
-                            if(mDocView.linksEnabled()) {
-                                mPageBeforeInternalLinkHit = getDisplayedViewIndex();
-                                mNormalizedScaleBeforeInternalLinkHit = getNormalizedScale();
-                                mNormalizedXScrollBeforeInternalLinkHit = getNormalizedXScroll();
-                                mNormalizedYScrollBeforeInternalLinkHit = getNormalizedYScroll();
-                            }
-                            mActionBarMode = ActionBarMode.Main;
-                            invalidateOptionsMenu();
-                            break;
-                     }
-                }
-
-                // @Override
-                // protected void onSelectionStatusChanged() {
-                //     invalidateOptionsMenu();
-                // }
-
-                @Override
-                protected void onNumberOfStrokesChanged(int numberOfStrokes) {
-                    if (numberOfStrokes>0 && mCanUndo == false) 
-                    {
-                        mCanUndo = true;
-                        invalidateOptionsMenu();
-                    }
-                    else if(numberOfStrokes == 0 && mCanUndo == true)
-                    {
-                        mCanUndo = false;
-                        invalidateOptionsMenu();
-                    }
-                }
-                
-            };
-        
-        mDocView.setAdapter(new MuPDFPageAdapter(this, this, core));
-        
-            //Enable link highlighting by default
-        mDocView.setLinksEnabled(true);
-
-        mSearchTask = new SearchTask(this, core) {
+    public void setupSearchTask() { //Is called during onResume()
+            //If there is no search task create it
+        if(mSearchTask == null) mSearchTask = new SearchTask(this, core) {
                 @Override
                 protected void onTextFound(SearchTaskResult result) {
                     mDocView.addSearchResult(result);
@@ -938,20 +864,135 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     }
                 }
             };
+    }
+    
+    
+    
+    public void setupUI() { //Is called during onResume()
+            //If we don't even have a core there is nothing to do
+        if (core == null) return;            
+            //If the doc view is not present create it
+        if(mDocView == null)
+        {
+            mDocView = new MuPDFReaderView(this) {
+                    @Override
+                    protected void onMoveToChild(int pageNumber) {
+                        setTitle();
+                            //We deselect annotations on page changes so let the action bar act accordingly
+                        if(mActionBarMode == ActionBarMode.Edit)
+                        {
+                            mActionBarMode = ActionBarMode.Main;
+                            invalidateOptionsMenu();
+                        }
+                    }
+
+                    @Override
+                    protected void onTapMainDocArea() {
+                        if (mActionBarMode == ActionBarMode.Edit) 
+                        {
+                            invalidateOptionsMenu();
+                            mActionBarMode = ActionBarMode.Main;
+                        }
+                    }
+                
+                    @Override
+                    protected void onTapTopLeftMargin() {
+                        if (getActionBar().isShowing())
+                            smartMoveBackwards();
+                        else
+                            mDocView.setDisplayedViewIndex(getDisplayedViewIndex()-1);
+                    };
+
+                    @Override
+                    protected void onBottomRightMargin() {
+                        if (getActionBar().isShowing())
+                            smartMoveForwards();
+                        else
+                            mDocView.setDisplayedViewIndex(getDisplayedViewIndex()+1);
+                    };
+                
+                    @Override
+                    protected void onDocMotion() {
+
+                    }
+
+                    @Override
+                    protected void onHit(Hit item) {
+                        switch(item){
+                            case Annotation:
+                                mActionBarMode = ActionBarMode.Edit;
+                                invalidateOptionsMenu();
+                                break;
+                            case Nothing:
+                                if(mActionBarMode != ActionBarMode.Search)
+                                {
+                                    mActionBarMode = ActionBarMode.Main;
+                                    invalidateOptionsMenu();
+                                }
+                                break;
+                            case LinkInternal:
+                                if(mDocView.linksEnabled()) {
+                                    mPageBeforeInternalLinkHit = getDisplayedViewIndex();
+                                    mNormalizedScaleBeforeInternalLinkHit = getNormalizedScale();
+                                    mNormalizedXScrollBeforeInternalLinkHit = getNormalizedXScroll();
+                                    mNormalizedYScrollBeforeInternalLinkHit = getNormalizedYScroll();
+                                }
+                                mActionBarMode = ActionBarMode.Main;
+                                invalidateOptionsMenu();
+                                break;
+                        }
+                    }
+
+                        // @Override
+                        // protected void onSelectionStatusChanged() {
+                        //     invalidateOptionsMenu();
+                        // }
+
+                    @Override
+                    protected void onNumberOfStrokesChanged(int numberOfStrokes) {
+                        if (numberOfStrokes>0 && mCanUndo == false) 
+                        {
+                            mCanUndo = true;
+                            invalidateOptionsMenu();
+                        }
+                        else if(numberOfStrokes == 0 && mCanUndo == true)
+                        {
+                            mCanUndo = false;
+                            invalidateOptionsMenu();
+                        }
+                    }
+                
+                };
+                // Stick the mDocView into a relative layout and add it to the current layout
+            RelativeLayout layout = new RelativeLayout(this);
+            layout.addView(mDocView);
+            setContentView(layout);
+        }
+
+            //Ascociate the mDocView with the adapter if necessary
+            //Remark: This can happen because the core was destroyed during save().
+            //        In that case mDocView is still intact and setAdapter() should thus
+            //        not force it to reload its child views, wich might contain
+            //        unfinished annotations for example
+        if(mDocViewNeedsNewAdapter) {
+            mDocView.setAdapter(new MuPDFPageAdapter(this, this, core));
+            mDocViewNeedsNewAdapter = false;
+        }
         
-            // Reenstate last state if it was recorded
+            //Restore the state of mDocView from its saved state in case there is one
+        if(mDocViewParcelable != null) mDocView.onRestoreInstanceState(mDocViewParcelable);
+        mDocViewParcelable=null;
+    
+            // Reenstate last viewport if it was recorded
         String path = core.getPath(); //Can be null
         SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
         if(path != null)
             setViewport(prefs, path);
         else
             setViewport(prefs, core.getFileName());
+        
             //Set the action bar title
         setTitle();
-            // Stick the document view into a parent view
-        RelativeLayout layout = new RelativeLayout(this);
-        layout.addView(mDocView);
-        setContentView(layout);
     }
 
 
@@ -1012,7 +1053,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private boolean saveAs(Uri uri) {
         if (core == null) return false;
         
-            //Do not overwrite the current fiele during onPause()
+            //Do not overwrite the current file during onPause()
         mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; 
         onPause();
             //Save the viewport under the new name
@@ -1026,7 +1067,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         {
             core.onDestroy();
             core = null;
-                //Set the uri of this intent so that we load the new file during onResum()...
+                //Set the uri of this intent so that we load the new file during onResume()...
             getIntent().setData(uri);
                 //... and resume
             onResume();
@@ -1061,24 +1102,25 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         mDocView.setNormalizedScale(normalizedscale);
         mDocView.setNormalizedScroll(normalizedxscroll, normalizedyscroll);
     }
-    
-    public Object onRetainNonConfigurationInstance()
-	{
-            MuPDFCore mycore = core;
-            core = null;
-            return mycore;
-	}
 
+    @Override
+    public Object onRetainNonConfigurationInstance() { //Called if the app is destroyed for a configuration change
+        MuPDFCore mycore = core;
+        core = null;
+        return mycore;
+    }
+    
     
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(Bundle outState) { //Called when the app is destroyed by the system 
         super.onSaveInstanceState(outState);
         
         outState.putString("ActionBarMode", mActionBarMode.toString());
         outState.putInt("PageBeforeInternalLinkHit", mPageBeforeInternalLinkHit);
         outState.putFloat("NormalizedScaleBeforeInternalLinkHit", mNormalizedScaleBeforeInternalLinkHit);
         outState.putFloat("NormalizedXScrollBeforeInternalLinkHit", mNormalizedXScrollBeforeInternalLinkHit);
-        outState.putFloat("NormalizedYScrollBeforeInternalLinkHit", mNormalizedYScrollBeforeInternalLinkHit);   
+        outState.putFloat("NormalizedYScrollBeforeInternalLinkHit", mNormalizedYScrollBeforeInternalLinkHit);
+        if(mDocView != null) outState.putParcelable("mDocView", mDocView.onSaveInstanceState());
     }
 
     @Override
@@ -1096,11 +1138,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
     
     private void printDoc() {
-        // if (core.getFileName() == null)
-        // {
-        //     showInfo(getString(R.string.save_before_print));
-        //     return;
-        // }
         if (!core.fileFormat().startsWith("PDF")) {
             showInfo(getString(R.string.format_currently_not_supported));
             return;
@@ -1212,7 +1249,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     public void onClick(DialogInterface dialog, int which) {
                         if (which == AlertDialog.BUTTON_POSITIVE) {
                             mNotSaveOnDestroyThisTime = mNotSaveOnPauseThisTime = true; //No need to save twice
-//                            boolean success = core.save();
                             boolean success = save();
                             if(!success)
                                 showInfo(getString(R.string.error_saveing));

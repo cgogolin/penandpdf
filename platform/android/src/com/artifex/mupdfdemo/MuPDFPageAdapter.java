@@ -77,4 +77,10 @@ public class MuPDFPageAdapter extends BaseAdapter {
 		}
 		return pageView;
 	}
+    
+    @Override
+    public void notifyDataSetChanged() {
+        super.notifyDataSetChanged();
+            //Usually we should here notify the associated view to reload its data, but as we never need to call this function and hence do not even keep a reference to our view we just don't do anything
+    }
 }
