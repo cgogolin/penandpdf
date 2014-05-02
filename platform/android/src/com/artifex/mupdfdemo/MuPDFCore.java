@@ -173,6 +173,7 @@ public class MuPDFCore
     }
 
     public synchronized void onDestroy() {
+        stopAlerts();
         destroying();
         globals = 0;
     }
