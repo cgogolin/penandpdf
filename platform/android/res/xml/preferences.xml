@@ -9,9 +9,9 @@
 	  android:summary="@string/save_on_destroy_summ"
 	  android:defaultValue="true" />
       <CheckBoxPreference
-	  android:key="pref_save_on_pause"
-	  android:title="@string/save_on_pause"
-	  android:summary="@string/save_on_pause_summ"
+	  android:key="pref_save_on_stop"
+	  android:title="@string/save_on_stop"
+	  android:summary="@string/save_on_stop_summ"
 	  android:defaultValue="false" />
     </PreferenceCategory>
     <PreferenceCategory 

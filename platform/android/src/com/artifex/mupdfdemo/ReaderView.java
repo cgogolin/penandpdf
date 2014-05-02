@@ -49,9 +49,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     private boolean           mHasNewCurrent = false;
     private boolean           mNextScrollWithCenter = false;
     private boolean           mResetLayout;
-    private final SparseArray<View> mChildViews = new SparseArray<View>(3);
-        // Shadows the children of the adapter view
-        // but with more sensible indexing
+    private final SparseArray<View> mChildViews = new SparseArray<View>(3); // Shadows the children of the AdapterView but with more sensible indexing
     private final LinkedList<View> mViewCache = new LinkedList<View>();
     private boolean           mUserInteracting;  // Whether the user is interacting
     private boolean           mScaling;    // Whether the user is currently pinch zooming
@@ -359,7 +357,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     abstract protected void onMoveOffChild(int i);
     abstract protected void onSettle(View v);
     abstract protected void onUnsettle(View v);
-    abstract protected void onNotInUse(View v);
+//    abstract protected void onNotInUse(View v);
     abstract protected void onScaleChild(View v, Float scale);
 
     public View getView(int i) {
@@ -665,8 +663,10 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 int ai = childIndices[i];
                 if (ai < mCurrent - 1 || ai > mCurrent + 1) {
                     View v = mChildViews.get(ai);
-                    onNotInUse(v);
+                    ((MuPDFView) v).releaseResources();
+//                    onNotInUse(v);
                     mViewCache.add(v);
+//                    mAdapter.cache(v);
                     removeViewInLayout(v);
                     mChildViews.remove(ai);
                 }
@@ -681,8 +681,10 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             int numChildren = mChildViews.size();
             for (int i = 0; i < numChildren; i++) {
                 View v = mChildViews.valueAt(i);
-                onNotInUse(v);
+                ((MuPDFView) v).releaseResources();
+//                onNotInUse(v);
                 mViewCache.add(v);
+//                mAdapter.cache(v);
                 removeViewInLayout(v);
             }
             mChildViews.clear();
@@ -830,8 +832,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     @Override
         public void setAdapter(Adapter adapter) {
         mAdapter = adapter;
-//        mChildViews.clear(); //This AdapterView should only clear its children if notifyDataSetChanged() is called on its adapter!
-//        removeAllViewsInLayout();
+        mChildViews.clear(); //This AdapterView should only clear its children if notifyDataSetChanged() is called on its adapter!
+        removeAllViewsInLayout();
         requestLayout();
     }
 
@@ -851,6 +853,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         View v = mChildViews.get(i);
         if (v == null) {
             v = mAdapter.getView(i, getCached(), this);
+//            v = mAdapter.getView(i, this);
             addAndMeasureChild(i, v);
             onChildSetup(i, v);
             onScaleChild(v, mScale);

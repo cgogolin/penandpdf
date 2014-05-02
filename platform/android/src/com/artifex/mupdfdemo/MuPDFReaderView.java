@@ -379,10 +379,10 @@ abstract public class MuPDFReaderView extends ReaderView {
         ((MuPDFView) v).removeHq();
     }
 
-    @Override
-    protected void onNotInUse(View v) {
-        ((MuPDFView) v).releaseResources();
-    }
+    // @Override
+    // protected void onNotInUse(View v) {
+    //     ((MuPDFView) v).releaseResources();
+    // }
 
     @Override
     protected void onScaleChild(View v, Float scale) {
@@ -404,7 +404,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     
     @Override
     public void onRestoreInstanceState(Parcelable state) {
-//        Log.v("MuPDFReaderView", "onRestoreInstanceState()");      
+        Log.v("MuPDFReaderView", "onRestoreInstanceState()");      
         if (state instanceof Bundle) {
             Bundle bundle = (Bundle) state;
                 //Load 
