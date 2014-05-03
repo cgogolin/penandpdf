@@ -73,6 +73,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private boolean mNotSaveOnDestroyThisTime = false;
     private boolean mNotSaveOnStopThisTime = false;
     private boolean mSaveOnStop = false;
+    private boolean mSaveOnDestroy = false;
     private boolean mDocViewNeedsNewAdapter = false;
     private int mPageBeforeInternalLinkHit = -1;
     private float mNormalizedScaleBeforeInternalLinkHit = 1.0f;
@@ -305,28 +306,16 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             mNotSaveOnStopThisTime = false;
             
                 //If the core was not restored during onCreat() set it up now
-            if (core == null) {
-                mDocViewNeedsNewAdapter = true;
-                setupCore();
-            }
+            setupCore();
             
             if (core != null) //OK, so apparently we have a valid pdf open
-            {
-                SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-                if(mDocView!=null)
-                {
-                    mDocView.clearSearchResults();
-                    mDocView.onSharedPreferenceChanged(prefs,"");
-                }
+            {   
+                    //Setup the mDocView
+                setupmDocView();
+
+                    //Set the action bar title
+                setTitle();
                 
-                    //Start receiving alerts
-                createAlertWaiter();
-                core.startAlerts();
-                
-                    //Make the core read the current preferences
-                core.onSharedPreferenceChanged(prefs,"");
-                    //Setup the UI
-                setupUI();
                     //Setup the mSearchTask
                 setupSearchTask();
             }
@@ -358,36 +347,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             
             if (mSearchTask != null) mSearchTask.stop();
 
-                //Currently this is irreversible so we don't release the bitmaps!!!
-            if(mDocView != null)
-            {
-                mDocView.applyToChildren(new ReaderView.ViewMapper() {
-                        void applyToView(View view) {
-                            ((MuPDFView)view).releaseBitmaps();
-                        }
-                    });
-            }
-
-                //Save the viewport and the current file under recent files
-            if (core != null && mDocView != null) {
-                String path = core.getPath();
-                SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-                SharedPreferences.Editor edit = prefs.edit();
-                if(path != null)
-                {
-                        //Read the recent files list from preferences
-                    RecentFilesList recentFilesList = new RecentFilesList(prefs);                    
-                        //Add the current file
-                    recentFilesList.push(path);
-                        //Write the recent files list
-                    recentFilesList.write(edit);
-                }
-                    //Save the current viewport
-                if(path != null)
-                    saveViewport(edit, path);
-                else
-                    saveViewport(edit, core.getFileName());
-            }
+                //Save the Viewport and update the recent files list
+            saveViewportAndRecentFiles();
 
                 //Stop receiving alerts
             if (core != null)
@@ -400,14 +361,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             {
                 if(!mNotSaveOnStopThisTime && core.hasChanges() && core.getFileName() != null && mSaveOnStop)
                 {
-                    boolean success = save();
                     if(!save())
                         showInfo(getString(R.string.error_saveing));
-                    // else
-                    // {
-                    //     core.onDestroy();  //Destroy only if we have saved
-                    //     core = null;
-                    // }
                 }
             }
         }
@@ -419,10 +374,20 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             
             getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).unregisterOnSharedPreferenceChangeListener(this);
 
+            //     //Release bitmaps of the page views
+            // if(mDocView != null)
+            // {
+            //     mDocView.applyToChildren(new ReaderView.ViewMapper() {
+            //             void applyToView(View view) {
+            //                 ((MuPDFView)view).releaseBitmaps();
+            //             }
+            //         });
+            // }
+            
             if(core != null && !isChangingConfigurations())
             {
                 SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
-                if(!mNotSaveOnDestroyThisTime && core.hasChanges() && core.getFileName() != null && sharedPref.getBoolean(SettingsActivity.PREF_SAVE_ON_DESTROY, true))
+                if(!mNotSaveOnDestroyThisTime && core.hasChanges() && core.getFileName() != null && mSaveOnDestroy)
                 {
                     if(!save())
                         showInfo(getString(R.string.error_saveing));
@@ -537,11 +502,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
     @Override
     public boolean onClose() {//???
-        // Log.v("MuPDFActivity", "onClose()");
-        //     Make the ReaderView act via overridden onChildSetup method.
-        // if (mSearchTask != null) mSearchTask.stop();
-        // mDocView.clearSearchResults();
-        // mDocView.resetupChildren();
         return false;
     }
 
@@ -716,6 +676,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                             if (which == AlertDialog.BUTTON_POSITIVE) {
                                 if(core != null)
                                 {
+                                    saveViewportAndRecentFiles();
                                     if(!save())
                                         showInfo(getString(R.string.error_saveing));
                                     else
@@ -766,81 +727,94 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
 
     public void setupCore() {//Called during onResume()
-        Intent intent = getIntent();
-        if (Intent.ACTION_VIEW.equals(intent.getAction()))
-        {
-            Uri uri = intent.getData();
-            String error = null;
+        if (core == null) {
+            mDocViewNeedsNewAdapter = true;
+            Intent intent = getIntent();
+            if (Intent.ACTION_VIEW.equals(intent.getAction()))
+            {
+                Uri uri = intent.getData();
+                String error = null;
             
-            if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
-            {
-                core = openFile(Uri.decode(uri.getEncodedPath()));
-            }
-            else if (uri.toString().startsWith("content://")) //Uri points to a content provider
-            {
-                byte buffer[] = null;
-                Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.DATA, MediaStore.MediaColumns.TITLE}, null, null, null); //This should be done asynchonously!
-                if (cursor != null && cursor.moveToFirst())
+                if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
                 {
-                    String displayName = null;
-                    String data = null;
-                    int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
-                    int dataIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
-                    int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
-                    if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
-                    if(displayName == null && displayNameIndex >= 0) displayName = Uri.parse(cursor.getString(titleIndex)).getLastPathSegment();
+                    core = openFile(Uri.decode(uri.getEncodedPath()));
+                }
+                else if (uri.toString().startsWith("content://")) //Uri points to a content provider
+                {
+                    byte buffer[] = null;
+                    Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.DATA, MediaStore.MediaColumns.TITLE}, null, null, null); //This should be done asynchonously!
+                    if (cursor != null && cursor.moveToFirst())
+                    {
+                        String displayName = null;
+                        String data = null;
+                        int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+                        int dataIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+                        int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+                        if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
+                        if(displayName == null && displayNameIndex >= 0) displayName = Uri.parse(cursor.getString(titleIndex)).getLastPathSegment();
                     
-                    // Bundle extras = intent.getExtras();
-                    // if (extras != null)
-                    //     for (String key : extras.keySet())
-                    //         showInfo(key+" = "+extras.get(key));
+                            // Bundle extras = intent.getExtras();
+                            // if (extras != null)
+                            //     for (String key : extras.keySet())
+                            //         showInfo(key+" = "+extras.get(key));
                     
-                    if(dataIndex >= 0) data = cursor.getString(dataIndex);//Can return null!
-                    try {
-                        InputStream is = getContentResolver().openInputStream(uri);
-                        if(is != null)
-                        {
-                            int len = is.available();
-                            buffer = new byte[len];
-                            is.read(buffer, 0, len);
-                            is.close();
+                        if(dataIndex >= 0) data = cursor.getString(dataIndex);//Can return null!
+                        try {
+                            InputStream is = getContentResolver().openInputStream(uri);
+                            if(is != null)
+                            {
+                                int len = is.available();
+                                buffer = new byte[len];
+                                is.read(buffer, 0, len);
+                                is.close();
+                            }
                         }
+                        catch (Exception e) {
+                            error = e.toString();
+                        }
+                        cursor.close();
+                        if(buffer != null) core = openBuffer(buffer,displayName);
                     }
-                    catch (Exception e) {
-                        error = e.toString();
-                    }
-                    cursor.close();
-                    if(buffer != null) core = openBuffer(buffer,displayName);
+                }
+                else
+                {
+                    error = getResources().getString(R.string.unable_to_interpret_uri)+" "+uri;
+                }
+                if (error != null) //There was an error
+                {
+                    AlertDialog alert = mAlertBuilder.create();
+                    alert.setTitle(R.string.cannot_open_document);
+                    alert.setMessage(getResources().getString(R.string.reason)+": "+error);
+                    alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            finish();
+                                        }
+                                    });
+                    alert.show();
+                    finish();
                 }
             }
-            else
-            {
-                error = getResources().getString(R.string.unable_to_interpret_uri)+" "+uri;
+            if (core != null && core.needsPassword()) {
+                requestPassword();
             }
-            if (error != null) //There was an error
+            if (core != null && core.countPages() == 0)
             {
-                AlertDialog alert = mAlertBuilder.create();
-                alert.setTitle(R.string.cannot_open_document);
-                alert.setMessage(getResources().getString(R.string.reason)+": "+error);
-                alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        finish();
-                                    }
-                                });
-                alert.show();
-                finish();
+                core = null;
             }
-        }
-        if (core != null && core.needsPassword()) {
-            requestPassword();
-        }
-        if (core != null && core.countPages() == 0)
-        {
-            core = null;
+            if (core != null) {
+                    //Start receiving alerts
+                createAlertWaiter();
+                core.startAlerts();
+                
+                    //Make the core read the current preferences
+                SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+                core.onSharedPreferenceChanged(prefs,"");
+            }    
         }
     }
-
+    
+        
     public void setupSearchTask() { //Is called during onResume()
             //If there is no search task create it
         if(mSearchTask == null) mSearchTask = new SearchTask(this, core) {
@@ -870,7 +844,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     
     
     
-    public void setupUI() { //Is called during onResume()
+    public void setupmDocView() { //Is called during onResume()
             //If we don't even have a core there is nothing to do
         if (core == null) return;            
             //If the doc view is not present create it
@@ -970,31 +944,32 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             layout.addView(mDocView);
             setContentView(layout);
         }
+        if(mDocView!=null)
+        {
+                //Clear the search results (not sure we need this)
+//            mDocView.clearSearchResults();
+            
+                //Restore the state of mDocView from its saved state in case there is one
+            if(mDocViewParcelable != null) mDocView.onRestoreInstanceState(mDocViewParcelable);
+            mDocViewParcelable=null;
+            
+                //Ascociate the mDocView with the adapter if necessary
+                //Remark: This can happen because the core was destroyed during save().
+                //        In that case mDocView is still intact and setAdapter() should thus
+                //        not force it to reload its child views, wich might contain
+                //        unfinished annotations for example
+            if(mDocViewNeedsNewAdapter) {
+                mDocView.setAdapter(new MuPDFPageAdapter(this, this, core));
+                mDocViewNeedsNewAdapter = false;
+            }
+            
+                //Reinstate last viewport if it was recorded
+            restoreVieport();
 
-            //Restore the state of mDocView from its saved state in case there is one
-        if(mDocViewParcelable != null) mDocView.onRestoreInstanceState(mDocViewParcelable);
-        mDocViewParcelable=null;
-        
-            //Ascociate the mDocView with the adapter if necessary
-            //Remark: This can happen because the core was destroyed during save().
-            //        In that case mDocView is still intact and setAdapter() should thus
-            //        not force it to reload its child views, wich might contain
-            //        unfinished annotations for example
-        if(mDocViewNeedsNewAdapter) {
-            mDocView.setAdapter(new MuPDFPageAdapter(this, this, core));
-            mDocViewNeedsNewAdapter = false;
+            //     //Make the mDocView read the prefernces 
+            // SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);   
+            // mDocView.onSharedPreferenceChanged(prefs,"");
         }
-    
-            // Reenstate last viewport if it was recorded
-        String path = core.getPath(); //Can be null
-        SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-        if(path != null)
-            setViewport(prefs, path);
-        else
-            setViewport(prefs, core.getFileName());
-        
-            //Set the action bar title
-        setTitle();
     }
 
 
@@ -1104,13 +1079,50 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         setViewport(prefs.getInt("page"+path, 0),prefs.getFloat("normalizedscale"+path, 0.0f),prefs.getFloat("normalizedxscroll"+path, 0.0f), prefs.getFloat("normalizedyscroll"+path, 0.0f));
     }
 
+    
     private void setViewport(int page, float normalizedscale, float normalizedxscroll, float normalizedyscroll) {
         mDocView.setDisplayedViewIndex(page);
         mDocView.setNormalizedScale(normalizedscale);
         mDocView.setNormalizedScroll(normalizedxscroll, normalizedyscroll);
     }
 
-    @Override
+
+    private void saveViewportAndRecentFiles() {
+        if (core != null && mDocView != null) {
+            String path = core.getPath();
+            SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+            SharedPreferences.Editor edit = prefs.edit();
+            if(path != null)
+            {
+                    //Read the recent files list from preferences
+                RecentFilesList recentFilesList = new RecentFilesList(prefs);                    
+                    //Add the current file
+                recentFilesList.push(path);
+                    //Write the recent files list
+                recentFilesList.write(edit);
+            }
+                //Save the current viewport
+            if(path != null)
+                saveViewport(edit, path);
+            else
+                saveViewport(edit, core.getFileName());
+        }
+    }
+
+    
+    private void restoreVieport() {
+        if (core != null && mDocView != null) {
+            String path = core.getPath(); //Can be null
+            SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+            if(path != null)
+                setViewport(prefs, path);
+            else
+                setViewport(prefs, core.getFileName());
+        }
+    }
+
+    
+        @Override
     public Object onRetainNonConfigurationInstance() { //Called if the app is destroyed for a configuration change
         MuPDFCore mycore = core;
         core = null;
@@ -1139,6 +1151,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mSaveOnStop = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).getBoolean(SettingsActivity.PREF_SAVE_ON_STOP, true);
+        mSaveOnDestroy = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).getBoolean(SettingsActivity.PREF_SAVE_ON_DESTROY, true);
         
             //Also notify other classes and members of the preference change
         ReaderView.onSharedPreferenceChanged(sharedPref, key);
@@ -1259,11 +1272,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     public void onClick(DialogInterface dialog, int which) {
                         if (which == AlertDialog.BUTTON_POSITIVE) {
                             mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //No need to save twice
-                            // boolean success = save();
-                            // if(!success)
-                            //     showInfo(getString(R.string.error_saveing));
-                            // else
-                            //     finish();
+                            saveViewportAndRecentFiles();
                             if(!save())
                                 showInfo(getString(R.string.error_saveing));
                             else
