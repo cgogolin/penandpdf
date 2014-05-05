@@ -337,7 +337,7 @@ JNI_FN(MuPDFCore_openFile)(JNIEnv * env, jobject thiz, jstring jfilename)
     {
         glo->colorspace = fz_device_rgb(ctx);
 
-        LOGE("Opening document...");
+        LOGI("Opening document...");
         fz_try(ctx)
         {
             glo->current_path = fz_strdup(ctx, (char *)filename);
@@ -348,11 +348,11 @@ JNI_FN(MuPDFCore_openFile)(JNIEnv * env, jobject thiz, jstring jfilename)
         {
             fz_throw(ctx, FZ_ERROR_GENERIC, "Cannot open document: '%s'", filename);
         }
-        LOGE("Done!");
+        LOGI("Done!");
     }
     fz_catch(ctx)
     {
-        LOGE("Failed: %s", ctx->error->message);
+        LOGE("Opening document Failed: %s", ctx->error->message);
         fz_close_document(glo->doc);
         glo->doc = NULL;
         fz_free_context(ctx);
@@ -456,7 +456,7 @@ JNI_FN(MuPDFCore_openBuffer)(JNIEnv * env, jobject thiz)
 
         glo->colorspace = fz_device_rgb(ctx);
 
-        LOGE("Opening document...");
+        LOGI("Opening document...");
         fz_try(ctx)
         {
             glo->current_path = NULL;
@@ -467,7 +467,7 @@ JNI_FN(MuPDFCore_openBuffer)(JNIEnv * env, jobject thiz)
         {
             fz_throw(ctx, FZ_ERROR_GENERIC, "Cannot open memory document");
         }
-        LOGE("Done!");
+        LOGI("Done!");
     }
     fz_always(ctx)
     {
@@ -475,7 +475,7 @@ JNI_FN(MuPDFCore_openBuffer)(JNIEnv * env, jobject thiz)
     }
     fz_catch(ctx)
     {
-        LOGE("Failed: %s", ctx->error->message);
+        LOGE("Opening document Failed: %s", ctx->error->message);
         fz_close_document(glo->doc);
         glo->doc = NULL;
         fz_free_context(ctx);
@@ -567,7 +567,7 @@ JNI_FN(MuPDFCore_gotoPageInternal)(JNIEnv *env, jobject thiz, int page)
     pc->height = 100;
 
     pc->number = page;
-    LOGE("Goto page %d...", page);
+    LOGI("Goto page %d", page);
     fz_try(ctx)
     {
         fz_rect rect;
@@ -583,7 +583,7 @@ JNI_FN(MuPDFCore_gotoPageInternal)(JNIEnv *env, jobject thiz, int page)
     }
     fz_catch(ctx)
     {
-        LOGE("cannot make displaylist from page %d", pc->number);
+        LOGE("Cannot make displaylist from page %d", pc->number);
     }
 }
 
@@ -591,7 +591,7 @@ JNIEXPORT float JNICALL
 JNI_FN(MuPDFCore_getPageWidth)(JNIEnv *env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
-    LOGE("PageWidth=%d", glo->pages[glo->current].width);
+//    LOGI("PageWidth=%d", glo->pages[glo->current].width);
     return glo->pages[glo->current].width;
 }
 
@@ -599,7 +599,7 @@ JNIEXPORT float JNICALL
 JNI_FN(MuPDFCore_getPageHeight)(JNIEnv *env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
-    LOGE("PageHeight=%d", glo->pages[glo->current].height);
+//    LOGI("PageHeight=%d", glo->pages[glo->current].height);
     return glo->pages[glo->current].height;
 }
 
@@ -675,7 +675,7 @@ JNI_FN(MuPDFCore_drawPage)(JNIEnv *env, jobject thiz, jobject bitmap,
     }
 
 	/* Call mupdf to render display list to screen */
-    LOGE("Rendering page(%d)=%dx%d patch=[%d,%d,%d,%d]",
+    LOGI("Rendering page(%d)=%dx%d patch=[%d,%d,%d,%d]",
          pc->number, pageW, pageH, patchX, patchY, patchW, patchH);
 
     fz_try(ctx)
@@ -745,7 +745,7 @@ JNI_FN(MuPDFCore_drawPage)(JNIEnv *env, jobject thiz, jobject bitmap,
             clock_t time;
             int i;
 
-            LOGE("Executing display list");
+            LOGI("Executing display list");
             time = clock();
             for (i=0; i<100;i++) {
 #endif
@@ -756,13 +756,13 @@ JNI_FN(MuPDFCore_drawPage)(JNIEnv *env, jobject thiz, jobject bitmap,
 #ifdef TIME_DISPLAY_LIST
             }
             time = clock() - time;
-            LOGE("100 renders in %d (%d per sec)", time, CLOCKS_PER_SEC);
+            LOGI("100 renders in %d (%d per sec)", time, CLOCKS_PER_SEC);
         }
 #endif
         fz_free_device(dev);
         dev = NULL;
         fz_drop_pixmap(ctx, pix);
-        LOGE("Rendered");
+        LOGI("Rendered");
     }
     fz_always(ctx)
     {
@@ -858,7 +858,7 @@ JNI_FN(MuPDFCore_updatePageInternal)(JNIEnv *env, jobject thiz, jobject bitmap, 
     }
 
 	/* Call mupdf to render display list to screen */
-    LOGE("Rendering page(%d)=%dx%d patch=[%d,%d,%d,%d]",
+    LOGI("Rendering page(%d)=%dx%d patch=[%d,%d,%d,%d]",
          pc->number, pageW, pageH, patchX, patchY, patchW, patchH);
 
     fz_try(ctx)
@@ -940,7 +940,7 @@ JNI_FN(MuPDFCore_updatePageInternal)(JNIEnv *env, jobject thiz, jobject bitmap, 
             /* Drop the changed rects we've just rendered */
         drop_changed_rects(ctx, hq ? &pc->hq_changed_rects : &pc->changed_rects);
 
-        LOGE("Rendered");
+        LOGI("Rendered");
     }
     fz_always(ctx)
     {

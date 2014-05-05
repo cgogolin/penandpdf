@@ -27,6 +27,8 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.preference.PreferenceManager;
 
+import android.util.Log;
+
 class PatchInfo {
     public Point patchViewSize;
     public Rect  patchArea;
@@ -128,9 +130,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private static final int BACKGROUND_COLOR = 0xFFFFFFFF;
     private static final int ERASER_INNER_COLOR = 0xFFFFFFFF;
     private static final int ERASER_OUTER_COLOR = 0xFF000000;
-    
     private static final int PROGRESS_DIALOG_DELAY = 200;
-    protected final Context   mContext;
+    protected final Context mContext;
     protected     int       mPageNumber;
     private       Point     mParentSize;
     protected     Point     mSize;   // Size of page at minimum zoom
@@ -163,6 +164,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private final Handler   mHandler = new Handler();
 
     private PointF eraser = null;
+    
         //Set in onSharedPreferenceChanged()
     private static float inkThickness = 10;
     private static float eraserThickness = 20;
@@ -177,8 +179,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     
     public PageView(Context c, Point parentSize, Bitmap sharedHqBm) {
         super(c);
-        mContext    = c;
-                
+        Log.i("PageView", "PageView()");
+        mContext    = c;       
         mParentSize = parentSize;
         setBackgroundColor(BACKGROUND_COLOR);
         mEntireBm = Bitmap.createBitmap(parentSize.x, parentSize.y, Config.ARGB_8888);
@@ -193,6 +195,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     protected abstract void addMarkup(PointF[] quadPoints, Annotation.Type type);
 
     private void reinit() {
+        Log.i("PageView", "reinit()");        
             // Cancel pending render task
         if (mDrawEntire != null) {
             mDrawEntire.cancel(true);
@@ -241,6 +244,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void releaseResources() {
+        Log.i("PageView", "releaseResources()");
         reinit();
         if (mBusyIndicator != null) {
             removeView(mBusyIndicator);
@@ -248,15 +252,26 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         }
         mDrawing = null;
         mDrawingHistory.clear();
+            //Cancel any rendering
+        if (mDrawEntire != null) {
+            mDrawEntire.cancel(true);
+            mDrawEntire= null;
+        }
+        if (mDrawPatch != null) {
+            mDrawPatch.cancel(true);
+            mDrawPatch = null;
+        }
     }
 
     public void releaseBitmaps() {
+        Log.i("PageView", "releaseBitmaps()");
         reinit();
         mEntireBm = null;
         mPatchBm = null;
     }
 
     public void blank(int page) {
+        Log.i("PageView", "blank("+page+")");
         reinit();
         mPageNumber = page;
 
@@ -271,6 +286,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void setPage(int page, PointF size) {
+        Log.i("PageView", "setPage("+page+",)");
             // Cancel pending render task
         if (mDrawEntire != null) {
             mDrawEntire.cancel(true);
@@ -346,6 +362,11 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 mEntire.setImageBitmap(mEntireBm);
                 mEntire.invalidate();
                 setBackgroundColor(Color.TRANSPARENT);
+            }
+
+            protected void onCanceled(Void v) {
+                removeView(mBusyIndicator);
+                mBusyIndicator = null;
             }
         };
 
@@ -761,6 +782,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        Log.i("PageView", "onMeasure() of page "+mPageNumber);
         int x, y;
         switch(View.MeasureSpec.getMode(widthMeasureSpec)) {
             case View.MeasureSpec.UNSPECIFIED:
@@ -787,6 +809,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        Log.i("PageView", "onLayout() of page "+mPageNumber);        
         int w  = right-left;
         int h = bottom-top;
 
@@ -892,6 +915,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void update() {
+        Log.i("PageView", "update()");
             // Cancel pending render task
         if (mDrawEntire != null) {
             mDrawEntire.cancel(true);
@@ -958,6 +982,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         }
 
     public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
+        Log.i("PageView", "onSharedPreferenceChanged()");
             //Set ink thickness and colors for PageView
         inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
         eraserThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_ERASER_THICKNESS, Float.toString(eraserThickness)));

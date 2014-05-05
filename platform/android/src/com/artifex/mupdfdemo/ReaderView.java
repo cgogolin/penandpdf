@@ -653,44 +653,44 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 }
             }
 
-                // Remove not needed children and hold them for reuse
-            int numChildren = mChildViews.size();
-            int childIndices[] = new int[numChildren];
-            for (int i = 0; i < numChildren; i++)
-                childIndices[i] = mChildViews.keyAt(i);
+            //     //Remove not needed children and hold them for reuse
+            // int numChildren = mChildViews.size();
+            // int childIndices[] = new int[numChildren];
+            // for (int i = 0; i < numChildren; i++)
+            //     childIndices[i] = mChildViews.keyAt(i);
 
-            for (int i = 0; i < numChildren; i++) {
-                int ai = childIndices[i];
-                if (ai < mCurrent - 1 || ai > mCurrent + 1) {
-                    View v = mChildViews.get(ai);
-                    ((MuPDFView) v).releaseResources();
-//                    onNotInUse(v);
-                    mViewCache.add(v);
-//                    mAdapter.cache(v);
-                    removeViewInLayout(v);
-                    mChildViews.remove(ai);
-                }
-            }
+            // for (int i = 0; i < numChildren; i++) {
+            //     int ai = childIndices[i];
+            //     if (ai < mCurrent - 1 || ai > mCurrent + 1) {
+            //         View v = mChildViews.get(ai);
+            //         ((MuPDFView) v).releaseResources();
+            //         mViewCache.add(v);
+            //         removeViewInLayout(v);
+            //         mChildViews.remove(ai);
+            //     }
+            // }
         }
         else //Were asked to reset the layout (this happens for example when setDisplayedViewIndex() is called)
         { 
             mResetLayout = false;
             mXScroll = mYScroll = 0;
             
-                // Remove all children and hold them for reuse
-            int numChildren = mChildViews.size();
-            for (int i = 0; i < numChildren; i++) {
-                View v = mChildViews.valueAt(i);
-                ((MuPDFView) v).releaseResources();
-//                onNotInUse(v);
-                mViewCache.add(v);
-//                mAdapter.cache(v);
-                removeViewInLayout(v);
-            }
-            mChildViews.clear();
+            //     // Remove all children and hold them for reuse
+            // int numChildren = mChildViews.size();
+            // for (int i = 0; i < numChildren; i++) {
+            //     View v = mChildViews.valueAt(i);
+            //     ((MuPDFView) v).releaseResources();
+            //     mViewCache.add(v);
+            //     removeViewInLayout(v);
+            // }
+            // mChildViews.clear();
+            
                 // post to ensure generation of hq area
             post(this);
         }
+
+            // Remove not needed children and hold them for reuse
+        removeSuperflousChildren();
 
             // Check if current view is already present...
         int cvLeft, cvRight, cvTop, cvBottom;
@@ -819,6 +819,24 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         invalidate();
     }
 
+    private void removeSuperflousChildren() {
+        int numChildren = mChildViews.size();
+        int childIndices[] = new int[numChildren];
+        for (int i = 0; i < numChildren; i++)
+            childIndices[i] = mChildViews.keyAt(i);
+        
+        for (int i = 0; i < numChildren; i++) {
+            int ai = childIndices[i];
+            if (ai < mCurrent - 1 || ai > mCurrent + 1) {
+                View v = mChildViews.get(ai);
+                ((MuPDFView) v).releaseResources();
+                mViewCache.add(v);
+                removeViewInLayout(v);
+                mChildViews.remove(ai);
+            }
+        }
+    }
+    
     @Override
 	public Adapter getAdapter() {
         return mAdapter;
