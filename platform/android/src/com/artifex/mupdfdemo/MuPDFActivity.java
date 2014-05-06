@@ -947,11 +947,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         if(mDocView!=null)
         {
                 //Clear the search results (not sure we need this)
-//            mDocView.clearSearchResults();
-            
-                //Restore the state of mDocView from its saved state in case there is one
-            if(mDocViewParcelable != null) mDocView.onRestoreInstanceState(mDocViewParcelable);
-            mDocViewParcelable=null;
+//            mDocView.clearSearchResults();            
             
                 //Ascociate the mDocView with the adapter if necessary
                 //Remark: This can happen because the core was destroyed during save().
@@ -966,9 +962,13 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 //Reinstate last viewport if it was recorded
             restoreVieport();
 
-            //     //Make the mDocView read the prefernces 
-            // SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);   
-            // mDocView.onSharedPreferenceChanged(prefs,"");
+                //Restore the state of mDocView from its saved state in case there is one
+            if(mDocViewParcelable != null) mDocView.onRestoreInstanceState(mDocViewParcelable);
+            mDocViewParcelable=null;
+            
+                //Make the mDocView read the prefernces 
+            SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);   
+            mDocView.onSharedPreferenceChanged(prefs,"");
         }
     }
 
@@ -996,7 +996,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                             showInfo(getString(R.string.error_saveing));
                                         else
                                             onResume(); //This is a hack but allows me to not duplicate code...
-                                            invalidateOptionsMenu();
+//                                            invalidateOptionsMenu();
                                     }
                                     if (which == AlertDialog.BUTTON_NEGATIVE) {
                                     }
@@ -1015,7 +1015,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                             showInfo(getString(R.string.error_saveing));
                         else
                             onResume(); //This is a hack but allows me to not duplicate code...
-                            invalidateOptionsMenu();
+//                            invalidateOptionsMenu();
                     }
                 }
                 // else if (resultCode == RESULT_CANCELED)
@@ -1029,18 +1029,15 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
 
     private boolean saveAs(Uri uri) {
         if (core == null) return false;
-            //Do not overwrite the current file during onStop()
-        // mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; 
-        // onStop();
-            //Save the viewport under the new name
-        SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-        SharedPreferences.Editor edit = prefs.edit();
-            //Save the current viewport
-        saveViewport(edit, uri.getPath());
             //Save the file to the new location
         boolean success = core.saveAs(uri.toString());
         if(success)
         {
+                //Save the viewport under the new name
+            SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+            SharedPreferences.Editor edit = prefs.edit();
+            saveViewport(edit, uri.getPath());
+                //Destroy the core
             core.onDestroy();
             core = null;
                 //Set the uri of this intent to the new file path

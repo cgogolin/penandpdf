@@ -1,7 +1,5 @@
 package com.artifex.mupdfdemo;
 
-import android.os.Parcelable;
-
 import java.lang.Math;
 
 import java.util.LinkedList;
@@ -10,6 +8,7 @@ import java.util.NoSuchElementException;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.view.GestureDetector;
@@ -80,6 +79,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     private final Scroller    mScroller;
     private boolean           mScrollDisabled;
 
+    Parcelable displayedViewInstanceState = null; //Set by MuPDFReaderView in onRestoreInstanceState()
+    
     static abstract class ViewMapper {
         abstract void applyToView(View view);
     }
@@ -359,7 +360,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     abstract protected void onUnsettle(View v);
 //    abstract protected void onNotInUse(View v);
     abstract protected void onScaleChild(View v, Float scale);
-
+    abstract protected void onNumberOfStrokesChanged(int numberOfStrokes);
+    
     public View getView(int i) {
         return mChildViews.get(i); //Can return null while waiting for onLayout()!
     }
@@ -875,6 +877,12 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             addAndMeasureChild(i, v);
             onChildSetup(i, v);
             onScaleChild(v, mScale);
+                //If we are creating the current view and have a saved instance state restore it
+            if(i == mCurrent && displayedViewInstanceState != null){
+                ((PageView)v).onRestoreInstanceState(displayedViewInstanceState);
+                displayedViewInstanceState = null;
+                onNumberOfStrokesChanged(((PageView)v).getDrawingSize());
+            }
         }
         return v;
     }

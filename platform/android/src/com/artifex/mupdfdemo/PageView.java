@@ -2,7 +2,7 @@ package com.artifex.mupdfdemo;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Deque;
+import java.util.ArrayDeque;
 //import java.util.Collections;
 import java.util.LinkedList;
 
@@ -20,7 +20,9 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -155,7 +157,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private       TextWord  mText[][];
     private       RectF     mItemSelectBox;
     protected     ArrayList<ArrayList<PointF>> mDrawing;
-    protected     Deque<ArrayList<ArrayList<PointF>>> mDrawingHistory = new LinkedList<ArrayList<ArrayList<PointF>>>();
+    protected     ArrayDeque<ArrayList<ArrayList<PointF>>> mDrawingHistory = new ArrayDeque<ArrayList<ArrayList<PointF>>>();
     private       View      mOverlayView;
     private       boolean   mIsBlank;
     private       boolean   mHighlightLinks;
@@ -179,7 +181,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     
     public PageView(Context c, Point parentSize, Bitmap sharedHqBm) {
         super(c);
-        Log.i("PageView", "PageView()");
+//        Log.i("PageView", "PageView()");
         mContext    = c;       
         mParentSize = parentSize;
         setBackgroundColor(BACKGROUND_COLOR);
@@ -195,7 +197,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     protected abstract void addMarkup(PointF[] quadPoints, Annotation.Type type);
 
     private void reinit() {
-        Log.i("PageView", "reinit()");        
+//        Log.i("PageView", "reinit()");        
             // Cancel pending render task
         if (mDrawEntire != null) {
             mDrawEntire.cancel(true);
@@ -244,7 +246,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void releaseResources() {
-        Log.i("PageView", "releaseResources()");
+//        Log.i("PageView", "releaseResources()");
         reinit();
         if (mBusyIndicator != null) {
             removeView(mBusyIndicator);
@@ -264,14 +266,14 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void releaseBitmaps() {
-        Log.i("PageView", "releaseBitmaps()");
+//        Log.i("PageView", "releaseBitmaps()");
         reinit();
         mEntireBm = null;
         mPatchBm = null;
     }
 
     public void blank(int page) {
-        Log.i("PageView", "blank("+page+")");
+//        Log.i("PageView", "blank("+page+")");
         reinit();
         mPageNumber = page;
 
@@ -286,7 +288,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void setPage(int page, PointF size) {
-        Log.i("PageView", "setPage("+page+",)");
+//        Log.i("PageView", "setPage("+page+",)");
             // Cancel pending render task
         if (mDrawEntire != null) {
             mDrawEntire.cancel(true);
@@ -782,7 +784,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        Log.i("PageView", "onMeasure() of page "+mPageNumber);
+//        Log.i("PageView", "onMeasure() of page "+mPageNumber);
         int x, y;
         switch(View.MeasureSpec.getMode(widthMeasureSpec)) {
             case View.MeasureSpec.UNSPECIFIED:
@@ -809,7 +811,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        Log.i("PageView", "onLayout() of page "+mPageNumber);        
+//        Log.i("PageView", "onLayout() of page "+mPageNumber);        
         int w  = right-left;
         int h = bottom-top;
 
@@ -915,7 +917,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void update() {
-        Log.i("PageView", "update()");
+//        Log.i("PageView", "update()");
             // Cancel pending render task
         if (mDrawEntire != null) {
             mDrawEntire.cancel(true);
@@ -982,7 +984,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         }
 
     public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
-        Log.i("PageView", "onSharedPreferenceChanged()");
+//        Log.i("PageView", "onSharedPreferenceChanged()");
             //Set ink thickness and colors for PageView
         inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
         eraserThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_ERASER_THICKNESS, Float.toString(eraserThickness)));
@@ -1005,5 +1007,31 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             mDrawingHistory.push(mDrawingCopy);
         }
     }
-    
+
+
+    @Override
+    public Parcelable onSaveInstanceState() {
+        Log.v("PageView", "onSaveInstanceState()");
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("superInstanceState", super.onSaveInstanceState());
+            //Save
+        bundle.putSerializable("mDrawing", mDrawing);
+        bundle.putSerializable("mDrawingHistory", mDrawingHistory);
+
+        return bundle;
+    }
+
+    @Override
+    public void onRestoreInstanceState(Parcelable state) {
+        Log.v("PageView", "onRestoreInstanceState()");
+        if (state instanceof Bundle) {
+            Bundle bundle = (Bundle) state;
+                //Load 
+            mDrawing = (ArrayList<ArrayList<PointF>>)bundle.getSerializable("mDrawing");
+            mDrawingHistory = (ArrayDeque<ArrayList<ArrayList<PointF>>>)bundle.getSerializable("mDrawingHistory");
+
+            state = bundle.getParcelable("superInstanceState");
+        }
+        super.onRestoreInstanceState(state);
+    }
 }

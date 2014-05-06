@@ -392,24 +392,29 @@ abstract public class MuPDFReaderView extends ReaderView {
 
     @Override
     public Parcelable onSaveInstanceState() {
-        Log.v("MuPDFReaderView", "onSaveInstanceState()");
-        
+        Log.v("MuPDFReaderView", "onSaveInstanceState() getDisplayedView()="+getDisplayedView());
         Bundle bundle = new Bundle();
         bundle.putParcelable("superInstanceState", super.onSaveInstanceState());
             //Save
         bundle.putString("mMode", mMode.toString());
-
+        if(getDisplayedView() != null) bundle.putParcelable("displayedViewInstanceState", ((PageView)getDisplayedView()).onSaveInstanceState());
+        
         return bundle;
     }
     
     @Override
     public void onRestoreInstanceState(Parcelable state) {
-        Log.v("MuPDFReaderView", "onRestoreInstanceState()");      
+        Log.v("MuPDFReaderView", "onRestoreInstanceState() getDisplayedView()="+getDisplayedView());      
         if (state instanceof Bundle) {
             Bundle bundle = (Bundle) state;
                 //Load 
-            mMode = Mode.valueOf(bundle.getString("mMode"));
-
+            mMode = Mode.valueOf(bundle.getString("mMode", mMode.toString()));
+                //Save the displayedViewInstanceState for later if getDisplayedView() returns null
+            if(getDisplayedView() != null)
+                ((PageView)getDisplayedView()).onRestoreInstanceState(bundle.getParcelable("displayedViewInstanceState"));
+            else
+                displayedViewInstanceState = bundle.getParcelable("displayedViewInstanceState");
+            
             state = bundle.getParcelable("superInstanceState");
         }
         super.onRestoreInstanceState(state);
