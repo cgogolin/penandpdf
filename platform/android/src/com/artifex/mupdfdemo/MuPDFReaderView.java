@@ -39,7 +39,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     abstract protected void onDocMotion();
     abstract protected void onHit(Hit item);
     abstract protected void onNumberOfStrokesChanged(int numberOfStrokes);
-
+    
     public void setLinksEnabled(boolean b) {
         mLinksEnabled = b;
         resetupChildren();

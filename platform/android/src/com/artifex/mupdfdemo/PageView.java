@@ -24,6 +24,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.view.View;
+import android.view.View.OnLayoutChangeListener;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -190,6 +191,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         mEntireMat = new Matrix();
     }
 
+        //To be overrwritten in MuPDFPageView
     protected abstract void drawPage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
     protected abstract void updatePage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
     protected abstract LinkInfo[] getLinkInfo();
@@ -306,7 +308,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             addView(mEntire);
         }
 
-            // Calculate scaled size that fits within the screen limits
+            // Calculate scaled size that fits within the parent
             // This is the size at minimum zoom
         mSourceScale = Math.min(mParentSize.x/size.x, mParentSize.y/size.y);
                 

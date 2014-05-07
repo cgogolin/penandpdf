@@ -504,7 +504,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     public boolean onClose() {//???
         return false;
     }
-
     
     @Override
     public boolean onQueryTextChange(String query) {//Called when string in search box has changed
@@ -940,9 +939,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 
                 };
                 // Stick the mDocView into a relative layout and add it to the current layout
-            RelativeLayout layout = new RelativeLayout(this);
-            layout.addView(mDocView);
-            setContentView(layout);
+            // RelativeLayout layout = new RelativeLayout(this);
+            // layout.addView(mDocView);
+            // setContentView(layout);
+            setContentView(mDocView);
         }
         if(mDocView!=null)
         {
@@ -1128,7 +1128,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     
     
     @Override
-    protected void onSaveInstanceState(Bundle outState) { //Called when the app is destroyed by the system 
+    protected void onSaveInstanceState(Bundle outState) { //Called when the app is destroyed by the system and in various other cases  
         super.onSaveInstanceState(outState);
         
         outState.putString("ActionBarMode", mActionBarMode.toString());
@@ -1323,6 +1323,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         getActionBar().hide();
         mActionBarMode = ActionBarMode.Hidden;
         invalidateOptionsMenu();
+        mDocView.setLinksEnabled(false);
         mDocView.setScale(1.0f);
     }
             
@@ -1331,5 +1332,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         getActionBar().show();
         mActionBarMode = ActionBarMode.Main;
         invalidateOptionsMenu();
+        mDocView.setLinksEnabled(true);
     }
 }
