@@ -938,12 +938,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     }
                 
                 };
-                // Stick the mDocView into a relative layout and add it to the current layout
-            // RelativeLayout layout = new RelativeLayout(this);
-            // layout.addView(mDocView);
-            // setContentView(layout);
             setContentView(mDocView);
-            
             mDocViewNeedsNewAdapter = true;
         }
         if(mDocView!=null)
@@ -1227,6 +1222,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                             // User clicked OK button
                         int pageNumber = Integer.parseInt(input.getText().toString());
                         mDocView.setDisplayedViewIndex(pageNumber == 0 ? 0 : pageNumber -1 );
+                        mDocView.setScale(1.0f);
                     }
                 })
             .setNegativeButton(R.string.dialog_gotopage_cancel, new DialogInterface.OnClickListener() {
@@ -1325,14 +1321,17 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         getActionBar().hide();
         mActionBarMode = ActionBarMode.Hidden;
         invalidateOptionsMenu();
+        if(mDocView != null) {
+        mDocView.setScale(1.0f);
+            saveViewportAndRecentFiles(); //So that we show the right page when the mDocView is recreated
+        }
         mDocView = null;
-            //This is an ungly hack that recreates the mDocView only after the 
+            //This is an ungly hack that recreates the mDocView only after a delay
         new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     setupmDocView();
                     mDocView.setLinksEnabled(false);
-                    mDocView.setScale(1.0f);
                 }
             }, 2000);
     }
@@ -1342,7 +1341,12 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         getActionBar().show();
         mActionBarMode = ActionBarMode.Main;
         invalidateOptionsMenu();
+        if(mDocView != null) {
+            mDocView.setScale(1.0f);
+            saveViewportAndRecentFiles(); //So that we show the right page when the mDocView is recreated
+        }
         mDocView = null;
+            //This is an ungly hack that recreates the mDocView only after a delay
         new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {

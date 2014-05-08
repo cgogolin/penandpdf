@@ -786,7 +786,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-//        Log.i("PageView", "onMeasure() of page "+mPageNumber);
         int x, y;
         switch(View.MeasureSpec.getMode(widthMeasureSpec)) {
             case View.MeasureSpec.UNSPECIFIED:

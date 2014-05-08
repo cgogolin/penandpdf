@@ -49,7 +49,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     private int               mNewCurrent;
     private boolean           mHasNewCurrent = false;
     private boolean           mNextScrollWithCenter = false;
-    private boolean           mResetLayout = false;
+//    private boolean           mResetLayout = false;
     private final SparseArray<View> mChildViews = new SparseArray<View>(3); // Shadows the children of the AdapterView but with more sensible indexing
     private final LinkedList<View> mViewCache = new LinkedList<View>();
     private boolean           mUserInteracting;  // Whether the user is interacting
@@ -68,8 +68,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     private boolean           mHasNewDocRelYScroll = false;//Set in setDocRelYScroll() and accounted for in onLayout()
 
         // Scroll amounts recorded from events and then accounted for in onLayout.
-    private int               mXScroll;    
-    private int               mYScroll;
+    private int               mXScroll = 0;    
+    private int               mYScroll = 0;
     private int               mScrollerLastX;
     private int               mScrollerLastY;
     private int previousFocusX;
@@ -607,9 +607,13 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     }
 
     @Override
-	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
+        int x, y;
+        x = View.MeasureSpec.getSize(widthMeasureSpec);
+        y = View.MeasureSpec.getSize(heightMeasureSpec);
+        setMeasuredDimension(x, y);
+        
         int n = getChildCount();
         for (int i = 0; i < n; i++)
             measureView(getChildAt(i));
@@ -636,71 +640,73 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         View cv = getDisplayedView();
         Point cvOffset;
         
-        if (mResetLayout) {
-            Log.i("MuPDFActivity", "resetting layout");
-            mResetLayout = false;
-            mXScroll = mYScroll = 0;
-            
-                // Remove all children
-            removeAllChildren();
-        }
-        else if(mHasNewCurrent)
+        // if (mResetLayout) {
+        //     Log.i("MuPDFActivity", "resetting layout");
+        //     mResetLayout = false;
+        //     mXScroll = mYScroll = 0;
+        //         // Remove all children
+        //     removeAllChildren();
+        // }
+        // else
+
+            //If we were asked to display a different view do so now...
+        if(mHasNewCurrent)
         {
             if (cv != null) postUnsettle(cv);
                 //Reset scroll amounts
             mXScroll = mYScroll = 0;
-            
             onMoveOffChild(mCurrent);
             mCurrent = mNewCurrent;
             onMoveToChild(mCurrent);
             mHasNewCurrent = false;
+            post(this);
         }
-        else
-        {
+            //... else check if we should be switching to a new view and do it
+        else if (cv != null) {
+            cvOffset = subScreenSizeOffset(cv);
                 // Move to next if current is sufficiently off center
-            if (cv != null) {
-                cvOffset = subScreenSizeOffset(cv);
-                    // cv.getRight() may be out of date with the current scale
-                    // so add left to the measured width for the correct position
-                if (cv.getLeft() + cv.getMeasuredWidth() + cvOffset.x + GAP/2 + mXScroll < getWidth()/2 && mCurrent + 1 < mAdapter.getCount()) {
-                    postUnsettle(cv);
-                    onMoveOffChild(mCurrent);
-                    mCurrent++;
-                    onMoveToChild(mCurrent);
-                        // post to invoke test for end of animation
-                        // where we must set hq area for the new current view
-//                    post(this);
-                }
-                    // Move to previous if current is sufficiently off center
-                if (cv.getLeft() - cvOffset.x - GAP/2 + mXScroll >= getWidth()/2 && mCurrent > 0) {
-                    postUnsettle(cv);
-                    onMoveOffChild(mCurrent);
-                    mCurrent--;
-                    onMoveToChild(mCurrent);
-                        // post to invoke test for end of animation
-                        // where we must set hq area for the new current view
-//                    post(this);
-                }
+                // cv.getRight() may be out of date with the current scale
+                // so add left to the measured width for the correct position
+            if (cv.getLeft() + cv.getMeasuredWidth() + cvOffset.x + GAP/2 + mXScroll < getWidth()/2 && mCurrent + 1 < mAdapter.getCount()) {
+                postUnsettle(cv);
+                onMoveOffChild(mCurrent);
+                mCurrent++;
+                onMoveToChild(mCurrent);
+                    // post to invoke test for end of animation
+                    // where we must set hq area for the new current view
+                post(this);
             }
-        }
+                    // Move to previous if current is sufficiently off center
+            if (cv.getLeft() - cvOffset.x - GAP/2 + mXScroll >= getWidth()/2 && mCurrent > 0) {
+                postUnsettle(cv);
+                onMoveOffChild(mCurrent);
+                mCurrent--;
+                onMoveToChild(mCurrent);
+                    // post to invoke test for end of animation
+                    // where we must set hq area for the new current view
+                post(this);
+            }
+        }//mCurrent now is the view we should actually be displaying
         
             // Remove not needed children and hold them for reuse
         removeSuperflousChildren();
         
-            //Caculate placement of the child view
+            //Caculate placement of the current view
         int cvLeft, cvRight, cvTop, cvBottom;
-        if (cv == null) {
-            cv = getOrCreateChild(mCurrent);
-            cvOffset = subScreenSizeOffset(cv);
+        // if (cv == null) {
+        //     cv = getOrCreateChild(mCurrent);
+        //     cvOffset = subScreenSizeOffset(cv); //Doesn't work, which leads to ugly flickering....
+
+        //     Log.i("MuPDFActivity", "subScreenSizeOffset returned: "+cvOffset.x+", "+cvOffset.y);
+        //     Log.i("MuPDFActivity", "cv.getMeasuredWidth()="+cv.getMeasuredWidth());
+        //     Log.i("MuPDFActivity", "getWidth()="+getWidth());
             
-                //If the view was freshly created we will place it top left or
-                //offset it to center within the screen area if it is too small
-            cvLeft = cvOffset.x;
-            cvTop  = cvOffset.y;
-            Log.i("MuPDFActivity", "subScreenSizeOffset returned: "+cvOffset.x+", "+cvOffset.y);
-            Log.i("MuPDFActivity", "cv.getMeasuredWidth()="+cv.getMeasuredWidth());
-            Log.i("MuPDFActivity", "getWidth()="+getWidth());
-        } else {
+        //         //If the view was freshly created we will place it top left or
+        //         //offset it to center within the screen area if it is too small
+        //     cvLeft = cvOffset.x;
+        //     cvTop  = cvOffset.y;
+        // } else
+        {
             cv = getOrCreateChild(mCurrent);
             cvOffset = subScreenSizeOffset(cv);
             
@@ -759,27 +765,27 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 }
             }
             
-                //If the child view was already present we adjust it by the scroll amounts.
+                //Set the positon of the top left corner
             cvLeft = cv.getLeft() + mXScroll;
             cvTop  = cv.getTop()  + mYScroll;
+                //Reset scroll amounts
+            mXScroll = mYScroll = 0;
         }
-        
-            //Reset scroll amounts
-        mXScroll = mYScroll = 0;
-        
             //Calculate right and bottom
         cvRight  = cvLeft + cv.getMeasuredWidth();
         cvBottom = cvTop  + cv.getMeasuredHeight();
 
+            //If the user is not interacting and the scroller is finished move the view so that no gaps are left
         if (!mUserInteracting && mScroller.isFinished()) {
             Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
             cvRight  += corr.x;
             cvLeft   += corr.x;
             cvTop    += corr.y;
             cvBottom += corr.y;
-        } else if (cv.getMeasuredHeight() <= getHeight()) {
-                // When the current view is as small as the screen in height, clamp
-                // it vertically
+        }
+            // If the current view is as small as the screen in height, clamp
+            // it vertically
+        else if (cv.getMeasuredHeight() <= getHeight()) {
             Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
             cvTop    += corr.y;
             cvBottom += corr.y;
@@ -788,7 +794,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             //Finally layout the child view with the calculated values
         cv.layout(cvLeft, cvTop, cvRight, cvBottom);
         
-            //Creat the preceding and following PageViews
+            //Creat and layout the preceding and following PageViews
         if (mCurrent > 0) {
             View lv = getOrCreateChild(mCurrent - 1);
             Point leftOffset = subScreenSizeOffset(lv);
@@ -821,7 +827,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         for (int i = 0; i < numChildren; i++) {
             View v = mChildViews.valueAt(i);
             ((MuPDFView) v).releaseResources();
-//            mViewCache.add(v);
             removeViewInLayout(v);
         }
         mChildViews.clear();
@@ -860,7 +865,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     @Override
         public void setAdapter(Adapter adapter) {
         mAdapter = adapter;
-        mChildViews.clear(); //This AdapterView should only clear its children if notifyDataSetChanged() is called on its adapter!
+        mChildViews.clear();
         removeAllViewsInLayout();
         requestLayout();
     }
@@ -881,16 +886,16 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         View v = mChildViews.get(i);
         if (v == null) {
             v = mAdapter.getView(i, getCached(), this);
-//            v = mAdapter.getView(i, this);
-            addAndMeasureChild(i, v);
             onChildSetup(i, v);
             onScaleChild(v, mScale);
+            addAndMeasureChild(i, v);
                 //If we are creating the current view and have a saved instance state restore it
             if(i == mCurrent && displayedViewInstanceState != null){
                 ((PageView)v).onRestoreInstanceState(displayedViewInstanceState);
                 displayedViewInstanceState = null;
                 onNumberOfStrokesChanged(((PageView)v).getDrawingSize());
             }
+            Log.i("MuPDFActivity", "created child with width="+v.getMeasuredWidth()+" height="+v.getMeasuredWidth());
         }
         return v;
     }
@@ -900,9 +905,9 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         if (params == null) {
             params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
         }
+        measureView(v);
         addViewInLayout(v, 0, params, true);
         mChildViews.append(i, v); // Record the view against it's adapter index
-        measureView(v);
     }
 
     private void measureView(View v) {
@@ -1020,6 +1025,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         }
         else return 0;
     }
+
     public float getNormalizedYScroll()
     {
         View cv = getDisplayedView();
@@ -1039,6 +1045,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     public void setScale(float scale)
     {
         mScale = scale;
+        requestLayout();
     }            
         
     public void setNormalizedScroll(float normalizedXScroll, float normalizedYScroll) 
@@ -1060,7 +1067,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         mNewNormalizedYScroll = normalizedYScroll;
         requestLayout();
     }
-
 
     public void setDocRelXScroll(float docRelXScroll)
     {
