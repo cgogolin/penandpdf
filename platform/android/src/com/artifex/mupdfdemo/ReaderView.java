@@ -15,7 +15,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.view.View.OnLayoutChangeListener;
+//import android.view.View.OnLayoutChangeListener;
 import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.Scroller;
@@ -25,7 +25,8 @@ import android.preference.PreferenceManager;
 
 import android.util.Log;
 
-abstract public class ReaderView extends AdapterView<Adapter> implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, Runnable, android.view.View.OnLayoutChangeListener {
+abstract public class ReaderView extends AdapterView<Adapter> implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, Runnable//, android.view.View.OnLayoutChangeListener
+{
     private static final int  MOVING_DIAGONALLY = 0;
     private static final int  MOVING_LEFT       = 1;
     private static final int  MOVING_RIGHT      = 2;
@@ -92,7 +93,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         mScaleGestureDetector = new ScaleGestureDetector(context, this);
         mScroller        = new Scroller(context);
             //We want to get notified if the size we have changes
-        addOnLayoutChangeListener(this);
+//        addOnLayoutChangeListener(this);
     }
 
     // public ReaderView(Context context, AttributeSet attrs) {
@@ -614,26 +615,19 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             measureView(getChildAt(i));
     }
 
-    @Override
-    public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-        Log.i("MuPDFActivity", "onLayoutChange("+v+", "+left+", "+top+", "+right+", "+bottom+", "+oldLeft+", "+oldTop+", "+oldRight+", "+oldBottom+")");
-        if(right - left != 0 && bottom - top != 0 && oldRight - oldLeft != 0 && oldBottom - oldTop != 0 &&
-           (left!=oldLeft || top!=oldTop || right!=oldRight || bottom!=oldBottom )
-           )
-        {
-            Log.i("MuPDFActivity", "planing layout reset");
-            mResetLayout = true;
-            forceLayout();//Doesn't work as intended!!!
-            requestLayout();
-        }
-        
-        // applyToChildren(new ReaderView.ViewMapper() {
-        //         @Override
-        //         void applyToView(View view) {
-        //             view.invalidate();
-        //         }
-        //     });
-    }
+    // @Override
+    // public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+    //     Log.i("MuPDFActivity", "onLayoutChange("+v+", "+left+", "+top+", "+right+", "+bottom+", "+oldLeft+", "+oldTop+", "+oldRight+", "+oldBottom+")");
+    //     if(right - left != 0 && bottom - top != 0 && oldRight - oldLeft != 0 && oldBottom - oldTop != 0 &&
+    //        (left!=oldLeft || top!=oldTop || right!=oldRight || bottom!=oldBottom )
+    //        )
+    //     {
+    //         Log.i("MuPDFActivity", "planing layout reset");
+    //         mResetLayout = true;
+    //         forceLayout();//Doesn't work as intended!!!
+    //         requestLayout();
+    //     }
+    // }
     
     @Override
 	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
@@ -649,22 +643,17 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             
                 // Remove all children
             removeAllChildren();
-            
-                // post to ensure generation of hq area
-//            post(this);
         }
         else if(mHasNewCurrent)
         {
             if (cv != null) postUnsettle(cv);
-             //Reset scroll amounts
+                //Reset scroll amounts
             mXScroll = mYScroll = 0;
             
             onMoveOffChild(mCurrent);
             mCurrent = mNewCurrent;
             onMoveToChild(mCurrent);
             mHasNewCurrent = false;
-                // post to ensure generation of hq area
-//            post(this);
         }
         else
         {
@@ -695,30 +684,29 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             }
         }
         
-            // post to ensure generation of hq area
-        post(this);
-
             // Remove not needed children and hold them for reuse
         removeSuperflousChildren();
-
-            // Check if current view is already present...
-        int cvLeft, cvRight, cvTop, cvBottom;
-        boolean notPresent = (cv == null);
-            // ...if not create it.
-        cv = getOrCreateChild(mCurrent);
         
             //Caculate placement of the child view
-        cvOffset = subScreenSizeOffset(cv);
-        if (notPresent) {
+        int cvLeft, cvRight, cvTop, cvBottom;
+        if (cv == null) {
+            cv = getOrCreateChild(mCurrent);
+            cvOffset = subScreenSizeOffset(cv);
+            
                 //If the view was freshly created we will place it top left or
                 //offset it to center within the screen area if it is too small
             cvLeft = cvOffset.x;
             cvTop  = cvOffset.y;
+            Log.i("MuPDFActivity", "subScreenSizeOffset returned: "+cvOffset.x+", "+cvOffset.y);
+            Log.i("MuPDFActivity", "cv.getMeasuredWidth()="+cv.getMeasuredWidth());
+            Log.i("MuPDFActivity", "getWidth()="+getWidth());
         } else {
+            cv = getOrCreateChild(mCurrent);
+            cvOffset = subScreenSizeOffset(cv);
+            
                 //Set mXScroll, mYScroll and mScale from the values set in setScale() and setScroll()
-            if(!changed && !notPresent && !mReflow && cv != null)
+            if(!changed && !mReflow)
             {
-//                boolean needLayout = false;
                 float scale_factor = mReflow ? REFLOW_SCALE_FACTOR : 1.0f;
                 float min_scale = MIN_SCALE * scale_factor;
                 float max_scale = MAX_SCALE * scale_factor;
@@ -727,9 +715,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 
                 if(mHasNewNormalizedScale)
                 {
-//                    Log.i("MyActivity", "In onLayout() taking care of scale");
-                    mScale = Math.min(Math.max(mNewNormalizedScale*scaleCorrection, min_scale), max_scale); // I still don't understand how exactly this is pased on to the view in the end...
-//                    mNewNormalizedScale = 0.0f;
+                    mScale = Math.min(Math.max(mNewNormalizedScale*scaleCorrection, min_scale), max_scale); 
                     mHasNewNormalizedScale = false;
                 }
 
@@ -744,7 +730,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 {
                     mHasNewNormalizedYScroll = true;
                     mHasNewDocRelYScroll = false;
-//                    mNewNormalizedYScroll = mNewDocRelYScroll*((PageView)cv).getScale()/(cv.getMeasuredHeight()*mScale*scale) - 1.0f;
                     mNewNormalizedYScroll = -mNewDocRelYScroll*((PageView)cv).getScale()/(cv.getMeasuredHeight()*mScale*scale);
                 }
                     
@@ -756,7 +741,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                     
                     if(mHasNewNormalizedXScroll){
                         XScroll = (int)(mNewNormalizedXScroll*cv.getMeasuredWidth()*mScale*scale);
-//                        if(cv.getMeasuredWidth()  < getWidth() ) XScroll += (float)(cv.getMeasuredWidth()  - getWidth() )/2;
                         mHasNewNormalizedXScroll = false;
                     }
                     if(mHasNewNormalizedYScroll){
@@ -764,7 +748,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                         if(cv.getMeasuredHeight() < getHeight()) YScroll += (float)(cv.getMeasuredHeight() - getHeight())/2;
                         mHasNewNormalizedYScroll = false;
                     }
-//                    mNewNormalizedXScroll = mNewNormalizedYScroll = 0;
 
                     if(mNextScrollWithCenter)
                     {
@@ -826,6 +809,10 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         }
 
         invalidate();
+        
+            // post to ensure generation of hq area
+//        post(this);
+
     }
 
     

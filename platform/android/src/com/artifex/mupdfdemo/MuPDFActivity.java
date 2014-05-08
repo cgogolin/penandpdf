@@ -943,6 +943,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             // layout.addView(mDocView);
             // setContentView(layout);
             setContentView(mDocView);
+            
+            mDocViewNeedsNewAdapter = true;
         }
         if(mDocView!=null)
         {
@@ -1323,8 +1325,16 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         getActionBar().hide();
         mActionBarMode = ActionBarMode.Hidden;
         invalidateOptionsMenu();
-        mDocView.setLinksEnabled(false);
-        mDocView.setScale(1.0f);
+        mDocView = null;
+            //This is an ungly hack that recreates the mDocView only after the 
+        new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    setupmDocView();
+                    mDocView.setLinksEnabled(false);
+                    mDocView.setScale(1.0f);
+                }
+            }, 2000);
     }
             
     private void exitFullScreen() {
@@ -1332,6 +1342,13 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         getActionBar().show();
         mActionBarMode = ActionBarMode.Main;
         invalidateOptionsMenu();
-        mDocView.setLinksEnabled(true);
+        mDocView = null;
+        new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    setupmDocView();
+                    mDocView.setLinksEnabled(true);
+                }
+            }, 2000);
     }
 }
