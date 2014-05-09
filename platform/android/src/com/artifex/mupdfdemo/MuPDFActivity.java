@@ -2,6 +2,8 @@
 
 package com.artifex.mupdfdemo;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -53,6 +55,7 @@ import android.widget.ViewAnimator;
 import com.artifex.mupdfdemo.ReaderView.ViewMapper;
 import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
@@ -1321,19 +1324,20 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         getActionBar().hide();
         mActionBarMode = ActionBarMode.Hidden;
         invalidateOptionsMenu();
-        if(mDocView != null) {
-        mDocView.setScale(1.0f);
-            saveViewportAndRecentFiles(); //So that we show the right page when the mDocView is recreated
-        }
-        mDocView = null;
-            //This is an ungly hack that recreates the mDocView only after a delay
-        new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    setupmDocView();
-                    mDocView.setLinksEnabled(false);
-                }
-            }, 2000);
+        resetupMDocViewAfterActionBarAnimation(false);
+        //     //This is an ungly hack that recreates the mDocView only after a delay
+        // new Handler().postDelayed(new Runnable() {
+        //         @Override
+        //         public void run() {
+        //             if(mDocView != null) {
+        //                 mDocView.setScale(1.0f);
+        //                 saveViewportAndRecentFiles(); //So that we show the right page when the mDocView is recreated
+        //             }
+        //             mDocView = null;
+        //             setupmDocView();
+        //             mDocView.setLinksEnabled(false);
+        //         }
+        //     }, 2000);
     }
             
     private void exitFullScreen() {
@@ -1341,18 +1345,48 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         getActionBar().show();
         mActionBarMode = ActionBarMode.Main;
         invalidateOptionsMenu();
-        if(mDocView != null) {
-            mDocView.setScale(1.0f);
-            saveViewportAndRecentFiles(); //So that we show the right page when the mDocView is recreated
-        }
-        mDocView = null;
-            //This is an ungly hack that recreates the mDocView only after a delay
-        new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    setupmDocView();
-                    mDocView.setLinksEnabled(true);
-                }
-            }, 2000);
+        resetupMDocViewAfterActionBarAnimation(true);
+        //     //This is an ungly hack that recreates the mDocView only after a delay
+        // new Handler().postDelayed(new Runnable() {
+        //         @Override
+        //         public void run() {
+        //             if(mDocView != null) {
+        //                 mDocView.setScale(1.0f);
+        //                 saveViewportAndRecentFiles(); //So that we show the right page when the mDocView is recreated
+        //             }
+        //             mDocView = null;
+        //             setupmDocView();
+        //             mDocView.setLinksEnabled(true);
+        //         }
+        //     }, 2000);
     }
+
+    private void resetupMDocViewAfterActionBarAnimation(final boolean linksEnabled) {
+        final ActionBar actionBar = getActionBar();
+        try {
+                // Make the Animator accessible
+            final Class<?> actionBarImpl = actionBar.getClass();
+            final Field currentAnimField = actionBarImpl.getDeclaredField("mCurrentShowAnim");
+            currentAnimField.setAccessible(true);
+            
+                // Monitor the animation
+            final Animator currentAnim = (Animator) currentAnimField.get(actionBar);
+            currentAnim.addListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        if(mDocView != null) {
+                            mDocView.setScale(1.0f);
+                            saveViewportAndRecentFiles(); //So that we show the right page when the mDocView is recreated
+                        }
+                        mDocView = null;
+                        setupmDocView();
+                        mDocView.setLinksEnabled(linksEnabled);
+                    }
+                    
+                });
+        } catch (final Exception ignored) {
+        // Nothing to do
+        }
+    }
+    
 }
