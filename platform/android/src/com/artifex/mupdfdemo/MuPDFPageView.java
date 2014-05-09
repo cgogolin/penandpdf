@@ -553,7 +553,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                 }
                 Log.i("PageView", "drawing="+drawing);
                 setmDrawing(drawing);
-//                deleteSelectedAnnotation();
+                deleteSelectedAnnotation();
 //                deselectAnnotation();
             }
         }

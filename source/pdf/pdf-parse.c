@@ -1,5 +1,15 @@
 #include "mupdf/pdf.h"
 
+fz_point *
+pdf_to_point(fz_context *ctx, pdf_obj *array, fz_point *p)
+{
+	float a = pdf_to_real(pdf_array_get(array, 0));
+	float b = pdf_to_real(pdf_array_get(array, 1));
+	p->x = a;
+	p->y = b;
+	return p;
+}
+
 fz_rect *
 pdf_to_rect(fz_context *ctx, pdf_obj *array, fz_rect *r)
 {

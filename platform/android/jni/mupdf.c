@@ -1932,16 +1932,21 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
         {
             pdf_obj *inklisti = pdf_array_get(inklist, i);
             int nArc = pdf_array_len(inklisti);
-            LOGI(" of legth %d ", nArc);
-            jobjectArray arci = (*env)->NewObjectArray(env, nArc, pt_cls, NULL);
+            LOGI(" of legth %d ", nArc/2);
+            jobjectArray arci = (*env)->NewObjectArray(env, nArc/2, pt_cls, NULL);
             int j;
-            for(j = 0; j < nArc; j++)
+            for(j = 0; j < nArc; j+=2)
             {
-                pdf_obj *inklistij = pdf_array_get(inklisti, j);
-                fz_point point = *(fz_point *)inklistij;
+                /* pdf_obj *inklistij = pdf_array_get(inklisti, j); */
+                fz_point point; 
+                /* pdf_to_point(glo->ctx, inklistij, &point); */
+                point.x = pdf_to_real(pdf_array_get(inklisti, j));
+                point.y = pdf_to_real(pdf_array_get(inklisti, j+1));
+                LOGI("  with coords %f %f ", point.x, point.y);
                 fz_transform_point(&point, &ctm);
+                LOGI("  and transformed coords %f %f ", point.x, point.y);
                 jobject pfobj = (*env)->NewObject(env, pt_cls, ctor3, point.x, point.y);
-                (*env)->SetObjectArrayElement(env, arci, j, pfobj);
+                (*env)->SetObjectArrayElement(env, arci, j/2, pfobj);
                 (*env)->DeleteLocalRef(env, pfobj);
             }
             (*env)->SetObjectArrayElement(env, arcs, i, arci);
