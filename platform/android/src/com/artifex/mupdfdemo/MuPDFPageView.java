@@ -16,8 +16,12 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+
+
 
 /* This enum should be kept in line with the cooresponding C enum in mupdf.c */
 enum SignatureState {
@@ -542,13 +546,14 @@ public class MuPDFPageView extends PageView implements MuPDFView {
             PointF[][] arcs = mAnnotations[mSelectedAnnotationIndex].arcs;
             if(arcs != null)
             {
-                mDrawing = new ArrayList<ArrayList<PointF>>();
+                ArrayList<ArrayList<PointF>> drawing = new ArrayList<ArrayList<PointF>>();
                 for(int i = 0; i < arcs.length; i++)
                 {
-                    mDrawing.add(new ArrayList<PointF>(Arrays.asList(arcs[i])));
+                    drawing.add(new ArrayList<PointF>(Arrays.asList(arcs[i])));
                 }
-                invalidate();
-                deleteSelectedAnnotation();
+                Log.i("PageView", "drawing="+drawing);
+                setmDrawing(drawing);
+//                deleteSelectedAnnotation();
 //                deselectAnnotation();
             }
         }

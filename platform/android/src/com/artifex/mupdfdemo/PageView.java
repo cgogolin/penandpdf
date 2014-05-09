@@ -1035,4 +1035,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         }
         super.onRestoreInstanceState(state);
     }
+
+    public void setmDrawing(ArrayList<ArrayList<PointF>> drawing){
+        mDrawing = drawing;
+        if (mOverlayView != null)
+            mOverlayView.invalidate();
+    }
 }

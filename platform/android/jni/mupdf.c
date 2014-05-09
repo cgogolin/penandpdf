@@ -1926,19 +1926,21 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
         int nArcs = pdf_array_len(inklist);
         LOGI("found %d arcs", nArcs);
         jobjectArray arcs = (*env)->NewObjectArray(env, nArcs, pt_cls, NULL);
-        if (arcs == NULL) return NULL;
+//        if (arcs == NULL) return NULL;
         int i;
         for(i = 0; i < nArcs; i++)
         {
             pdf_obj *inklisti = pdf_array_get(inklist, i);
             int nArc = pdf_array_len(inklisti);
+            LOGI(" of legth %d ", nArc);
             jobjectArray arci = (*env)->NewObjectArray(env, nArc, pt_cls, NULL);
             int j;
             for(j = 0; j < nArc; j++)
             {
                 pdf_obj *inklistij = pdf_array_get(inklisti, j);
                 fz_point point = *(fz_point *)inklistij;
-                jobject pfobj = (*env)->NewObject(env, pt_cls, ctor3, point.x, point.y); //???
+                fz_transform_point(&point, &ctm);
+                jobject pfobj = (*env)->NewObject(env, pt_cls, ctor3, point.x, point.y);
                 (*env)->SetObjectArrayElement(env, arci, j, pfobj);
                 (*env)->DeleteLocalRef(env, pfobj);
             }
