@@ -1875,8 +1875,9 @@ JNI_FN(MuPDFCore_getWidgetAreasInternal)(JNIEnv * env, jobject thiz, int pageNum
 JNIEXPORT jobjectArray JNICALL
 JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNumber)
 {
-    jclass annotClass;
-    jmethodID ctor;
+    jclass annotClass, pt_cls;
+    jfieldID x_fid, y_fid;
+    jmethodID ctor, ctor2, ctor3;
     jobjectArray arr;
     jobject jannot;
     fz_annot *annot;
@@ -1887,10 +1888,19 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
     globals *glo = get_globals(env, thiz);
 
     annotClass = (*env)->FindClass(env, PACKAGENAME "/Annotation");
-    if (annotClass == NULL) return NULL;
+    if (annotClass == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "FindClass");
     ctor = (*env)->GetMethodID(env, annotClass, "<init>", "(FFFFI)V");
-    if (ctor == NULL) return NULL;
+    ctor2 = (*env)->GetMethodID(env, annotClass, "<init>", "(FFFFI[[Landroid/graphics/PointF;)V");
+    if (ctor == NULL || ctor2 == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetMethodID");
 
+    pt_cls = (*env)->FindClass(env, "android/graphics/PointF");
+    if (pt_cls == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "FindClass");
+    x_fid = (*env)->GetFieldID(env, pt_cls, "x", "F");
+    if (x_fid == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetFieldID(x)");
+    y_fid = (*env)->GetFieldID(env, pt_cls, "y", "F");
+    if (y_fid == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetFieldID(y)");
+    ctor3 = (*env)->GetMethodID(env, pt_cls, "<init>", "(FF)V");
+    
     JNI_FN(MuPDFCore_gotoPageInternal)(env, thiz, pageNumber);
     pc = &glo->pages[glo->current];
     if (pc->number != pageNumber || pc->page == NULL)
@@ -1911,11 +1921,44 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
     {
         fz_rect rect;
         fz_annot_type type = pdf_annot_type((pdf_annot *)annot);
+        
+        pdf_obj *inklist = pdf_annot_inklist((pdf_annot *)annot);
+        int nArcs = pdf_array_len(inklist);
+        LOGI("found %d arcs", nArcs);
+        jobjectArray arcs = (*env)->NewObjectArray(env, nArcs, pt_cls, NULL);
+        if (arcs == NULL) return NULL;
+        int i;
+        for(i = 0; i < nArcs; i++)
+        {
+            pdf_obj *inklisti = pdf_array_get(inklist, i);
+            int nArc = pdf_array_len(inklisti);
+            jobjectArray arci = (*env)->NewObjectArray(env, nArc, pt_cls, NULL);
+            int j;
+            for(j = 0; j < nArc; j++)
+            {
+                pdf_obj *inklistij = pdf_array_get(inklisti, j);
+                fz_point point = *(fz_point *)inklistij;
+                jobject pfobj = (*env)->NewObject(env, pt_cls, ctor3, point.x, point.y); //???
+                (*env)->SetObjectArrayElement(env, arci, j, pfobj);
+                (*env)->DeleteLocalRef(env, pfobj);
+            }
+            (*env)->SetObjectArrayElement(env, arcs, i, arci);
+            (*env)->DeleteLocalRef(env, arci);
+        }
+        
         fz_bound_annot(glo->doc, annot, &rect);
         fz_transform_rect(&rect, &ctm);
-
-        jannot = (*env)->NewObject(env, annotClass, ctor,
+        if (ctor != NULL && inklist != NULL)
+        {
+            jannot = (*env)->NewObject(env, annotClass, ctor2,
+                                       (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1, type, arcs);
+        }
+        else
+        {
+            jannot = (*env)->NewObject(env, annotClass, ctor,
                                    (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1, type);
+        }
+        
         if (jannot == NULL) return NULL;
         (*env)->SetObjectArrayElement(env, arr, count, jannot);
         (*env)->DeleteLocalRef(env, jannot);

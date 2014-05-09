@@ -555,6 +555,12 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 Intent intent = new Intent(this,SettingsActivity.class);
                 startActivity(intent);
                 return true;
+            case R.id.menu_edit:
+                ((MuPDFPageView)pageView).editSelectedAnnotation();
+                mDocView.setMode(MuPDFReaderView.Mode.Drawing);
+                mActionBarMode = ActionBarMode.Annot;
+                invalidateOptionsMenu();
+                return true;
             case R.id.menu_draw:
                 mDocView.setMode(MuPDFReaderView.Mode.Drawing);
                 mActionBarMode = ActionBarMode.Annot;

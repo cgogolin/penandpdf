@@ -1,7 +1,5 @@
 package com.artifex.mupdfdemo;
 
-import java.util.ArrayList;
-
 import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.Context;
@@ -18,6 +16,8 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /* This enum should be kept in line with the cooresponding C enum in mupdf.c */
 enum SignatureState {
@@ -510,9 +510,9 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 		return true;
 	}
-
-	public void deleteSelectedAnnotation() {
-		if (mSelectedAnnotationIndex != -1) {
+    
+    public void deleteSelectedAnnotation() {
+        if (mSelectedAnnotationIndex != -1) {
 			if (mDeleteAnnotation != null)
 				mDeleteAnnotation.cancel(true);
 
@@ -536,7 +536,26 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		}
 	}
 
-	public void deselectAnnotation() {
+
+    public void editSelectedAnnotation() {
+        if (mSelectedAnnotationIndex != -1) {
+            PointF[][] arcs = mAnnotations[mSelectedAnnotationIndex].arcs;
+            if(arcs != null)
+            {
+                mDrawing = new ArrayList<ArrayList<PointF>>();
+                for(int i = 0; i < arcs.length; i++)
+                {
+                    mDrawing.add(new ArrayList<PointF>(Arrays.asList(arcs[i])));
+                }
+                invalidate();
+                deleteSelectedAnnotation();
+//                deselectAnnotation();
+            }
+        }
+    }
+    
+    
+    public void deselectAnnotation() {
 		mSelectedAnnotationIndex = -1;
 		setItemSelectBox(null);
 	}
