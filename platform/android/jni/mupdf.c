@@ -1875,7 +1875,7 @@ JNI_FN(MuPDFCore_getWidgetAreasInternal)(JNIEnv * env, jobject thiz, int pageNum
 JNIEXPORT jobjectArray JNICALL
 JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNumber)
 {
-    jclass annotClass, pt_cls;
+    jclass annotClass, pt_cls, ptarr_cls;
     jfieldID x_fid, y_fid;
     jmethodID ctor, ctor2, ctor3;
     jobjectArray arr;
@@ -1925,8 +1925,10 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
         pdf_obj *inklist = pdf_annot_inklist((pdf_annot *)annot);
         int nArcs = pdf_array_len(inklist);
         LOGI("found %d arcs", nArcs);
-        jobjectArray arcs = (*env)->NewObjectArray(env, nArcs, pt_cls, NULL);
-//        if (arcs == NULL) return NULL;
+        jobjectArray arcs;
+//        jobjectArray arcs = (*env)->NewObjectArray(env, nArcs, pt_cls, NULL);
+//                if (arcs == NULL) return NULL;
+        
         int i;
         for(i = 0; i < nArcs; i++)
         {
@@ -1934,17 +1936,27 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
             int nArc = pdf_array_len(inklisti);
             LOGI(" of legth %d ", nArc/2);
             jobjectArray arci = (*env)->NewObjectArray(env, nArc/2, pt_cls, NULL);
+
+            if(i==0) { //Get the class of the array of pointF and create the array of arrays 
+                ptarr_cls = (*env)->GetObjectClass(env, arci);
+                if (ptarr_cls == NULL) {
+                    fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetObjectClass()");
+                }
+                else {
+                    arcs = (*env)->NewObjectArray(env, nArcs, ptarr_cls, NULL);
+                    if (arcs == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "arcs == NULL");
+                }
+            }
+            
+            if (arci == NULL) return NULL;
             int j;
             for(j = 0; j < nArc; j+=2)
             {
-                /* pdf_obj *inklistij = pdf_array_get(inklisti, j); */
                 fz_point point; 
-                /* pdf_to_point(glo->ctx, inklistij, &point); */
                 point.x = pdf_to_real(pdf_array_get(inklisti, j));
                 point.y = pdf_to_real(pdf_array_get(inklisti, j+1));
-                LOGI("  with coords %f %f ", point.x, point.y);
                 fz_transform_point(&point, &ctm);
-                LOGI("  and transformed coords %f %f ", point.x, point.y);
+                point.y = (&glo->pages[glo->current])->height - point.y;//Flip y here because pdf coordinate system is upside down
                 jobject pfobj = (*env)->NewObject(env, pt_cls, ctor3, point.x, point.y);
                 (*env)->SetObjectArrayElement(env, arci, j/2, pfobj);
                 (*env)->DeleteLocalRef(env, pfobj);
