@@ -753,20 +753,7 @@ pdf_create_annot(pdf_document *doc, pdf_page *page, fz_annot_type type)
 		annot->pagerect = rect;
 		annot->ap = NULL;
 		annot->widget_type = PDF_WIDGET_TYPE_NOT_WIDGET;
-		annot->annot_type = type;
-
-//Christian Gogolin
-// Add:                
-// /Resources<</ExtGState<</R0<</AIS false/Type/ExtGState/BM/Multiply>>>>
-// ....
-// >stream
-// /R0 gs
-
-//Instead of
-// /Resources<</ExtGState<</Alp0 106	0 R>>
-// ...
-// /Alp0 gs
-                
+		annot->annot_type = type;                
 		/*
 			Both annotation object and annotation structure are now created.
 			Insert the object in the hierarchy and the structure in the
@@ -973,6 +960,14 @@ pdf_set_ink_annot_list(pdf_document *doc, pdf_annot *annot, fz_point *pts, int *
 	pdf_dict_puts_drop(annot->obj, "C", col);
 	for (i = 0; i < 3; i++)
 		pdf_array_push_drop(col, pdf_new_real(doc, color[i]));
+        
+            //Maybe it would be good to also write an AP with defined cap and line join operations to make sure that ink annotations have the same appearance on all devices based on the follwoing code:
+        /* stroke->start_cap = FZ_LINECAP_BUTT; */
+        /* fz_buffer_printf(ctx, gs->buf, "%d J\n", stroke->start_cap); */
+        /* stroke->linejoin = FZ_LINEJOIN_ROUND; */
+        /* fz_buffer_printf(ctx, gs->buf, "%d j\n", stroke->linejoin); */
+        
+
 }
 
 static void find_free_font_name(pdf_obj *fdict, char *buf, int buf_size)

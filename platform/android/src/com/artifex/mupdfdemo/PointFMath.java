@@ -25,6 +25,11 @@ public class PointFMath
     public static float distance(PointF A, PointF B) {
         return new PointF(A.x - B.x, A.y - B.y).length();
     }
+
+    public static float pointToLineDistance(PointF A, PointF B, PointF P) {
+        float l = (float)Math.sqrt((B.x-A.x)*(B.x-A.x)+(B.y-A.y)*(B.y-A.y));
+        return Math.abs((P.x-A.x)*(B.y-A.y)-(P.y-A.y)*(B.x-A.x))/l;
+    }
     
     public static LineSegmentCircleIntersectionResult LineSegmentCircleIntersection(PointF A, PointF B, PointF C, float radius) {
             //Adapted from http://keith-hair.net/blog/2008/08/05/line-to-circle-intersection-data/

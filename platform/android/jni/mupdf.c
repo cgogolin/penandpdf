@@ -122,8 +122,7 @@ struct globals_s
 	// needs access to the following.
     JNIEnv *env;
     jclass thiz;
-
-        //added by me
+    
     float inkThickness;
     float inkColor[3];
     float highlightColor[3];
@@ -1924,17 +1923,15 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
         
         pdf_obj *inklist = pdf_annot_inklist((pdf_annot *)annot);
         int nArcs = pdf_array_len(inklist);
-        LOGI("found %d arcs", nArcs);
+//        LOGI("found %d arcs", nArcs);
         jobjectArray arcs;
-//        jobjectArray arcs = (*env)->NewObjectArray(env, nArcs, pt_cls, NULL);
-//                if (arcs == NULL) return NULL;
         
         int i;
         for(i = 0; i < nArcs; i++)
         {
             pdf_obj *inklisti = pdf_array_get(inklist, i);
             int nArc = pdf_array_len(inklisti);
-            LOGI(" of legth %d ", nArc/2);
+//            LOGI(" of legth %d ", nArc/2);
             jobjectArray arci = (*env)->NewObjectArray(env, nArc/2, pt_cls, NULL);
 
             if(i==0) { //Get the class of the array of pointF and create the array of arrays 
@@ -1967,12 +1964,12 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
         
         fz_bound_annot(glo->doc, annot, &rect);
         fz_transform_rect(&rect, &ctm);
-        if (ctor != NULL && inklist != NULL)
+        if (ctor2 != NULL && inklist != NULL)
         {
             jannot = (*env)->NewObject(env, annotClass, ctor2,
                                        (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1, type, arcs);
         }
-        else
+        else if(ctor != NULL)
         {
             jannot = (*env)->NewObject(env, annotClass, ctor,
                                    (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1, type);

@@ -92,7 +92,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private MuPDFReaderView mDocView;
     Parcelable mDocViewParcelable;
     private EditText     mPasswordView;
-    private ActionBarMode   mActionBarMode = ActionBarMode.Main;
+    private ActionBarMode  mActionBarMode = ActionBarMode.Main;
+    private boolean selectedAnnotationIsEditable = false;
     private SearchTask   mSearchTask;
     private AlertDialog.Builder mAlertBuilder;
     private boolean    mLinkHighlight = false;
@@ -485,6 +486,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     break;
                 case Edit:
                     inflater.inflate(R.menu.edit_menu, menu);
+                    if(!selectedAnnotationIsEditable){
+                        MenuItem editButton = menu.findItem(R.id.menu_edit);
+                        editButton.setEnabled(false).setVisible(false);
+                    }
                     break;
                 case Search:
                     inflater.inflate(R.menu.search_menu, menu);
@@ -906,6 +911,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                             case Annotation:
                                 mActionBarMode = ActionBarMode.Edit;
                                 invalidateOptionsMenu();
+                                selectedAnnotationIsEditable = ((MuPDFPageView)getDisplayedView()).selectedAnnotationIsEditable();
                                 break;
                             case Nothing:
                                 if(mActionBarMode != ActionBarMode.Search)

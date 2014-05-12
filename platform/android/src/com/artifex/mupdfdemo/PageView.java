@@ -621,16 +621,19 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
         final float docRelX = (x - getLeft())/scale;
         final float docRelY = (y - getTop())/scale;
+        PointF point = new PointF(docRelX, docRelY);
+        
         if (mDrawing != null && mDrawing.size() > 0) {
             ArrayList<PointF> arc = mDrawing.get(mDrawing.size() - 1);
-            arc.add(new PointF(docRelX, docRelY));
+            int lastElementIndex = arc.size()-1;
+            // if(lastElementIndex >= 2 && PointFMath.pointToLineDistance(arc.get(lastElementIndex-2),point,arc.get(lastElementIndex-1)) < inkThickness && PointFMath.pointToLineDistance(arc.get(lastElementIndex-2),arc.get(lastElementIndex),arc.get(lastElementIndex-1)) < inkThickness) {
+            //     arc.remove(lastElementIndex-1);
+            // }
+            if(lastElementIndex >= 2 && PointFMath.distance(arc.get(lastElementIndex-1), point) < inkThickness)
+                arc.remove(lastElementIndex);
+            arc.add(point);
             mOverlayView.invalidate();
         }
-            //Postprocess the current arc
-        // if(arc.size() >= 4)
-        // {
-        //     inkThickness * scale
-        // }
     }
     
     public void finishDraw() {
@@ -638,7 +641,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             ArrayList<PointF> arc = mDrawing.get(mDrawing.size() - 1);
                 //Make points look nice
             if(arc.size() == 1) {
-                final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+//                final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
                 final PointF lastArc = arc.get(0);
                 arc.add(new PointF(lastArc.x+0.5f*inkThickness,lastArc.y));
                 arc.add(new PointF(lastArc.x+0.5f*inkThickness,lastArc.y+0.5f*inkThickness));

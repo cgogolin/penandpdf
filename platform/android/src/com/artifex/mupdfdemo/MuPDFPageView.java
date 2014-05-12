@@ -558,6 +558,19 @@ public class MuPDFPageView extends PageView implements MuPDFView {
             }
         }
     }
+
+    
+    public boolean selectedAnnotationIsEditable() {
+        if (mSelectedAnnotationIndex != -1) {
+            PointF[][] arcs = mAnnotations[mSelectedAnnotationIndex].arcs;
+            if(arcs != null)
+                return true;
+            else
+                return false;
+        }
+        else
+            return false;
+    }
     
     
     public void deselectAnnotation() {
