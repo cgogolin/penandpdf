@@ -1708,8 +1708,8 @@ void pdf_update_ink_appearance(pdf_document *doc, pdf_annot *annot)
 		stroke->linewidth = width;
 
                     //Added to improve rendering of ink annotations
-                stroke->start_cap = FZ_LINECAP_BUTT;
-                stroke->end_cap = FZ_LINECAP_BUTT;
+                stroke->start_cap = FZ_LINECAP_ROUND;
+                stroke->end_cap = FZ_LINECAP_ROUND;
                 stroke->linejoin = FZ_LINEJOIN_ROUND;
                 
 		for (i = 0; i < n; i ++)

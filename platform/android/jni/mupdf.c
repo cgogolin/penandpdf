@@ -573,6 +573,7 @@ JNI_FN(MuPDFCore_gotoPageInternal)(JNIEnv *env, jobject thiz, int page)
         LOGI("Load page %d", pc->number);
         pc->page = fz_load_page(glo->doc, pc->number);
         zoom = glo->resolution / 72;
+        if (pc->page == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "fz_load_page() returned NULL");
         fz_bound_page(glo->doc, pc->page, &pc->media_box);
         fz_scale(&ctm, zoom, zoom);
         rect = pc->media_box;
@@ -1721,24 +1722,24 @@ JNI_FN(MuPDFCore_getPageLinksInternal)(JNIEnv * env, jobject thiz, int pageNumbe
     globals *glo = get_globals(env, thiz);
 
     linkInfoClass = (*env)->FindClass(env, PACKAGENAME "/LinkInfo");
-    if (linkInfoClass == NULL) return NULL;
+    if (linkInfoClass == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "FindClass LinkInfo failed");
     linkInfoInternalClass = (*env)->FindClass(env, PACKAGENAME "/LinkInfoInternal");
-    if (linkInfoInternalClass == NULL) return NULL;
+    if (linkInfoInternalClass == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "FindClass LinkInfoInternal failed");
     linkInfoExternalClass = (*env)->FindClass(env, PACKAGENAME "/LinkInfoExternal");
-    if (linkInfoExternalClass == NULL) return NULL;
+    if (linkInfoExternalClass == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "FindClass LinkInfoExternal failed");
     linkInfoRemoteClass = (*env)->FindClass(env, PACKAGENAME "/LinkInfoRemote");
-    if (linkInfoRemoteClass == NULL) return NULL;
+    if (linkInfoRemoteClass == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "FindClass LinkInfoRemote failed");
     ctorInternal = (*env)->GetMethodID(env, linkInfoInternalClass, "<init>", "(FFFFIFFFFI)V");
-    if (ctorInternal == NULL) return NULL;
+    if (ctorInternal == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetMethodID LinkInfoInternal() failed");
     ctorExternal = (*env)->GetMethodID(env, linkInfoExternalClass, "<init>", "(FFFFLjava/lang/String;)V");
-    if (ctorExternal == NULL) return NULL;
+    if (ctorExternal == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetMethodID");
     ctorRemote = (*env)->GetMethodID(env, linkInfoRemoteClass, "<init>", "(FFFFLjava/lang/String;IZ)V");
-    if (ctorRemote == NULL) return NULL;
+    if (ctorRemote == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetMethodID LinkInfoRemote() failed");
 
     JNI_FN(MuPDFCore_gotoPageInternal)(env, thiz, pageNumber);
     pc = &glo->pages[glo->current];
     if (pc->page == NULL || pc->number != pageNumber)
-        return NULL;
+        fz_throw(glo->ctx, FZ_ERROR_GENERIC, "MuPDFCore_gotoPageInternal failed");
 
     zoom = glo->resolution / 72;
     fz_scale(&ctm, zoom, zoom);
@@ -1760,7 +1761,7 @@ JNI_FN(MuPDFCore_getPageLinksInternal)(JNIEnv * env, jobject thiz, int pageNumbe
     if (arr == NULL)
     {
         fz_drop_link(glo->ctx, list);
-        return NULL;
+        fz_throw(glo->ctx, FZ_ERROR_GENERIC, "NewObjectArray() failed");
     }
 
     count = 0;
@@ -1802,7 +1803,7 @@ JNI_FN(MuPDFCore_getPageLinksInternal)(JNIEnv * env, jobject thiz, int pageNumbe
         if (linkInfo == NULL)
         {
             fz_drop_link(glo->ctx, list);
-            return NULL;
+            fz_throw(glo->ctx, FZ_ERROR_GENERIC, "linkInfo = NULL");
         }
         (*env)->SetObjectArrayElement(env, arr, count, linkInfo);
         (*env)->DeleteLocalRef(env, linkInfo);

@@ -17,6 +17,10 @@ void pdf_update_text_appearance(pdf_document *doc, pdf_obj *obj, char *eventValu
 void pdf_update_combobox_appearance(pdf_document *doc, pdf_obj *obj);
 void pdf_update_pushbutton_appearance(pdf_document *doc, pdf_obj *obj);
 void pdf_update_text_markup_appearance(pdf_document *doc, pdf_annot *annot, fz_annot_type type);
+/*
+	pdf_update_ink_appearance: update the appearance stream for a ink
+	annotation, basing it on the annoations inkList.
+*/
 void pdf_update_ink_appearance(pdf_document *doc, pdf_annot *annot);
 /*
 	pdf_update_free_text_annot_appearance: update the appearance stream for a free text

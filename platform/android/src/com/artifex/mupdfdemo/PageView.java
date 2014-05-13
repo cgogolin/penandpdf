@@ -265,6 +265,19 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             mDrawPatch.cancel(true);
             mDrawPatch = null;
         }
+            //Cancel all other async tasks
+        if (mGetText != null) {
+            mGetText.cancel(true);
+            mGetText = null;
+        }
+        if (mGetLinkInfo != null) {
+            mGetLinkInfo.cancel(true);
+            mGetLinkInfo = null;
+        }
+        if (mDrawPatch != null) {
+            mDrawPatch.cancel(true);
+            mDrawPatch = null;
+        }
     }
 
     public void releaseBitmaps() {
@@ -629,8 +642,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             // if(lastElementIndex >= 2 && PointFMath.pointToLineDistance(arc.get(lastElementIndex-2),point,arc.get(lastElementIndex-1)) < inkThickness && PointFMath.pointToLineDistance(arc.get(lastElementIndex-2),arc.get(lastElementIndex),arc.get(lastElementIndex-1)) < inkThickness) {
             //     arc.remove(lastElementIndex-1);
             // }
-            if(lastElementIndex >= 2 && PointFMath.distance(arc.get(lastElementIndex-1), point) < inkThickness)
-                arc.remove(lastElementIndex);
+            // if(lastElementIndex >= 2 && PointFMath.distance(arc.get(lastElementIndex-1), point) < inkThickness)
+            //     arc.remove(lastElementIndex);
             arc.add(point);
             mOverlayView.invalidate();
         }

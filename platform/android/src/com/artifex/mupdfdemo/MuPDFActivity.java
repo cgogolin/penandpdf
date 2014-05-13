@@ -337,40 +337,42 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             }
             invalidateOptionsMenu();
         }
+    
+    
+    @Override
+    protected void onPause() {
+        super.onPause();
+        
+            //Stop searches
+        if (mSearchTask != null) mSearchTask.stop();
+        
+            //Save the Viewport and update the recent files list
+        saveViewportAndRecentFiles();
+        
+            //Stop receiving alerts
+        if (core != null)
+        {
+            core.stopAlerts();
+            destroyAlertWaiter();
+        }
+        
+    }
+    
 
-
-        // @Override
-        // protected void onPause() {
-        //     super.onPause():
-        // }
-
-
-        @Override
-        protected void onStop() {
-            super.onStop();
-            
-            if (mSearchTask != null) mSearchTask.stop();
-
-                //Save the Viewport and update the recent files list
-            saveViewportAndRecentFiles();
-
-                //Stop receiving alerts
-            if (core != null)
+    @Override
+    protected void onStop() {
+        super.onStop();
+            //Save only during onStop() as this can take some time
+        if(core != null && !isChangingConfigurations())
+        {
+            if(!mNotSaveOnStopThisTime && core.hasChanges() && core.getFileName() != null && mSaveOnStop)
             {
-                core.stopAlerts();
-                destroyAlertWaiter();
-            }
-            
-            if(core != null && !isChangingConfigurations())
-            {
-                if(!mNotSaveOnStopThisTime && core.hasChanges() && core.getFileName() != null && mSaveOnStop)
-                {
-                    if(!save())
-                        showInfo(getString(R.string.error_saveing));
-                }
+                if(!save())
+                    showInfo(getString(R.string.error_saveing));
             }
         }
-
+    }
+    
     
     @Override
     protected void onDestroy() {//There is no guarantee that this is ever called!!!
@@ -694,10 +696,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                                         showInfo(getString(R.string.error_saveing));
                                     else
                                     {
-//                                        onStop();
-//                                        core.onDestroy(); //Destroy only if we have saved
-//                                        core = null;
-                                        onResume(); //This is a hack but allows me to not duplicate code...
+                                        onResume(); //This is a hack but allows me to not duplicate code. Remeber that save() usually destroyes the core!
                                     }
                                 }
                             }
@@ -961,11 +960,13 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 //Clear the search results (not sure we need this)
 //            mDocView.clearSearchResults();            
             
-                //Ascociate the mDocView with the adapter if necessary
-                //Remark: This can happen because the core was destroyed during save().
-                //        In that case mDocView is still intact and setAdapter() should thus
-                //        not force it to reload its child views, wich might contain
-                //        unfinished annotations for example
+                //Ascociate the mDocView with a new adapter if necessary
+                //Attention: This will cause the old adapter and then also the old core (a
+                //           reference to which is held in the adapter and in various PageViews
+                //           that are in the cache of the ReaderView, which is also cleared on
+                //           setAdapter()) to be garbage collected!
+                //           This can cause problems if some async tasks are still running in
+                //           the background and using the old core!!! Needs to be fixed!
             if(mDocViewNeedsNewAdapter) {
                 mDocView.setAdapter(new MuPDFPageAdapter(this, this, core));
                 mDocViewNeedsNewAdapter = false;
@@ -1039,7 +1040,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     }
 
 
-    private boolean saveAs(Uri uri) {
+    private boolean saveAs(Uri uri) { //Attention! Potentially destroyes the core !!
         if (core == null) return false;
             //Save the file to the new location
         boolean success = core.saveAs(uri.toString());
@@ -1049,6 +1050,9 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
             SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
             SharedPreferences.Editor edit = prefs.edit();
             saveViewport(edit, uri.getPath());
+                //Stop alerts
+            core.stopAlerts();
+            destroyAlertWaiter();
                 //Destroy the core
             core.onDestroy();
             core = null;
@@ -1059,14 +1063,18 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     }
 
     
-    private boolean save() {
+    private boolean save() { //Attention! Potentially destroyes the core !!
         if (core == null) return false;
         boolean success = core.save();
         if(!success)
             showInfo(getString(R.string.error_saveing));
         else
         {
-            core.onDestroy();  //Destroy only if we have saved
+                //Stop alerts
+            core.stopAlerts();
+            destroyAlertWaiter();
+                //Destroy the core
+            core.onDestroy();  
             core = null;
         }
         return success;
@@ -1080,6 +1088,18 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         edit.putFloat("normalizedxscroll"+path, mDocView.getNormalizedXScroll());
         edit.putFloat("normalizedyscroll"+path, mDocView.getNormalizedYScroll());
         edit.commit();
+    }
+
+
+    private void restoreVieport() {
+        if (core != null && mDocView != null) {
+            String path = core.getPath(); //Can be null
+            SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+            if(path != null)
+                setViewport(prefs, path);
+            else
+                setViewport(prefs, core.getFileName());
+        }
     }
 
 
@@ -1117,19 +1137,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 saveViewport(edit, core.getFileName());
         }
     }
-
-    
-    private void restoreVieport() {
-        if (core != null && mDocView != null) {
-            String path = core.getPath(); //Can be null
-            SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-            if(path != null)
-                setViewport(prefs, path);
-            else
-                setViewport(prefs, core.getFileName());
-        }
-    }
-
     
         @Override
     public Object onRetainNonConfigurationInstance() { //Called if the app is destroyed for a configuration change
@@ -1337,19 +1344,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         mActionBarMode = ActionBarMode.Hidden;
         invalidateOptionsMenu();
         resetupMDocViewAfterActionBarAnimation(false);
-        //     //This is an ungly hack that recreates the mDocView only after a delay
-        // new Handler().postDelayed(new Runnable() {
-        //         @Override
-        //         public void run() {
-        //             if(mDocView != null) {
-        //                 mDocView.setScale(1.0f);
-        //                 saveViewportAndRecentFiles(); //So that we show the right page when the mDocView is recreated
-        //             }
-        //             mDocView = null;
-        //             setupmDocView();
-        //             mDocView.setLinksEnabled(false);
-        //         }
-        //     }, 2000);
     }
             
     private void exitFullScreen() {
@@ -1358,19 +1352,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         mActionBarMode = ActionBarMode.Main;
         invalidateOptionsMenu();
         resetupMDocViewAfterActionBarAnimation(true);
-        //     //This is an ungly hack that recreates the mDocView only after a delay
-        // new Handler().postDelayed(new Runnable() {
-        //         @Override
-        //         public void run() {
-        //             if(mDocView != null) {
-        //                 mDocView.setScale(1.0f);
-        //                 saveViewportAndRecentFiles(); //So that we show the right page when the mDocView is recreated
-        //             }
-        //             mDocView = null;
-        //             setupmDocView();
-        //             mDocView.setLinksEnabled(true);
-        //         }
-        //     }, 2000);
     }
 
     private void resetupMDocViewAfterActionBarAnimation(final boolean linksEnabled) {
