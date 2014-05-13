@@ -233,7 +233,8 @@ public class MuPDFCore
 
     public synchronized LinkInfo [] getPageLinks(int page) {
         LinkInfo[] pageLinks = getPageLinksInternal(page);
-            // To flip the y cooridnate of all link targets to make coordiante system consistent with thr link rect and coordinates of search results
+        if(pageLinks == null) return null;
+            // To flip the y cooridnate of all link targets to make coordiante system consistent with the link rect and coordinates of search results
         for (LinkInfo link: pageLinks)
             if(link.type() == LinkInfo.LinkType.Internal)
             {

@@ -490,6 +490,8 @@ JNIEXPORT int JNICALL
 JNI_FN(MuPDFCore_countPagesInternal)(JNIEnv *env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
+
     fz_context *ctx = glo->ctx;
     int count = 0;
 
@@ -509,6 +511,7 @@ JNI_FN(MuPDFCore_fileFormatInternal)(JNIEnv * env, jobject thiz)
 {
     char info[64];
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
 
     fz_meta(glo->doc, FZ_META_FORMAT_INFO, info, sizeof(info));
 
@@ -518,6 +521,7 @@ JNI_FN(MuPDFCore_fileFormatInternal)(JNIEnv * env, jobject thiz)
 JNIEXPORT void JNICALL
 JNI_FN(MuPDFCore_gotoPageInternal)(JNIEnv *env, jobject thiz, int page)
 {
+//    LOGI("MuPDFCore_gotoPageInternal(, %d)", page);
     int i;
     int furthest;
     int furthest_dist = -1;
@@ -526,8 +530,10 @@ JNI_FN(MuPDFCore_gotoPageInternal)(JNIEnv *env, jobject thiz, int page)
     fz_irect bbox;
     page_cache *pc;
     globals *glo = get_globals(env, thiz);
+    if(glo == NULL) return;
     fz_context *ctx = glo->ctx;
-
+    if(ctx == NULL) return;
+    
     for (i = 0; i < NUM_CACHE; i++)
     {
         if (glo->pages[i].page != NULL && glo->pages[i].number == page)
@@ -573,7 +579,7 @@ JNI_FN(MuPDFCore_gotoPageInternal)(JNIEnv *env, jobject thiz, int page)
         LOGI("Load page %d", pc->number);
         pc->page = fz_load_page(glo->doc, pc->number);
         zoom = glo->resolution / 72;
-        if (pc->page == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "fz_load_page() returned NULL");
+        if (pc->page == NULL) return NULL;//fz_throw(glo->ctx, FZ_ERROR_GENERIC, "fz_load_page() returned NULL");
         fz_bound_page(glo->doc, pc->page, &pc->media_box);
         fz_scale(&ctm, zoom, zoom);
         rect = pc->media_box;
@@ -591,6 +597,7 @@ JNIEXPORT float JNICALL
 JNI_FN(MuPDFCore_getPageWidth)(JNIEnv *env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0.0f;
 //    LOGI("PageWidth=%d", glo->pages[glo->current].width);
     return glo->pages[glo->current].width;
 }
@@ -599,6 +606,7 @@ JNIEXPORT float JNICALL
 JNI_FN(MuPDFCore_getPageHeight)(JNIEnv *env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0.0f;
 //    LOGI("PageHeight=%d", glo->pages[glo->current].height);
     return glo->pages[glo->current].height;
 }
@@ -644,6 +652,7 @@ JNI_FN(MuPDFCore_drawPage)(JNIEnv *env, jobject thiz, jobject bitmap,
     fz_pixmap *pix = NULL;
     float xscale, yscale;
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
     fz_context *ctx = glo->ctx;
     fz_document *doc = glo->doc;
     page_cache *pc = &glo->pages[glo->current];
@@ -812,6 +821,7 @@ JNI_FN(MuPDFCore_updatePageInternal)(JNIEnv *env, jobject thiz, jobject bitmap, 
     int hq = (patchW < pageW || patchH < pageH);
     int i;
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
     fz_context *ctx = glo->ctx;
     fz_document *doc = glo->doc;
     rect_node *crect;
@@ -1052,7 +1062,7 @@ JNIEXPORT jboolean JNICALL
 JNI_FN(MuPDFCore_needsPasswordInternal)(JNIEnv * env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
-
+    if (glo == NULL) return 0;
     return fz_needs_password(glo->doc) ? JNI_TRUE : JNI_FALSE;
 }
 
@@ -1062,7 +1072,7 @@ JNI_FN(MuPDFCore_authenticatePasswordInternal)(JNIEnv *env, jobject thiz, jstrin
     const char *pw;
     int result;
     globals *glo = get_globals(env, thiz);
-
+    if (glo == NULL) return 0;
     pw = (*env)->GetStringUTFChars(env, password, NULL);
     if (pw == NULL)
         return JNI_FALSE;
@@ -1076,6 +1086,7 @@ JNIEXPORT jboolean JNICALL
 JNI_FN(MuPDFCore_hasOutlineInternal)(JNIEnv * env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
     fz_outline *outline = fz_load_outline(glo->doc);
 
     fz_free_outline(glo->ctx, outline);
@@ -1092,6 +1103,7 @@ JNI_FN(MuPDFCore_getOutlineInternal)(JNIEnv * env, jobject thiz)
     fz_outline *outline;
     int nItems;
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
     jobjectArray ret;
 
     olClass = (*env)->FindClass(env, PACKAGENAME "/OutlineItem");
@@ -1133,6 +1145,7 @@ JNI_FN(MuPDFCore_searchPage)(JNIEnv * env, jobject thiz, jstring jtext)
     int hit_count = 0;
     const char *str;
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
     fz_context *ctx = glo->ctx;
     fz_document *doc = glo->doc;
     page_cache *pc = &glo->pages[glo->current];
@@ -1220,6 +1233,7 @@ JNI_FN(MuPDFCore_text)(JNIEnv * env, jobject thiz)
     float zoom;
     fz_matrix ctm;
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
     fz_context *ctx = glo->ctx;
     fz_document *doc = glo->doc;
     page_cache *pc = &glo->pages[glo->current];
@@ -1335,6 +1349,7 @@ JNI_FN(MuPDFCore_textAsHtml)(JNIEnv * env, jobject thiz)
     fz_device *dev = NULL;
     fz_matrix ctm;
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
     fz_context *ctx = glo->ctx;
     fz_document *doc = glo->doc;
     page_cache *pc = &glo->pages[glo->current];
@@ -1414,6 +1429,7 @@ JNIEXPORT void JNICALL
 JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjectArray points, fz_annot_type type)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return;
     fz_context *ctx = glo->ctx;
     fz_document *doc = glo->doc;
     pdf_document *idoc = pdf_specifics(doc);
@@ -1529,6 +1545,7 @@ JNIEXPORT void JNICALL
 JNI_FN(MuPDFCore_addInkAnnotationInternal)(JNIEnv * env, jobject thiz, jobjectArray arcs)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return;
     fz_context *ctx = glo->ctx;
     fz_document *doc = glo->doc;
     pdf_document *idoc = pdf_specifics(doc);
@@ -1625,6 +1642,7 @@ JNIEXPORT void JNICALL
 JNI_FN(MuPDFCore_deleteAnnotationInternal)(JNIEnv * env, jobject thiz, int annot_index)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return;
     fz_context *ctx = glo->ctx;
     fz_document *doc = glo->doc;
     pdf_document *idoc = pdf_specifics(doc);
@@ -1675,9 +1693,8 @@ JNIEXPORT void JNICALL
 JNI_FN(MuPDFCore_destroying)(JNIEnv * env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
-
-    if (glo == NULL)
-        return;
+    if (glo == NULL) return;
+    
     LOGI("Destroying");
     fz_free(glo->ctx, glo->current_path);
     glo->current_path = NULL;
@@ -1720,6 +1737,7 @@ JNI_FN(MuPDFCore_getPageLinksInternal)(JNIEnv * env, jobject thiz, int pageNumbe
     int count;
     page_cache *pc;
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
 
     linkInfoClass = (*env)->FindClass(env, PACKAGENAME "/LinkInfo");
     if (linkInfoClass == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "FindClass LinkInfo failed");
@@ -1739,12 +1757,17 @@ JNI_FN(MuPDFCore_getPageLinksInternal)(JNIEnv * env, jobject thiz, int pageNumbe
     JNI_FN(MuPDFCore_gotoPageInternal)(env, thiz, pageNumber);
     pc = &glo->pages[glo->current];
     if (pc->page == NULL || pc->number != pageNumber)
-        fz_throw(glo->ctx, FZ_ERROR_GENERIC, "MuPDFCore_gotoPageInternal failed");
+//        fz_throw(glo->ctx, FZ_ERROR_GENERIC, "MuPDFCore_gotoPageInternal failed");
+        return NULL;
 
     zoom = glo->resolution / 72;
     fz_scale(&ctm, zoom, zoom);
 
     list = fz_load_links(glo->doc, pc->page);
+    if (list == NULL)
+//        fz_throw(glo->ctx, FZ_ERROR_GENERIC, "fz_load_links() returned NULL");
+        return NULL;
+    
     count = 0;
     for (link = list; link; link = link->next)
     {
@@ -1828,6 +1851,7 @@ JNI_FN(MuPDFCore_getWidgetAreasInternal)(JNIEnv * env, jobject thiz, int pageNum
     int count;
     page_cache *pc;
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
 
     rectFClass = (*env)->FindClass(env, "android/graphics/RectF");
     if (rectFClass == NULL) return NULL;
@@ -1886,6 +1910,7 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
     int count;
     page_cache *pc;
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return;
 
     annotClass = (*env)->FindClass(env, PACKAGENAME "/Annotation");
     if (annotClass == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "FindClass");
@@ -1990,6 +2015,7 @@ JNIEXPORT int JNICALL
 JNI_FN(MuPDFCore_passClickEventInternal)(JNIEnv * env, jobject thiz, int pageNumber, float x, float y)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
     fz_context *ctx = glo->ctx;
     fz_matrix ctm;
     pdf_document *idoc = pdf_specifics(glo->doc);
@@ -2044,6 +2070,7 @@ JNI_FN(MuPDFCore_getFocusedWidgetTextInternal)(JNIEnv * env, jobject thiz)
 {
     char *text = "";
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
     fz_context *ctx = glo->ctx;
 
     fz_try(ctx)
@@ -2072,6 +2099,7 @@ JNI_FN(MuPDFCore_setFocusedWidgetTextInternal)(JNIEnv * env, jobject thiz, jstri
     const char *text;
     int result = 0;
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
     fz_context *ctx = glo->ctx;
 
     text = (*env)->GetStringUTFChars(env, jtext, NULL);
@@ -2110,6 +2138,7 @@ JNIEXPORT jobjectArray JNICALL
 JNI_FN(MuPDFCore_getFocusedWidgetChoiceOptions)(JNIEnv * env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
     fz_context *ctx = glo->ctx;
     pdf_document *idoc = pdf_specifics(glo->doc);
     pdf_widget *focus;
@@ -2166,6 +2195,7 @@ JNIEXPORT jobjectArray JNICALL
 JNI_FN(MuPDFCore_getFocusedWidgetChoiceSelected)(JNIEnv * env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
     fz_context *ctx = glo->ctx;
     pdf_document *idoc = pdf_specifics(glo->doc);
     pdf_widget *focus;
@@ -2222,6 +2252,7 @@ JNIEXPORT void JNICALL
 JNI_FN(MuPDFCore_setFocusedWidgetChoiceSelectedInternal)(JNIEnv * env, jobject thiz, jobjectArray arr)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return;
     fz_context *ctx = glo->ctx;
     pdf_document *idoc = pdf_specifics(glo->doc);
     pdf_widget *focus;
@@ -2280,6 +2311,7 @@ JNIEXPORT int JNICALL
 JNI_FN(MuPDFCore_getFocusedWidgetTypeInternal)(JNIEnv * env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
     pdf_document *idoc = pdf_specifics(glo->doc);
     pdf_widget *focus;
 
@@ -2314,6 +2346,7 @@ JNIEXPORT int JNICALL
 JNI_FN(MuPDFCore_getFocusedWidgetSignatureState)(JNIEnv * env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
     pdf_document *idoc = pdf_specifics(glo->doc);
     pdf_widget *focus;
 
@@ -2335,6 +2368,7 @@ JNIEXPORT jstring JNICALL
 JNI_FN(MuPDFCore_checkFocusedSignatureInternal)(JNIEnv * env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
     pdf_document *idoc = pdf_specifics(glo->doc);
     pdf_widget *focus;
     char ebuf[256] = "Failed";
@@ -2360,6 +2394,7 @@ JNIEXPORT jboolean JNICALL
 JNI_FN(MuPDFCore_signFocusedSignatureInternal)(JNIEnv * env, jobject thiz, jstring jkeyfile, jstring jpassword)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
     fz_context *ctx = glo->ctx;
     pdf_document *idoc = pdf_specifics(glo->doc);
     pdf_widget *focus;
@@ -2399,6 +2434,7 @@ JNIEXPORT jobject JNICALL
 JNI_FN(MuPDFCore_waitForAlertInternal)(JNIEnv * env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
     jclass alertClass;
     jmethodID ctor;
     jstring title;
@@ -2449,6 +2485,7 @@ JNIEXPORT void JNICALL
 JNI_FN(MuPDFCore_replyToAlertInternal)(JNIEnv * env, jobject thiz, jobject alert)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return;
     jclass alertClass;
     jfieldID field;
     int button_pressed;
@@ -2482,7 +2519,7 @@ JNIEXPORT void JNICALL
 JNI_FN(MuPDFCore_startAlertsInternal)(JNIEnv * env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
-
+    if (glo == NULL) return;
     if (!glo->alerts_initialised)
         return;
 
@@ -2502,7 +2539,7 @@ JNIEXPORT void JNICALL
 JNI_FN(MuPDFCore_stopAlertsInternal)(JNIEnv * env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
-
+    if (glo == NULL) return;
     if (!glo->alerts_initialised)
         return;
 
@@ -2524,6 +2561,7 @@ JNIEXPORT jboolean JNICALL
 JNI_FN(MuPDFCore_hasChangesInternal)(JNIEnv * env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
     pdf_document *idoc = pdf_specifics(glo->doc);
 
     return (idoc && pdf_has_unsaved_changes(idoc)) ? JNI_TRUE : JNI_FALSE;
@@ -2567,6 +2605,7 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
     int written = 0;
     
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
     fz_context *ctx = glo->ctx;
 
         //Try to get the new path from jpath
@@ -2671,6 +2710,7 @@ JNIEXPORT void JNICALL
 JNI_FN(MuPDFCore_dumpMemoryInternal)(JNIEnv * env, jobject thiz)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return;
     fz_context *ctx = glo->ctx;
 
 #ifdef MEMENTO
@@ -2686,6 +2726,7 @@ JNIEXPORT jobjectArray JNICALL
 JNI_FN(MuPDFCore_setInkThickness)(JNIEnv * env, jobject thiz, float inkThickness)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
     glo->inkThickness = inkThickness;
 }
 
@@ -2694,6 +2735,7 @@ JNIEXPORT jobjectArray JNICALL
 JNI_FN(MuPDFCore_setInkColor)(JNIEnv * env, jobject thiz, float r, float g, float b)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
     glo->inkColor[0] = r;
     glo->inkColor[1] = g;
     glo->inkColor[2] = b;
@@ -2704,6 +2746,7 @@ JNIEXPORT jobjectArray JNICALL
 JNI_FN(MuPDFCore_setHighlightColor)(JNIEnv * env, jobject thiz, float r, float g, float b)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
     glo->highlightColor[0] = r;
     glo->highlightColor[1] = g;
     glo->highlightColor[2] = b;
@@ -2714,6 +2757,7 @@ JNIEXPORT jobjectArray JNICALL
 JNI_FN(MuPDFCore_setUnderlineColor)(JNIEnv * env, jobject thiz, float r, float g, float b)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
     glo->underlineColor[0] = r;
     glo->underlineColor[1] = g;
     glo->underlineColor[2] = b;
@@ -2724,6 +2768,7 @@ JNIEXPORT jobjectArray JNICALL
 JNI_FN(MuPDFCore_setStrikeoutColor)(JNIEnv * env, jobject thiz, float r, float g, float b)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
     glo->strikeoutColor[0] = r;
     glo->strikeoutColor[1] = g;
     glo->strikeoutColor[2] = b;
@@ -2734,6 +2779,7 @@ JNIEXPORT int JNICALL
 JNI_FN(MuPDFCore_insertBlankPageBeforeInternal)(JNIEnv * env, jobject thiz, int position)
 {
     globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return 0;
     fz_document *doc = glo->doc;
     page_cache *pc = &glo->pages[glo->current];
     pdf_page * page = pdf_create_page((pdf_document *)doc, pc->media_box, 72, 0);
