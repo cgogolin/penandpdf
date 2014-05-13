@@ -151,7 +151,7 @@ static void drop_page_cache(globals *glo, page_cache *pc)
     fz_context *ctx = glo->ctx;
     fz_document *doc = glo->doc;
 
-    LOGI("Drop page %d", pc->number);
+//    LOGI("Drop page %d", pc->number);
     fz_drop_display_list(ctx, pc->page_list);
     pc->page_list = NULL;
     fz_drop_display_list(ctx, pc->annot_list);
@@ -521,7 +521,6 @@ JNI_FN(MuPDFCore_fileFormatInternal)(JNIEnv * env, jobject thiz)
 JNIEXPORT void JNICALL
 JNI_FN(MuPDFCore_gotoPageInternal)(JNIEnv *env, jobject thiz, int page)
 {
-//    LOGI("MuPDFCore_gotoPageInternal(, %d)", page);
     int i;
     int furthest;
     int furthest_dist = -1;
@@ -572,11 +571,11 @@ JNI_FN(MuPDFCore_gotoPageInternal)(JNIEnv *env, jobject thiz, int page)
     pc->height = 100;
 
     pc->number = page;
-    LOGI("Goto page %d", page);
+//    LOGI("Goto page %d", page);
     fz_try(ctx)
     {
         fz_rect rect;
-        LOGI("Load page %d", pc->number);
+//        LOGI("Load page %d", pc->number);
         pc->page = fz_load_page(glo->doc, pc->number);
         zoom = glo->resolution / 72;
         if (pc->page == NULL) return NULL;//fz_throw(glo->ctx, FZ_ERROR_GENERIC, "fz_load_page() returned NULL");
