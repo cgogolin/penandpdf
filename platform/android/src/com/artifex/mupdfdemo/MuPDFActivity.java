@@ -344,14 +344,13 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         super.onPause();
         
             //Stop searches
-        if (mSearchTask != null) mSearchTask.stop();
-        
-            //Save the Viewport and update the recent files list
-        saveViewportAndRecentFiles();
-        
-            //Stop receiving alerts
+        if (mSearchTask != null) mSearchTask.stop();        
+
         if (core != null)
         {
+                //Save the Viewport and update the recent files list
+            saveViewportAndRecentFiles(core.getPath());
+                //Stop receiving alerts
             core.stopAlerts();
             destroyAlertWaiter();
         }
@@ -691,7 +690,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                             if (which == AlertDialog.BUTTON_POSITIVE) {
                                 if(core != null)
                                 {
-                                    saveViewportAndRecentFiles();
                                     if(!save())
                                         showInfo(getString(R.string.error_saveing));
                                     else
@@ -1048,9 +1046,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         if(success)
         {
                 //Save the viewport under the new name
-            SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-            SharedPreferences.Editor edit = prefs.edit();
-            saveViewport(edit, uri.getPath());
+            // SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+            // SharedPreferences.Editor edit = prefs.edit();
+            // saveViewport(edit, uri.getPath());
+            saveViewportAndRecentFiles(uri.getPath());
                 //Stop alerts
             core.stopAlerts();
             destroyAlertWaiter();
@@ -1067,10 +1066,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     private boolean save() { //Attention! Potentially destroyes the core !!
         if (core == null) return false;
         boolean success = core.save();
-        if(!success)
-            showInfo(getString(R.string.error_saveing));
-        else
+        if(success)
         {
+                //Save the viewport
+            saveViewportAndRecentFiles(core.getPath());
                 //Stop alerts
             core.stopAlerts();
             destroyAlertWaiter();
@@ -1089,6 +1088,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         edit.putFloat("normalizedxscroll"+path, mDocView.getNormalizedXScroll());
         edit.putFloat("normalizedyscroll"+path, mDocView.getNormalizedYScroll());
         edit.commit();
+//        Toast.makeText(getApplicationContext(), "saving "+mDocView.getNormalizedXScroll()+" "+mDocView.getNormalizedYScroll(), Toast.LENGTH_LONG).show();
     }
 
 
@@ -1117,9 +1117,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     }
 
 
-    private void saveViewportAndRecentFiles() {
-        if (core != null && mDocView != null) {
-            String path = core.getPath();
+    private void saveViewportAndRecentFiles(String path) {
             SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
             SharedPreferences.Editor edit = prefs.edit();
             if(path != null)
@@ -1130,13 +1128,10 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 recentFilesList.push(path);
                     //Write the recent files list
                 recentFilesList.write(edit);
-            }
-                //Save the current viewport
-            if(path != null)
                 saveViewport(edit, path);
+            }
             else
                 saveViewport(edit, core.getFileName());
-        }
     }
     
         @Override
@@ -1290,7 +1285,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     public void onClick(DialogInterface dialog, int which) {
                         if (which == AlertDialog.BUTTON_POSITIVE) {
                             mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //No need to save twice
-                            saveViewportAndRecentFiles();
                             if(!save())
                                 showInfo(getString(R.string.error_saveing));
                             else
@@ -1370,7 +1364,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     public void onAnimationEnd(Animator animation) {
                         if(mDocView != null) {
                             mDocView.setScale(1.0f);
-                            saveViewportAndRecentFiles(); //So that we show the right page when the mDocView is recreated
+                            saveViewportAndRecentFiles(core.getPath()); //So that we show the right page when the mDocView is recreated
                         }
                         mDocView = null;
                         setupmDocView();

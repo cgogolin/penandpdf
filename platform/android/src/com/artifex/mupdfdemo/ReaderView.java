@@ -167,28 +167,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         return advance;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     
-
-
     public void smartMoveForwards() {
         View v = mChildViews.get(mCurrent);
         if (v == null)
@@ -758,9 +737,9 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                     }
                     if(mHasNewNormalizedYScroll){
                         YScroll = (int)(mNewNormalizedYScroll*cv.getMeasuredHeight()*mScale*scale);
-                        Toast.makeText(getContext(), "("+cv.getLeft()+" "+cv.getTop()+"; "+cv.getMeasuredHeight()+" "+getHeight()+" "+mScale+" "+scale+"; "+cv.getMeasuredHeight()*scale+")", Toast.LENGTH_LONG).show();
+//                        Toast.makeText(getContext(), "measuredHeight="+cv.getMeasuredHeight()+" getHeight="+getHeight()+" mScale="+mScale+" scale="+scale, Toast.LENGTH_LONG).show();
                         // if(cv.getMeasuredHeight()*scale < getHeight()) {
-                        //     YScroll += (float)(cv.getMeasuredHeight() - getHeight())/2;
+                        // YScroll += (float)(cv.getMeasuredHeight() - getHeight())/2;
                         // }
                         mHasNewNormalizedYScroll = false;
                     }
@@ -771,13 +750,19 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                         XScroll+=getWidth()/2;
                         YScroll+=getHeight()/2;
                     }
-                    scrollToPos(XScroll, YScroll);
+//                    scrollToPos(XScroll, YScroll);
+                    mScrollerLastX = mScrollerLastY = 0;
+                    mXScroll = mYScroll = 0;
+                    mScroller.forceFinished(true);
+                    mScroller.startScroll(0, 0, XScroll-cv.getLeft(), YScroll-cv.getTop(), 200);
+                    post(this);
                 }
             }
             
                 //Set the positon of the top left corner
             cvLeft = cv.getLeft() + mXScroll;
             cvTop  = cv.getTop()  + mYScroll;
+            
                 //Reset scroll amounts
             mXScroll = mYScroll = 0;
         }
@@ -805,7 +790,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
 
             //Finally layout the child view with the calculated values
         cv.layout(cvLeft, cvTop, cvRight, cvBottom);
-        
+
             //Creat and layout the preceding and following PageViews
         Point cvOffset = subScreenSizeOffset(cv);
         if (mCurrent > 0) {
@@ -908,6 +893,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 displayedViewInstanceState = null;
                 onNumberOfStrokesChanged(((PageView)v).getDrawingSize());
             }
+                //Toast.makeText(getContext(), "created child with width="+v.getMeasuredWidth()+" height="+v.getMeasuredWidth(), Toast.LENGTH_LONG).show();
 //            Log.i("MuPDFActivity", "created child with width="+v.getMeasuredWidth()+" height="+v.getMeasuredWidth());
         }
         return v;
@@ -1100,17 +1086,17 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         mNextScrollWithCenter = true;
     }
     
-    private void scrollToPos(int XScroll, int YScroll)
-    {
-        View cv = getDisplayedView();
-        if (cv == null) return;
+    // private void scrollToPos(int XScroll, int YScroll)
+    // {
+    //     View cv = getDisplayedView();
+    //     if (cv == null) return;
         
-        mScrollerLastX = mScrollerLastY = 0;
-        mXScroll = mYScroll = 0;
-        mScroller.forceFinished(true);
-        mScroller.startScroll(0, 0, XScroll-cv.getLeft(), YScroll-cv.getTop(), 0);
-        post(this);
-    }
+    //     mScrollerLastX = mScrollerLastY = 0;
+    //     mXScroll = mYScroll = 0;
+    //     mScroller.forceFinished(true);
+    //     mScroller.startScroll(0, 0, XScroll-cv.getLeft(), YScroll-cv.getTop(), 0);
+    //     post(this);
+    // }
 
     public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
         mUseStylus = sharedPref.getBoolean(SettingsActivity.PREF_USE_STYLUS, false);
