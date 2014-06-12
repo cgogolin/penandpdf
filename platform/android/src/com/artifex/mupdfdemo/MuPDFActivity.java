@@ -714,6 +714,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     };
                 AlertDialog alert = mAlertBuilder.create();
                 alert.setTitle(getString(R.string.app_name));
+                alert.setMessage(getString(R.string.how_do_you_want_to_save));
                 if (core != null && core.getFileName() != null) alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
                 alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.saveas), listener);
                 alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), listener);
@@ -1304,8 +1305,8 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                     }
                 };
             AlertDialog alert = mAlertBuilder.create();
-            alert.setTitle("MuPDF");
-            alert.setMessage(getString(R.string.document_has_changes_save_them_));
+            alert.setTitle(getString(R.string.app_name));
+            alert.setMessage(getString(R.string.document_has_changes_save_them));
             alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), listener);
             alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
             alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);

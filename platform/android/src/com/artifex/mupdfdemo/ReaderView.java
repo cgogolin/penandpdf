@@ -167,6 +167,28 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         return advance;
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
     public void smartMoveForwards() {
         View v = mChildViews.get(mCurrent);
         if (v == null)
@@ -190,9 +212,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         int remainingX = mScroller.getFinalX() - mScroller.getCurrX();
         int remainingY = mScroller.getFinalY() - mScroller.getCurrY();
             // right/bottom is in terms of pixels within the scaled document; e.g. 1000
-        int top  = -(v.getTop()  + mYScroll + remainingY);
         int left = -(v.getLeft() + mXScroll + remainingX);
-//		int right  = screenWidth -(v.getLeft() + mXScroll + remainingX);
+        int top  = -(v.getTop()  + mYScroll + remainingY);
         int right  = screenWidth  + left;
         int bottom = screenHeight + top;
             // docWidth/Height are the width/height of the scaled document e.g. 2000x3000
@@ -229,19 +250,17 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 if (nextDocWidth < screenWidth) // Next page is too narrow to fill the screen. Scroll to the top, centred.
                 {
                     xOffset = (nextDocWidth - screenWidth)>>1;
-                }
-                else
-                {
+                } else {
                         // Reset X back to the left hand column
-//                    xOffset = right % screenWidth;
                     if(screenWidth >= 0.7*docWidth)
                         xOffset = left;
                     else
                         xOffset = 0;
-                    
                         // Adjust in case the previous page is less wide
                     if (xOffset + screenWidth > nextDocWidth)
                         xOffset = nextDocWidth - screenWidth;
+
+                    
                 }
                 xOffset -= nextLeft;
                 yOffset -= nextTop;
@@ -285,6 +304,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             // left/top is in terms of pixels within the scaled document; e.g. 1000
         int left  = -(v.getLeft() + mXScroll + remainingX);
         int top   = -(v.getTop()  + mYScroll + remainingY);
+        // int right  = screenWidth  + left;
+        // int bottom = screenHeight + top;
             // docWidth/Height are the width/height of the scaled document e.g. 2000x3000
         int docWidth  = v.getMeasuredWidth();
         int docHeight = v.getMeasuredHeight();
@@ -297,6 +318,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 View pv = mChildViews.get(mCurrent-1);
                 if (pv == null) /* No page to advance to */
                     return;
+                int prevLeft  = -(pv.getLeft() + mXScroll);
+                int prevTop  = -(pv.getTop() + mYScroll);
                 int prevDocWidth = pv.getMeasuredWidth();
                 int prevDocHeight = pv.getMeasuredHeight();
 
@@ -313,15 +336,12 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 {
                     yOffset = 0;
                 }
-
-                int prevLeft  = -(pv.getLeft() + mXScroll);
-                int prevTop  = -(pv.getTop() + mYScroll);
+                
                 if (prevDocWidth < screenWidth) {
                         // Previous page is too narrow to fill the screen. Scroll to the bottom, centred.
                     xOffset = (prevDocWidth - screenWidth)>>1;
                 } else {
                         // Reset X back to the right hand column
-//                    xOffset = (left > 0 ? left % screenWidth : 0);
                     if(screenWidth >= 0.7*docWidth)
                         xOffset = left;
                     else
@@ -333,7 +353,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                         xOffset += screenWidth;
                 }
                 xOffset -= prevLeft;
-                yOffset -= prevTop-prevDocHeight+screenHeight;
+                yOffset -= prevTop + (-prevDocHeight+screenHeight >= 0 ? 0 : -prevDocHeight+screenHeight);
             } else {
                     // Move to bottom of previous column
                 xOffset = - Math.min(screenWidth,left);
@@ -638,7 +658,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         super.onLayout(changed, left, top, right, bottom);
         
         View cv = getDisplayedView();
-        Point cvOffset;
         
         // if (mResetLayout) {
         //     Log.i("MuPDFActivity", "resetting layout");
@@ -663,7 +682,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         }
             //... else check if we should be switching to a new view and do it
         else if (cv != null) {
-            cvOffset = subScreenSizeOffset(cv);
+            Point cvOffset = subScreenSizeOffset(cv);
                 // Move to next if current is sufficiently off center
                 // cv.getRight() may be out of date with the current scale
                 // so add left to the measured width for the correct position
@@ -693,22 +712,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         
             //Caculate placement of the current view
         int cvLeft, cvRight, cvTop, cvBottom;
-        // if (cv == null) {
-        //     cv = getOrCreateChild(mCurrent);
-        //     cvOffset = subScreenSizeOffset(cv); //Doesn't work, which leads to ugly flickering....
-
-        //     Log.i("MuPDFActivity", "subScreenSizeOffset returned: "+cvOffset.x+", "+cvOffset.y);
-        //     Log.i("MuPDFActivity", "cv.getMeasuredWidth()="+cv.getMeasuredWidth());
-        //     Log.i("MuPDFActivity", "getWidth()="+getWidth());
-            
-        //         //If the view was freshly created we will place it top left or
-        //         //offset it to center within the screen area if it is too small
-        //     cvLeft = cvOffset.x;
-        //     cvTop  = cvOffset.y;
-        // } else
         {
             cv = getOrCreateChild(mCurrent);
-            cvOffset = subScreenSizeOffset(cv);
             
                 //Set mXScroll, mYScroll and mScale from the values set in setScale() and setScroll()
             if(!changed && !mReflow)
@@ -724,14 +729,12 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                     mScale = Math.min(Math.max(mNewNormalizedScale*scaleCorrection, min_scale), max_scale); 
                     mHasNewNormalizedScale = false;
                 }
-
                 if (mHasNewDocRelXScroll)
                 {
                     mHasNewNormalizedXScroll = true;
                     mHasNewDocRelXScroll = false;
                     mNewNormalizedXScroll = -mNewDocRelXScroll*((PageView)cv).getScale()/(cv.getMeasuredWidth()*mScale*scale);
                 }
-
                 if (mHasNewDocRelYScroll)
                 {
                     mHasNewNormalizedYScroll = true;
@@ -747,11 +750,18 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                     
                     if(mHasNewNormalizedXScroll){
                         XScroll = (int)(mNewNormalizedXScroll*cv.getMeasuredWidth()*mScale*scale);
+                        // if(cv.getMeasuredWidth() < getWidth()) {
+                        //     Toast.makeText(getContext(), "correcting XScroll by "+(float)(cv.getMeasuredWidth() - getWidth())/2, Toast.LENGTH_LONG).show();
+                        //     XScroll += (float)(cv.getMeasuredWidth() - getWidth())/2;
+                        // }
                         mHasNewNormalizedXScroll = false;
                     }
                     if(mHasNewNormalizedYScroll){
                         YScroll = (int)(mNewNormalizedYScroll*cv.getMeasuredHeight()*mScale*scale);
-                        if(cv.getMeasuredHeight() < getHeight()) YScroll += (float)(cv.getMeasuredHeight() - getHeight())/2;
+                        Toast.makeText(getContext(), "("+cv.getLeft()+" "+cv.getTop()+"; "+cv.getMeasuredHeight()+" "+getHeight()+" "+mScale+" "+scale+"; "+cv.getMeasuredHeight()*scale+")", Toast.LENGTH_LONG).show();
+                        // if(cv.getMeasuredHeight()*scale < getHeight()) {
+                        //     YScroll += (float)(cv.getMeasuredHeight() - getHeight())/2;
+                        // }
                         mHasNewNormalizedYScroll = false;
                     }
 
@@ -771,30 +781,33 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 //Reset scroll amounts
             mXScroll = mYScroll = 0;
         }
-            //Calculate right and bottom
+            //Calculate right and bottom after scaling the child
+        onScaleChild(cv, mScale);
         cvRight  = cvLeft + cv.getMeasuredWidth();
         cvBottom = cvTop  + cv.getMeasuredHeight();
 
-            //If the user is not interacting and the scroller is finished move the view so that no gaps are left
-        if (!mUserInteracting && mScroller.isFinished()) {
-            Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
-            cvRight  += corr.x;
-            cvLeft   += corr.x;
-            cvTop    += corr.y;
-            cvBottom += corr.y;
-        }
-            // If the current view is as small as the screen in height, clamp
-            // it vertically
-        else if (cv.getMeasuredHeight() <= getHeight()) {
-            Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
-            cvTop    += corr.y;
-            cvBottom += corr.y;
-        }
+//             //If the user is not interacting and the scroller is finished move the view so that no gaps are left
+//         if (!mUserInteracting && mScroller.isFinished()) {
+//             Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
+//             cvRight  += corr.x;
+//             cvLeft   += corr.x;
+//             cvTop    += corr.y;
+//             cvBottom += corr.y;
+// //            Toast.makeText(getContext(), "corrections: "+corr.x+" "+corr.y, Toast.LENGTH_LONG).show();
+//         }
+//             // If the current view is smaller than the screen in height, clamp
+//             // it vertically
+//         else if (cv.getMeasuredHeight() <= getHeight()) {
+//             Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
+//             cvTop    += corr.y;
+//             cvBottom += corr.y;
+//         }
 
             //Finally layout the child view with the calculated values
         cv.layout(cvLeft, cvTop, cvRight, cvBottom);
         
             //Creat and layout the preceding and following PageViews
+        Point cvOffset = subScreenSizeOffset(cv);
         if (mCurrent > 0) {
             View lv = getOrCreateChild(mCurrent - 1);
             Point leftOffset = subScreenSizeOffset(lv);
@@ -865,7 +878,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     @Override
         public void setAdapter(Adapter adapter) {
         mAdapter = adapter;
-//        mChildViews.clear();
         removeAllChildren();
         removeAllViewsInLayout();
         requestLayout();
@@ -896,7 +908,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 displayedViewInstanceState = null;
                 onNumberOfStrokesChanged(((PageView)v).getDrawingSize());
             }
-            Log.i("MuPDFActivity", "created child with width="+v.getMeasuredWidth()+" height="+v.getMeasuredWidth());
+//            Log.i("MuPDFActivity", "created child with width="+v.getMeasuredWidth()+" height="+v.getMeasuredWidth());
         }
         return v;
     }

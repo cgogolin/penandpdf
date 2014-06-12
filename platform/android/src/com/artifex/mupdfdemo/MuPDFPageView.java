@@ -503,8 +503,8 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 			@Override
 			protected void onPostExecute(Void result) {
-				loadAnnotations();
-				update();
+				loadAnnotations(true);
+//				update();
 			}
 		};
 
@@ -529,8 +529,8 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 				@Override
 				protected void onPostExecute(Void result) {
-					loadAnnotations();
-					update();
+					loadAnnotations(true);
+//					update();
 				}
 			};
 
@@ -597,9 +597,9 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 			@Override
 			protected void onPostExecute(Void result) {
-                            loadAnnotations();
-                            update();
-                            cancelDraw();
+                            loadAnnotations(true);
+                            cancelDraw();//Should be delayed until after annotations have been loaded to prevent flicker...
+//                            update();
 			}
 
 		};
@@ -636,7 +636,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		mCore.addMarkupAnnotation(mPageNumber, quadPoints, type);
 	}
 
-	private void loadAnnotations() {
+	private void loadAnnotations(final boolean updateInOnPostExecute) {
 		mAnnotations = null;
 		if (mLoadAnnotations != null) mLoadAnnotations.cancel(true);
 		mLoadAnnotations = new AsyncTask<Void,Void,Annotation[]> () {
@@ -648,6 +648,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			@Override
 			protected void onPostExecute(Annotation[] result) {
 				mAnnotations = result;
+                                if(updateInOnPostExecute) update();
 			}
 		};
 		mLoadAnnotations.execute();
@@ -671,7 +672,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		mLoadWidgetAreas.execute();
 
 		super.setPage(page, size);
-                loadAnnotations();//Must be done after super.setPage() otherwise page number is wrong!
+                loadAnnotations(false);//Must be done after super.setPage() otherwise page number is wrong!
 	}
 
 	public void setScale(float scale) {
