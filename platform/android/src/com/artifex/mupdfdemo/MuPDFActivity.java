@@ -1046,9 +1046,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
         if(success)
         {
                 //Save the viewport under the new name
-            // SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-            // SharedPreferences.Editor edit = prefs.edit();
-            // saveViewport(edit, uri.getPath());
             saveViewportAndRecentFiles(uri.getPath());
                 //Stop alerts
             core.stopAlerts();
@@ -1076,6 +1073,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 //Destroy the core
             core.onDestroy();  
             core = null;
+            mDocView = null;
         }
         return success;
     }

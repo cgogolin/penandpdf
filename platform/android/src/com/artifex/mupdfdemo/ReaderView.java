@@ -751,11 +751,19 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                         YScroll+=getHeight()/2;
                     }
 //                    scrollToPos(XScroll, YScroll);
-                    mScrollerLastX = mScrollerLastY = 0;
-                    mXScroll = mYScroll = 0;
+                    
+                    // mScrollerLastX = mScrollerLastY = 0;
+                    // mXScroll = mYScroll = 0;
+                    // mScroller.forceFinished(true);
+                    // mScroller.startScroll(0, 0, XScroll-cv.getLeft(), YScroll-cv.getTop(), 200);
+                    // post(this);
+
                     mScroller.forceFinished(true);
-                    mScroller.startScroll(0, 0, XScroll-cv.getLeft(), YScroll-cv.getTop(), 200);
-                    post(this);
+                    mScrollerLastX = mScrollerLastY = 0;
+                    mXScroll = XScroll - cv.getLeft();
+                    mYScroll = YScroll - cv.getTop();
+//                    postSettle(cv);
+//                    post(this);
                 }
             }
             
@@ -771,15 +779,14 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         cvRight  = cvLeft + cv.getMeasuredWidth();
         cvBottom = cvTop  + cv.getMeasuredHeight();
 
-//             //If the user is not interacting and the scroller is finished move the view so that no gaps are left
-//         if (!mUserInteracting && mScroller.isFinished()) {
-//             Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
-//             cvRight  += corr.x;
-//             cvLeft   += corr.x;
-//             cvTop    += corr.y;
-//             cvBottom += corr.y;
-// //            Toast.makeText(getContext(), "corrections: "+corr.x+" "+corr.y, Toast.LENGTH_LONG).show();
-//         }
+        //     //If the user is not interacting and the scroller is finished move the view so that no gaps are left
+        // if (!mUserInteracting && mScroller.isFinished()) {
+        //     Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
+        //     cvRight  += corr.x;
+        //     cvLeft   += corr.x;
+        //     cvTop    += corr.y;
+        //     cvBottom += corr.y;
+        // }
 //             // If the current view is smaller than the screen in height, clamp
 //             // it vertically
 //         else if (cv.getMeasuredHeight() <= getHeight()) {
@@ -791,6 +798,10 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             //Finally layout the child view with the calculated values
         cv.layout(cvLeft, cvTop, cvRight, cvBottom);
 
+            //Starte the generation of the HQ aread if appropriate
+        if (!mUserInteracting && mScroller.isFinished())
+            postSettle(cv);
+        
             //Creat and layout the preceding and following PageViews
         Point cvOffset = subScreenSizeOffset(cv);
         if (mCurrent > 0) {
