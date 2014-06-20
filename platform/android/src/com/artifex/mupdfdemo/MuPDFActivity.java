@@ -322,6 +322,11 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 
                     //Setup the mSearchTask
                 setupSearchTask();
+
+                    //Update the recent files list
+                SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+                SharedPreferences.Editor edit = prefs.edit();
+                saveRecentFiles(prefs, edit, core.getPath());
             }
             else //Something went wrong
             {
@@ -713,10 +718,13 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                 AlertDialog alert = mAlertBuilder.create();
                 alert.setTitle(getString(R.string.app_name));
                 alert.setMessage(getString(R.string.how_do_you_want_to_save));
-                if (core != null && core.getFileName() != null) alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
+//                if (core != null && core.getFileName() != null && core.getPath() != null)
+                alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
                 alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.saveas), listener);
                 alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), listener);
                 alert.show();
+                if (core == null || core.getFileName() == null || core.getPath() == null)
+                    alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
                 return true;
             case R.id.menu_gotopage:
                 showGoToPageDialoge();
@@ -763,12 +771,6 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
                         int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
                         if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
                         if(displayName == null && displayNameIndex >= 0) displayName = Uri.parse(cursor.getString(titleIndex)).getLastPathSegment();
-                    
-                            // Bundle extras = intent.getExtras();
-                            // if (extras != null)
-                            //     for (String key : extras.keySet())
-                            //         showInfo(key+" = "+extras.get(key));
-                    
                         if(dataIndex >= 0) data = cursor.getString(dataIndex);//Can return null!
                         try {
                             InputStream is = getContentResolver().openInputStream(uri);
@@ -1080,6 +1082,7 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     
             
     private void saveViewport(SharedPreferences.Editor edit, String path) {
+        if(mDocView == null) return;
         if(path == null) path = "/nopath";
         edit.putInt("page"+path, mDocView.getDisplayedViewIndex());
         edit.putFloat("normalizedscale"+path, mDocView.getNormalizedScale());
@@ -1115,21 +1118,26 @@ public class MuPDFActivity extends Activity implements SharedPreferences.OnShare
     }
 
 
+    private void saveRecentFiles(SharedPreferences prefs, SharedPreferences.Editor edit, String path) {
+            //Read the recent files list from preferences
+        RecentFilesList recentFilesList = new RecentFilesList(prefs);                    
+            //Add the current file
+        recentFilesList.push(path);
+            //Write the recent files list
+        recentFilesList.write(edit);
+    }
+    
+    
     private void saveViewportAndRecentFiles(String path) {
-            SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-            SharedPreferences.Editor edit = prefs.edit();
-            if(path != null)
-            {
-                    //Read the recent files list from preferences
-                RecentFilesList recentFilesList = new RecentFilesList(prefs);                    
-                    //Add the current file
-                recentFilesList.push(path);
-                    //Write the recent files list
-                recentFilesList.write(edit);
-                saveViewport(edit, path);
-            }
-            else
-                saveViewport(edit, core.getFileName());
+        SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+        SharedPreferences.Editor edit = prefs.edit();
+        if(path != null)
+        {
+            saveRecentFiles(prefs, edit, path);
+            saveViewport(edit, path);
+        }
+        else
+            saveViewport(edit, core.getFileName());
     }
     
         @Override

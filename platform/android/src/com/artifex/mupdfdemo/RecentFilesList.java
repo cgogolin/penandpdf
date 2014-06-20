@@ -20,10 +20,9 @@ public class RecentFilesList extends LinkedList<String> implements List<String> 
             String recentFileString = prefs.getString("recentfile"+i,null);
             if(recentFileString != null)
             {
-                    //Make sure we add only actual files
-//                File recentFile = new File(recentFileString);
-//                if(recentFile != null && recentFile.isFile() && recentFile.canRead()) push(recentFileString);
-//                if(recentFile != null)
+                    //Make sure we add only readable files
+                File recentFile = new File(recentFileString);
+                if(recentFile != null && recentFile.isFile() && recentFile.canRead())
                     push(recentFileString);
             }
         }
