@@ -13,4 +13,5 @@
 	<color name="text_border_focused">#000000</color>
 	<color name="seek_thumb">#2572AC</color>
 	<color name="seek_progress">#FFFFFF</color>
+	<color name="background">#F0F0F0</color>
 </resources>

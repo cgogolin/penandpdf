@@ -1,24 +1,21 @@
 package com.artifex.mupdfdemo;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-//import android.widget.Adapter;
 import android.os.AsyncTask;
-//import java.util.LinkedList;
+
+import android.util.Log;
 
 public class MuPDFPageAdapter extends BaseAdapter {
     private final Context mContext;
     private final FilePicker.FilePickerSupport mFilePickerSupport;
     private final MuPDFCore mCore;
     private final SparseArray<PointF> mPageSizes = new SparseArray<PointF>();
-//    private final LinkedList<View> mViewCache = new LinkedList<View>();
-    private       Bitmap mSharedHqBm;
     
     public MuPDFPageAdapter(Context c, FilePicker.FilePickerSupport filePickerSupport, MuPDFCore core) {
         mContext = c;
@@ -43,13 +40,10 @@ public class MuPDFPageAdapter extends BaseAdapter {
     
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
-//    public View getView(final int position, ViewGroup parent) {
         final MuPDFPageView pageView;
         if (convertView == null) {
-            if (mSharedHqBm == null || mSharedHqBm.getWidth() != parent.getWidth() || mSharedHqBm.getWidth() != parent.getWidth())
-                mSharedHqBm = Bitmap.createBitmap(parent.getWidth(), parent.getHeight(), Bitmap.Config.ARGB_8888);
+            pageView = new MuPDFPageView(mContext, mFilePickerSupport, mCore, new Point(parent.getWidth(), parent.getHeight()));
             
-            pageView = new MuPDFPageView(mContext, mFilePickerSupport, mCore, new Point(parent.getWidth(), parent.getHeight()), mSharedHqBm);
         } else {
             pageView = (MuPDFPageView) convertView;
         }
@@ -85,17 +79,6 @@ public class MuPDFPageAdapter extends BaseAdapter {
         }
         return pageView;
     }
-
-    // private View getCached() {
-    //     if (mViewCache.size() == 0)
-    //         return null;
-    //     else
-    //         return mViewCache.removeFirst();
-    // }
-
-    // private void cache(View v) {
-    //     mViewCache.add(v);
-    // }
     
         //Usually we should here notify the associated view to reload its data, but as we never need to call this function and hence do not even keep a reference to our view we just don't do anything
     // @Override

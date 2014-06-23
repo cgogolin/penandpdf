@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Parcelable;
@@ -15,7 +16,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-//import android.view.View.OnLayoutChangeListener;
+import android.view.View.OnLayoutChangeListener;
 import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.Scroller;
@@ -25,7 +26,7 @@ import android.preference.PreferenceManager;
 
 import android.util.Log;
 
-abstract public class ReaderView extends AdapterView<Adapter> implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, Runnable//, android.view.View.OnLayoutChangeListener
+abstract public class ReaderView extends AdapterView<Adapter> implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, Runnable, android.view.View.OnLayoutChangeListener
 {
     private static final int  MOVING_DIAGONALLY = 0;
     private static final int  MOVING_LEFT       = 1;
@@ -43,7 +44,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         //Set in onSharedPreferenceChanged()
     protected static boolean mUseStylus = false;
     protected static boolean mFitWidth = false;
-    
+
+    private Bitmap mSharedHqBm;
     private Adapter           mAdapter;
     private int               mCurrent;    // Adapter's index for the current view
     private int               mNewCurrent;
@@ -93,7 +95,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         mScaleGestureDetector = new ScaleGestureDetector(context, this);
         mScroller        = new Scroller(context);
             //We want to get notified if the size we have changes
-//        addOnLayoutChangeListener(this);
+        addOnLayoutChangeListener(this);
     }
 
     // public ReaderView(Context context, AttributeSet attrs) {
@@ -618,19 +620,34 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             measureView(getChildAt(i));
     }
 
-    // @Override
-    // public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-    //     Log.i("MuPDFActivity", "onLayoutChange("+v+", "+left+", "+top+", "+right+", "+bottom+", "+oldLeft+", "+oldTop+", "+oldRight+", "+oldBottom+")");
-    //     if(right - left != 0 && bottom - top != 0 && oldRight - oldLeft != 0 && oldBottom - oldTop != 0 &&
-    //        (left!=oldLeft || top!=oldTop || right!=oldRight || bottom!=oldBottom )
-    //        )
-    //     {
-    //         Log.i("MuPDFActivity", "planing layout reset");
-    //         mResetLayout = true;
-    //         forceLayout();//Doesn't work as intended!!!
-    //         requestLayout();
-    //     }
-    // }
+    @Override
+    public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        final int width = right-left;
+        final int height = bottom-top;
+        
+            //Tell the Adapter to adjust the size of the HQ bitmap and all existing views that the parent size has changed
+//        ((MuPDFPageAdapter)mAdapter).updateHqBm(width, height);
+        applyToChildren(new ViewMapper() {
+                @Override
+                void applyToView(View view) {
+                    ((PageView)view).setParentSize(new Point(width, height));
+                    ((PageView)view).setHqBm(getSharedHqBm());
+                }
+            });
+            
+        requestLayout();
+        
+        // Log.i("MuPDFActivity", "onLayoutChange("+v+", "+left+", "+top+", "+right+", "+bottom+", "+oldLeft+", "+oldTop+", "+oldRight+", "+oldBottom+")");
+        // if(right - left != 0 && bottom - top != 0 && oldRight - oldLeft != 0 && oldBottom - oldTop != 0 &&
+        //    (left!=oldLeft || top!=oldTop || right!=oldRight || bottom!=oldBottom )
+        //    )
+        // {
+        //     Log.i("MuPDFActivity", "planing layout reset");
+        //     mResetLayout = true;
+        //     forceLayout();//Doesn't work as intended!!!
+        //     requestLayout();
+        // }
+    }
     
     @Override
 	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
@@ -891,10 +908,17 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             return mViewCache.removeFirst();
     }
 
+    private Bitmap getSharedHqBm() {
+        if (mSharedHqBm == null || mSharedHqBm.getWidth() != getWidth() || mSharedHqBm.getHeight() != getHeight())
+            mSharedHqBm = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+        return mSharedHqBm;
+    }
+
     private View getOrCreateChild(int i) {
         View v = mChildViews.get(i);
         if (v == null) {
             v = mAdapter.getView(i, getCached(), this);
+            ((PageView)v).setHqBm(getSharedHqBm());
             onChildSetup(i, v);
             onScaleChild(v, mScale);
             addAndMeasureChild(i, v);

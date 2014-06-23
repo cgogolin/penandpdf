@@ -180,17 +180,19 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private float docRelXmax = Float.NEGATIVE_INFINITY;
     private float docRelXmin = Float.POSITIVE_INFINITY;
     
-    public PageView(Context c, Point parentSize, Bitmap sharedHqBm) {
+    public PageView(Context c, Point parentSize) {
         super(c);
-//        Log.i("PageView", "PageView()");
         mContext    = c;       
         mParentSize = parentSize;
         setBackgroundColor(BACKGROUND_COLOR);
         mEntireBm = Bitmap.createBitmap(parentSize.x, parentSize.y, Config.ARGB_8888);
-        mPatchBm = sharedHqBm;
         mEntireMat = new Matrix();
     }
 
+    public void setHqBm(Bitmap sharedHqBm) {
+        mPatchBm = sharedHqBm;
+    }
+    
         //To be overrwritten in MuPDFPageView
     protected abstract void drawPage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
     protected abstract void updatePage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
@@ -866,6 +868,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void addHq(boolean update) {
+            //If we were not given a Bitmap for the Hq area via setHqBm() return
+        if(mPatchBm==null) return;
+        
         Rect viewArea = new Rect(getLeft(),getTop(),getRight(),getBottom());
             // If the viewArea's size matches the unzoomed size, there is no need for an hq patch
         if (viewArea.width() != mSize.x || viewArea.height() != mSize.y) {
@@ -882,8 +887,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             boolean area_unchanged = patchArea.equals(mPatchArea) && patchViewSize.equals(mPatchViewSize);
 
                 // If being asked for the same area as last time and not because of an update then nothing to do
-            if (area_unchanged && !update)
-                return;
+            if (area_unchanged && !update) return;
 
             boolean completeRedraw = !(area_unchanged && update);
 
@@ -1057,5 +1061,14 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         
         if (mOverlayView != null)
             mOverlayView.invalidate();
+    }
+
+    public void setParentSize(Point parentSize) {
+        if(mParentSize.x != parentSize.x || mParentSize.y != parentSize.y)
+        {
+            mParentSize = parentSize;
+            mEntireBm = Bitmap.createBitmap(parentSize.x, parentSize.y, Config.ARGB_8888);
+            invalidate();
+        }
     }
 }
