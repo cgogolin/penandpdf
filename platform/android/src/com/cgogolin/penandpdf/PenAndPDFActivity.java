@@ -768,9 +768,9 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                         String data = null;
                         int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
                         int dataIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
-                        int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+                        int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);                       
                         if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
-                        if(displayName == null && displayNameIndex >= 0) displayName = Uri.parse(cursor.getString(titleIndex)).getLastPathSegment();
+                        if(displayName == null && titleIndex >= 0) displayName = Uri.parse(cursor.getString(titleIndex)).getLastPathSegment();
                         if(dataIndex >= 0) data = cursor.getString(dataIndex);//Can return null!
                         try {
                             InputStream is = getContentResolver().openInputStream(uri);
