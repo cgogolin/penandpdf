@@ -1,4 +1,7 @@
-// compile-command: cd ~/src/android/mupdf/platform/android && ant clean && ~/src/android/android-ndk-r9/ndk-build && ant debug && cp bin/PenAndPDF-debug.apk /home/cgogolin/Dropbox/galaxynote8/ 
+// compile-command:
+// cd ~/src/android/mupdf/platform/android && ant clean && ~/src/android/android-ndk-r9/ndk-build && ant debug && cp bin/PenAndPDF-debug.apk /home/cgogolin/Dropbox/galaxynote8/
+// or
+// cd ~/src/android/mupdf/platform/android && ant debug && /home/cgogolin/bin/adb install -r ~/src/android/mupdf/platform/android/bin/PenAndPDF-debug.apk
 
 package com.cgogolin.penandpdf;
 
@@ -557,7 +560,9 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 if(core!=null) core.insertBlankPageAtEnd();
                 invalidateOptionsMenu();
                     //Display the newly inserted page
-                mDocView.setDisplayedViewIndex(core.countPages()-1);
+                mDocView.setDisplayedViewIndex(core.countPages()-1, true);
+                mDocView.setScale(1.0f);
+                mDocView.setNormalizedScroll(0.0f,0.0f);
                 return true;
             case R.id.menu_fullscreen:
                 enterFullscreen();
@@ -668,9 +673,9 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 mActionBarMode = ActionBarMode.Main;
                 invalidateOptionsMenu();
                 return true;
-            case R.id.menu_print:
-                printDoc();
-                return true;
+            // case R.id.menu_print:
+            //     printDoc();
+            //     return true;
             case R.id.menu_search:
                 mActionBarMode = ActionBarMode.Search;
                 invalidateOptionsMenu();
@@ -888,16 +893,22 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     protected void onTapTopLeftMargin() {
                         if (getActionBar().isShowing())
                             smartMoveBackwards();
-                        else
+                        else {
                             mDocView.setDisplayedViewIndex(getDisplayedViewIndex()-1);
+                            mDocView.setScale(1.0f);
+                            mDocView.setNormalizedScroll(0.0f,0.0f);
+                        }
                     };
 
                     @Override
                     protected void onBottomRightMargin() {
                         if (getActionBar().isShowing())
                             smartMoveForwards();
-                        else
+                        else {
                             mDocView.setDisplayedViewIndex(getDisplayedViewIndex()+1);
+                            mDocView.setScale(1.0f);
+                            mDocView.setNormalizedScroll(0.0f,0.0f);
+                        }
                     };
                 
                     @Override
@@ -1247,6 +1258,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                         int pageNumber = Integer.parseInt(input.getText().toString());
                         mDocView.setDisplayedViewIndex(pageNumber == 0 ? 0 : pageNumber -1 );
                         mDocView.setScale(1.0f);
+                        mDocView.setNormalizedScroll(0.0f,0.0f);
                     }
                 })
             .setNegativeButton(R.string.dialog_gotopage_cancel, new DialogInterface.OnClickListener() {

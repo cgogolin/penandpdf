@@ -392,7 +392,7 @@ abstract public class MuPDFReaderView extends ReaderView {
 
     @Override
     public Parcelable onSaveInstanceState() {
-        Log.v("MuPDFReaderView", "onSaveInstanceState() getDisplayedView()="+getDisplayedView());
+//        Log.v("MuPDFReaderView", "onSaveInstanceState() getDisplayedView()="+getDisplayedView());
         Bundle bundle = new Bundle();
         bundle.putParcelable("superInstanceState", super.onSaveInstanceState());
             //Save
@@ -404,7 +404,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     
     @Override
     public void onRestoreInstanceState(Parcelable state) {
-        Log.v("MuPDFReaderView", "onRestoreInstanceState() getDisplayedView()="+getDisplayedView());      
+//        Log.v("MuPDFReaderView", "onRestoreInstanceState() getDisplayedView()="+getDisplayedView());      
         if (state instanceof Bundle) {
             Bundle bundle = (Bundle) state;
                 //Load 

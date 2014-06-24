@@ -776,13 +776,13 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         cvBottom = cvTop  + cv.getMeasuredHeight();
 
             //If the user is not interacting and the scroller is finished move the view so that no gaps are left
-        // if (!mUserInteracting && mScroller.isFinished()) {
-        //     Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
-        //     cvRight  += corr.x;
-        //     cvLeft   += corr.x;
-        //     cvTop    += corr.y;
-        //     cvBottom += corr.y;
-        // }
+        if (!mUserInteracting && mScroller.isFinished() && cvLeft == 0 && cvTop == 0) {
+            Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
+            cvRight  += corr.x;
+            cvLeft   += corr.x;
+            cvTop    += corr.y;
+            cvBottom += corr.y;
+        }
 
         
 //             // If the current view is smaller than the screen in height, clamp
