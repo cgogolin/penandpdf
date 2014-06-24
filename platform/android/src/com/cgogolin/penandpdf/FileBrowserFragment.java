@@ -1,4 +1,4 @@
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -242,7 +242,7 @@ public class FileBrowserFragment extends ListFragment {
     }
     
     private void passUriBack(Uri uri){
-        Intent intent = new Intent(getActivity(),MuPDFActivity.class);
+        Intent intent = new Intent(getActivity(),PenAndPDFActivity.class);
         intent.setAction(Intent.ACTION_VIEW);//?
         intent.setData(uri);
         getActivity().setResult(Activity.RESULT_OK, intent);
@@ -272,7 +272,7 @@ public class FileBrowserFragment extends ListFragment {
         position -= mDirs.length;
 
         Uri uri = Uri.parse(mFiles[position].getAbsolutePath());
-        Intent intent = new Intent(getActivity(),MuPDFActivity.class);
+        Intent intent = new Intent(getActivity(),PenAndPDFActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
         intent.setData(uri);
         switch (mPurpose) {

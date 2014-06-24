@@ -1,4 +1,4 @@
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 
 import android.graphics.PointF;
 import android.graphics.RectF;

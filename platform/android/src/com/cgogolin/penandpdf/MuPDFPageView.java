@@ -1,4 +1,4 @@
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 
 import android.app.AlertDialog;
 import android.content.ClipData;
@@ -553,7 +553,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                 {
                     drawing.add(new ArrayList<PointF>(Arrays.asList(arcs[i])));
                 }
-                Log.i("PageView", "drawing="+drawing);
+//                Log.i("PageView", "drawing="+drawing);
                 setmDrawing(drawing);
                 deleteSelectedAnnotation();
 //                deselectAnnotation();

@@ -1,4 +1,4 @@
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 
 abstract public class LinkInfoVisitor {
     public abstract void visitInternal(LinkInfoInternal li);

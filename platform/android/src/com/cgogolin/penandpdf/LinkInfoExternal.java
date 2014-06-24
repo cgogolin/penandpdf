@@ -1,4 +1,4 @@
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 
 public class LinkInfoExternal extends LinkInfo {
     final public String url;

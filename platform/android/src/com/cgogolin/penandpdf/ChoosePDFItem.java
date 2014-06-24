@@ -1,4 +1,4 @@
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 
 public class ChoosePDFItem {
     enum Type {PARENT, DIR, DOC, NEW}

@@ -1,4 +1,4 @@
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 
 // Version of MuPDFAlert without enums to simplify JNI
 public class MuPDFAlertInternal {

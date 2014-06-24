@@ -1,4 +1,4 @@
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 
 import java.lang.Math;
 
@@ -626,7 +626,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         final int height = bottom-top;
         
             //Tell the Adapter to adjust the size of the HQ bitmap and all existing views that the parent size has changed
-//        ((MuPDFPageAdapter)mAdapter).updateHqBm(width, height);
         applyToChildren(new ViewMapper() {
                 @Override
                 void applyToView(View view) {
@@ -636,17 +635,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             });
             
         requestLayout();
-        
-        // Log.i("MuPDFActivity", "onLayoutChange("+v+", "+left+", "+top+", "+right+", "+bottom+", "+oldLeft+", "+oldTop+", "+oldRight+", "+oldBottom+")");
-        // if(right - left != 0 && bottom - top != 0 && oldRight - oldLeft != 0 && oldBottom - oldTop != 0 &&
-        //    (left!=oldLeft || top!=oldTop || right!=oldRight || bottom!=oldBottom )
-        //    )
-        // {
-        //     Log.i("MuPDFActivity", "planing layout reset");
-        //     mResetLayout = true;
-        //     forceLayout();//Doesn't work as intended!!!
-        //     requestLayout();
-        // }
     }
     
     @Override
@@ -654,15 +642,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         super.onLayout(changed, left, top, right, bottom);
         
         View cv = getDisplayedView();
-        
-        // if (mResetLayout) {
-        //     Log.i("MuPDFActivity", "resetting layout");
-        //     mResetLayout = false;
-        //     mXScroll = mYScroll = 0;
-        //         // Remove all children
-        //     removeAllChildren();
-        // }
-        // else
 
             //If we were asked to display a different view do so now...
         if(mHasNewCurrent)
@@ -797,13 +776,15 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         cvBottom = cvTop  + cv.getMeasuredHeight();
 
             //If the user is not interacting and the scroller is finished move the view so that no gaps are left
-        if (!mUserInteracting && mScroller.isFinished()) {
-            Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
-            cvRight  += corr.x;
-            cvLeft   += corr.x;
-            cvTop    += corr.y;
-            cvBottom += corr.y;
-        }
+        // if (!mUserInteracting && mScroller.isFinished()) {
+        //     Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
+        //     cvRight  += corr.x;
+        //     cvLeft   += corr.x;
+        //     cvTop    += corr.y;
+        //     cvBottom += corr.y;
+        // }
+
+        
 //             // If the current view is smaller than the screen in height, clamp
 //             // it vertically
 //         else if (cv.getMeasuredHeight() <= getHeight()) {
@@ -928,8 +909,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 displayedViewInstanceState = null;
                 onNumberOfStrokesChanged(((PageView)v).getDrawingSize());
             }
-                //Toast.makeText(getContext(), "created child with width="+v.getMeasuredWidth()+" height="+v.getMeasuredWidth(), Toast.LENGTH_LONG).show();
-//            Log.i("MuPDFActivity", "created child with width="+v.getMeasuredWidth()+" height="+v.getMeasuredWidth());
         }
         return v;
     }

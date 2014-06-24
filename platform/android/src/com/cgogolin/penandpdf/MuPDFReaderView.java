@@ -1,4 +1,4 @@
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 
 import android.util.SparseArray;
 
@@ -31,7 +31,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     
     private SparseArray<SearchTaskResult> SearchTaskResults = new SparseArray<SearchTaskResult>();
     
-        //To be overwritten in MuPDFActivity:
+        //To be overwritten in PenAndPDFActivity:
     abstract protected void onMoveToChild(int pageNumber);
     abstract protected void onTapMainDocArea();
     abstract protected void onTapTopLeftMargin();

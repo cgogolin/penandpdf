@@ -1,4 +1,4 @@
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 import java.util.ArrayList;
 
 import android.content.Context;

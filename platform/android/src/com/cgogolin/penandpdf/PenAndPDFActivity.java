@@ -1,6 +1,6 @@
-// compile-command: cd ~/src/android/mupdf/platform/android && ant clean && ~/src/android/android-ndk-r9/ndk-build && ant debug && cp bin/MuPDF-debug.apk /home/cgogolin/Dropbox/galaxynote8/ 
+// compile-command: cd ~/src/android/mupdf/platform/android && ant clean && ~/src/android/android-ndk-r9/ndk-build && ant debug && cp bin/PenAndPDF-debug.apk /home/cgogolin/Dropbox/galaxynote8/ 
 
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -52,7 +52,7 @@ import android.widget.ShareActionProvider;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewAnimator;
-import com.artifex.mupdfdemo.ReaderView.ViewMapper;
+//import com.artifex.mupdfdemo.ReaderView.ViewMapper;
 import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -65,7 +65,7 @@ class ThreadPerTaskExecutor implements Executor {
     }
 }
 
-public class MuPDFActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener, FilePicker.FilePickerSupport
+public class PenAndPDFActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener, FilePicker.FilePickerSupport
 {       
     enum ActionBarMode {Main, Annot, Edit, Search, Selection, Hidden};
     

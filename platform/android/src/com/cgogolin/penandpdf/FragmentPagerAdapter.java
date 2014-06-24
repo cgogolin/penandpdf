@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 //package android.support.v13.app; //Taken from there but slightly modified
 
 import android.app.Fragment;

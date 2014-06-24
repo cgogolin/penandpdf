@@ -1,4 +1,4 @@
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 
 import java.io.File;
 
@@ -147,7 +147,7 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
             return;
         }
 
-        Intent intent = new Intent(getActivity(),MuPDFActivity.class);
+        Intent intent = new Intent(getActivity(),PenAndPDFActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
         intent.setData(uri);
         switch (mPurpose) {

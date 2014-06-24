@@ -1,4 +1,4 @@
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;

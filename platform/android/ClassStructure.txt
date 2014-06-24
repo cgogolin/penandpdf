@@ -1,9 +1,9 @@
 The information in this file is outdated and only partially correct!!!
 
-MuPDFActivity
+PenAndPDFActivity
 ~~~~~~~~~~~~~
 
-MuPDFActivity is the main activity used when displaying and interacting with a
+PenAndPDFActivity is the main activity used when displaying and interacting with a
 document. This class is responsible for creating the view hierarchy and the
 menus.
 

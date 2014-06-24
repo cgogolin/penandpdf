@@ -1,4 +1,4 @@
-package com.artifex.mupdfdemo;
+package com.cgogolin.penandpdf;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -19,6 +19,7 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Region;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -391,6 +392,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
         mDrawEntire.execute();
 
+            //This should probably not be done in setPage() ?!
         if (mOverlayView == null) {
             mOverlayView = new View(mContext) {
                     class TextSelectionDrawer implements TextProcessor
@@ -426,8 +428,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                         public void onEndText() {
                             if (useSmartTextSelection)
                             {
-                                canvas.drawRect(0, 0, docRelXminSelection*scale, getHeight(), selectOverlayPaint);
-                                canvas.drawRect(docRelXmaxSelection*scale, 0, getWidth(), getHeight(), selectOverlayPaint);
+                                canvas.drawRect(0, 0, docRelXminSelection*scale, PageView.this.getHeight(), selectOverlayPaint);
+                                canvas.drawRect(docRelXmaxSelection*scale, 0, PageView.this.getWidth(), PageView.this.getHeight(), selectOverlayPaint);
                             }
                         }
                     }
@@ -479,13 +481,53 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                             eraserOuterPaint.setStyle(Paint.Style.STROKE);
                             eraserOuterPaint.setColor(ERASER_OUTER_COLOR);
                         }
+
+                    @Override
+                    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                        int x, y;
+                        switch(View.MeasureSpec.getMode(widthMeasureSpec)) {
+                            case View.MeasureSpec.UNSPECIFIED:
+                                x = PageView.this.getWidth();
+                                break;
+                            case View.MeasureSpec.AT_MOST:
+                                x = Math.min(PageView.this.getWidth() ,View.MeasureSpec.getSize(widthMeasureSpec));
+                            default:
+                                x = View.MeasureSpec.getSize(widthMeasureSpec);
+                        }
+                        switch(View.MeasureSpec.getMode(heightMeasureSpec)) {
+                            case View.MeasureSpec.UNSPECIFIED:
+                                y = PageView.this.getHeight();
+                                break;
+                            case View.MeasureSpec.AT_MOST:
+                                y = Math.min(PageView.this.getHeight(), View.MeasureSpec.getSize(heightMeasureSpec));
+                            default:
+                                y = View.MeasureSpec.getSize(heightMeasureSpec);
+                        }
+//                        Log.i("PageView", "setMeasuredDimension"+mParentSize);
+                        setMeasuredDimension(x, y);
+                    }
+
                     
                     @Override
                     protected void onDraw(final Canvas canvas) {
                         super.onDraw(canvas);
-                            // Work out current total scale factor from source to view
-                        final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
 
+                        // Log.i("PageView", "onDraw canvas="+canvas.getWidth()+" "+canvas.getHeight());
+                        // Log.i("PageView", "onDraw parent size="+mParentSize);
+                        
+//                        canvas.drawRect(10,10, canvas.getWidth()-10, canvas.getHeight()-10, searchResultPaint);
+                        canvas.clipRect(0,0, canvas.getWidth(), canvas.getHeight(), Region.Op.INTERSECT);
+                        
+                        canvas.translate(PageView.this.getLeft()-2, PageView.this.getTop());
+//                        canvas.scale(PageView.this.getScale(), PageView.this.getScale());
+                        
+                            // Work out current total scale factor from source to view
+//                        final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+                        final float scale = mSourceScale*(float)PageView.this.getWidth()/(float)mSize.x;
+                        
+                            //Clip to the visible region
+//                        canvas.clipRect(-PageView.this.getLeft(), -PageView.this.getTop(), -PageView.this.getLeft()+mParentSize.x, -PageView.this.getTop()+mParentSize.y, Region.Op.INTERSECT);
+                        
                         if (!mIsBlank && mSearchTaskResult != null) {
                             for (RectF rect : mSearchTaskResult.getSearchBoxes())
                                 canvas.drawRect(rect.left*scale, rect.top*scale,
@@ -535,17 +577,33 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                                             p = iit.next();
                                             float x = p.x * scale;
                                             float y = p.y * scale;
-                                            path.quadTo(mX, mY, (x + mX) / 2, (y + mY) / 2);
-                                            mX = x;
-                                            mY = y;
+//                                            path.quadTo(mX, mY, (x + mX) / 2, (y + mY) / 2);
+                                            path.lineTo(x, y);
+                                            // mX = x;
+                                            // mY = y;
                                         }
-                                    path.lineTo(mX, mY);
+//                                    path.lineTo(mX, mY);
                                     }
+                                    if(!canvas.quickReject(path, Canvas.EdgeType.AA))
+                                    {
+                                        drawingPaint.setStrokeWidth(inkThickness * scale);
+                                        drawingPaint.setColor(inkColor);  //Should be done only on settings change
+                                        canvas.drawPath(path, drawingPaint);
+                                    }
+                                    // else {
+                                    //     Log.i("PageView", "path rejected");
+                                    // }
+                                    path = new Path();
                                 }
                             }
-                            drawingPaint.setStrokeWidth(inkThickness * scale);
-                            drawingPaint.setColor(inkColor);  //Should be done only on settings change                          
-                            canvas.drawPath(path, drawingPaint);
+
+                            // if(!canvas.quickReject(path, Canvas.EdgeType.AA))
+                            // {
+                            //     Log.i("PageView", "path rejected");
+                            //     drawingPaint.setStrokeWidth(inkThickness * scale);
+                            //     drawingPaint.setColor(inkColor);  //Should be done only on settings change
+                            //     canvas.drawPath(path, drawingPaint);
+                            // }                         
                         }
 
                         if (eraser != null) {
@@ -555,6 +613,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                     }
                 };
 
+
+//            mOverlayView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+            mOverlayView.measure(MeasureSpec.makeMeasureSpec(mParentSize.x, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(mParentSize.y, MeasureSpec.AT_MOST));
+            
             addView(mOverlayView);
         }
         requestLayout();
@@ -826,6 +888,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             int limit = Math.min(mParentSize.x, mParentSize.y)/2;
             mBusyIndicator.measure(View.MeasureSpec.AT_MOST | limit, View.MeasureSpec.AT_MOST | limit);
         }
+
+        if (mOverlayView != null) {
+            mOverlayView.measure(MeasureSpec.makeMeasureSpec(mParentSize.x, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(mParentSize.y, MeasureSpec.AT_MOST));
+        }
     }
 
     @Override
@@ -833,16 +899,22 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 //        Log.i("PageView", "onLayout() of page "+mPageNumber);        
         int w  = right-left;
         int h = bottom-top;
-
+            
         if (mEntire != null) {
-            mEntireMat.setScale(w/(float)mSize.x, h/(float)mSize.y);
-            mEntire.setImageMatrix(mEntireMat);
-            mEntire.invalidate();
-            mEntire.layout(0, 0, w, h);
-        }
-
-        if (mOverlayView != null) {
-            mOverlayView.layout(0, 0, w, h);
+            //     //Draw mEntire only if it is not completely covered by a Hq patch
+            // if(mPatch != null) Log.i("PageView", "left="+left+" top="+top+" right="+right+" bottom="+bottom+" mPatchViewSize="+mPatchViewSize+" mPatch.getLeft()"+mPatch.getLeft()+" mPatch.getRigth()"+mPatch.getRight());
+            // if(mPatch != null && mPatch.getLeft() == left && mPatch.getTop() == top && mPatch.getRight() == right && mPatch.getBottom() == bottom) 
+            // {
+            //     mEntire.setVisibility(View.GONE);
+            // }
+            // else
+            {
+//                mEntire.setVisibility(View.VISIBLE);
+                mEntireMat.setScale(w/(float)mSize.x, h/(float)mSize.y);
+                mEntire.setImageMatrix(mEntireMat);
+                mEntire.invalidate();
+                mEntire.layout(0, 0, w, h);
+            }
         }
 
         if (mPatchViewSize != null) {
@@ -859,6 +931,12 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
         }
 
+        if (mOverlayView != null) {
+//            mOverlayView.layout(0, 0, w, h);
+            mOverlayView.layout(-left, -top, -left+mOverlayView.getMeasuredWidth(), -top+mOverlayView.getMeasuredHeight());
+            mOverlayView.invalidate();
+        }
+        
         if (mBusyIndicator != null) {
             int bw = mBusyIndicator.getMeasuredWidth();
             int bh = mBusyIndicator.getMeasuredHeight();
@@ -938,7 +1016,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void update() {
-//        Log.i("PageView", "update()");
             // Cancel pending render task
         if (mDrawEntire != null) {
             mDrawEntire.cancel(true);
@@ -1032,7 +1109,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     @Override
     public Parcelable onSaveInstanceState() {
-        Log.v("PageView", "onSaveInstanceState()");
+//        Log.v("PageView", "onSaveInstanceState()");
         Bundle bundle = new Bundle();
         bundle.putParcelable("superInstanceState", super.onSaveInstanceState());
             //Save
@@ -1044,7 +1121,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     @Override
     public void onRestoreInstanceState(Parcelable state) {
-        Log.v("PageView", "onRestoreInstanceState()");
+//        Log.v("PageView", "onRestoreInstanceState()");
         if (state instanceof Bundle) {
             Bundle bundle = (Bundle) state;
                 //Load 
