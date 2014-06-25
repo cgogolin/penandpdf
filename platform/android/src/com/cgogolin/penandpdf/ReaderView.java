@@ -622,20 +622,35 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
 
     @Override
     public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        final int oldWidth = oldRight-oldLeft;
+        final int oldHeight = oldBottom-oldTop;
         final int width = right-left;
         final int height = bottom-top;
         
             //Tell the Adapter to adjust the size of the HQ bitmap and all existing views that the parent size has changed
-        applyToChildren(new ViewMapper() {
-                @Override
-                void applyToView(View view) {
-                    ((PageView)view).setParentSize(new Point(width, height));
-                    ((PageView)view).setHqBm(getSharedHqBm());
-                }
-            });
-            
+        if(oldWidth != width || oldHeight != height)
+        {
+            applyToChildren(new ViewMapper() {
+                    @Override
+                    void applyToView(View view) {
+                        ((PageView)view).setParentSize(new Point(width, height));
+//                        ((PageView)view).setHqBm(getSharedHqBm(width, height));
+                    }
+                });
+        }
         requestLayout();
     }
+
+
+    public Bitmap getPatchBm() {
+        if (mSharedHqBm == null || mSharedHqBm.getWidth() != getWidth() || mSharedHqBm.getHeight() != getHeight())
+        {
+            Log.i("PageView", "creating new HqBm w="+getWidth()+" h="+getHeight());
+            mSharedHqBm = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+        }
+        return mSharedHqBm;
+    }
+    
     
     @Override
 	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
@@ -688,7 +703,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             //Caculate placement of the current view
         int cvLeft, cvRight, cvTop, cvBottom;
         {
-            cv = getOrCreateChild(mCurrent);
+            cv = getOrCreateChild(mCurrent, right-left, bottom-top);
             
                 //Set mXScroll, mYScroll and mScale from the values set in setScale() and setScroll()
             if(!changed && !mReflow)
@@ -803,7 +818,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             //Creat and layout the preceding and following PageViews
         Point cvOffset = subScreenSizeOffset(cv);
         if (mCurrent > 0) {
-            View lv = getOrCreateChild(mCurrent - 1);
+            View lv = getOrCreateChild(mCurrent - 1, right-left, bottom-top);
             Point leftOffset = subScreenSizeOffset(lv);
             int gap = leftOffset.x + GAP + cvOffset.x;
             lv.layout(cvLeft - lv.getMeasuredWidth() - gap,
@@ -812,7 +827,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                       (cvBottom + cvTop + lv.getMeasuredHeight())/2);
         }
         if (mCurrent + 1 < mAdapter.getCount()) {
-            View rv = getOrCreateChild(mCurrent + 1);
+            View rv = getOrCreateChild(mCurrent + 1, right-left, bottom-top);
             Point rightOffset = subScreenSizeOffset(rv);
             int gap = cvOffset.x + GAP + rightOffset.x;
             rv.layout(cvRight + gap,
@@ -889,17 +904,21 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             return mViewCache.removeFirst();
     }
 
-    private Bitmap getSharedHqBm() {
-        if (mSharedHqBm == null || mSharedHqBm.getWidth() != getWidth() || mSharedHqBm.getHeight() != getHeight())
-            mSharedHqBm = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
-        return mSharedHqBm;
-    }
+    // private Bitmap getSharedHqBm(int width, int height) {
+    //     if (mSharedHqBm == null || mSharedHqBm.getWidth() != width || mSharedHqBm.getHeight() != height)
+    //     {
+    //         Log.i("PageView", "creating new HqBm");
+    //         mSharedHqBm = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+    //     }
+    //     return mSharedHqBm;
+    // }
 
-    private View getOrCreateChild(int i) {
+    private View getOrCreateChild(int i, int width, int height) {
         View v = mChildViews.get(i);
         if (v == null) {
             v = mAdapter.getView(i, getCached(), this);
-            ((PageView)v).setHqBm(getSharedHqBm());
+            Log.i("PageView", "getOrCreateChild page="+i);
+//            ((PageView)v).setHqBm(getSharedHqBm(width, height));
             onChildSetup(i, v);
             onScaleChild(v, mScale);
             addAndMeasureChild(i, v);

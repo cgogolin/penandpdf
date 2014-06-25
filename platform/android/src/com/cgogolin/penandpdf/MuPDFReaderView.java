@@ -367,8 +367,7 @@ abstract public class MuPDFReaderView extends ReaderView {
 
     @Override
     protected void onSettle(View v) {
-            // When the layout has settled ask the page to render
-            // in HQ
+            // When the layout has settled ask the page to render in HQ
         ((MuPDFView) v).addHq(false);
     }
 

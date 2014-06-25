@@ -83,7 +83,7 @@ public class MuPDFReflowView extends WebView implements MuPDFView {
         requestHeight();
     }
 
-    public void blank(int page) {
+    public void setBlankPage(int page) {
     }
 
     public Hit passClickEvent(float x, float y) {

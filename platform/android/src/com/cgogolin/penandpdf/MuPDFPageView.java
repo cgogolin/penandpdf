@@ -11,9 +11,10 @@ import android.graphics.RectF;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.text.method.PasswordTransformationMethod;
-import android.view.LayoutInflater;
-import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
+import android.view.LayoutInflater;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.EditText;
 
 import android.util.Log;
@@ -118,14 +119,14 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	private Runnable changeReporter;
 
 //	public MuPDFPageView(Context c, FilePicker.FilePickerSupport filePickerSupport, MuPDFCore core, Point parentSize, Bitmap sharedHqBm) {
-	public MuPDFPageView(Context c, FilePicker.FilePickerSupport filePickerSupport, MuPDFCore core, Point parentSize) {
+	public MuPDFPageView(Context context, FilePicker.FilePickerSupport filePickerSupport, MuPDFCore core, ViewGroup parent) {
 //		super(c, parentSize, sharedHqBm);
-                super(c, parentSize);
+                super(context, parent);
 		mFilePickerSupport = filePickerSupport;
 		mCore = core;
-		mTextEntryBuilder = new AlertDialog.Builder(c);
+		mTextEntryBuilder = new AlertDialog.Builder(context);
 		mTextEntryBuilder.setTitle(getContext().getString(R.string.fill_out_text_field));
-		LayoutInflater inflater = (LayoutInflater)c.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		mEditText = (EditText)inflater.inflate(R.layout.textentry, null);
 		mTextEntryBuilder.setView(mEditText);
 		mTextEntryBuilder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -153,10 +154,10 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		});
 		mTextEntry = mTextEntryBuilder.create();
 
-		mChoiceEntryBuilder = new AlertDialog.Builder(c);
+		mChoiceEntryBuilder = new AlertDialog.Builder(context);
 		mChoiceEntryBuilder.setTitle(getContext().getString(R.string.choose_value));
 
-		mSigningDialogBuilder = new AlertDialog.Builder(c);
+		mSigningDialogBuilder = new AlertDialog.Builder(context);
 		mSigningDialogBuilder.setTitle("Select certificate and sign?");
 		mSigningDialogBuilder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
 			@Override
@@ -178,7 +179,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			}
 		});
 
-		mSignatureReportBuilder = new AlertDialog.Builder(c);
+		mSignatureReportBuilder = new AlertDialog.Builder(context);
 		mSignatureReportBuilder.setTitle("Signature checked");
 		mSignatureReportBuilder.setPositiveButton(R.string.okay, new DialogInterface.OnClickListener() {
 			@Override
@@ -187,11 +188,11 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			}
 		});
 
-		mPasswordText = new EditText(c);
+		mPasswordText = new EditText(context);
 		mPasswordText.setInputType(EditorInfo.TYPE_TEXT_VARIATION_PASSWORD);
 		mPasswordText.setTransformationMethod(new PasswordTransformationMethod());
 
-		mPasswordEntryBuilder = new AlertDialog.Builder(c);
+		mPasswordEntryBuilder = new AlertDialog.Builder(context);
 		mPasswordEntryBuilder.setTitle(R.string.enter_password);
 		mPasswordEntryBuilder.setView(mPasswordText);
 		mPasswordEntryBuilder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
