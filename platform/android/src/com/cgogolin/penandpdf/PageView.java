@@ -988,6 +988,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             protected void onPostExecute(PatchInfo v) {
                 mPatchViewSize = v.patchViewSize;
                 mPatchArea     = v.patchArea;
+
+                Log.i("PageView", "mPatchViewSize="+mPatchViewSize+" mPatchArea="+mPatchArea);
+                
                 mPatch.setImageBitmap(v.patchBm);
                 mPatch.invalidate();
                     //requestLayout();
@@ -995,6 +998,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                     // why, but apparently others have run into the problem.
                 mPatch.layout(mPatchArea.left, mPatchArea.top, mPatchArea.right, mPatchArea.bottom);
                 invalidate();
+                    //Recursively call addHq() to check whether the visible area has changed since the generation was started.
+                addHq(false);
             }
         };
         mDrawPatch.execute(patchInfo);
