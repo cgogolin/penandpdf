@@ -239,9 +239,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
         mIsBlank = true;
         mPageNumber = 0;
-
-        // if (mSize == null)
-        //     mSize = mParentSize;
+        
         mSize = null;
         
         if (mEntire != null) {
@@ -327,7 +325,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         
             // Calculate scaled size that fits within the parent
             // This is the size at minimum zoom
-//        mSourceScale = Math.min(mParentSize.x/size.x, mParentSize.y/size.y);
         mSourceScale = Math.min(mParent.getWidth()/size.x, mParent.getHeight()/size.y);
         mSize = new Point((int)(size.x*mSourceScale), (int)(size.y*mSourceScale));
         

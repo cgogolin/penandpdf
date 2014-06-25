@@ -706,7 +706,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             cv = getOrCreateChild(mCurrent, right-left, bottom-top);
             
                 //Set mXScroll, mYScroll and mScale from the values set in setScale() and setScroll()
-            if(!changed && !mReflow)
+//            if(!changed && !mReflow)
+            if(!mReflow)
             {
                 float scale_factor = mReflow ? REFLOW_SCALE_FACTOR : 1.0f;
                 float min_scale = MIN_SCALE * scale_factor;
