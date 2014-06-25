@@ -16,7 +16,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.view.View.OnLayoutChangeListener;
+//import android.view.View.OnLayoutChangeListener;
 import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.Scroller;
@@ -26,7 +26,7 @@ import android.preference.PreferenceManager;
 
 import android.util.Log;
 
-abstract public class ReaderView extends AdapterView<Adapter> implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, Runnable, android.view.View.OnLayoutChangeListener
+abstract public class ReaderView extends AdapterView<Adapter> implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, Runnable //, android.view.View.OnLayoutChangeListener
 {
     private static final int  MOVING_DIAGONALLY = 0;
     private static final int  MOVING_LEFT       = 1;
@@ -95,7 +95,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         mScaleGestureDetector = new ScaleGestureDetector(context, this);
         mScroller        = new Scroller(context);
             //We want to get notified if the size we have changes
-        addOnLayoutChangeListener(this);
+//        addOnLayoutChangeListener(this);
     }
 
     // public ReaderView(Context context, AttributeSet attrs) {
@@ -620,26 +620,26 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             measureView(getChildAt(i));
     }
 
-    @Override
-    public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-        final int oldWidth = oldRight-oldLeft;
-        final int oldHeight = oldBottom-oldTop;
-        final int width = right-left;
-        final int height = bottom-top;
+    // @Override
+    // public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+//         final int oldWidth = oldRight-oldLeft;
+//         final int oldHeight = oldBottom-oldTop;
+//         final int width = right-left;
+//         final int height = bottom-top;
         
-            //Tell the Adapter to adjust the size of the HQ bitmap and all existing views that the parent size has changed
-        if(oldWidth != width || oldHeight != height)
-        {
-            applyToChildren(new ViewMapper() {
-                    @Override
-                    void applyToView(View view) {
-                        ((PageView)view).setParentSize(new Point(width, height));
-//                        ((PageView)view).setHqBm(getSharedHqBm(width, height));
-                    }
-                });
-        }
-        requestLayout();
-    }
+//             //Tell the Adapter to adjust the size of the HQ bitmap and all existing views that the parent size has changed
+//         if(oldWidth != width || oldHeight != height)
+//         {
+//             applyToChildren(new ViewMapper() {
+//                     @Override
+//                     void applyToView(View view) {
+//                         ((PageView)view).setParentSize(new Point(width, height));
+// //                        ((PageView)view).setHqBm(getSharedHqBm(width, height));
+//                     }
+//                 });
+//         }
+//         requestLayout();
+//    }
 
 
     public Bitmap getPatchBm() {
@@ -811,7 +811,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             //Finally layout the child view with the calculated values
         cv.layout(cvLeft, cvTop, cvRight, cvBottom);
 
-            //Starte the generation of the HQ aread if appropriate
+            //Start the generation of the HQ area if appropriate
         if (!mUserInteracting && mScroller.isFinished())
             postSettle(cv);
         
@@ -992,7 +992,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             // onSettle and onUnsettle are posted so that the calls
             // wont be executed until after the system has performed
             // layout.
-        post (new Runnable() {
+        post(new Runnable() {
                 public void run () {
                     onSettle(v);
                 }

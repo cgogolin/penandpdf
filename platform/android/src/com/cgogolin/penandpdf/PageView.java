@@ -149,7 +149,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private ViewGroup mParent;
     
     protected     int       mPageNumber;
-    private       Point     mParentSize;
+//    private       Point     mParentSize;
     protected     Point     mSize;   // Size of page at minimum zoom
     protected     float     mSourceScale;
     private       float     docRelXmax = Float.NEGATIVE_INFINITY;
@@ -198,8 +198,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         super(c);
         mContext    = c;
         mParent = parent;
-//        mParentSize = parentSize;
-        mParentSize = new Point(parent.getWidth(), parent.getHeight());
+//        mParentSize = new Point(parent.getWidth(), parent.getHeight());
         setBackgroundColor(BACKGROUND_COLOR);
 //        mEntireBm = Bitmap.createBitmap(parentSize.x, parentSize.y, Config.ARGB_8888);
         mEntireMat = new Matrix();
@@ -218,7 +217,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     protected abstract void addMarkup(PointF[] quadPoints, Annotation.Type type);
 
     private void reset() {
-
         Log.i("PageView", "reset()");
         
             // Cancel pending background tasks
@@ -242,8 +240,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         mIsBlank = true;
         mPageNumber = 0;
 
-        if (mSize == null)
-            mSize = mParentSize;
+        // if (mSize == null)
+        //     mSize = mParentSize;
+        mSize = null;
         
         if (mEntire != null) {
             mEntire.setImageBitmap(null);
@@ -303,10 +302,14 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 //        mPatchBm = null;
     }
 
-    public void setBlankPage(int page) {
+    public void setBlankPage(int page) { //This should not be used. Setting mSize to a dummy value will result in flicker and other problems!
         reset();
         mPageNumber = page;
-
+        mIsBlank = true;
+        
+            //We don't know how large this page wants to be so return a size of zero
+        mSize = new Point(0,0);
+        
         if (mBusyIndicator == null) {
             mBusyIndicator = new ProgressBar(mContext);
             mBusyIndicator.setIndeterminate(true);
@@ -324,7 +327,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         
             // Calculate scaled size that fits within the parent
             // This is the size at minimum zoom
-        mSourceScale = Math.min(mParentSize.x/size.x, mParentSize.y/size.y);
+//        mSourceScale = Math.min(mParentSize.x/size.x, mParentSize.y/size.y);
+        mSourceScale = Math.min(mParent.getWidth()/size.x, mParent.getHeight()/size.y);
         mSize = new Point((int)(size.x*mSourceScale), (int)(size.y*mSourceScale));
         
             // Get the link info in the background
@@ -355,9 +359,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 mEntire.invalidate();
                 
                     //Create a bitmap of the right size
-                if(mEntireBm == null || mParentSize.x != mEntireBm.getWidth() || mParentSize.y != mEntireBm.getHeight())
+//                if(mEntireBm == null || mParentSize.x != mEntireBm.getWidth() || mParentSize.y != mEntireBm.getHeight())
+                if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
                 {
-                    mEntireBm = Bitmap.createBitmap(mParentSize.x, mParentSize.y, Config.ARGB_8888);
+                    mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
                 }
 
                 if (mBusyIndicator == null) {
@@ -506,7 +511,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                             default:
                                 y = View.MeasureSpec.getSize(heightMeasureSpec);
                         }
-//                        Log.i("PageView", "setMeasuredDimension"+mParentSize);
                         setMeasuredDimension(x, y);
                     }
 
@@ -600,7 +604,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 };
 
                 //Fit the overlay view to the PageView
-            mOverlayView.measure(MeasureSpec.makeMeasureSpec(mParentSize.x, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(mParentSize.y, MeasureSpec.AT_MOST));
+//            mOverlayView.measure(MeasureSpec.makeMeasureSpec(mParentSize.x, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(mParentSize.y, MeasureSpec.AT_MOST));
+            mOverlayView.measure(MeasureSpec.makeMeasureSpec(mParent.getWidth(), MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(mParent.getHeight(), MeasureSpec.AT_MOST));
             addView(mOverlayView);
         }
         mOverlayView.invalidate();
@@ -871,12 +876,12 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         setMeasuredDimension(x, y);
 
         if (mBusyIndicator != null) {
-            int limit = Math.min(mParentSize.x, mParentSize.y)/2;
+            int limit = Math.min(mParent.getWidth(), mParent.getHeight())/2;
             mBusyIndicator.measure(View.MeasureSpec.AT_MOST | limit, View.MeasureSpec.AT_MOST | limit);
         }
 
         if (mOverlayView != null) {
-            mOverlayView.measure(MeasureSpec.makeMeasureSpec(mParentSize.x, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(mParentSize.y, MeasureSpec.AT_MOST));
+            mOverlayView.measure(MeasureSpec.makeMeasureSpec(mParent.getWidth(), MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(mParent.getHeight(), MeasureSpec.AT_MOST));
         }
     }
 
@@ -967,8 +972,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                     addView(mPatch);
                     if(mOverlayView != null) mOverlayView.bringToFront();
                 }
-                // mPatch.setImageBitmap(null);
-                // mPatch.invalidate();
             }
             
             protected PatchInfo doInBackground(PatchInfo... v) {                
@@ -998,8 +1001,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                     // why, but apparently others have run into the problem.
                 mPatch.layout(mPatchArea.left, mPatchArea.top, mPatchArea.right, mPatchArea.bottom);
                 invalidate();
-                    //Recursively call addHq() to check whether the visible area has changed since the generation was started.
-                addHq(false);
+                //     //Recursively call addHq() to check whether the visible area has changed since the generation was started.
+                // addHq(false);
             }
         };
         mDrawPatch.execute(patchInfo);
@@ -1133,12 +1136,12 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             mOverlayView.invalidate();
     }
 
-    public void setParentSize(Point parentSize) {
-        if(mParentSize.x != parentSize.x || mParentSize.y != parentSize.y)
-        {
-            mParentSize = parentSize;
-            mEntireBm = Bitmap.createBitmap(parentSize.x, parentSize.y, Config.ARGB_8888);
-            invalidate();
-        }
-    }
+    // public void setParentSize(Point parentSize) {
+    //     if(mParentSize.x != parentSize.x || mParentSize.y != parentSize.y)
+    //     {
+    //         mParentSize = parentSize;
+    //         mEntireBm = Bitmap.createBitmap(parentSize.x, parentSize.y, Config.ARGB_8888);
+    //         invalidate();
+    //     }
+    // }
 }

@@ -54,28 +54,34 @@ public class MuPDFPageAdapter extends BaseAdapter {
                 // immediately
             pageView.setPage(position, pageSize);
         } else {
+                // Page size as yet unknown so find out find the size
+            PointF size = mCore.getPageSize(position);
+            mPageSizes.put(position, size);
+            pageView.setPage(position, size);            
+                // Warning: Page size must be known for measuring so 
+                // we can't do this in background!!!
                 // Page size as yet unknown. Blank it for now, and
                 // start a background task to find the size
-            pageView.setBlankPage(position);
-            AsyncTask<Void,Void,PointF> sizingTask = new AsyncTask<Void,Void,PointF>() {
-                @Override
-                protected PointF doInBackground(Void... arg0) {
-                    return mCore.getPageSize(position);
-                }
+            // pageView.setBlankPage(position);
+            // AsyncTask<Void,Void,PointF> sizingTask = new AsyncTask<Void,Void,PointF>() {
+            //     @Override
+            //     protected PointF doInBackground(Void... arg0) {
+            //         return mCore.getPageSize(position);
+            //     }
                 
-                @Override
-                protected void onPostExecute(PointF result) {
-                    super.onPostExecute(result);
-                        // We now know the page size
-                    mPageSizes.put(position, result);
-                        // Check that this view hasn't been reused for
-                        // another page since we started
-                    if (pageView.getPage() == position)
-                        pageView.setPage(position, result);
-                }
-            };
+            //     @Override
+            //     protected void onPostExecute(PointF result) {
+            //         super.onPostExecute(result);
+            //             // We now know the page size
+            //         mPageSizes.put(position, result);
+            //             // Check that this view hasn't been reused for
+            //             // another page since we started
+            //         if (pageView.getPage() == position)
+            //             pageView.setPage(position, result);
+            //     }
+            // };
             
-            sizingTask.execute((Void)null);
+            // sizingTask.execute((Void)null);
         }
         return pageView;
     }
