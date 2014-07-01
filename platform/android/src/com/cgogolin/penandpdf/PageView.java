@@ -149,7 +149,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private ViewGroup mParent;
     
     protected     int       mPageNumber;
-//    private       Point     mParentSize;
     protected     Point     mSize;   // Size of page at minimum zoom
     protected     float     mSourceScale;
     private       float     docRelXmax = Float.NEGATIVE_INFINITY;
@@ -166,7 +165,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private       Point     mPatchViewSize; // View size on the basis of which the patch was created
     private       Rect      mPatchArea;
     private       ImageView mPatch;
-//    private       Bitmap    mPatchBm;
     private       AsyncTask<PatchInfo,Void,PatchInfo> mDrawPatch;
     
     private       TextWord  mText[][];
@@ -198,16 +196,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         super(c);
         mContext    = c;
         mParent = parent;
-//        mParentSize = new Point(parent.getWidth(), parent.getHeight());
         setBackgroundColor(BACKGROUND_COLOR);
-//        mEntireBm = Bitmap.createBitmap(parentSize.x, parentSize.y, Config.ARGB_8888);
         mEntireMat = new Matrix();
     }
-
-    // public void setHqBm(Bitmap sharedHqBm) {
-    //     Log.i("PageView", "setHqBm() page="+mPageNumber);
-    //     mPatchBm = sharedHqBm;
-    // }
     
         //To be overrwritten in MuPDFPageView
     protected abstract void drawPage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
@@ -217,8 +208,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     protected abstract void addMarkup(PointF[] quadPoints, Annotation.Type type);
 
     private void reset() {
-        Log.i("PageView", "reset()");
-        
             // Cancel pending background tasks
         if (mDrawEntire != null) {
             mDrawEntire.cancel(true);
@@ -238,10 +227,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         }
 
         mIsBlank = true;
-        mPageNumber = 0;
-        
+        mPageNumber = 0;        
         mSize = null;
-        
+
+            //Reset the child views 
         if (mEntire != null) {
             mEntire.setImageBitmap(null);
             mEntire.invalidate();
@@ -250,7 +239,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             mPatch.setImageBitmap(null);
             mPatch.invalidate();
         }
-
+        mOverlayView = null;
+        
+        
         mPatchViewSize = null;
         mPatchArea = null;
 
@@ -262,7 +253,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void releaseResources() {
-        Log.i("PageView", "releaseResources()");
         reset();
         if (mBusyIndicator != null) {
             removeView(mBusyIndicator);
@@ -270,15 +260,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         }
         mDrawing = null;
         mDrawingHistory.clear();
-            //Cancel any rendering
-        if (mDrawEntire != null) {
-            mDrawEntire.cancel(true);
-            mDrawEntire= null;
-        }
-        if (mDrawPatch != null) {
-            mDrawPatch.cancel(true);
-            mDrawPatch = null;
-        }
+        
             //Cancel all other async tasks
         if (mGetText != null) {
             mGetText.cancel(true);
@@ -288,34 +270,28 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             mGetLinkInfo.cancel(true);
             mGetLinkInfo = null;
         }
-        if (mDrawPatch != null) {
-            mDrawPatch.cancel(true);
-            mDrawPatch = null;
-        }
     }
 
     public void releaseBitmaps() {
         reset();
         mEntireBm = null;
-//        mPatchBm = null;
     }
 
-    public void setBlankPage(int page) { //This should not be used. Setting mSize to a dummy value will result in flicker and other problems!
-        reset();
-        mPageNumber = page;
-        mIsBlank = true;
+    // public void setBlankPage(int page) { //This should not be used. Setting mSize to a dummy value will result in flicker and other problems!
+    //     reset();
+    //     mPageNumber = page;
+    //     mIsBlank = true;
         
-            //We don't know how large this page wants to be so return a size of zero
-        mSize = new Point(0,0);
+    //         //We don't know how large this page wants to be so return a size of zero
+    //     mSize = new Point(0,0);
         
-        if (mBusyIndicator == null) {
-            mBusyIndicator = new ProgressBar(mContext);
-            mBusyIndicator.setIndeterminate(true);
-            addView(mBusyIndicator);
-        }
-
-        setBackgroundColor(BACKGROUND_COLOR);
-    }
+    //     if (mBusyIndicator == null) {
+    //         mBusyIndicator = new ProgressBar(mContext);
+    //         mBusyIndicator.setIndeterminate(true);
+    //         addView(mBusyIndicator);
+    //     }
+    //     setBackgroundColor(BACKGROUND_COLOR);
+    // }
 
     public void setPage(int page, PointF size) {
         Log.i("PageView", "setPage() page="+page);
@@ -356,7 +332,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 mEntire.invalidate();
                 
                     //Create a bitmap of the right size
-//                if(mEntireBm == null || mParentSize.x != mEntireBm.getWidth() || mParentSize.y != mEntireBm.getHeight())
                 if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
                 {
                     mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
@@ -601,7 +576,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 };
 
                 //Fit the overlay view to the PageView
-//            mOverlayView.measure(MeasureSpec.makeMeasureSpec(mParentSize.x, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(mParentSize.y, MeasureSpec.AT_MOST));
             mOverlayView.measure(MeasureSpec.makeMeasureSpec(mParent.getWidth(), MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(mParent.getHeight(), MeasureSpec.AT_MOST));
             addView(mOverlayView);
         }
@@ -706,7 +680,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             ArrayList<PointF> arc = mDrawing.get(mDrawing.size() - 1);
                 //Make points look nice
             if(arc.size() == 1) {
-//                final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
                 final PointF lastArc = arc.get(0);
                 arc.add(new PointF(lastArc.x+0.5f*inkThickness,lastArc.y));
                 arc.add(new PointF(lastArc.x+0.5f*inkThickness,lastArc.y+0.5f*inkThickness));
@@ -806,14 +779,17 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void undoDraw() {
-        // if (mDrawing == null || mDrawing.size() == 0) return;
-        // mDrawing.remove(mDrawing.size()-1);
-        if(mDrawingHistory.size()>0)
+        if(mDrawingHistory.size()>0) 
+        {
             mDrawing = mDrawingHistory.pop();
-        else
-            mDrawing = null;
-        mOverlayView.invalidate();
+            mOverlayView.invalidate();
+        }
     }
+    
+    public boolean canUndo() {
+        return mDrawingHistory.size()>0;
+    }
+    
     
     public void cancelDraw() {
         mDrawing = null;
@@ -848,8 +824,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     public void setItemSelectBox(RectF rect) {
         mItemSelectBox = rect;
-        if (mOverlayView != null)
-            mOverlayView.invalidate();
+        if (mOverlayView != null) mOverlayView.invalidate();
     }
 
     @Override
@@ -988,25 +963,17 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             protected void onPostExecute(PatchInfo v) {
                 mPatchViewSize = v.patchViewSize;
                 mPatchArea     = v.patchArea;
-
-                Log.i("PageView", "mPatchViewSize="+mPatchViewSize+" mPatchArea="+mPatchArea);
                 
                 mPatch.setImageBitmap(v.patchBm);
                 mPatch.invalidate();
-                    //requestLayout();
-                    // Calling requestLayout here doesn't lead to a later call to layout. No idea
-                    // why, but apparently others have run into the problem.
                 mPatch.layout(mPatchArea.left, mPatchArea.top, mPatchArea.right, mPatchArea.bottom);
                 invalidate();
-                //     //Recursively call addHq() to check whether the visible area has changed since the generation was started.
-                // addHq(false);
             }
         };
         mDrawPatch.execute(patchInfo);
     }
 
     public void update() {
-        Log.i("PageView", "update() page="+mPageNumber);
             // Cancel pending render task
         if (mDrawEntire != null) {
             mDrawEntire.cancel(true);
@@ -1037,8 +1004,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void removeHq() {
-        Log.i("PageView", "removeHq()");
-        
             // Stop the drawing of the patch if still going
         if (mDrawPatch != null) {
             mDrawPatch.cancel(true);
@@ -1075,7 +1040,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         }
 
     public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
-//        Log.i("PageView", "onSharedPreferenceChanged()");
             //Set ink thickness and colors for PageView
         inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
         eraserThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_ERASER_THICKNESS, Float.toString(eraserThickness)));
@@ -1088,8 +1052,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     private void savemDrawingToHistory(){
-        if(mDrawing != null)
-        {
+        if(mDrawing != null) {
             ArrayList<ArrayList<PointF>> mDrawingCopy = new ArrayList<ArrayList<PointF>>(mDrawing.size());
             for(int i = 0; i < mDrawing.size(); i++)
             {
@@ -1097,12 +1060,14 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
             mDrawingHistory.push(mDrawingCopy);
         }
+        else {
+            mDrawingHistory.push(new ArrayList<ArrayList<PointF>>(0));
+        }
     }
 
 
     @Override
     public Parcelable onSaveInstanceState() {
-//        Log.v("PageView", "onSaveInstanceState()");
         Bundle bundle = new Bundle();
         bundle.putParcelable("superInstanceState", super.onSaveInstanceState());
             //Save
@@ -1114,7 +1079,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     @Override
     public void onRestoreInstanceState(Parcelable state) {
-//        Log.v("PageView", "onRestoreInstanceState()");
         if (state instanceof Bundle) {
             Bundle bundle = (Bundle) state;
                 //Load 
@@ -1127,18 +1091,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void setmDrawing(ArrayList<ArrayList<PointF>> drawing){
-        mDrawing = drawing;
-        
-        if (mOverlayView != null)
-            mOverlayView.invalidate();
+        mDrawing = drawing;   
+        if (mOverlayView != null) mOverlayView.invalidate();
     }
-
-    // public void setParentSize(Point parentSize) {
-    //     if(mParentSize.x != parentSize.x || mParentSize.y != parentSize.y)
-    //     {
-    //         mParentSize = parentSize;
-    //         mEntireBm = Bitmap.createBitmap(parentSize.x, parentSize.y, Config.ARGB_8888);
-    //         invalidate();
-    //     }
-    // }
 }

@@ -85,7 +85,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     private float mNormalizedScaleBeforeInternalLinkHit = 1.0f;
     private float mNormalizedXScrollBeforeInternalLinkHit = 0;
     private float mNormalizedYScrollBeforeInternalLinkHit = 0;
-    private boolean mCanUndo = false;
+//    private boolean mCanUndo = false;
 
     private final int    OUTLINE_REQUEST=0;
     private final int    PRINT_REQUEST=1;
@@ -458,7 +458,9 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     break;
                 case Annot:
                     inflater.inflate(R.menu.annot_menu, menu);
-                    if (!mCanUndo) {
+
+                    if(mDocView==null || ((PageView)mDocView.getSelectedView()) == null || !((PageView)mDocView.getSelectedView()).canUndo()) {
+//                    if (!mCanUndo) {
                         MenuItem undoButton = menu.findItem(R.id.menu_undo);
                         undoButton.setEnabled(false).setVisible(false);
                     }
@@ -548,7 +550,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     
     @Override
     public boolean onOptionsItemSelected(MenuItem item) { //Handel clicks in the options menu
-        MuPDFView pageView = (MuPDFView) mDocView.getDisplayedView();
+        MuPDFView pageView = (MuPDFView) mDocView.getSelectedView();
         switch (item.getItemId()) 
         {
             case R.id.menu_undo:
@@ -635,7 +637,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                                 pageView.deselectText();
                                 pageView.cancelDraw();
                         }
-                        mCanUndo = false;
+//                        mCanUndo = false;
                         mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         break;
                     case Edit:
@@ -660,7 +662,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 switch (mActionBarMode) {
                     case Annot:
 //                    case Copy:
-                        mCanUndo = false;
+//                        mCanUndo = false;
                         mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         if (pageView != null) {
                             pageView.saveDraw();
@@ -846,7 +848,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                         //Make the docview show the hits
                     mDocView.resetupChildren();
                         // Ask the ReaderView to move to the resulting page
-                    if(mDocView.getDisplayedViewIndex() != result.getPageNumber())
+                    if(mDocView.getSelectedItemPosition() != result.getPageNumber())
                         mDocView.setDisplayedViewIndex(result.getPageNumber());
                         // ... and the region on the page
                     RectF resultRect = result.getFocusedSearchBox();
@@ -894,7 +896,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                         if (getActionBar().isShowing())
                             smartMoveBackwards();
                         else {
-                            mDocView.setDisplayedViewIndex(getDisplayedViewIndex()-1);
+                            mDocView.setDisplayedViewIndex(getSelectedItemPosition()-1);
                             mDocView.setScale(1.0f);
                             mDocView.setNormalizedScroll(0.0f,0.0f);
                         }
@@ -905,7 +907,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                         if (getActionBar().isShowing())
                             smartMoveForwards();
                         else {
-                            mDocView.setDisplayedViewIndex(getDisplayedViewIndex()+1);
+                            mDocView.setDisplayedViewIndex(getSelectedItemPosition()+1);
                             mDocView.setScale(1.0f);
                             mDocView.setNormalizedScroll(0.0f,0.0f);
                         }
@@ -922,7 +924,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                             case Annotation:
                                 mActionBarMode = ActionBarMode.Edit;
                                 invalidateOptionsMenu();
-                                selectedAnnotationIsEditable = ((MuPDFPageView)getDisplayedView()).selectedAnnotationIsEditable();
+                                selectedAnnotationIsEditable = ((MuPDFPageView)getSelectedView()).selectedAnnotationIsEditable();
                                 break;
                             case Nothing:
                                 if(mActionBarMode != ActionBarMode.Search)
@@ -933,7 +935,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                                 break;
                             case LinkInternal:
                                 if(mDocView.linksEnabled()) {
-                                    mPageBeforeInternalLinkHit = getDisplayedViewIndex();
+                                    mPageBeforeInternalLinkHit = getSelectedItemPosition();
                                     mNormalizedScaleBeforeInternalLinkHit = getNormalizedScale();
                                     mNormalizedXScrollBeforeInternalLinkHit = getNormalizedXScroll();
                                     mNormalizedYScrollBeforeInternalLinkHit = getNormalizedYScroll();
@@ -951,16 +953,17 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
 
                     @Override
                     protected void onNumberOfStrokesChanged(int numberOfStrokes) {
-                        if (numberOfStrokes>0 && mCanUndo == false) 
-                        {
-                            mCanUndo = true;
-                            invalidateOptionsMenu();
-                        }
-                        else if(numberOfStrokes == 0 && mCanUndo == true)
-                        {
-                            mCanUndo = false;
-                            invalidateOptionsMenu();
-                        }
+                        invalidateOptionsMenu();
+                        // if (numberOfStrokes>0 && mCanUndo == false) 
+                        // {
+                        //     mCanUndo = true;
+                        //     invalidateOptionsMenu();
+                        // }
+                        // else if(numberOfStrokes == 0 && mCanUndo == true)
+                        // {
+                        //     mCanUndo = false;
+                        //     invalidateOptionsMenu();
+                        // }
                     }
                 
                 };
@@ -1095,7 +1098,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     private void saveViewport(SharedPreferences.Editor edit, String path) {
         if(mDocView == null) return;
         if(path == null) path = "/nopath";
-        edit.putInt("page"+path, mDocView.getDisplayedViewIndex());
+        edit.putInt("page"+path, mDocView.getSelectedItemPosition());
         edit.putFloat("normalizedscale"+path, mDocView.getNormalizedScale());
         edit.putFloat("normalizedxscroll"+path, mDocView.getNormalizedXScroll());
         edit.putFloat("normalizedyscroll"+path, mDocView.getNormalizedYScroll());
@@ -1276,7 +1279,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             mDocView.goToNextSearchResult(direction);
         else
         {
-            mSearchTask.start(latestTextInSearchBox, direction, mDocView.getDisplayedViewIndex());
+            mSearchTask.start(latestTextInSearchBox, direction, mDocView.getSelectedItemPosition());
             textOfLastSearch = latestTextInSearchBox;
         }
     }
@@ -1338,7 +1341,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
 
     private void setTitle() {
         if (core == null || mDocView == null)  return;
-        int pageNumber = mDocView.getDisplayedViewIndex();
+        int pageNumber = mDocView.getSelectedItemPosition();
         String title = Integer.toString(pageNumber+1)+"/"+Integer.toString(core.countPages());
         if(core.getFileName() != null) title+=" "+core.getFileName();
         getActionBar().setTitle(title);

@@ -47,7 +47,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
 
     private Bitmap mSharedHqBm;
     private Adapter           mAdapter;
-    private int               mCurrent;    // Adapter's index for the current view
+    private int               mCurrent = INVALID_POSITION;    // Adapter's index for the current view
     private int               mNewCurrent;
     private boolean           mHasNewCurrent = false;
     private boolean           mNextScrollWithCenter = false;
@@ -116,7 +116,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     //     addOnLayoutChangeListener(this);
     // }
 
-    public int getDisplayedViewIndex() {
+    @Override
+        public int getSelectedItemPosition() {
         return mCurrent;
     }
 
@@ -171,7 +172,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
 
     
     public void smartMoveForwards() {
-        View v = mChildViews.get(mCurrent);
+        View v = getSelectedView();
         if (v == null)
             return;
 
@@ -261,7 +262,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     }
 
     public void smartMoveBackwards() {
-        View v = mChildViews.get(mCurrent);
+        View v = getSelectedView();
         if (v == null)
             return;
 
@@ -374,9 +375,9 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         return mChildViews.get(i); //Can return null while waiting for onLayout()!
     }
 
-    public View getDisplayedView() {
-        return mChildViews.get(mCurrent); //Can return null while waiting for onLayout()!
-    }
+    // public View getDisplayedView() {
+    //     return mChildViews.get(mCurrent); //Can return null while waiting for onLayout()!
+    // }
 
     public void run() {
         if (!mScroller.isFinished()) {
@@ -393,7 +394,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         else if (!mUserInteracting) {
                 // End of an inertial scroll and the user is not interacting.
                 // The layout is stable
-            View v = getDisplayedView();
+            View v = getSelectedView();
             if (v != null) postSettle(v);
         }
     }
@@ -410,7 +411,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         if (mScrollDisabled)
             return true;
 
-        View v = getDisplayedView();
+        View v = getSelectedView();
         if (v != null) {
             Rect bounds = getScrollBounds(v);
             switch(directionOfTravel(velocityX, velocityY)) {
@@ -508,13 +509,13 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         mScale = Math.min(Math.max(mScale * detector.getScaleFactor(), min_scale), max_scale);
                 
         if (mReflow) {
-            View v = getDisplayedView();
+            View v = getSelectedView();
             if (v != null)
                 onScaleChild(v, mScale);
         } else {
             float factor = mScale/previousScale;
 
-            View v = getDisplayedView();
+            View v = getSelectedView();
             if (v != null) {
                     // Work out the focus point relative to the view top left
                 int viewFocusX = (int)detector.getFocusX() - (v.getLeft() + mXScroll);
@@ -544,7 +545,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             //Snap to page width
         if(mFitWidth)
         {
-            View cv = getDisplayedView();
+            View cv = getSelectedView();
             if(cv != null) 
             {
                 float previousScale = mScale;
@@ -586,7 +587,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             mScrollDisabled = false;
             mUserInteracting = false;
 
-            View v = getDisplayedView();
+            View v = getSelectedView();
             if (v != null) {
                 if (mScroller.isFinished()) {
                         // If, at the end of user interaction, there is no
@@ -656,7 +657,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
 	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
         
-        View cv = getDisplayedView();
+        View cv = getSelectedView();
 
             //If we were asked to display a different view do so now...
         if(mHasNewCurrent)
@@ -882,8 +883,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
 
     @Override
 	public View getSelectedView() {
-        return mChildViews.get(mCurrent);
-//        throw new UnsupportedOperationException(getContext().getString(R.string.not_supported));
+        return mChildViews.get(mCurrent); //Can return null while waiting for onLayout()!
     }
 
     @Override
@@ -1045,7 +1045,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         
     public float getNormalizedScale() 
     {
-        View cv = getDisplayedView();
+        View cv = getSelectedView();
         float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
         float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
         return mScale/scaleCorrection;
@@ -1053,7 +1053,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         
     public float getNormalizedXScroll()
     {
-        View cv = getDisplayedView();
+        View cv = getSelectedView();
         if (cv != null) {
             return cv.getLeft()/(float)cv.getMeasuredWidth();
         }
@@ -1062,7 +1062,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
 
     public float getNormalizedYScroll()
     {
-        View cv = getDisplayedView();
+        View cv = getSelectedView();
         if (cv != null) {
             return cv.getTop()/(float)cv.getMeasuredHeight();
         }
@@ -1123,7 +1123,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     
     // private void scrollToPos(int XScroll, int YScroll)
     // {
-    //     View cv = getDisplayedView();
+    //     View cv = getSelectedView();
     //     if (cv == null) return;
         
     //     mScrollerLastX = mScrollerLastY = 0;

@@ -82,7 +82,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     public boolean onSingleTapUp(MotionEvent e)
         {
             if (mMode == Mode.Viewing && !tapDisabled) {
-                MuPDFView pageView = (MuPDFView)getDisplayedView();
+                MuPDFView pageView = (MuPDFView)getSelectedView();
                 if (pageView == null ) return super.onSingleTapUp(e);
 
                 Hit item = pageView.passClickEvent(e.getX(), e.getY());
@@ -163,7 +163,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     public boolean onDown(MotionEvent e) {
         switch (mMode) {
             case Selecting:
-                MuPDFView pageView = (MuPDFView)getDisplayedView();
+                MuPDFView pageView = (MuPDFView)getSelectedView();
                 if(pageView!=null) pageView.deselectText();
         }
         return super.onDown(e);
@@ -172,7 +172,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
                             float distanceY) {
-        MuPDFView pageView = (MuPDFView)getDisplayedView();
+        MuPDFView pageView = (MuPDFView)getSelectedView();
         switch (mMode) {
             case Viewing:
                 if (!tapDisabled) onDocMotion();
@@ -210,7 +210,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     }
 
     public boolean onTouchEvent(MotionEvent event) {
-        final MuPDFView pageView = (MuPDFView)getDisplayedView();
+        final MuPDFView pageView = (MuPDFView)getSelectedView();
         if (pageView == null) super.onTouchEvent(event);
             
             // By default use the first pointer
@@ -296,17 +296,17 @@ abstract public class MuPDFReaderView extends ReaderView {
     public void goToNextSearchResult(int direction) {
         RectF resultRect = null;
         int resultPage = -1;
-        SearchTaskResult resultOnCurrentPage = SearchTaskResults.get(getDisplayedViewIndex());
+        SearchTaskResult resultOnCurrentPage = SearchTaskResults.get(getSelectedItemPosition());
         if(resultOnCurrentPage!=null && resultOnCurrentPage.incrementFocus(direction)) //There is a result on the current page in the right direction
         {
-            resultRect = SearchTaskResults.get(getDisplayedViewIndex()).getFocusedSearchBox();
+            resultRect = SearchTaskResults.get(getSelectedItemPosition()).getFocusedSearchBox();
         }
         else 
         {
             for(int i = 0, size = SearchTaskResults.size(); i < size; i++)
             {
                 SearchTaskResult result = SearchTaskResults.valueAt(direction == 1 ? i : size-1-i);
-                if(direction*result.getPageNumber() > direction*getDisplayedViewIndex())
+                if(direction*result.getPageNumber() > direction*getSelectedItemPosition())
                 {
                     if(direction == 1)
                         result.focusFirst();
@@ -391,26 +391,26 @@ abstract public class MuPDFReaderView extends ReaderView {
 
     @Override
     public Parcelable onSaveInstanceState() {
-//        Log.v("MuPDFReaderView", "onSaveInstanceState() getDisplayedView()="+getDisplayedView());
+//        Log.v("MuPDFReaderView", "onSaveInstanceState() getSelectedView()="+getSelectedView());
         Bundle bundle = new Bundle();
         bundle.putParcelable("superInstanceState", super.onSaveInstanceState());
             //Save
         bundle.putString("mMode", mMode.toString());
-        if(getDisplayedView() != null) bundle.putParcelable("displayedViewInstanceState", ((PageView)getDisplayedView()).onSaveInstanceState());
+        if(getSelectedView() != null) bundle.putParcelable("displayedViewInstanceState", ((PageView)getSelectedView()).onSaveInstanceState());
         
         return bundle;
     }
     
     @Override
     public void onRestoreInstanceState(Parcelable state) {
-//        Log.v("MuPDFReaderView", "onRestoreInstanceState() getDisplayedView()="+getDisplayedView());      
+//        Log.v("MuPDFReaderView", "onRestoreInstanceState() getSelectedView()="+getSelectedView());      
         if (state instanceof Bundle) {
             Bundle bundle = (Bundle) state;
                 //Load 
             mMode = Mode.valueOf(bundle.getString("mMode", mMode.toString()));
-                //Save the displayedViewInstanceState for later if getDisplayedView() returns null
-            if(getDisplayedView() != null)
-                ((PageView)getDisplayedView()).onRestoreInstanceState(bundle.getParcelable("displayedViewInstanceState"));
+                //Save the displayedViewInstanceState for later if getSelectedView() returns null
+            if(getSelectedView() != null)
+                ((PageView)getSelectedView()).onRestoreInstanceState(bundle.getParcelable("displayedViewInstanceState"));
             else
                 displayedViewInstanceState = bundle.getParcelable("displayedViewInstanceState");
             
