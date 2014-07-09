@@ -580,7 +580,7 @@ JNI_FN(MuPDFCore_gotoPageInternal)(JNIEnv *env, jobject thiz, int page)
 //        LOGI("Load page %d", pc->number);
         pc->page = fz_load_page(glo->doc, pc->number);
         zoom = glo->resolution / 72;
-        if (pc->page == NULL) return NULL;//fz_throw(glo->ctx, FZ_ERROR_GENERIC, "fz_load_page() returned NULL");
+        if (pc->page == NULL) return;//fz_throw(glo->ctx, FZ_ERROR_GENERIC, "fz_load_page() returned NULL");
         fz_bound_page(glo->doc, pc->page, &pc->media_box);
         fz_scale(&ctm, zoom, zoom);
         rect = pc->media_box;
@@ -1576,7 +1576,6 @@ JNI_FN(MuPDFCore_addInkAnnotationInternal)(JNIEnv * env, jobject thiz, jobjectAr
         float zoom = glo->resolution / 72;
         zoom = 1.0 / zoom;
         fz_scale(&ctm, zoom, zoom);
-//		pt_cls = (*env)->FindClass(env, "android.graphics.PointF");
         pt_cls = (*env)->FindClass(env, "android/graphics/PointF");
         if (pt_cls == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "FindClass");
         x_fid = (*env)->GetFieldID(env, pt_cls, "x", "F");

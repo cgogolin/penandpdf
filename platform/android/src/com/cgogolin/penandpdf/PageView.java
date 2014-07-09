@@ -1,6 +1,7 @@
 package com.cgogolin.penandpdf;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.ArrayDeque;
 import java.util.LinkedList;
@@ -403,6 +404,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         if (mOverlayView == null) {
             mOverlayView = new View(mContext) {
                     
+                    Path mDrawingPath = new Path();
+                    
                     class TextSelectionDrawer implements TextProcessor
                     {
                         RectF rect;
@@ -564,7 +567,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
                             // Draw the current hand drawing
                         if (!mIsBlank && mDrawing != null) {
-                            Path path = new Path();
+//                            Path path = new Path();
                             PointF p;
                             Iterator<ArrayList<PointF>> it = mDrawing.iterator();
                             while (it.hasNext()) {
@@ -576,21 +579,22 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                                         p = iit.next();
                                         float mX = p.x * scale;
                                         float mY = p.y * scale;
-                                        path.moveTo(mX, mY);
+                                        mDrawingPath.moveTo(mX, mY);
                                         while (iit.hasNext()) {
                                             p = iit.next();
                                             float x = p.x * scale;
                                             float y = p.y * scale;
-                                            path.lineTo(x, y);
+                                            mDrawingPath.lineTo(x, y);
                                         }
                                     }
-                                    if(!canvas.quickReject(path, Canvas.EdgeType.AA))
+                                    if(!canvas.quickReject(mDrawingPath, Canvas.EdgeType.AA))
                                     {
                                         drawingPaint.setStrokeWidth(inkThickness * scale);
                                         drawingPaint.setColor(inkColor);  //Should be done only on settings change
-                                        canvas.drawPath(path, drawingPaint);
+                                        canvas.drawPath(mDrawingPath, drawingPaint);
                                     }
-                                    path = new Path();
+//                                    path = new Path();
+                                    mDrawingPath.reset();
                                 }
                             }
                         }
@@ -828,19 +832,28 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     public int getDrawingSize() {
         return mDrawing == null ? 0 : mDrawing.size();
     }
+
+    public void setDraw(PointF[][] arcs) {
+        if(arcs != null)
+        {
+            mDrawing = new ArrayList<ArrayList<PointF>>();
+            for(int i = 0; i < arcs.length; i++)
+            {
+                mDrawing.add(new ArrayList<PointF>(Arrays.asList(arcs[i])));
+            }
+        }
+        if (mOverlayView != null) mOverlayView.invalidate();
+    }
     
     protected PointF[][] getDraw() {
-        if (mDrawing == null)
-            return null;
+        if (mDrawing == null) return null;
 
-        PointF[][] path = new PointF[mDrawing.size()][];
-
+        PointF[][] arcs = new PointF[mDrawing.size()][];
         for (int i = 0; i < mDrawing.size(); i++) {
             ArrayList<PointF> arc = mDrawing.get(i);
-            path[i] = arc.toArray(new PointF[arc.size()]);
+            arcs[i] = arc.toArray(new PointF[arc.size()]);
         }
-
-        return path;
+        return arcs;
     }
 
     protected void processSelectedText(TextProcessor tp) {
@@ -1027,10 +1040,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         }
 
             // And get rid of it
-        if (mPatch != null) mPatch.clear(); // {
-        //     mPatch.setImageBitmap(null);
-        //     mPatch.invalidate();
-        // }
+        if (mPatch != null) mPatch.clear();
     }
 
     public int getPage() {
@@ -1102,10 +1112,5 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             state = bundle.getParcelable("superInstanceState");
         }
         super.onRestoreInstanceState(state);
-    }
-
-    public void setmDrawing(ArrayList<ArrayList<PointF>> drawing){
-        mDrawing = drawing;   
-        if (mOverlayView != null) mOverlayView.invalidate();
     }
 }

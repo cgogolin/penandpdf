@@ -1,5 +1,7 @@
 package com.cgogolin.penandpdf;
 
+import android.util.Log;
+
 import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.Context;
@@ -16,12 +18,7 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.EditText;
-
-import android.util.Log;
-
 import java.util.ArrayList;
-import java.util.Arrays;
-
 
 
 /* This enum should be kept in line with the cooresponding C enum in mupdf.c */
@@ -547,15 +544,8 @@ public class MuPDFPageView extends PageView implements MuPDFView {
             PointF[][] arcs = mAnnotations[mSelectedAnnotationIndex].arcs;
             if(arcs != null)
             {
-                ArrayList<ArrayList<PointF>> drawing = new ArrayList<ArrayList<PointF>>();
-                for(int i = 0; i < arcs.length; i++)
-                {
-                    drawing.add(new ArrayList<PointF>(Arrays.asList(arcs[i])));
-                }
-//                Log.i("PageView", "drawing="+drawing);
-                setmDrawing(drawing);
+                setDraw(arcs);
                 deleteSelectedAnnotation();
-//                deselectAnnotation();
             }
         }
     }
@@ -581,9 +571,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
     public boolean saveDraw() { 
 		PointF[][] path = getDraw();
-
-		if (path == null)
-			return false;
+		if (path == null) return false;
 
 		if (mAddInk != null) {
 			mAddInk.cancel(true);
@@ -604,9 +592,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			}
 
 		};
-//		mAddInk.execute(getDraw());
                 mAddInk.execute(path);
-//		cancelDraw();
 		return true;
 	}
 

@@ -99,6 +99,8 @@ void pdf_set_free_text_details(pdf_document *doc, pdf_annot *annot, fz_point *po
 
 fz_annot_type pdf_annot_obj_type(pdf_obj *obj);
 
+pdf_obj * pdf_annot_inklist(pdf_annot *annot);
+
 /*
 	pdf_poll_changed_annot: enumerate the changed annotations recoreded
 	by a call to pdf_update_page.
