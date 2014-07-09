@@ -10,7 +10,7 @@ public interface MuPDFView {
     public void setPage(int page, PointF size);
     public void setScale(float scale);
     public int getPage();
-    public void setBlankPage(int page);
+//    public void setBlankPage(int page);
     public Hit passClickEvent(float x, float y);
     public LinkInfo hitLink(float x, float y);
     public void selectText(float x0, float y0, float x1, float y1);

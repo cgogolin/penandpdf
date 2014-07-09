@@ -94,6 +94,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         mGestureDetector = new GestureDetector(this);
         mScaleGestureDetector = new ScaleGestureDetector(context, this);
         mScroller        = new Scroller(context);
+        mScroller.forceFinished(true);
             //We want to get notified if the size we have changes
 //        addOnLayoutChangeListener(this);
     }

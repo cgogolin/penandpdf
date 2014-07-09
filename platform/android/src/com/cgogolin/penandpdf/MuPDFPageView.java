@@ -118,9 +118,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	private AsyncTask<Void,Void,Boolean> mSign;
 	private Runnable changeReporter;
 
-//	public MuPDFPageView(Context c, FilePicker.FilePickerSupport filePickerSupport, MuPDFCore core, Point parentSize, Bitmap sharedHqBm) {
 	public MuPDFPageView(Context context, FilePicker.FilePickerSupport filePickerSupport, MuPDFCore core, ViewGroup parent) {
-//		super(c, parentSize, sharedHqBm);
                 super(context, parent);
 		mFilePickerSupport = filePickerSupport;
 		mCore = core;
