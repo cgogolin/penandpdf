@@ -525,7 +525,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                             //Clip to the canvas size (not sure if this is necessary)
                         canvas.clipRect(0,0, canvas.getWidth(), canvas.getHeight(), Region.Op.INTERSECT);
                             //Move the canvas so that it covers the visible region (not sure why the -2 is necessary)
-                        canvas.translate(PageView.this.getLeft()-2, PageView.this.getTop());
+                        canvas.translate(PageView.this.getLeft(), PageView.this.getTop());
                         
                             // Work out current total scale factor from source to view
                         final float scale = mSourceScale*(float)PageView.this.getWidth()/(float)mSize.x;

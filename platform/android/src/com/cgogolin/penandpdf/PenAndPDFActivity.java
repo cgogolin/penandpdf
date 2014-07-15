@@ -529,6 +529,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             //This is a hacky way to determine when the user has reset the text field with the X button 
         if (query.length() == 0 && latestTextInSearchBox.length() > 1) {
             if (mSearchTask != null) mSearchTask.stop();
+            textOfLastSearch = "";
             if(mDocView.hasSearchResults())
             {
                 mDocView.clearSearchResults();
@@ -682,6 +683,9 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 mActionBarMode = ActionBarMode.Search;
                 invalidateOptionsMenu();
                 return true;
+            // case R.id.menu_search_box:
+            //     onSearchRequested();
+            //     return true;
             case R.id.menu_next:
                 if (!latestTextInSearchBox.equals(""))
                 {
