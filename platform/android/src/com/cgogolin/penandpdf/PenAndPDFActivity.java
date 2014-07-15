@@ -1065,6 +1065,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         boolean success = core.saveAs(uri.toString());
         if(success)
         {
+                //Set the uri of this intent to the new file path
+            getIntent().setData(uri);
                 //Save the viewport under the new name
             saveViewportAndRecentFiles(uri.getPath());
                 //Stop alerts
@@ -1073,8 +1075,13 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 //Destroy the core
             core.onDestroy();
             core = null;
-                //Set the uri of this intent to the new file path
-            getIntent().setData(uri);
+                //Resetup the ShareActionProvider
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.setType("plain/text");
+            shareIntent.setType("*/*");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(uri.getPath())));
+            if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
         }
         return success;
     }

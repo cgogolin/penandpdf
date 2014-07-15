@@ -647,7 +647,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     public Bitmap getPatchBm() {
         if (mSharedHqBm == null || mSharedHqBm.getWidth() != getWidth() || mSharedHqBm.getHeight() != getHeight())
         {
-            Log.i("PageView", "creating new HqBm w="+getWidth()+" h="+getHeight());
+//            Log.i("PageView", "creating new HqBm w="+getWidth()+" h="+getHeight());
             mSharedHqBm = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
         }
         return mSharedHqBm;
@@ -794,7 +794,9 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         cvBottom = cvTop  + cv.getMeasuredHeight();
 
             //If the user is not interacting and the scroller is finished move the view so that no gaps are left
-        if (!mUserInteracting && mScroller.isFinished()) {
+        if (!mUserInteracting && mScroller.isFinished() && !changed) {
+            Log.i("PageView", "cvLeft="+cvLeft+" cvTop="+cvTop+" cvRight="+cvRight+" cvBottom="+cvBottom+" left="+left+" top="+top+" right="+right+" bottom="+bottom+" changed="+changed);
+            
             Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
             cvRight  += corr.x;
             cvLeft   += corr.x;
@@ -920,7 +922,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         View v = mChildViews.get(i);
         if (v == null) {
             v = mAdapter.getView(i, getCached(), this);
-            Log.i("PageView", "getOrCreateChild page="+i);
+//            Log.i("PageView", "getOrCreateChild page="+i);
 //            ((PageView)v).setHqBm(getSharedHqBm(width, height));
             onChildSetup(i, v);
             onScaleChild(v, mScale);
@@ -1047,9 +1049,13 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     public float getNormalizedScale() 
     {
         View cv = getSelectedView();
-        float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
-        float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
-        return mScale/scaleCorrection;
+        if (cv != null) {
+            float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
+            float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
+            return mScale/scaleCorrection;
+        }
+        else
+            return 1f;
     }
         
     public float getNormalizedXScroll()
