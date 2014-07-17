@@ -285,30 +285,45 @@ public class MuPDFCore
                 for (TextChar[] sp: ln) {
                     for (TextChar tc: sp) {
                         final int type = Character.getType(tc.c);
-                        if (Character.isWhitespace(tc.c) || type == Character.END_PUNCTUATION || type == Character.FINAL_QUOTE_PUNCTUATION || type == Character.INITIAL_QUOTE_PUNCTUATION || type == Character.OTHER_PUNCTUATION || type == Character.START_PUNCTUATION)
+                        final boolean special = Character.isWhitespace(tc.c) || type == Character.END_PUNCTUATION || type == Character.FINAL_QUOTE_PUNCTUATION || type == Character.INITIAL_QUOTE_PUNCTUATION || type == Character.OTHER_PUNCTUATION || type == Character.START_PUNCTUATION;
+                        
+                        if (special)
                         {
+                                //Add what we already have to wds
                             if (wd.w.length() > 0) {
                                 wds.add(wd);
+//                                Log.v("Core", "'"+wd.w+"' at "+((RectF)wd));
                                 wd = new TextWord();
                             }
                         }
-                        if (!Character.isWhitespace(tc.c))
+//                        if (!Character.isWhitespace(tc.c))
+//                        {
+                            //Add the character
+
+                       if (Character.isWhitespace(tc.c))
+                           Log.v("Core", "tc.c='"+tc.c+"' at "+((RectF)tc));
+                        
+                        wd.Add(tc);
+//                            if (type == Character.END_PUNCTUATION || type == Character.FINAL_QUOTE_PUNCTUATION || type == Character.INITIAL_QUOTE_PUNCTUATION || type == Character.OTHER_PUNCTUATION || type == Character.START_PUNCTUATION)
+                        if (special)
                         {
-                            wd.Add(tc);
-                            if (type == Character.END_PUNCTUATION || type == Character.FINAL_QUOTE_PUNCTUATION || type == Character.INITIAL_QUOTE_PUNCTUATION || type == Character.OTHER_PUNCTUATION || type == Character.START_PUNCTUATION)
-                            {
-                                wds.add(wd);
-                                wd = new TextWord();
-                            }
+                                //Special chars go into a word on their own
+                            wds.add(wd);
+                            Log.v("Core", "wd.w='"+wd.w+"' at "+((RectF)wd));
+                            wd = new TextWord();
                         }
+//                        }
                     }
                 }
-
+                
                 if (wd.w.length() > 0)
                     wds.add(wd);
 
                 if (wds.size() > 0)
                     lns.add(wds.toArray(new TextWord[wds.size()]));
+
+                for (TextWord word: wds)
+                    Log.v("Core", "word='"+word.w+"' at "+word);
             }
         }
 

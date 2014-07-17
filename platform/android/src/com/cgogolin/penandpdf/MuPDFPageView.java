@@ -432,9 +432,9 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			}
 
 			public void onWord(TextWord word) {
-				if (line.length() > 0)
-					line.append(' ');
-				line.append(word.w);
+//				if (line.length() > 0) line.append(' ');
+//				line.append(" >"+word.w+"< ");
+                            line.append(word.w);
 			}
 
 			public void onEndLine() {

@@ -795,7 +795,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
 
             //If the user is not interacting and the scroller is finished move the view so that no gaps are left
         if (!mUserInteracting && mScroller.isFinished() && !changed) {
-            Log.i("PageView", "cvLeft="+cvLeft+" cvTop="+cvTop+" cvRight="+cvRight+" cvBottom="+cvBottom+" left="+left+" top="+top+" right="+right+" bottom="+bottom+" changed="+changed);
+//            Log.i("PageView", "cvLeft="+cvLeft+" cvTop="+cvTop+" cvRight="+cvRight+" cvBottom="+cvBottom+" left="+left+" top="+top+" right="+right+" bottom="+bottom+" changed="+changed);
             
             Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
             cvRight  += corr.x;

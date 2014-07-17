@@ -11,7 +11,10 @@ public class TextWord extends RectF {
 	}
 
 	public void Add(TextChar tc) {
-		super.union(tc);
-		w = w.concat(new String(new char[]{tc.c}));
+            if(isEmpty())
+                super.set(tc);
+            else
+                super.union(tc);
+            w = w.concat(new String(new char[]{tc.c}));
 	}
 }

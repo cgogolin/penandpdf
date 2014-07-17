@@ -1298,19 +1298,43 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
 
     @Override
     public void onBackPressed() {
-        if (mActionBarMode == ActionBarMode.Annot) return;
         if (!getActionBar().isShowing()) {
             exitFullScreen();
             return;
         };
-        if (mActionBarMode == ActionBarMode.Search) {
-            hideKeyboard();
-            mDocView.clearSearchResults();
-            mDocView.resetupChildren();
-            mActionBarMode = ActionBarMode.Main;
-            invalidateOptionsMenu();
-            return;
-        }    
+        switch (mActionBarMode) {
+            case Annot:
+                return;
+            case Search:
+                hideKeyboard();
+                mDocView.clearSearchResults();
+                mDocView.resetupChildren();
+                mActionBarMode = ActionBarMode.Main;
+                invalidateOptionsMenu();
+                return;
+            case Selection:
+                mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                MuPDFView pageView = (MuPDFView) mDocView.getSelectedView();
+                if (pageView != null) pageView.deselectText();
+                mActionBarMode = ActionBarMode.Main;
+                invalidateOptionsMenu();
+                return;
+        }
+        
+        // if (mActionBarMode == ActionBarMode.Annot) return;
+        // if (mActionBarMode == ActionBarMode.Search) {
+        //     hideKeyboard();
+        //     mDocView.clearSearchResults();
+        //     mDocView.resetupChildren();
+        //     mActionBarMode = ActionBarMode.Main;
+        //     invalidateOptionsMenu();
+        //     return;
+        // }
+        // if (mActionBarMode == ActionBarMode.Selection) {
+        //     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+        //     pageView.deselectText();
+        //     return;
+        // }
         
         if (core.hasChanges()) {
             DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {

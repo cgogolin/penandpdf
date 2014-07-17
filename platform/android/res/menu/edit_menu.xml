@@ -8,9 +8,10 @@
 	/>
   <item
       android:id="@+id/menu_edit"
-      android:icon="@drawable/ic_action_edit"
+      android:icon="@drawable/ic_action_editannot"
       android:title="@string/menu_draw" 
       android:showAsAction="always"
+      android:background="?android:selectableItemBackground"
       />
   <item android:id="@+id/menu_accept"
 	android:icon="@drawable/ic_action_accept"

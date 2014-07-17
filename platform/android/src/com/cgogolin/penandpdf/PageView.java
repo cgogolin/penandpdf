@@ -162,9 +162,12 @@ class TextSelector
             tp.onStartLine();
 
             for (TextWord word : line)
+            {
+//                Log.v("PageView", "'"+word.w+"' at "+word);
                 if (word.right > start && word.left < end)
                     tp.onWord(word);
-
+            }
+            
             tp.onEndLine();
         }
         tp.onEndText();
@@ -323,7 +326,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     // }
 
     public void setPage(int page, PointF size) {
-        Log.i("PageView", "setPage() page="+page);
+//        Log.i("PageView", "setPage() page="+page);
         reset();
         mPageNumber = page;
         mIsBlank = false;
@@ -414,9 +417,11 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                         float scale;
                         Canvas canvas;
 
-                        public void setCanvasAndScale(Canvas canvas, float scale) {
+                        public void reset(Canvas canvas, float scale) {
                             this.canvas = canvas;
                             this.scale = scale;
+                            docRelXmaxSelection = Float.NEGATIVE_INFINITY;
+                            docRelXminSelection = Float.POSITIVE_INFINITY;
                         }
                                     
                         public void onStartLine() {
@@ -556,7 +561,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
                             // Draw the text selection
                         if (!mIsBlank && mSelectBox != null && mText != null) {
-                            textSelectionDrawer.setCanvasAndScale(canvas, scale);
+//                            textSelectionDrawer.setCanvasAndScale(canvas, scale);
+                            textSelectionDrawer.reset(canvas, scale);
+                                                        
                             processSelectedText(textSelectionDrawer);
                         }
 
