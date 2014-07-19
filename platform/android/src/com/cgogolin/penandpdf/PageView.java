@@ -251,6 +251,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             mDrawEntire.cancel(true);
             mDrawEntire = null;
         }
+
         if (mDrawPatch != null) {
             mDrawPatch.cancel(true);
             mDrawPatch = null;
@@ -389,6 +390,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
             
             protected void onPostExecute(Void v) {
+                mBusyIndicator.setVisibility(INVISIBLE);
                 removeView(mBusyIndicator);
                 mBusyIndicator = null;
                 mEntire.setImageBitmap(mEntireBm);
@@ -396,7 +398,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 setBackgroundColor(Color.TRANSPARENT);
             }
 
-            protected void onCanceled(Void v) {
+            protected void onCanceled() {
+                mBusyIndicator.setVisibility(INVISIBLE);
                 removeView(mBusyIndicator);
                 mBusyIndicator = null;
             }
@@ -1010,6 +1013,11 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void update() {
+        update(false);
+    }
+    
+    
+    public void update(final boolean cancelDrawInOnPostExecute) {
             // Cancel pending render task
         if (mDrawEntire != null) {
             mDrawEntire.cancel(true);
@@ -1029,8 +1037,25 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
 
             protected void onPostExecute(Void v) {
+                if(mBusyIndicator!=null)
+                {
+                    mBusyIndicator.setVisibility(INVISIBLE);
+                    removeView(mBusyIndicator);
+                    mBusyIndicator = null;
+                }
                 mEntire.setImageBitmap(mEntireBm);
                 mEntire.invalidate();
+                if(cancelDrawInOnPostExecute) cancelDraw();
+            }
+
+            protected void onCanceled() {
+                if(mBusyIndicator!=null)
+                {
+                    mBusyIndicator.setVisibility(INVISIBLE);
+                    removeView(mBusyIndicator);
+                    mBusyIndicator = null;
+                }
+                if(cancelDrawInOnPostExecute) cancelDraw();
             }
         };
 
