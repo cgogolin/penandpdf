@@ -350,58 +350,64 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         };
         mGetLinkInfo.execute();
 
+            //Set the background to white for now
+        setBackgroundColor(BACKGROUND_COLOR);
+                
+            //Prepare the mEntire view
+        if (mEntire == null) {
+            mEntire = new OpaqueImageView(mContext);
+            mEntire.setScaleType(ImageView.ScaleType.MATRIX);
+            addView(mEntire);
+        }
+        mEntire.setImageBitmap(null);
+        mEntire.invalidate();
+        
+            //Create a bitmap of the right size
+        if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
+        {
+            mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
+        }
+
+            //Prepare and show the busy indicator
+        if (mBusyIndicator == null) {
+            mBusyIndicator = new ProgressBar(mContext);
+            mBusyIndicator.setIndeterminate(true);
+            addView(mBusyIndicator);
+            mBusyIndicator.setVisibility(INVISIBLE);
+            mHandler.postDelayed(new Runnable() {
+                    public void run() {
+                        if (mBusyIndicator != null)
+                            mBusyIndicator.setVisibility(VISIBLE);
+                    }
+                }, PROGRESS_DIALOG_DELAY);
+        }
+        
             // Render the page in the background
         mDrawEntire = new AsyncTask<Void,Void,Void>() {
-            protected void onPreExecute() {
-                setBackgroundColor(BACKGROUND_COLOR);
-                
-                    //Prepare the mEntire view
-                if (mEntire == null) {
-                    mEntire = new OpaqueImageView(mContext);
-                    mEntire.setScaleType(ImageView.ScaleType.MATRIX);
-                    addView(mEntire);
-                }
-                mEntire.setImageBitmap(null);
-                mEntire.invalidate();
-                
-                    //Create a bitmap of the right size
-                if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
-                {
-                    mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
-                }
-
-                if (mBusyIndicator == null) {
-                    mBusyIndicator = new ProgressBar(mContext);
-                    mBusyIndicator.setIndeterminate(true);
-                    addView(mBusyIndicator);
-                    mBusyIndicator.setVisibility(INVISIBLE);
-                    mHandler.postDelayed(new Runnable() {
-                            public void run() {
-                                if (mBusyIndicator != null)
-                                    mBusyIndicator.setVisibility(VISIBLE);
-                            }
-                        }, PROGRESS_DIALOG_DELAY);
-                }
-            }
-
             protected Void doInBackground(Void... v) {
                 drawPage(mEntireBm, mSize.x, mSize.y, 0, 0, mSize.x, mSize.y);
                 return null;
             }
             
             protected void onPostExecute(Void v) {
-                mBusyIndicator.setVisibility(INVISIBLE);
-                removeView(mBusyIndicator);
-                mBusyIndicator = null;
+                if(mBusyIndicator!=null)
+                {
+                    mBusyIndicator.setVisibility(INVISIBLE);
+                    removeView(mBusyIndicator);
+                    mBusyIndicator = null;
+                }
                 mEntire.setImageBitmap(mEntireBm);
                 mEntire.invalidate();
                 setBackgroundColor(Color.TRANSPARENT);
             }
 
             protected void onCanceled() {
-                mBusyIndicator.setVisibility(INVISIBLE);
-                removeView(mBusyIndicator);
-                mBusyIndicator = null;
+                if(mBusyIndicator!=null)
+                {
+                    mBusyIndicator.setVisibility(INVISIBLE);
+                    removeView(mBusyIndicator);
+                    mBusyIndicator = null;
+                }
             }
         };
         mDrawEntire.execute();
@@ -1058,7 +1064,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 if(cancelDrawInOnPostExecute) cancelDraw();
             }
         };
-
         mDrawEntire.execute();
 
         addHq(true);
@@ -1075,27 +1080,25 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         if (mPatch != null) mPatch.clear();
     }
 
-    public int getPage() {
-        return mPageNumber;
-    }
+    // public int getPageNumber() {
+    //     return mPageNumber;
+    // }
 
     @Override
     public boolean isOpaque() {
         return true;
     }
 
-    public float getScale()
-        {
-            return mSourceScale*(float)getWidth()/(float)mSize.x;
-        }
+    public float getScale() {
+        return mSourceScale*(float)getWidth()/(float)mSize.x;
+    }
+    
 
-
-    public void setSearchTaskResult(SearchTaskResult searchTaskResult)
-        {
-            mSearchTaskResult = searchTaskResult;
-        }
-
-    public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
+    public void setSearchTaskResult(SearchTaskResult searchTaskResult) {
+        mSearchTaskResult = searchTaskResult;
+    }
+    
+    public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key) {
             //Set ink thickness and colors for PageView
         inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
         eraserThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_ERASER_THICKNESS, Float.toString(eraserThickness)));
@@ -1107,7 +1110,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         useSmartTextSelection = sharedPref.getBoolean(SettingsActivity.PREF_SMART_TEXT_SELECTION, true);
     }
 
-    private void savemDrawingToHistory(){
+    private void savemDrawingToHistory() {
         if(mDrawing != null) {
             ArrayList<ArrayList<PointF>> mDrawingCopy = new ArrayList<ArrayList<PointF>>(mDrawing.size());
             for(int i = 0; i < mDrawing.size(); i++)

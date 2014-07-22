@@ -285,6 +285,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 mNormalizedXScrollBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedXScrollBeforeInternalLinkHit", mNormalizedXScrollBeforeInternalLinkHit);
                 mNormalizedYScrollBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedYScrollBeforeInternalLinkHit", mNormalizedYScrollBeforeInternalLinkHit);
                 mDocViewParcelable = savedInstanceState.getParcelable("mDocView");
+
+                latestTextInSearchBox = savedInstanceState.getString("latestTextInSearchBox", latestTextInSearchBox);
             }
             
                 //Initialize the alert builder
@@ -511,6 +513,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     searchView.setIconified(false);
                     searchView.setOnCloseListener(this); //Implemented in: public void onClose(View view)
                     searchView.setOnQueryTextListener(this); //Implemented in: public boolean onQueryTextChange(String query) and public boolean onQueryTextSubmit(String query)
+                    searchView.setQuery(latestTextInSearchBox, true); //Set the query text and submit it to perform a search
                 case Hidden:
                     inflater.inflate(R.menu.empty_menu, menu);
                     break;
@@ -1174,7 +1177,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     
     
     @Override
-    protected void onSaveInstanceState(Bundle outState) { //Called when the app is destroyed by the system and in various other cases  
+    protected void onSaveInstanceState(Bundle outState) { //Called when the app is destroyed by the system and in various other cases
         super.onSaveInstanceState(outState);
         
         outState.putString("ActionBarMode", mActionBarMode.toString());
@@ -1183,6 +1186,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         outState.putFloat("NormalizedXScrollBeforeInternalLinkHit", mNormalizedXScrollBeforeInternalLinkHit);
         outState.putFloat("NormalizedYScrollBeforeInternalLinkHit", mNormalizedYScrollBeforeInternalLinkHit);
         if(mDocView != null) outState.putParcelable("mDocView", mDocView.onSaveInstanceState());
+        outState.putString("latestTextInSearchBox", latestTextInSearchBox);
     }
 
     @Override

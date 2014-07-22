@@ -9,7 +9,7 @@ enum Hit {Nothing, Widget, Annotation, Link, LinkInternal, LinkExternal, LinkRem
 public interface MuPDFView {
     public void setPage(int page, PointF size);
     public void setScale(float scale);
-    public int getPage();
+//    public int getPageNumber();
 //    public void setBlankPage(int page);
     public Hit passClickEvent(float x, float y);
     public LinkInfo hitLink(float x, float y);
