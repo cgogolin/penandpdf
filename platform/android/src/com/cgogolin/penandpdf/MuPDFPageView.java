@@ -432,8 +432,6 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			}
 
 			public void onWord(TextWord word) {
-//				if (line.length() > 0) line.append(' ');
-//				line.append(" >"+word.w+"< ");
                             line.append(word.w);
 			}
 
@@ -584,13 +582,6 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                                 loadAnnotations(true, true);
 				return null;
 			}
-
-			// @Override
-			// protected void onPostExecute(Void result) {
-                        //     loadAnnotations(true);
-                        //     cancelDraw();//Should be delayed until after annotations have been loaded to prevent flicker...
-			// }
-
 		};
                 mAddInk.execute(path);
 		return true;

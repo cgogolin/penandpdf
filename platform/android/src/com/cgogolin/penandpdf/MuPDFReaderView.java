@@ -29,7 +29,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     private int tapPageMargin;
 //    private static final int BACKGROUND_COLOR = 0xF0F0F0F0;
     
-    private SparseArray<SearchTaskResult> SearchTaskResults = new SparseArray<SearchTaskResult>();
+    private SparseArray<SearchResult> SearchResults = new SparseArray<SearchResult>();
     
         //To be overwritten in PenAndPDFActivity:
     abstract protected void onMoveToChild(int pageNumber);
@@ -280,32 +280,32 @@ abstract public class MuPDFReaderView extends ReaderView {
         return super.onTouchEvent(event);
     }
 
-    public void addSearchResult(SearchTaskResult result) {
-        SearchTaskResults.put(result.getPageNumber(),result);
+    public void addSearchResult(SearchResult result) {
+        SearchResults.put(result.getPageNumber(),result);
     }
 
     
     public void clearSearchResults() {
-        SearchTaskResults.clear();
+        SearchResults.clear();
     }
 
     public boolean hasSearchResults() {
-        return SearchTaskResults.size() !=0 ? true : false;
+        return SearchResults.size() !=0 ? true : false;
     }    
 
     public void goToNextSearchResult(int direction) {
         RectF resultRect = null;
         int resultPage = -1;
-        SearchTaskResult resultOnCurrentPage = SearchTaskResults.get(getSelectedItemPosition());
+        SearchResult resultOnCurrentPage = SearchResults.get(getSelectedItemPosition());
         if(resultOnCurrentPage!=null && resultOnCurrentPage.incrementFocus(direction)) //There is a result on the current page in the right direction
         {
-            resultRect = SearchTaskResults.get(getSelectedItemPosition()).getFocusedSearchBox();
+            resultRect = SearchResults.get(getSelectedItemPosition()).getFocusedSearchBox();
         }
         else 
         {
-            for(int i = 0, size = SearchTaskResults.size(); i < size; i++)
+            for(int i = 0, size = SearchResults.size(); i < size; i++)
             {
-                SearchTaskResult result = SearchTaskResults.valueAt(direction == 1 ? i : size-1-i);
+                SearchResult result = SearchResults.valueAt(direction == 1 ? i : size-1-i);
                 if(direction*result.getPageNumber() > direction*getSelectedItemPosition())
                 {
                     if(direction == 1)
@@ -339,10 +339,10 @@ abstract public class MuPDFReaderView extends ReaderView {
     
     @Override
     protected void onChildSetup(int i, View v) {
-        if (SearchTaskResults.get(i) != null)
-            ((MuPDFView) v).setSearchTaskResult(SearchTaskResults.get(i));
+        if (SearchResults.get(i) != null)
+            ((MuPDFView) v).setSearchResult(SearchResults.get(i));
         else
-            ((MuPDFView) v).setSearchTaskResult(null);
+            ((MuPDFView) v).setSearchResult(null);
 
         ((MuPDFView) v).setLinkHighlighting(mLinksEnabled);
 

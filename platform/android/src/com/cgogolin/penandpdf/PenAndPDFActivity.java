@@ -97,7 +97,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     private EditText     mPasswordView;
     private ActionBarMode  mActionBarMode = ActionBarMode.Main;
     private boolean selectedAnnotationIsEditable = false;
-    private SearchTask   mSearchTask;
+    private SearchTaskManager   mSearchTaskManager;
     private AlertDialog.Builder mAlertBuilder;
     private boolean    mLinkHighlight = false;
     private final Handler mHandler = new Handler();
@@ -320,13 +320,13 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             if (core != null) //OK, so apparently we have a valid pdf open
             {   
                     //Setup the mDocView
-                setupmDocView();
+                setupDocView();
 
                     //Set the action bar title
                 setTitle();
                 
-                    //Setup the mSearchTask
-                setupSearchTask();
+                    //Setup the mSearchTaskManager
+                setupSearchTaskManager();
 
                     //Update the recent files list
                 SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
@@ -354,7 +354,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         super.onPause();
         
             //Stop searches
-        if (mSearchTask != null) mSearchTask.stop();        
+        if (mSearchTaskManager != null) mSearchTaskManager.stop();        
 
         if (core != null)
         {
@@ -531,7 +531,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     public boolean onQueryTextChange(String query) {//Called when string in search box has changed
             //This is a hacky way to determine when the user has reset the text field with the X button 
         if (query.length() == 0 && latestTextInSearchBox.length() > 1) {
-            if (mSearchTask != null) mSearchTask.stop();
+            if (mSearchTaskManager != null) mSearchTaskManager.stop();
             textOfLastSearch = "";
             if(mDocView.hasSearchResults())
             {
@@ -650,7 +650,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                         break;
                     case Search:
                         hideKeyboard();
-                        if (mSearchTask != null) mSearchTask.stop();
+                        if (mSearchTaskManager != null) mSearchTaskManager.stop();
                         mDocView.clearSearchResults();
                         mDocView.resetupChildren();
                         break;
@@ -842,36 +842,39 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     }
     
         
-    public void setupSearchTask() { //Is called during onResume()
-            //If there is no search task create it
-        if(mSearchTask == null) mSearchTask = new SearchTask(this, core) {
-                @Override
-                protected void onTextFound(SearchTaskResult result) {
-                    mDocView.addSearchResult(result);
-                }
-                
-                @Override
-                protected void goToResult(SearchTaskResult result) {
-                        //Make the docview show the hits
-                    mDocView.resetupChildren();
-                        // Ask the ReaderView to move to the resulting page
-                    if(mDocView.getSelectedItemPosition() != result.getPageNumber())
-                        mDocView.setDisplayedViewIndex(result.getPageNumber());
-                        // ... and the region on the page
-                    RectF resultRect = result.getFocusedSearchBox();
-                    if(resultRect!=null)
-                    {
-                        mDocView.doNextScrollWithCenter();
-                        mDocView.setDocRelXScroll(resultRect.left);
-                        mDocView.setDocRelYScroll(resultRect.top);
+    public void setupSearchTaskManager() { //Is called during onResume()
+            //Create a new search task (the core might have changed)
+        // if(mSearchTaskManager == null)
+        // {
+            mSearchTaskManager = new SearchTaskManager(this, core) {
+                    @Override
+                    protected void onTextFound(SearchResult result) {
+                        mDocView.addSearchResult(result);
                     }
-                }
-            };
+                    
+                    @Override
+                    protected void goToResult(SearchResult result) {
+                            //Make the docview show the hits
+                        mDocView.resetupChildren();
+                            // Ask the ReaderView to move to the resulting page
+                        if(mDocView.getSelectedItemPosition() != result.getPageNumber())
+                            mDocView.setDisplayedViewIndex(result.getPageNumber());
+                            // ... and the region on the page
+                        RectF resultRect = result.getFocusedSearchBox();
+                        if(resultRect!=null)
+                        {
+                            mDocView.doNextScrollWithCenter();
+                            mDocView.setDocRelXScroll(resultRect.left);
+                            mDocView.setDocRelYScroll(resultRect.top);
+                        }
+                    }
+                };
+//        }
     }
     
     
     
-    public void setupmDocView() { //Is called during onResume()
+    public void setupDocView() { //Is called during onResume()
             //If we don't even have a core there is nothing to do
         if (core == null) return;            
             //If the doc view is not present create it
@@ -979,16 +982,10 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         }
         if(mDocView!=null)
         {
-                //Clear the search results (not sure we need this)
-//            mDocView.clearSearchResults();            
+                //Clear the search results 
+            mDocView.clearSearchResults();            
             
                 //Ascociate the mDocView with a new adapter if necessary
-                //Attention: This will cause the old adapter and then also the old core (a
-                //           reference to which is held in the adapter and in various PageViews
-                //           that are in the cache of the ReaderView, which is also cleared on
-                //           setAdapter()) to be garbage collected!
-                //           This can cause problems if some async tasks are still running in
-                //           the background and using the old core!!! Needs to be fixed!
             if(mDocViewNeedsNewAdapter) {
                 mDocView.setAdapter(new MuPDFPageAdapter(this, this, core));
                 mDocViewNeedsNewAdapter = false;
@@ -1294,7 +1291,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             mDocView.goToNextSearchResult(direction);
         else
         {
-            mSearchTask.start(latestTextInSearchBox, direction, mDocView.getSelectedItemPosition());
+            mSearchTaskManager.start(latestTextInSearchBox, direction, mDocView.getSelectedItemPosition());
             textOfLastSearch = latestTextInSearchBox;
         }
     }
@@ -1398,7 +1395,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         getActionBar().hide();
         mActionBarMode = ActionBarMode.Hidden;
         invalidateOptionsMenu();
-        resetupMDocViewAfterActionBarAnimation(false);
+        resetupDocViewAfterActionBarAnimation(false);
     }
             
     private void exitFullScreen() {
@@ -1406,10 +1403,10 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         getActionBar().show();
         mActionBarMode = ActionBarMode.Main;
         invalidateOptionsMenu();
-        resetupMDocViewAfterActionBarAnimation(true);
+        resetupDocViewAfterActionBarAnimation(true);
     }
 
-    private void resetupMDocViewAfterActionBarAnimation(final boolean linksEnabled) {
+    private void resetupDocViewAfterActionBarAnimation(final boolean linksEnabled) {
         final ActionBar actionBar = getActionBar();
         try {
                 // Make the Animator accessible
@@ -1427,7 +1424,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                             saveViewportAndRecentFiles(core.getPath()); //So that we show the right page when the mDocView is recreated
                         }
                         mDocView = null;
-                        setupmDocView();
+                        setupDocView();
                         mDocView.setLinksEnabled(linksEnabled);
                     }
                     

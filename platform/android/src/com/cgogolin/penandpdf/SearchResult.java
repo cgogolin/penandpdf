@@ -2,14 +2,14 @@ package com.cgogolin.penandpdf;
 
 import android.graphics.RectF;
 
-public class SearchTaskResult {
+public class SearchResult {
     private String text;
     private int   pageNumber;
     private RectF searchBoxes[];
     private int focus = -1;
     private int direction;
     
-    public SearchTaskResult(String text, int pageNumber, RectF[] searchBoxes, int direction) {
+    public SearchResult(String text, int pageNumber, RectF[] searchBoxes, int direction) {
         this.text = text;
         this.pageNumber = pageNumber;
 	this.searchBoxes = searchBoxes;

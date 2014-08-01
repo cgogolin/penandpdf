@@ -9,8 +9,6 @@ enum Hit {Nothing, Widget, Annotation, Link, LinkInternal, LinkExternal, LinkRem
 public interface MuPDFView {
     public void setPage(int page, PointF size);
     public void setScale(float scale);
-//    public int getPageNumber();
-//    public void setBlankPage(int page);
     public Hit passClickEvent(float x, float y);
     public LinkInfo hitLink(float x, float y);
     public void selectText(float x0, float y0, float x1, float y1);
@@ -19,7 +17,7 @@ public interface MuPDFView {
     public boolean copySelection();
     public boolean markupSelection(Annotation.Type type);
     public void deleteSelectedAnnotation();
-    public void setSearchTaskResult(SearchTaskResult searchTaskResult);
+    public void setSearchResult(SearchResult searchTaskResult);
     public void setLinkHighlighting(boolean f);
     public void deselectAnnotation();
     public void startDraw(float x, float y);

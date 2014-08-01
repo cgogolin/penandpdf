@@ -13,8 +13,8 @@ import android.widget.Toast;
 import android.util.Log;
 
 
-class ProgressDialogX extends ProgressDialog {
-    public ProgressDialogX(Context context) {
+class SearchProgressDialog extends ProgressDialog {
+    public SearchProgressDialog(Context context) {
         super(context);
     }
 
@@ -41,22 +41,22 @@ class ProgressDialogX extends ProgressDialog {
         super.dismiss();
     }
 }
-
-public abstract class SearchTask {
+                      
+public abstract class SearchTaskManager {
     private static final int SEARCH_PROGRESS_DELAY = 1000;
     protected final Context mContext;
     private final MuPDFCore mCore;
     private final Handler mHandler;
-    private AsyncTask<Void,Integer,SearchTaskResult> mSearchTask;
+    private AsyncTask<Void,Integer,SearchResult> mSearchTask;
     
-    public SearchTask(Context context, MuPDFCore core) {
+    public SearchTaskManager(Context context, MuPDFCore core) {
         mContext = context;
         mCore = core;
         mHandler = new Handler();
     }
 
-    protected abstract void onTextFound(SearchTaskResult result);
-    protected abstract void goToResult(SearchTaskResult result);
+    protected abstract void onTextFound(SearchResult result);
+    protected abstract void goToResult(SearchResult result);
     
     public void start(final String text, int direction, int displayPage) {
         if (mCore == null)
@@ -66,7 +66,7 @@ public abstract class SearchTask {
         final int increment = direction;
         final int startIndex = displayPage;
 
-        final ProgressDialogX progressDialog = new ProgressDialogX(mContext);
+        final SearchProgressDialog progressDialog = new SearchProgressDialog(mContext);
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         progressDialog.setProgressPercentFormat(null);
         progressDialog.setTitle(mContext.getString(R.string.searching_));
@@ -78,7 +78,7 @@ public abstract class SearchTask {
             });
         progressDialog.setMax(mCore.countPages());
 
-        mSearchTask = new AsyncTask<Void,Integer,SearchTaskResult>() {
+        mSearchTask = new AsyncTask<Void,Integer,SearchResult>() {
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
@@ -94,8 +94,8 @@ public abstract class SearchTask {
             }
             
             @Override
-            protected SearchTaskResult doInBackground(Void... params) {
-                SearchTaskResult firstResult = null;
+            protected SearchResult doInBackground(Void... params) {
+                SearchResult firstResult = null;
                 int index = startIndex;
                 do
                 {
@@ -104,7 +104,7 @@ public abstract class SearchTask {
                     RectF searchHits[] = mCore.searchPage(index, text);
                     if (searchHits != null && searchHits.length > 0)
                     {
-                        final SearchTaskResult result = new SearchTaskResult(text, index, searchHits, increment);
+                        final SearchResult result = new SearchResult(text, index, searchHits, increment);
                         if(increment == 1)
                             result.focusFirst();
                         else
@@ -132,7 +132,7 @@ public abstract class SearchTask {
             }
 
             @Override
-            protected void onPostExecute(SearchTaskResult result) {
+            protected void onPostExecute(SearchResult result) {
                 super.onPostExecute(result);
                 progressDialog.cancel();
                 if(result == null) Toast.makeText(mContext, R.string.text_not_found, Toast.LENGTH_SHORT).show();
