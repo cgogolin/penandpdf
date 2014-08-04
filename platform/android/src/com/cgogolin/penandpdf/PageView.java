@@ -1009,7 +1009,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         //     mDrawPatch.cancel(true);
         //     mDrawPatch = null;
         // }
-        mPatch.cancelRenderInBackground();
+        if(mPatch != null) mPatch.cancelRenderInBackground();
 
             // Render the page in the background
         mDrawEntire = new AsyncTask<Void,Void,Void>() {
