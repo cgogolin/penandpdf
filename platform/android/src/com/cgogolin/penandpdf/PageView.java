@@ -168,7 +168,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     protected abstract void addMarkup(PointF[] quadPoints, Annotation.Type type);
 
         //The ViewGroup PageView has three child views: PatchView, mEntireView, and OverlayView.
-        //They are all 
+        //They are all implement 
     
     class PatchInfo {
         public final Rect  viewArea;
@@ -197,6 +197,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     
         public PatchView(Context context) {
             super(context);
+            setScaleType(ImageView.ScaleType.MATRIX);
         }
 
         public void setArea(Rect area) {
@@ -236,6 +237,65 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 }
                 protected void onPostExecute(PatchInfo v) {                
                     setArea(v.viewArea);
+                    setImageBitmap(v.patchBm);
+                    invalidate();
+                    layout(v.patchArea.left, v.patchArea.top, v.patchArea.right, v.patchArea.bottom);
+                }
+            };
+            mDrawPatch.execute(patchInfo);
+        }
+
+        public void cancelRenderInBackground() {
+            if (mDrawPatch != null) {
+                mDrawPatch.cancel(true);
+                mDrawPatch = null;
+            }
+        }
+    }
+
+
+    class EntireView extends OpaqueImageView {
+        private AsyncTask<PatchInfo,Void,PatchInfo> mDrawEntire;
+        private Bitmap mEntireBm;
+        
+        public PatchView(Context context) {
+            super(context);
+            setScaleType(ImageView.ScaleType.MATRIX);
+        }
+    
+        public void clear() {
+            cancelRenderInBackground();
+            setImageBitmap(null);
+            invalidate();
+        }
+
+        public void renderInBackground(PatchInfo patchInfo) {
+                // Stop the drawing of previous patch if still going
+            if (mDrawPatch != null) {
+                mDrawPatch.cancel(true);
+                mDrawPatch = null;
+            }
+
+                //Create a bitmap of the right size (needs to be adopted!!!)
+            if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
+            {
+                mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
+            }
+            
+            mDrawEntire = new AsyncTask<PatchInfo,Void,PatchInfo>() {
+                protected PatchInfo doInBackground(PatchInfo... v) {                
+                    if (v[0].completeRedraw) {
+                        drawPage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
+                                 v[0].patchArea.left, v[0].patchArea.top,
+                                 v[0].patchArea.width(), v[0].patchArea.height());
+                    } else {
+                        updatePage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
+                                   v[0].patchArea.left, v[0].patchArea.top,
+                                   v[0].patchArea.width(), v[0].patchArea.height());
+                    }
+                    return v[0];
+                }
+                protected void onPostExecute(PatchInfo v) {                
                     setImageBitmap(v.patchBm);
                     invalidate();
                     layout(v.patchArea.left, v.patchArea.top, v.patchArea.right, v.patchArea.bottom);
@@ -926,11 +986,22 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         int w  = right-left;
         int h = bottom-top;
 
+            //Layout the Hq patch 
+        if (mPatch != null && mPatch.getArea() != null) {
+            if(mPatch.getArea().width() != w || mPatch.getArea().height() != h) {
+                    // Remove Hq if zoomed since patch was created
+                mPatch.clear();
+            } else
+            {
+                mPatch.layout(mPatch.getLeft(), mPatch.getTop(), mPatch.getRight(), mPatch.getBottom());
+            }
+        }
+
             //Layout the entire page view
         if (mEntireView != null)
         {
                 //Draw mEntireView only if it is not completely covered by a Hq patch
-            if(mPatch != null && /*mPatch.hasBitmap()*/ mPatch.getDrawable() != null && mPatch.getLeft() == left &&  mPatch.getTop() == top && mPatch.getRight() == right && mPatch.getBottom() == bottom ) 
+            if(mPatch != null && mPatch.getDrawable() != null && mPatch.getLeft() == left &&  mPatch.getTop() == top && mPatch.getRight() == right && mPatch.getBottom() == bottom ) 
             {
                 mEntireView.setVisibility(View.GONE);
             }
@@ -941,17 +1012,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 mEntireView.setImageMatrix(mEntireMat);
                 mEntireView.invalidate();
                 mEntireView.layout(0, 0, w, h);
-            }
-        }
-
-            //Layout the Hq patch 
-        if (mPatch != null && mPatch.getArea() != null) {
-            if(mPatch.getArea().width() != w || mPatch.getArea().height() != h) {
-                    // Remove Hq if zoomed since patch was created
-                mPatch.clear();
-            } else
-            {
-                mPatch.layout(mPatch.getLeft(), mPatch.getTop(), mPatch.getRight(), mPatch.getBottom());
             }
         }
 
@@ -986,7 +1046,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             // Create and add the patch view if not already done
         if (mPatch == null) {
             mPatch = new PatchView(mContext);
-            mPatch.setScaleType(ImageView.ScaleType.MATRIX);
             addView(mPatch);
             if(mOverlayView != null) mOverlayView.bringToFront();
         }
