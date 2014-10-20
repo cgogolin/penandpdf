@@ -127,12 +127,13 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private       boolean   mHighlightLinks;
 
 
-    private       ImageView mEntireView; // Image rendered at minimum zoom
+//    private       ImageView mEntireView; // Image rendered at minimum zoom
+    private       PatchView mEntireView; // Page rendered at minimum zoom
     private       Bitmap    mEntireBm;
     private       Matrix    mEntireMat;    
-    private       AsyncTask<Void,Void,Void> mDrawEntire;
+//    private       AsyncTask<Void,Void,Void> mDrawEntire;
 
-    private       PatchView mPatch;
+    private       PatchView mHqView;
 //    private       AsyncTask<PatchInfo,Void,PatchInfo> mDrawPatch;
     
     private       TextWord  mText[][];
@@ -167,8 +168,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     protected abstract TextWord[][] getText();
     protected abstract void addMarkup(PointF[] quadPoints, Annotation.Type type);
 
-        //The ViewGroup PageView has three child views: PatchView, mEntireView, and OverlayView.
-        //They are all implement 
+        //The ViewGroup PageView has three child views: mHqView, mEntire, and mOverlayView.
+        //mOverlayView is from an anonymous subclass defined in setPage(), the other two are 
     
     class PatchInfo {
         public final Rect  viewArea;
@@ -208,7 +209,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             return area;
         }
     
-        public void clear() {
+        public void reset() {
             cancelRenderInBackground();
             setArea(null);
             setImageBitmap(null);
@@ -254,63 +255,64 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
 
-    class EntireView extends OpaqueImageView {
-        private AsyncTask<PatchInfo,Void,PatchInfo> mDrawEntire;
-        private Bitmap mEntireBm;
+    // class EntireView extends OpaqueImageView {
+    //     private AsyncTask<PatchInfo,Void,PatchInfo> mDrawEntire;
+    //     private Bitmap mEntireBm;
         
-        public PatchView(Context context) {
-            super(context);
-            setScaleType(ImageView.ScaleType.MATRIX);
-        }
+    //     public EntireView(Context context) {
+    //         super(context);
+    //         setScaleType(ImageView.ScaleType.MATRIX);
+    //         reset();
+    //     }
     
-        public void clear() {
-            cancelRenderInBackground();
-            setImageBitmap(null);
-            invalidate();
-        }
+    //     public void reset() {
+    //         cancelRenderInBackground();
+    //         setImageBitmap(null);
+    //         invalidate();
+    //     }
 
-        public void renderInBackground(PatchInfo patchInfo) {
-                // Stop the drawing of previous patch if still going
-            if (mDrawPatch != null) {
-                mDrawPatch.cancel(true);
-                mDrawPatch = null;
-            }
+    //     public void renderInBackground(PatchInfo patchInfo) {
+    //             // Stop the drawing of previous patch if still going
+    //         if (mDrawEntire != null) {
+    //             mDrawEntire.cancel(true);
+    //             mDrawEntire = null;
+    //         }
 
-                //Create a bitmap of the right size (needs to be adopted!!!)
-            if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
-            {
-                mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
-            }
+    //             //Create a bitmap of the right size (needs to be adopted!!!)
+    //         if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
+    //         {
+    //             mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
+    //         }
             
-            mDrawEntire = new AsyncTask<PatchInfo,Void,PatchInfo>() {
-                protected PatchInfo doInBackground(PatchInfo... v) {                
-                    if (v[0].completeRedraw) {
-                        drawPage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
-                                 v[0].patchArea.left, v[0].patchArea.top,
-                                 v[0].patchArea.width(), v[0].patchArea.height());
-                    } else {
-                        updatePage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
-                                   v[0].patchArea.left, v[0].patchArea.top,
-                                   v[0].patchArea.width(), v[0].patchArea.height());
-                    }
-                    return v[0];
-                }
-                protected void onPostExecute(PatchInfo v) {                
-                    setImageBitmap(v.patchBm);
-                    invalidate();
-                    layout(v.patchArea.left, v.patchArea.top, v.patchArea.right, v.patchArea.bottom);
-                }
-            };
-            mDrawPatch.execute(patchInfo);
-        }
+    //         mDrawEntire = new AsyncTask<PatchInfo,Void,PatchInfo>() {
+    //             protected PatchInfo doInBackground(PatchInfo... v) {                
+    //                 if (v[0].completeRedraw) {
+    //                     drawPage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
+    //                              v[0].patchArea.left, v[0].patchArea.top,
+    //                              v[0].patchArea.width(), v[0].patchArea.height());
+    //                 } else {
+    //                     updatePage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
+    //                                v[0].patchArea.left, v[0].patchArea.top,
+    //                                v[0].patchArea.width(), v[0].patchArea.height());
+    //                 }
+    //                 return v[0];
+    //             }
+    //             protected void onPostExecute(PatchInfo v) {                
+    //                 setImageBitmap(v.patchBm);
+    //                 invalidate();
+    //                 layout(v.patchArea.left, v.patchArea.top, v.patchArea.right, v.patchArea.bottom);
+    //             }
+    //         };
+    //         mDrawEntire.execute(patchInfo);
+    //     }
 
-        public void cancelRenderInBackground() {
-            if (mDrawPatch != null) {
-                mDrawPatch.cancel(true);
-                mDrawPatch = null;
-            }
-        }
-    }
+    //     public void cancelRenderInBackground() {
+    //         if (mDrawEntire != null) {
+    //             mDrawEntire.cancel(true);
+    //             mDrawEntire = null;
+    //         }
+    //     }
+    // }
     
     public PageView(Context c, ViewGroup parent) {
         super(c);
@@ -326,10 +328,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     
     private void reset() {
             // Cancel pending background tasks
-        if (mDrawEntire != null) {
-            mDrawEntire.cancel(true);
-            mDrawEntire = null;
-        }
+        // if (mDrawEntire != null) {
+        //     mDrawEntire.cancel(true);
+        //     mDrawEntire = null;
+        // }
             // if (mDrawPatch != null) {
             //     mDrawPatch.cancel(true);
             //     mDrawPatch = null;
@@ -347,12 +349,13 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         mPageNumber = 0;        
         mSize = null;
 
-            //Reset the child views 
-        if (mEntireView != null) {
-            mEntireView.setImageBitmap(null);
-            mEntireView.invalidate();
-        }
-        if(mPatch != null) mPatch.clear();
+        //     //Reset the child views 
+        // if (mEntireView != null) {
+        //     mEntireView.setImageBitmap(null);
+        //     mEntireView.invalidate();
+        // }
+        if(mEntireView != null) mEntireView.reset();
+        if(mHqView != null) mHqView.reset();
 
         if(mOverlayView != null)
         {
@@ -415,25 +418,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         };
         mGetLinkInfo.execute();
 
-            //Set the background to white for now
+            //Set the background to white for now and
+            //prepare and show the busy indicator
         setBackgroundColor(BACKGROUND_COLOR);
-                
-            //Prepare the mEntire view
-        if (mEntireView == null) {
-            mEntireView = new OpaqueImageView(mContext);
-            mEntireView.setScaleType(ImageView.ScaleType.MATRIX);
-            addView(mEntireView);
-        }
-        mEntireView.setImageBitmap(null);
-        mEntireView.invalidate();
-        
-            //Create a bitmap of the right size
-        if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
-        {
-            mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
-        }
-
-            //Prepare and show the busy indicator
         if (mBusyIndicator == null) {
             mBusyIndicator = new ProgressBar(mContext);
             mBusyIndicator.setIndeterminate(true);
@@ -446,36 +433,57 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                     }
                 }, PROGRESS_DIALOG_DELAY);
         }
-        
-            // Render the page in the background
-        mDrawEntire = new AsyncTask<Void,Void,Void>() {
-            protected Void doInBackground(Void... v) {
-                drawPage(mEntireBm, mSize.x, mSize.y, 0, 0, mSize.x, mSize.y);
-                return null;
-            }
-            
-            protected void onPostExecute(Void v) {
-                if(mBusyIndicator!=null)
-                {
-                    mBusyIndicator.setVisibility(INVISIBLE);
-                    removeView(mBusyIndicator);
-                    mBusyIndicator = null;
-                }
-                mEntireView.setImageBitmap(mEntireBm);
-                mEntireView.invalidate();
-                setBackgroundColor(Color.TRANSPARENT);
-            }
 
-            protected void onCanceled() {
-                if(mBusyIndicator!=null)
-                {
-                    mBusyIndicator.setVisibility(INVISIBLE);
-                    removeView(mBusyIndicator);
-                    mBusyIndicator = null;
-                }
-            }
-        };
-        mDrawEntire.execute();
+
+
+            //The following has been moved to addEntire()
+        
+        //     //Prepare the mEntire view
+        // if (mEntireView == null) {
+        //     mEntireView = new OpaqueImageView(mContext);
+        //     mEntireView.setScaleType(ImageView.ScaleType.MATRIX);
+        //     addView(mEntireView);
+        // }
+        // mEntireView.setImageBitmap(null);
+        // mEntireView.invalidate();
+        
+        //     //Create a bitmap of the right size
+        // if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
+        // {
+        //     mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
+        // }
+        
+        //     // Render the page in the background
+        // mDrawEntire = new AsyncTask<Void,Void,Void>() {
+        //     protected Void doInBackground(Void... v) {
+        //         drawPage(mEntireBm, mSize.x, mSize.y, 0, 0, mSize.x, mSize.y);
+        //         return null;
+        //     }
+            
+        //     protected void onPostExecute(Void v) {
+        //         if(mBusyIndicator!=null)
+        //         {
+        //             mBusyIndicator.setVisibility(INVISIBLE);
+        //             removeView(mBusyIndicator);
+        //             mBusyIndicator = null;
+        //         }
+        //         mEntireView.setImageBitmap(mEntireBm);
+        //         mEntireView.invalidate();
+        //         setBackgroundColor(Color.TRANSPARENT);
+        //     }
+
+        //     protected void onCanceled() {
+        //         if(mBusyIndicator!=null)
+        //         {
+        //             mBusyIndicator.setVisibility(INVISIBLE);
+        //             removeView(mBusyIndicator);
+        //             mBusyIndicator = null;
+        //         }
+        //     }
+        // };
+        // mDrawEntire.execute();
+
+        addEntire(false);
         
             //Create the Overlay view if not present
         if (mOverlayView == null) {
@@ -987,13 +995,13 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         int h = bottom-top;
 
             //Layout the Hq patch 
-        if (mPatch != null && mPatch.getArea() != null) {
-            if(mPatch.getArea().width() != w || mPatch.getArea().height() != h) {
+        if (mHqView != null && mHqView.getArea() != null) {
+            if(mHqView.getArea().width() != w || mHqView.getArea().height() != h) {
                     // Remove Hq if zoomed since patch was created
-                mPatch.clear();
+                mHqView.reset();
             } else
             {
-                mPatch.layout(mPatch.getLeft(), mPatch.getTop(), mPatch.getRight(), mPatch.getBottom());
+                mHqView.layout(mHqView.getLeft(), mHqView.getTop(), mHqView.getRight(), mHqView.getBottom());
             }
         }
 
@@ -1001,7 +1009,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         if (mEntireView != null)
         {
                 //Draw mEntireView only if it is not completely covered by a Hq patch
-            if(mPatch != null && mPatch.getDrawable() != null && mPatch.getLeft() == left &&  mPatch.getTop() == top && mPatch.getRight() == right && mPatch.getBottom() == bottom ) 
+            if(mHqView != null && mHqView.getDrawable() != null && mHqView.getLeft() == left &&  mHqView.getTop() == top && mHqView.getRight() == right && mHqView.getBottom() == bottom ) 
             {
                 mEntireView.setVisibility(View.GONE);
             }
@@ -1029,13 +1037,44 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         }
     }
 
-    public void addHq(boolean update) {        
+
+    public void addEntire(boolean update) {
+        Rect viewArea = new Rect(0,0,mParent.getWidth(),mParent.getHeight());
+
+            //Create a bitmap of the right size (is this really correct?)
+        if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
+        {
+            mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
+        }
+        
+        //Construct the PatchInfo
+        PatchInfo patchInfo = new PatchInfo(viewArea, mEntireBm, mEntire, update);
+
+            //If there is no itersection there is no need to draw anything
+        if(!patchInfo.intersects) return;
+
+            // If being asked for the same area as last time and not because of an update then nothing to do
+        if (!patchInfo.areaChanged && !update) return;
+
+            // Create and add the patch view if not already done
+        if (mEntire == null) {
+            mEntire = new PatchView(mContext);
+            addView(mEntire);
+            if(mOverlayView != null) mOverlayView.bringToFront();
+        }
+        
+        mEntire.renderInBackground(patchInfo);
+    }
+    
+    
+    public void addHq(boolean update) {
         Rect viewArea = new Rect(getLeft(),getTop(),getRight(),getBottom());
         
             // If the viewArea's size matches the unzoomed size, there is no need for a hq patch
         if (viewArea.width() == mSize.x && viewArea.height() == mSize.y) return;
 
-        PatchInfo patchInfo = new PatchInfo(viewArea, ((ReaderView)mParent).getPatchBm(), mPatch, update);
+            //Construct the PatchInfo (important: the bitmap is shared between all page views that belong to a given readerview, so we ask the ReadderView to provide it)
+        PatchInfo patchInfo = new PatchInfo(viewArea, ((ReaderView)mParent).getPatchBm(), mHqView, update);
 
             //If there is no itersection there is no need to draw anything
         if(!patchInfo.intersects) return;
@@ -1044,13 +1083,13 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         if (!patchInfo.areaChanged && !update) return;
         
             // Create and add the patch view if not already done
-        if (mPatch == null) {
-            mPatch = new PatchView(mContext);
-            addView(mPatch);
+        if (mHqView == null) {
+            mHqView = new PatchView(mContext);
+            addView(mHqView);
             if(mOverlayView != null) mOverlayView.bringToFront();
         }
         
-        mPatch.renderInBackground(patchInfo);
+        mHqView.renderInBackground(patchInfo);
     }
 
     public void update() {
@@ -1068,51 +1107,45 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         //     mDrawPatch.cancel(true);
         //     mDrawPatch = null;
         // }
-        if(mPatch != null) mPatch.cancelRenderInBackground();
+        if(mHqView != null) mHqView.cancelRenderInBackground();
 
-            // Render the page in the background
-        mDrawEntire = new AsyncTask<Void,Void,Void>() {
-            protected Void doInBackground(Void... v) {
-                updatePage(mEntireBm, mSize.x, mSize.y, 0, 0, mSize.x, mSize.y);
-                return null;
-            }
+        //     // Render the page in the background
+        // mDrawEntire = new AsyncTask<Void,Void,Void>() {
+        //     protected Void doInBackground(Void... v) {
+        //         updatePage(mEntireBm, mSize.x, mSize.y, 0, 0, mSize.x, mSize.y);
+        //         return null;
+        //     }
 
-            protected void onPostExecute(Void v) {
-                if(mBusyIndicator!=null)
-                {
-                    mBusyIndicator.setVisibility(INVISIBLE);
-                    removeView(mBusyIndicator);
-                    mBusyIndicator = null;
-                }
-                mEntireView.setImageBitmap(mEntireBm);
-                mEntireView.invalidate();
-                if(cancelDrawInOnPostExecute) cancelDraw();
-            }
+        //     protected void onPostExecute(Void v) {
+        //         if(mBusyIndicator!=null)
+        //         {
+        //             mBusyIndicator.setVisibility(INVISIBLE);
+        //             removeView(mBusyIndicator);
+        //             mBusyIndicator = null;
+        //         }
+        //         mEntireView.setImageBitmap(mEntireBm);
+        //         mEntireView.invalidate();
+        //         if(cancelDrawInOnPostExecute) cancelDraw();
+        //     }
 
-            protected void onCanceled() {
-                if(mBusyIndicator!=null)
-                {
-                    mBusyIndicator.setVisibility(INVISIBLE);
-                    removeView(mBusyIndicator);
-                    mBusyIndicator = null;
-                }
-                if(cancelDrawInOnPostExecute) cancelDraw();
-            }
-        };
-        mDrawEntire.execute();
+        //     protected void onCanceled() {
+        //         if(mBusyIndicator!=null)
+        //         {
+        //             mBusyIndicator.setVisibility(INVISIBLE);
+        //             removeView(mBusyIndicator);
+        //             mBusyIndicator = null;
+        //         }
+        //         if(cancelDrawInOnPostExecute) cancelDraw();
+        //     }
+        // };
+        // mDrawEntire.execute();
 
+        addEntire(true);
         addHq(true);
     }
 
     public void removeHq() {
-            // Stop the drawing of the patch if still going
-        // if (mDrawPatch != null) {
-        //     mDrawPatch.cancel(true);
-        //     mDrawPatch = null;
-        // }
-
-            // And get rid of it
-        if (mPatch != null) mPatch.clear();
+        if (mHqView != null) mHqView.reset();
     }
 
     public float getScale() {
