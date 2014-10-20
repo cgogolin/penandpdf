@@ -168,9 +168,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     protected abstract TextWord[][] getText();
     protected abstract void addMarkup(PointF[] quadPoints, Annotation.Type type);
 
-        //The ViewGroup PageView has three main child views: mHqView, mEntireView, and mOverlayView.
-        //mOverlayView is from an anonymous subclass defined in setPage(), the other two are PatchViews
-        //On top of that is has a busy indicator mBusyIndicator.
+        //The ViewGroup PageView has three main child views: mEntireView, mHqView, and mOverlayView, all of which are defined below
+        //mEntireView is the view that holds a image of the whole document at a resolution corresponding to zoom=1.0
+        //mHqView is the view that holds an pixel accurate image of the currently visible patch of the document
+        //mOverlayView is used to draw things like the currently drawn line, selection boxes, frames around links, ...
     
     class PatchInfo {
         public final Rect  viewArea;
@@ -267,6 +268,220 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
         }
     }
+
+    class OverlayView extends View {
+        Path mDrawingPath = new Path();
+        
+        class TextSelectionDrawer implements TextProcessor
+        {
+            RectF rect;
+            float docRelXmaxSelection = Float.NEGATIVE_INFINITY;
+            float docRelXminSelection = Float.POSITIVE_INFINITY;
+            float scale;
+            Canvas canvas;
+
+            public void reset(Canvas canvas, float scale) {
+                this.canvas = canvas;
+                this.scale = scale;
+                docRelXmaxSelection = Float.NEGATIVE_INFINITY;
+                docRelXminSelection = Float.POSITIVE_INFINITY;
+            }
+                                    
+            public void onStartLine() {
+                rect = new RectF();
+            }
+                                    
+            public void onWord(TextWord word) {
+                rect.union(word);
+            }
+                                    
+            public void onEndLine() {
+                if (!rect.isEmpty())
+                {
+                    canvas.drawRect(rect.left*scale, rect.top*scale, rect.right*scale, rect.bottom*scale, selectBoxPaint);
+                    docRelXmaxSelection = Math.max(docRelXmaxSelection,Math.max(rect.right,docRelXmax));
+                    docRelXminSelection = Math.min(docRelXminSelection,Math.min(rect.left,docRelXmin));
+                }
+            }
+                                    
+            public void onEndText() {
+                if (useSmartTextSelection)
+                {
+                    canvas.drawRect(0, 0, docRelXminSelection*scale, PageView.this.getHeight(), selectOverlayPaint);
+                    canvas.drawRect(docRelXmaxSelection*scale, 0, PageView.this.getWidth(), PageView.this.getHeight(), selectOverlayPaint);
+                }
+            }
+        }
+        private final Paint searchResultPaint = new Paint();
+        private final Paint highlightedSearchResultPaint = new Paint();
+        private final Paint linksPaint = new Paint();
+        private final Paint selectBoxPaint = new Paint();
+        private final Paint selectOverlayPaint = new Paint();
+        private final Paint itemSelectBoxPaint = new Paint();
+        private final Paint drawingPaint = new Paint();
+        private final Paint eraserInnerPaint = new Paint();
+        private final Paint eraserOuterPaint = new Paint();
+        private final TextSelectionDrawer textSelectionDrawer = new TextSelectionDrawer();
+        
+        public OverlayView(Context context) {
+            super(context);
+            
+            searchResultPaint.setColor(SEARCHRESULTS_COLOR);
+            
+            highlightedSearchResultPaint.setColor(HIGHLIGHTED_SEARCHRESULT_COLOR);
+            highlightedSearchResultPaint.setStyle(Paint.Style.STROKE);
+            highlightedSearchResultPaint.setAntiAlias(true);
+            
+            linksPaint.setColor(LINK_COLOR);
+            linksPaint.setStyle(Paint.Style.STROKE);
+            linksPaint.setStrokeWidth(0);
+                
+            selectBoxPaint.setColor(SELECTION_COLOR);
+            selectBoxPaint.setStyle(Paint.Style.FILL);
+            selectBoxPaint.setStrokeWidth(0);
+                            
+            selectOverlayPaint.setColor(GRAYEDOUT_COLOR);
+            selectOverlayPaint.setStyle(Paint.Style.FILL);
+                            
+            itemSelectBoxPaint.setColor(BOX_COLOR);
+            itemSelectBoxPaint.setStyle(Paint.Style.STROKE);
+            itemSelectBoxPaint.setStrokeWidth(0);
+                            
+            drawingPaint.setAntiAlias(true);
+            drawingPaint.setDither(true);
+            drawingPaint.setStrokeJoin(Paint.Join.ROUND);
+            drawingPaint.setStrokeCap(Paint.Cap.ROUND);
+            drawingPaint.setStyle(Paint.Style.STROKE);
+                            
+            eraserInnerPaint.setAntiAlias(true);
+            eraserInnerPaint.setDither(true);
+            eraserInnerPaint.setStyle(Paint.Style.FILL);
+            eraserInnerPaint.setColor(ERASER_INNER_COLOR);
+                            
+            eraserOuterPaint.setAntiAlias(true);
+            eraserOuterPaint.setDither(true);
+            eraserOuterPaint.setStyle(Paint.Style.STROKE);
+            eraserOuterPaint.setColor(ERASER_OUTER_COLOR);
+        }
+
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            int x, y;
+            switch(View.MeasureSpec.getMode(widthMeasureSpec)) {
+                case View.MeasureSpec.UNSPECIFIED:
+                    x = PageView.this.getWidth();
+                    break;
+                case View.MeasureSpec.AT_MOST:
+                    x = Math.min(PageView.this.getWidth() ,View.MeasureSpec.getSize(widthMeasureSpec));
+                default:
+                    x = View.MeasureSpec.getSize(widthMeasureSpec);
+            }
+            switch(View.MeasureSpec.getMode(heightMeasureSpec)) {
+                case View.MeasureSpec.UNSPECIFIED:
+                    y = PageView.this.getHeight();
+                    break;
+                case View.MeasureSpec.AT_MOST:
+                    y = Math.min(PageView.this.getHeight(), View.MeasureSpec.getSize(heightMeasureSpec));
+                default:
+                    y = View.MeasureSpec.getSize(heightMeasureSpec);
+            }
+            setMeasuredDimension(x, y);
+        }
+
+                    
+        @Override
+        protected void onDraw(final Canvas canvas) {
+            super.onDraw(canvas);
+
+//                        Log.v("PageView", "onDraw() of page "+mPageNumber+" of OverlayView"+this);
+                        
+                //Clip to the canvas size (not sure if this is necessary)
+            canvas.clipRect(0,0, canvas.getWidth(), canvas.getHeight(), Region.Op.INTERSECT);
+                //Move the canvas so that it covers the visible region (not sure why the -2 is necessary)
+            canvas.translate(PageView.this.getLeft(), PageView.this.getTop());
+                        
+                // Work out current total scale factor from source to view
+            final float scale = mSourceScale*(float)PageView.this.getWidth()/(float)mSize.x;
+                        
+                // Highlight the search results
+            if (!mIsBlank && mSearchResult != null) {
+                for (RectF rect : mSearchResult.getSearchBoxes())
+                {
+                    canvas.drawRect(rect.left*scale, rect.top*scale,
+                                    rect.right*scale, rect.bottom*scale,
+                                    searchResultPaint);
+                }
+                RectF rect = mSearchResult.getFocusedSearchBox();
+                if(rect != null)
+                {
+                    highlightedSearchResultPaint.setStrokeWidth(2 * scale);
+                    canvas.drawRect(rect.left*scale, rect.top*scale,
+                                    rect.right*scale, rect.bottom*scale,
+                                    highlightedSearchResultPaint);
+                }
+            }
+
+                // Draw the link boxes
+            if (!mIsBlank && mLinks != null && mHighlightLinks) {
+                for (LinkInfo link : mLinks)
+                {
+                    canvas.drawRect(link.rect.left*scale, link.rect.top*scale,
+                                    link.rect.right*scale, link.rect.bottom*scale,
+                                    linksPaint);
+                }
+            }
+
+                // Draw the text selection
+            if (!mIsBlank && mSelectBox != null && mText != null) {
+                textSelectionDrawer.reset(canvas, scale);                                                        
+                processSelectedText(textSelectionDrawer);
+            }
+
+                // Draw the box arround selected notations and thelike
+            if (!mIsBlank && mItemSelectBox != null) {
+                canvas.drawRect(mItemSelectBox.left*scale, mItemSelectBox.top*scale, mItemSelectBox.right*scale, mItemSelectBox.bottom*scale, itemSelectBoxPaint);
+            }
+
+                // Draw the current hand drawing
+            if (!mIsBlank && mDrawing != null) {
+                PointF p;
+                Iterator<ArrayList<PointF>> it = mDrawing.iterator();
+                while (it.hasNext()) {
+                    ArrayList<PointF> arc = it.next();
+                    if (arc.size() >= 2) {
+                        Iterator<PointF> iit = arc.iterator();
+                        if(iit.hasNext())
+                        {
+                            p = iit.next();
+                            float mX = p.x * scale;
+                            float mY = p.y * scale;
+                            mDrawingPath.moveTo(mX, mY);
+                            while (iit.hasNext()) {
+                                p = iit.next();
+                                float x = p.x * scale;
+                                float y = p.y * scale;
+                                mDrawingPath.lineTo(x, y);
+                            }
+                        }
+                        if(!canvas.quickReject(mDrawingPath, Canvas.EdgeType.AA))
+                        {
+                            drawingPaint.setStrokeWidth(inkThickness * scale);
+                            drawingPaint.setColor(inkColor);  //Should be done only on settings change
+                            canvas.drawPath(mDrawingPath, drawingPaint);
+                        }
+                        mDrawingPath.reset();
+                    }
+                }
+            }
+
+                // Draw the eraser
+            if (eraser != null) {
+                canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, eraserInnerPaint);
+                canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, eraserOuterPaint);
+            }
+        }
+    }
+
     
     public PageView(Context c, ViewGroup parent) {
         super(c);
@@ -281,10 +496,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
     
     private void reset() {
-            //Reset the child views
-        if(mEntireView != null) mEntireView.reset();
-        if(mHqView != null) mHqView.reset();
-        
         if (mGetLinkInfo != null) {
             mGetLinkInfo.cancel(true);
             mGetLinkInfo = null;
@@ -294,15 +505,18 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             mGetText = null;
         }
 
-        mIsBlank = true;
-        mPageNumber = 0;        
-        mSize = null;
-
+            //Reset the child views
+        if(mEntireView != null) mEntireView.reset();
+        if(mHqView != null) mHqView.reset();
         if(mOverlayView != null)
         {
             removeView(mOverlayView);
             mOverlayView = null;
-        }     
+        }
+        
+        mIsBlank = true;
+        mPageNumber = 0;        
+        mSize = null;
                     
         mSearchResult = null;
         mLinks = null;
@@ -369,269 +583,12 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 }, PROGRESS_DIALOG_DELAY);
         }
 
-
-
-            //The following has been moved to addEntire()
-        
-        //     //Prepare the mEntireView
-        // if (mEntireView == null) {
-        //     mEntireView = new OpaqueImageView(mContext);
-        //     mEntireView.setScaleType(ImageView.ScaleType.MATRIX);
-        //     addView(mEntireView);
-        // }
-        // mEntireView.setImageBitmap(null);
-        // mEntireView.invalidate();
-        
-        //     //Create a bitmap of the right size
-        // if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
-        // {
-        //     mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
-        // }
-        
-        //     // Render the page in the background
-        // mDrawEntire = new AsyncTask<Void,Void,Void>() {
-        //     protected Void doInBackground(Void... v) {
-        //         drawPage(mEntireBm, mSize.x, mSize.y, 0, 0, mSize.x, mSize.y);
-        //         return null;
-        //     }
-            
-        //     protected void onPostExecute(Void v) {
-        //         if(mBusyIndicator!=null)
-        //         {
-        //             mBusyIndicator.setVisibility(INVISIBLE);
-        //             removeView(mBusyIndicator);
-        //             mBusyIndicator = null;
-        //         }
-        //         mEntireView.setImageBitmap(mEntireBm);
-        //         mEntireView.invalidate();
-        //         setBackgroundColor(Color.TRANSPARENT);
-        //     }
-
-        //     protected void onCanceled() {
-        //         if(mBusyIndicator!=null)
-        //         {
-        //             mBusyIndicator.setVisibility(INVISIBLE);
-        //             removeView(mBusyIndicator);
-        //             mBusyIndicator = null;
-        //         }
-        //     }
-        // };
-        // mDrawEntire.execute();
-
+            //Create the mEntireView
         addEntire(false);
         
-            //Create the Overlay view if not present
+            //Create the mOverlayView if not present
         if (mOverlayView == null) {
-            mOverlayView = new View(mContext) {
-                    
-                    Path mDrawingPath = new Path();
-                    
-                    class TextSelectionDrawer implements TextProcessor
-                    {
-                        RectF rect;
-                        float docRelXmaxSelection = Float.NEGATIVE_INFINITY;
-                        float docRelXminSelection = Float.POSITIVE_INFINITY;
-                        float scale;
-                        Canvas canvas;
-
-                        public void reset(Canvas canvas, float scale) {
-                            this.canvas = canvas;
-                            this.scale = scale;
-                            docRelXmaxSelection = Float.NEGATIVE_INFINITY;
-                            docRelXminSelection = Float.POSITIVE_INFINITY;
-                        }
-                                    
-                        public void onStartLine() {
-                            rect = new RectF();
-                        }
-                                    
-                        public void onWord(TextWord word) {
-                            rect.union(word);
-                        }
-                                    
-                        public void onEndLine() {
-                            if (!rect.isEmpty())
-                            {
-                                canvas.drawRect(rect.left*scale, rect.top*scale, rect.right*scale, rect.bottom*scale, selectBoxPaint);
-                                docRelXmaxSelection = Math.max(docRelXmaxSelection,Math.max(rect.right,docRelXmax));
-                                docRelXminSelection = Math.min(docRelXminSelection,Math.min(rect.left,docRelXmin));
-                            }
-                        }
-                                    
-                        public void onEndText() {
-                            if (useSmartTextSelection)
-                            {
-                                canvas.drawRect(0, 0, docRelXminSelection*scale, PageView.this.getHeight(), selectOverlayPaint);
-                                canvas.drawRect(docRelXmaxSelection*scale, 0, PageView.this.getWidth(), PageView.this.getHeight(), selectOverlayPaint);
-                            }
-                        }
-                    }
-                    private final Paint searchResultPaint = new Paint();
-                    private final Paint highlightedSearchResultPaint = new Paint();
-                    private final Paint linksPaint = new Paint();
-                    private final Paint selectBoxPaint = new Paint();
-                    private final Paint selectOverlayPaint = new Paint();
-                    private final Paint itemSelectBoxPaint = new Paint();
-                    private final Paint drawingPaint = new Paint();
-                    private final Paint eraserInnerPaint = new Paint();
-                    private final Paint eraserOuterPaint = new Paint();
-                    private final TextSelectionDrawer textSelectionDrawer = new TextSelectionDrawer();
-                        {
-                            searchResultPaint.setColor(SEARCHRESULTS_COLOR);
-                            
-                            highlightedSearchResultPaint.setColor(HIGHLIGHTED_SEARCHRESULT_COLOR);
-                            highlightedSearchResultPaint.setStyle(Paint.Style.STROKE);
-                            highlightedSearchResultPaint.setAntiAlias(true);
-                            
-                            linksPaint.setColor(LINK_COLOR);
-                            linksPaint.setStyle(Paint.Style.STROKE);
-                            linksPaint.setStrokeWidth(0);
-                            
-                            selectBoxPaint.setColor(SELECTION_COLOR);
-                            selectBoxPaint.setStyle(Paint.Style.FILL);
-                            selectBoxPaint.setStrokeWidth(0);
-                            
-                            selectOverlayPaint.setColor(GRAYEDOUT_COLOR);
-                            selectOverlayPaint.setStyle(Paint.Style.FILL);
-                            
-                            itemSelectBoxPaint.setColor(BOX_COLOR);
-                            itemSelectBoxPaint.setStyle(Paint.Style.STROKE);
-                            itemSelectBoxPaint.setStrokeWidth(0);
-                            
-                            drawingPaint.setAntiAlias(true);
-                            drawingPaint.setDither(true);
-                            drawingPaint.setStrokeJoin(Paint.Join.ROUND);
-                            drawingPaint.setStrokeCap(Paint.Cap.ROUND);
-                            drawingPaint.setStyle(Paint.Style.STROKE);
-                            
-                            eraserInnerPaint.setAntiAlias(true);
-                            eraserInnerPaint.setDither(true);
-                            eraserInnerPaint.setStyle(Paint.Style.FILL);
-                            eraserInnerPaint.setColor(ERASER_INNER_COLOR);
-                            
-                            eraserOuterPaint.setAntiAlias(true);
-                            eraserOuterPaint.setDither(true);
-                            eraserOuterPaint.setStyle(Paint.Style.STROKE);
-                            eraserOuterPaint.setColor(ERASER_OUTER_COLOR);
-                        }
-
-                    @Override
-                    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-                        int x, y;
-                        switch(View.MeasureSpec.getMode(widthMeasureSpec)) {
-                            case View.MeasureSpec.UNSPECIFIED:
-                                x = PageView.this.getWidth();
-                                break;
-                            case View.MeasureSpec.AT_MOST:
-                                x = Math.min(PageView.this.getWidth() ,View.MeasureSpec.getSize(widthMeasureSpec));
-                            default:
-                                x = View.MeasureSpec.getSize(widthMeasureSpec);
-                        }
-                        switch(View.MeasureSpec.getMode(heightMeasureSpec)) {
-                            case View.MeasureSpec.UNSPECIFIED:
-                                y = PageView.this.getHeight();
-                                break;
-                            case View.MeasureSpec.AT_MOST:
-                                y = Math.min(PageView.this.getHeight(), View.MeasureSpec.getSize(heightMeasureSpec));
-                            default:
-                                y = View.MeasureSpec.getSize(heightMeasureSpec);
-                        }
-                        setMeasuredDimension(x, y);
-                    }
-
-                    
-                    @Override
-                    protected void onDraw(final Canvas canvas) {
-                        super.onDraw(canvas);
-
-//                        Log.v("PageView", "onDraw() of page "+mPageNumber+" of OverlayView"+this);
-                        
-                            //Clip to the canvas size (not sure if this is necessary)
-                        canvas.clipRect(0,0, canvas.getWidth(), canvas.getHeight(), Region.Op.INTERSECT);
-                            //Move the canvas so that it covers the visible region (not sure why the -2 is necessary)
-                        canvas.translate(PageView.this.getLeft(), PageView.this.getTop());
-                        
-                            // Work out current total scale factor from source to view
-                        final float scale = mSourceScale*(float)PageView.this.getWidth()/(float)mSize.x;
-                        
-                            // Highlight the search results
-                        if (!mIsBlank && mSearchResult != null) {
-                            for (RectF rect : mSearchResult.getSearchBoxes())
-                            {
-                                canvas.drawRect(rect.left*scale, rect.top*scale,
-                                                rect.right*scale, rect.bottom*scale,
-                                                searchResultPaint);
-                            }
-                            RectF rect = mSearchResult.getFocusedSearchBox();
-                            if(rect != null)
-                            {
-                                highlightedSearchResultPaint.setStrokeWidth(2 * scale);
-                                canvas.drawRect(rect.left*scale, rect.top*scale,
-                                                rect.right*scale, rect.bottom*scale,
-                                                highlightedSearchResultPaint);
-                            }
-                        }
-
-                            // Draw the link boxes
-                        if (!mIsBlank && mLinks != null && mHighlightLinks) {
-                            for (LinkInfo link : mLinks)
-                            {
-                                canvas.drawRect(link.rect.left*scale, link.rect.top*scale,
-                                                link.rect.right*scale, link.rect.bottom*scale,
-                                                linksPaint);
-                            }
-                        }
-
-                            // Draw the text selection
-                        if (!mIsBlank && mSelectBox != null && mText != null) {
-                            textSelectionDrawer.reset(canvas, scale);                                                        
-                            processSelectedText(textSelectionDrawer);
-                        }
-
-                            // Draw the box arround selected notations and thelike
-                        if (!mIsBlank && mItemSelectBox != null) {
-                            canvas.drawRect(mItemSelectBox.left*scale, mItemSelectBox.top*scale, mItemSelectBox.right*scale, mItemSelectBox.bottom*scale, itemSelectBoxPaint);
-                        }
-
-                            // Draw the current hand drawing
-                        if (!mIsBlank && mDrawing != null) {
-                            PointF p;
-                            Iterator<ArrayList<PointF>> it = mDrawing.iterator();
-                            while (it.hasNext()) {
-                                ArrayList<PointF> arc = it.next();
-                                if (arc.size() >= 2) {
-                                    Iterator<PointF> iit = arc.iterator();
-                                    if(iit.hasNext())
-                                    {
-                                        p = iit.next();
-                                        float mX = p.x * scale;
-                                        float mY = p.y * scale;
-                                        mDrawingPath.moveTo(mX, mY);
-                                        while (iit.hasNext()) {
-                                            p = iit.next();
-                                            float x = p.x * scale;
-                                            float y = p.y * scale;
-                                            mDrawingPath.lineTo(x, y);
-                                        }
-                                    }
-                                    if(!canvas.quickReject(mDrawingPath, Canvas.EdgeType.AA))
-                                    {
-                                        drawingPaint.setStrokeWidth(inkThickness * scale);
-                                        drawingPaint.setColor(inkColor);  //Should be done only on settings change
-                                        canvas.drawPath(mDrawingPath, drawingPaint);
-                                    }
-                                    mDrawingPath.reset();
-                                }
-                            }
-                        }
-
-                            // Draw the eraser
-                        if (eraser != null) {
-                            canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, eraserInnerPaint);
-                            canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, eraserOuterPaint);
-                        }
-                    }
-                };
+            mOverlayView = new OverlayView(mContext);
 
                 //Fit the overlay view to the PageView
             mOverlayView.measure(MeasureSpec.makeMeasureSpec(mParent.getWidth(), MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(mParent.getHeight(), MeasureSpec.AT_MOST));
