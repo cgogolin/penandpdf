@@ -168,8 +168,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     protected abstract TextWord[][] getText();
     protected abstract void addMarkup(PointF[] quadPoints, Annotation.Type type);
 
-        //The ViewGroup PageView has three child views: mHqView, mEntire, and mOverlayView.
-        //mOverlayView is from an anonymous subclass defined in setPage(), the other two are 
+        //The ViewGroup PageView has three main child views: mHqView, mEntireView, and mOverlayView.
+        //mOverlayView is from an anonymous subclass defined in setPage(), the other two are PatchViews
+        //On top of that is has a busy indicator mBusyIndicator.
     
     class PatchInfo {
         public final Rect  viewArea;
@@ -224,7 +225,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
 
             mDrawPatch = new AsyncTask<PatchInfo,Void,PatchInfo>() {
-                protected PatchInfo doInBackground(PatchInfo... v) {                
+                protected PatchInfo doInBackground(PatchInfo... v) {                    
                     if (v[0].completeRedraw) {
                         drawPage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
                                  v[0].patchArea.left, v[0].patchArea.top,
@@ -236,11 +237,15 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                     }
                     return v[0];
                 }
-                protected void onPostExecute(PatchInfo v) {                
+                protected void onPostExecute(PatchInfo v) {
+                    removeBusyIndicator();
                     setArea(v.viewArea);
                     setImageBitmap(v.patchBm);
                     invalidate();
                     layout(v.patchArea.left, v.patchArea.top, v.patchArea.right, v.patchArea.bottom);
+                }
+                protected void onCanceled() {
+                    removeBusyIndicator(); //Do we really want to do this here?
                 }
             };
             mDrawPatch.execute(patchInfo);
@@ -252,67 +257,16 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 mDrawPatch = null;
             }
         }
+
+        private void removeBusyIndicator() {
+            if(mBusyIndicator!=null)
+            {
+                mBusyIndicator.setVisibility(INVISIBLE);
+                removeView(mBusyIndicator);
+                mBusyIndicator = null;
+            }
+        }
     }
-
-
-    // class EntireView extends OpaqueImageView {
-    //     private AsyncTask<PatchInfo,Void,PatchInfo> mDrawEntire;
-    //     private Bitmap mEntireBm;
-        
-    //     public EntireView(Context context) {
-    //         super(context);
-    //         setScaleType(ImageView.ScaleType.MATRIX);
-    //         reset();
-    //     }
-    
-    //     public void reset() {
-    //         cancelRenderInBackground();
-    //         setImageBitmap(null);
-    //         invalidate();
-    //     }
-
-    //     public void renderInBackground(PatchInfo patchInfo) {
-    //             // Stop the drawing of previous patch if still going
-    //         if (mDrawEntire != null) {
-    //             mDrawEntire.cancel(true);
-    //             mDrawEntire = null;
-    //         }
-
-    //             //Create a bitmap of the right size (needs to be adopted!!!)
-    //         if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
-    //         {
-    //             mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
-    //         }
-            
-    //         mDrawEntire = new AsyncTask<PatchInfo,Void,PatchInfo>() {
-    //             protected PatchInfo doInBackground(PatchInfo... v) {                
-    //                 if (v[0].completeRedraw) {
-    //                     drawPage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
-    //                              v[0].patchArea.left, v[0].patchArea.top,
-    //                              v[0].patchArea.width(), v[0].patchArea.height());
-    //                 } else {
-    //                     updatePage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
-    //                                v[0].patchArea.left, v[0].patchArea.top,
-    //                                v[0].patchArea.width(), v[0].patchArea.height());
-    //                 }
-    //                 return v[0];
-    //             }
-    //             protected void onPostExecute(PatchInfo v) {                
-    //                 setImageBitmap(v.patchBm);
-    //                 invalidate();
-    //                 layout(v.patchArea.left, v.patchArea.top, v.patchArea.right, v.patchArea.bottom);
-    //             }
-    //         };
-    //         mDrawEntire.execute(patchInfo);
-    //     }
-
-    //     public void cancelRenderInBackground() {
-    //         if (mDrawEntire != null) {
-    //             mDrawEntire.cancel(true);
-    //             mDrawEntire = null;
-    //         }
-    //     }
-    // }
     
     public PageView(Context c, ViewGroup parent) {
         super(c);
@@ -327,15 +281,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
     
     private void reset() {
-            // Cancel pending background tasks
-        // if (mDrawEntire != null) {
-        //     mDrawEntire.cancel(true);
-        //     mDrawEntire = null;
-        // }
-            // if (mDrawPatch != null) {
-            //     mDrawPatch.cancel(true);
-            //     mDrawPatch = null;
-            // }
+            //Reset the child views
+        if(mEntireView != null) mEntireView.reset();
+        if(mHqView != null) mHqView.reset();
+        
         if (mGetLinkInfo != null) {
             mGetLinkInfo.cancel(true);
             mGetLinkInfo = null;
@@ -348,14 +297,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         mIsBlank = true;
         mPageNumber = 0;        
         mSize = null;
-
-        //     //Reset the child views 
-        // if (mEntireView != null) {
-        //     mEntireView.setImageBitmap(null);
-        //     mEntireView.invalidate();
-        // }
-        if(mEntireView != null) mEntireView.reset();
-        if(mHqView != null) mHqView.reset();
 
         if(mOverlayView != null)
         {
@@ -371,27 +312,21 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void releaseResources() {
+        
         reset();
+        
         if (mBusyIndicator != null) {
             removeView(mBusyIndicator);
             mBusyIndicator = null;
         }
+        
         mDrawing = null;
         mDrawingHistory.clear();
-        
-            //Cancel all other async tasks
-        if (mGetText != null) {
-            mGetText.cancel(true);
-            mGetText = null;
-        }
-        if (mGetLinkInfo != null) {
-            mGetLinkInfo.cancel(true);
-            mGetLinkInfo = null;
-        }
     }
 
     public void releaseBitmaps() {
         reset();
+        
         mEntireBm = null;
     }
 
@@ -438,7 +373,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
             //The following has been moved to addEntire()
         
-        //     //Prepare the mEntire view
+        //     //Prepare the mEntireView
         // if (mEntireView == null) {
         //     mEntireView = new OpaqueImageView(mContext);
         //     mEntireView.setScaleType(ImageView.ScaleType.MATRIX);
@@ -1039,16 +974,24 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
 
     public void addEntire(boolean update) {
-        Rect viewArea = new Rect(0,0,mParent.getWidth(),mParent.getHeight());
+        Rect viewArea = new Rect(0,0,mSize.x,mSize.y);
 
             //Create a bitmap of the right size (is this really correct?)
-        if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
+        if(mEntireBm == null || mSize.x != mEntireBm.getWidth() || mSize.y != mEntireBm.getHeight())
         {
-            mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
+            mEntireBm = Bitmap.createBitmap(mSize.x, mSize.y, Config.ARGB_8888);
         }
         
+        // Rect viewArea = new Rect(0,0,mParent.getWidth(),mParent.getHeight());
+
+        //     //Create a bitmap of the right size (is this really correct?)
+        // if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
+        // {
+        //     mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
+        // }
+        
         //Construct the PatchInfo
-        PatchInfo patchInfo = new PatchInfo(viewArea, mEntireBm, mEntire, update);
+        PatchInfo patchInfo = new PatchInfo(viewArea, mEntireBm, mEntireView, update);
 
             //If there is no itersection there is no need to draw anything
         if(!patchInfo.intersects) return;
@@ -1056,14 +999,14 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             // If being asked for the same area as last time and not because of an update then nothing to do
         if (!patchInfo.areaChanged && !update) return;
 
-            // Create and add the patch view if not already done
-        if (mEntire == null) {
-            mEntire = new PatchView(mContext);
-            addView(mEntire);
+            // Create and add the mEntireView view if not already done
+        if (mEntireView == null) {
+            mEntireView = new PatchView(mContext);
+            addView(mEntireView);
             if(mOverlayView != null) mOverlayView.bringToFront();
         }
         
-        mEntire.renderInBackground(patchInfo);
+        mEntireView.renderInBackground(patchInfo);
     }
     
     
@@ -1098,16 +1041,16 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     
     public void update(final boolean cancelDrawInOnPostExecute) {
             // Cancel pending render task
-        if (mDrawEntire != null) {
-            mDrawEntire.cancel(true);
-            mDrawEntire = null;
-        }
-
+        // if (mDrawEntire != null) {
+        //     mDrawEntire.cancel(true);
+        //     mDrawEntire = null;
+        // }
         // if (mDrawPatch != null) {
         //     mDrawPatch.cancel(true);
         //     mDrawPatch = null;
         // }
-        if(mHqView != null) mHqView.cancelRenderInBackground();
+//Not necessary anymore as this is done in addHq(true);
+//        if(mHqView != null) mHqView.cancelRenderInBackground();
 
         //     // Render the page in the background
         // mDrawEntire = new AsyncTask<Void,Void,Void>() {
@@ -1140,6 +1083,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         // };
         // mDrawEntire.execute();
 
+        //This needs to be fixed!!!
+        if(cancelDrawInOnPostExecute) cancelDraw();
+        
         addEntire(true);
         addHq(true);
     }

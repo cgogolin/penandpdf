@@ -29,6 +29,7 @@ import android.preference.PreferenceManager;
 import android.provider.MediaStore.MediaColumns;
 import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.format.Time;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
@@ -59,8 +60,10 @@ import android.widget.ViewAnimator;
 import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.util.Set;
+import java.lang.Runtime;
 import java.util.concurrent.Executor;
+import java.util.Set;
+
 
 class ThreadPerTaskExecutor implements Executor {
     public void execute(Runnable r) {
@@ -268,6 +271,13 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     @Override
     public void onCreate(Bundle savedInstanceState)
         {
+            //     //For debuggin only!!!
+            // try{
+            //     Runtime.getRuntime().exec("logcat -d -v time -r 100 -f "+"/storage/emulated/0/PenAndPDF_"+(new Time()).format("%Y-%m-%d_HH:mm:ss")+".txt"+"*:E");
+            // }catch(java.io.IOException e){
+            //     Log.e("PenAndPDF", "unable to write log to file!");
+            // }
+            
             super.onCreate(savedInstanceState);
             
                 //Set default preferences on first start

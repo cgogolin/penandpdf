@@ -5,6 +5,10 @@
 	  android:versionName="1.0"
 	  android:installLocation="auto">
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+<!--  <uses-permission android:name="android.permission.READ_LOGS" />
+  <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL" />-->
+
   <uses-sdk android:minSdkVersion="11" android:targetSdkVersion="11" />
   <supports-screens
       android:smallScreens="true"
