@@ -305,7 +305,7 @@ public class MuPDFCore
                        // if (Character.isWhitespace(tc.c))
                        //     Log.v("Core", "tc.c='"+tc.c+"' at "+((RectF)tc));
                         
-                        wd.Add(tc);
+                        wd.add(tc);
 //                            if (type == Character.END_PUNCTUATION || type == Character.FINAL_QUOTE_PUNCTUATION || type == Character.INITIAL_QUOTE_PUNCTUATION || type == Character.OTHER_PUNCTUATION || type == Character.START_PUNCTUATION)
 //                        if (special)
                         if(!Character.isLetter(tc.c))
@@ -328,18 +328,44 @@ public class MuPDFCore
                     lns.add(wds.toArray(new TextWord[wds.size()]));
 
                     //Some pdfs have strangely large character boxes, so we correct the bottom of the
-                    //words in the previous line if they overlap with the current line
-                if (lns.size() >= 2)
-                    for(TextWord wd1 : lns.get(lns.size()-2)) {
-                        for(TextWord wd2 : wds) {
-                            if(wd1.intersects(wd2)){
-                                wd1.bottom = wd2.top;
+                    //words in the previous line if they overlap with the current line and, the change is not too drastical (this is a heuristic!), and anything from the previous line actually intersects anything from the current line.
+                if (lns.size() >= 2) {
+                    TextWord line = new TextWord();
+                    for(TextWord wd2 : lns.get(lns.size()-1)) {
+                        line.add(wd2);
+                    }
+                        //Some pdfs have a strange line structure with makes it necessary to look further back than just one line, so we look at the few last lines (this is an ugly heuristic!)
+                    for(int n = 2; lns.size()-n>=0 && n<=5; n++)
+                    {
+                        boolean anyIntersection = false;
+                        for(TextWord wd3 : lns.get(lns.size()-n)) {
+                            for(TextWord wd2 : lns.get(lns.size()-1)) {
+                                if(wd3.intersects(wd2))
+                                {
+                                    anyIntersection = true;
+                                    break;
+                                }
+                                if(anyIntersection) break;
+                            }
+                        }
+                        for(TextWord wd3 : lns.get(lns.size()-n)) {
+                            if(line.top > wd3.top && line.top < wd3.bottom && (wd3.bottom - line.top) / (wd3.bottom-wd3.top) < 0.45 && anyIntersection ) {
+                                wd3.bottom = line.top;
                             }
                         }
                     }
+                }
+                // if (lns.size() >= 2)
+                //     for(TextWord wd1 : lns.get(lns.size()-2)) {
+                //         for(TextWord wd2 : wds) {
+                //             if(wd1.intersects(wd2)){
+                //                 wd1.bottom = wd2.top;
+                //             }
+                //         }
+                //     }
                 
-                // for (TextWord word: wds)
-                //     Log.v("Core", "word='"+word.w+"' at "+word);
+                for (TextWord word: wds)
+                    Log.v("Core", "word='"+word.w+"' at "+word);
             }
         }
         

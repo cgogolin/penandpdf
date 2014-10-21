@@ -10,13 +10,22 @@ public class TextWord extends RectF {
         w = new String();
     }
 
-    public void Add(TextChar tc) {
+    public void add(TextChar tc) {
         if(isEmpty())
             super.set(tc);
         else
             super.union(tc);
         w = w.concat(new String(new char[]{tc.c}));
     }
+
+    public void add(TextWord tw) {
+        if(isEmpty())
+            super.set(tw);
+        else
+            super.union(tw);
+        w = w.concat(tw.w);
+    }
+    
 
     public boolean intersects(TextWord wd) {
         return RectF.intersects(this,wd);
