@@ -345,44 +345,21 @@ public class MuPDFCore
                                     anyIntersection = true;
                                     break;
                                 }
-                                if(anyIntersection) break;
                             }
+                            if(anyIntersection) break;
                         }
-                        for(TextWord wd3 : lns.get(lns.size()-n)) {
-                            if(line.top > wd3.top && line.top < wd3.bottom && (wd3.bottom - line.top) / (wd3.bottom-wd3.top) < 0.45 && anyIntersection ) {
-                                wd3.bottom = line.top;
+                        if(anyIntersection)
+                            for(TextWord wd3 : lns.get(lns.size()-n)) {
+                                if(line.top > wd3.top && line.top < wd3.bottom && (wd3.bottom - line.top) / (wd3.bottom-wd3.top) < 0.45) {
+                                    wd3.bottom = line.top;
+                                }
                             }
-                        }
                     }
                 }
-                // if (lns.size() >= 2)
-                //     for(TextWord wd1 : lns.get(lns.size()-2)) {
-                //         for(TextWord wd2 : wds) {
-                //             if(wd1.intersects(wd2)){
-                //                 wd1.bottom = wd2.top;
-                //             }
-                //         }
-                //     }
-                
-                for (TextWord word: wds)
-                    Log.v("Core", "word='"+word.w+"' at "+word);
+                // for (TextWord word: wds)
+                //     Log.v("Core", "word='"+word.w+"' at "+word);
             }
         }
-        
-        //     //Now we postprocess (the coordinates are in a system with the origin in thr top left):
-        // for(TextWord [] ln1 : lns) {
-        //     for(TextWord wd1 : ln1) {
-                
-        //             //Check for intersections with all other words
-        //         for(TextWord [] ln2 : lns) {
-        //             for(TextWord wd2 : ln2) {
-        //                 if(wd1.bottom > wd2.top && wd1.intersects(wd2) && !wd1.equals(wd2)){
-        //                     wd1.bottom = wd2.top;
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
         
         return lns.toArray(new TextWord[lns.size()][]);
     }
