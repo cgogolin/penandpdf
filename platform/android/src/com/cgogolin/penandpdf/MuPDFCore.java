@@ -319,17 +319,45 @@ public class MuPDFCore
                     }
                 }
                 
-                if (wd.w.length() > 0)
+                if (wd.w.length() > 0) {
+                    wd.sort();
                     wds.add(wd);
-
+                }
+                
                 if (wds.size() > 0)
                     lns.add(wds.toArray(new TextWord[wds.size()]));
 
+                    //Some pdfs have strangely large character boxes, so we correct the bottom of the
+                    //words in the previous line if they overlap with the current line
+                if (lns.size() >= 2)
+                    for(TextWord wd1 : lns.get(lns.size()-2)) {
+                        for(TextWord wd2 : wds) {
+                            if(wd1.intersects(wd2)){
+                                wd1.bottom = wd2.top;
+                            }
+                        }
+                    }
+                
                 // for (TextWord word: wds)
                 //     Log.v("Core", "word='"+word.w+"' at "+word);
             }
         }
-
+        
+        //     //Now we postprocess (the coordinates are in a system with the origin in thr top left):
+        // for(TextWord [] ln1 : lns) {
+        //     for(TextWord wd1 : ln1) {
+                
+        //             //Check for intersections with all other words
+        //         for(TextWord [] ln2 : lns) {
+        //             for(TextWord wd2 : ln2) {
+        //                 if(wd1.bottom > wd2.top && wd1.intersects(wd2) && !wd1.equals(wd2)){
+        //                     wd1.bottom = wd2.top;
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        
         return lns.toArray(new TextWord[lns.size()][]);
     }
 

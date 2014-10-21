@@ -31,7 +31,7 @@ public interface MuPDFView {
     public int getDrawingSize();
     public boolean saveDraw();
     public void setChangeReporter(Runnable reporter);
-    public void update();
+    public void redraw(boolean update);
     public void addHq(boolean update);
     public void removeHq();
     public void releaseResources();

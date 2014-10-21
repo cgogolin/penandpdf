@@ -88,7 +88,6 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     private float mNormalizedScaleBeforeInternalLinkHit = 1.0f;
     private float mNormalizedXScrollBeforeInternalLinkHit = 0;
     private float mNormalizedYScrollBeforeInternalLinkHit = 0;
-//    private boolean mCanUndo = false;
 
     private final int    OUTLINE_REQUEST=0;
     private final int    PRINT_REQUEST=1;
@@ -472,7 +471,6 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     inflater.inflate(R.menu.annot_menu, menu);
 
                     if(mDocView==null || ((PageView)mDocView.getSelectedView()) == null || !((PageView)mDocView.getSelectedView()).canUndo()) {
-//                    if (!mCanUndo) {
                         MenuItem undoButton = menu.findItem(R.id.menu_undo);
                         undoButton.setEnabled(false).setVisible(false);
                     }
@@ -651,7 +649,6 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                                 pageView.deselectText();
                                 pageView.cancelDraw();
                         }
-//                        mCanUndo = false;
                         mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         break;
                     case Edit:
@@ -676,7 +673,6 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 switch (mActionBarMode) {
                     case Annot:
 //                    case Copy:
-//                        mCanUndo = false;
                         mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         if (pageView != null) {
                             pageView.saveDraw();
@@ -974,16 +970,6 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     @Override
                     protected void onNumberOfStrokesChanged(int numberOfStrokes) {
                         invalidateOptionsMenu();
-                        // if (numberOfStrokes>0 && mCanUndo == false) 
-                        // {
-                        //     mCanUndo = true;
-                        //     invalidateOptionsMenu();
-                        // }
-                        // else if(numberOfStrokes == 0 && mCanUndo == true)
-                        // {
-                        //     mCanUndo = false;
-                        //     invalidateOptionsMenu();
-                        // }
                     }
                 
                 };

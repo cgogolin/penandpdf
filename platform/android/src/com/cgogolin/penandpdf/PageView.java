@@ -553,19 +553,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             // This is the size at minimum zoom
         mSourceScale = Math.min(mParent.getWidth()/size.x, mParent.getHeight()/size.y);
         mSize = new Point((int)(size.x*mSourceScale), (int)(size.y*mSourceScale));
-        
-            // Get the link info in the background
-        mGetLinkInfo = new AsyncTask<Void,Void,LinkInfo[]>() {
-            protected LinkInfo[] doInBackground(Void... v) {
-                return getLinkInfo();
-            }
-
-            protected void onPostExecute(LinkInfo[] v) {
-                mLinks = v;
-                if (mOverlayView != null) mOverlayView.invalidate();
-            }
-        };
-        mGetLinkInfo.execute();
 
             //Set the background to white for now and
             //prepare and show the busy indicator
@@ -585,6 +572,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
             //Create the mEntireView
         addEntire(false);
+
+            // Get the link info and text in the background
+        getLinkInfoInBackground();
+        getTextInBackground();
         
             //Create the mOverlayView if not present
         if (mOverlayView == null) {
@@ -642,7 +633,11 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
         mOverlayView.invalidate();
 
-        if (mGetText == null) {
+        getTextInBackground(); //We should do this earlier in the background ...
+    }
+
+    private void getTextInBackground() { 
+        if (mGetText == null) { 
             mGetText = new AsyncTask<Void,Void,TextWord[][]>() {
                 @Override
                 protected TextWord[][] doInBackground(Void... params) {
@@ -653,12 +648,26 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                     mText = result;
                     mOverlayView.invalidate();
                 }
-            };
-
+            };   
             mGetText.execute();
         }
     }
 
+    private void getLinkInfoInBackground() {
+        mGetLinkInfo = new AsyncTask<Void,Void,LinkInfo[]>() {
+            protected LinkInfo[] doInBackground(Void... v) {
+                return getLinkInfo();
+            }
+
+            protected void onPostExecute(LinkInfo[] v) {
+                mLinks = v;
+                if (mOverlayView != null) mOverlayView.invalidate();
+            }
+        };
+        mGetLinkInfo.execute();
+    }
+    
+    
     public void startDraw(final float x, final float y) {
         savemDrawingToHistory();
             
@@ -809,7 +818,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     public void cancelDraw() {
         mDrawing = null;
         mDrawingHistory.clear();
-        mOverlayView.invalidate();
     }
     
     public int getDrawingSize() {
@@ -939,15 +947,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             mEntireBm = Bitmap.createBitmap(mSize.x, mSize.y, Config.ARGB_8888);
         }
         
-        // Rect viewArea = new Rect(0,0,mParent.getWidth(),mParent.getHeight());
-
-        //     //Create a bitmap of the right size (is this really correct?)
-        // if(mEntireBm == null || mParent.getWidth() != mEntireBm.getWidth() || mParent.getHeight() != mEntireBm.getHeight())
-        // {
-        //     mEntireBm = Bitmap.createBitmap(mParent.getWidth(), mParent.getHeight(), Config.ARGB_8888);
-        // }
-        
-        //Construct the PatchInfo
+            //Construct the PatchInfo
         PatchInfo patchInfo = new PatchInfo(viewArea, mEntireBm, mEntireView, update);
 
             //If there is no itersection there is no need to draw anything
@@ -992,66 +992,17 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         mHqView.renderInBackground(patchInfo);
     }
 
-    public void update() {
-        update(false);
-    }    
-    
-    public void update(final boolean cancelDrawInOnPostExecute) {
-            // Cancel pending render task
-        // if (mDrawEntire != null) {
-        //     mDrawEntire.cancel(true);
-        //     mDrawEntire = null;
-        // }
-        // if (mDrawPatch != null) {
-        //     mDrawPatch.cancel(true);
-        //     mDrawPatch = null;
-        // }
-//Not necessary anymore as this is done in addHq(true);
-//        if(mHqView != null) mHqView.cancelRenderInBackground();
-
-        //     // Render the page in the background
-        // mDrawEntire = new AsyncTask<Void,Void,Void>() {
-        //     protected Void doInBackground(Void... v) {
-        //         updatePage(mEntireBm, mSize.x, mSize.y, 0, 0, mSize.x, mSize.y);
-        //         return null;
-        //     }
-
-        //     protected void onPostExecute(Void v) {
-        //         if(mBusyIndicator!=null)
-        //         {
-        //             mBusyIndicator.setVisibility(INVISIBLE);
-        //             removeView(mBusyIndicator);
-        //             mBusyIndicator = null;
-        //         }
-        //         mEntireView.setImageBitmap(mEntireBm);
-        //         mEntireView.invalidate();
-        //         if(cancelDrawInOnPostExecute) cancelDraw();
-        //     }
-
-        //     protected void onCanceled() {
-        //         if(mBusyIndicator!=null)
-        //         {
-        //             mBusyIndicator.setVisibility(INVISIBLE);
-        //             removeView(mBusyIndicator);
-        //             mBusyIndicator = null;
-        //         }
-        //         if(cancelDrawInOnPostExecute) cancelDraw();
-        //     }
-        // };
-        // mDrawEntire.execute();
-
-        //This needs to be fixed!!!
-        if(cancelDrawInOnPostExecute) cancelDraw();
-        
-        addEntire(true);
-        addHq(true);
-    }
-
     public void removeHq() {
         if (mHqView != null) mHqView.reset();
     }
 
-    public float getScale() {
+    public void redraw(boolean update) {
+        addEntire(update);
+        addHq(update);
+        mOverlayView.invalidate();
+    }
+
+    public float getScae() {
         return mSourceScale*(float)getWidth()/(float)mSize.x;
     }
 

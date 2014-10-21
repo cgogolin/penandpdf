@@ -93,6 +93,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	private final MuPDFCore mCore;
 	private AsyncTask<Void,Void,PassClickResult> mPassClick;
 	private RectF mWidgetAreas[];
+//        private TextWord text[][] = null;
 	private Annotation mAnnotations[];
 	private int mSelectedAnnotationIndex = -1;
 	private AsyncTask<Void,Void,RectF[]> mLoadWidgetAreas;
@@ -499,8 +500,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 			@Override
 			protected void onPostExecute(Void result) {
-				loadAnnotations(true);
-//				update();
+				loadAnnotations();
 			}
 		};
 
@@ -525,8 +525,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 				@Override
 				protected void onPostExecute(Void result) {
-					loadAnnotations(true);
-//					update();
+					loadAnnotations();
 				}
 			};
 
@@ -570,7 +569,8 @@ public class MuPDFPageView extends PageView implements MuPDFView {
     public boolean saveDraw() { 
 		PointF[][] path = getDraw();
 		if (path == null) return false;
-
+                cancelDraw();
+                
 		if (mAddInk != null) {
 			mAddInk.cancel(true);
 			mAddInk = null;
@@ -579,11 +579,12 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			@Override
 			protected Void doInBackground(PointF[][]... params) {
 				mCore.addInkAnnotation(mPageNumber, params[0]);
-                                loadAnnotations(true, true);
+                                loadAnnotations();
 				return null;
 			}
 		};
                 mAddInk.execute(path);
+
 		return true;
 	}
 
@@ -606,19 +607,19 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 	@Override
 	protected TextWord[][] getText() {
-		return mCore.textLines(mPageNumber);
+            return mCore.textLines(mPageNumber);
+            // if(text==null)
+	    //     return text = mCore.textLines(mPageNumber);
+            // else
+            //     return text;
 	}
 
 	@Override
 	protected void addMarkup(PointF[] quadPoints, Annotation.Type type) {
 		mCore.addMarkupAnnotation(mPageNumber, quadPoints, type);
-	}
-    
-        private void loadAnnotations(final boolean updateInOnPostExecute) {
-            loadAnnotations(updateInOnPostExecute, false);
-        }
-    
-        private void loadAnnotations(final boolean updateInOnPostExecute, final boolean cancelDrawInOnPostExecute) {
+	}    
+
+        private void loadAnnotations() {
 		mAnnotations = null;
 		if (mLoadAnnotations != null) mLoadAnnotations.cancel(true);
 		mLoadAnnotations = new AsyncTask<Void,Void,Annotation[]> () {
@@ -630,7 +631,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			@Override
 			protected void onPostExecute(Annotation[] result) {
 				mAnnotations = result;
-                                update(cancelDrawInOnPostExecute);
+                                redraw(true);
 			}
 		};
 		mLoadAnnotations.execute();
@@ -654,7 +655,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		mLoadWidgetAreas.execute();
 
 		super.setPage(page, size);
-                loadAnnotations(false);//Must be done after super.setPage() otherwise page number is wrong!
+                loadAnnotations();//Must be done after super.setPage() otherwise page number is wrong!
 	}
 
 	public void setScale(float scale) {

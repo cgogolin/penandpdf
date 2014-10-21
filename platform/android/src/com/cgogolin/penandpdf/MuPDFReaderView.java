@@ -351,7 +351,7 @@ abstract public class MuPDFReaderView extends ReaderView {
                     applyToChildren(new ReaderView.ViewMapper() {
                             @Override
                             void applyToView(View view) {
-                                ((MuPDFView) view).update();
+                                ((MuPDFView) view).redraw(true);
                             }
                         });
                 }
