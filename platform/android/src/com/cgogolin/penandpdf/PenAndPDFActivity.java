@@ -50,6 +50,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
+import android.widget.LinearLayout;
 import android.widget.SearchView;
 import android.widget.SeekBar;
 import android.widget.ShareActionProvider;
@@ -944,6 +945,51 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     @Override
                     protected void onDocMotion() {
 
+                    }
+
+                    @Override
+                    protected void addTextAnnotFromUserInput(final float x, final float y, final Annotation annot) {
+
+                        final LinearLayout editTextLayout = new LinearLayout(getContext());
+                        editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
+                        editTextLayout.setOrientation(1);
+                        editTextLayout.setPadding(16, 0, 16, 0);
+                        final EditText input = new EditText(getContext());
+//        input.setRawInputType(0x00000011); // 0x00000011=textUri
+                        input.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_NORMAL|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+//        input.setSingleLine();
+                        input.setHint(getString(R.string.add_a_note));
+//                        input.setMinLines(3);
+                        input.setFocusable(true);
+                        if(annot != null) input.setText(annot.text);
+                        editTextLayout.addView(input);
+                        mAlertDialog = mAlertBuilder.create();
+//                        new AlertDialog.Builder(getApplicationContext())
+//            .setTitle(getString(R.string.menu_set_library_path))
+//            .setMessage(getString(R.string.please_enter_path_of_bibtex_library))
+                        mAlertDialog.setView(editTextLayout);
+                        mAlertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), new DialogInterface.OnClickListener() 
+                                {
+                                    public void onClick(DialogInterface dialog, int whichButton) 
+                                        {
+                                            addTextAnnot(x, y, input.getText().toString());
+                                        }
+                            });
+                        mAlertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), new DialogInterface.OnClickListener() 
+                                {public void onClick(DialogInterface dialog, int whichButton)
+                                        {
+                                            if(annot != null) addTextAnnot(x, y, annot.text);
+                                        }
+                            });
+                        if(annot != null) mAlertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.delete), new DialogInterface.OnClickListener() 
+                                {public void onClick(DialogInterface dialog, int whichButton)
+                                        {
+                                                //Nothing to do
+                                        }
+                            });
+                        mAlertDialog.setCanceledOnTouchOutside(true);
+                        mAlertDialog.show();
+                        input.requestFocus();
                     }
 
                     @Override

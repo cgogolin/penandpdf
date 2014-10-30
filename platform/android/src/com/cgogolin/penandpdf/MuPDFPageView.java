@@ -361,6 +361,9 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                                 mSelectedAnnotationIndex = i;
                                 setItemSelectBox(mAnnotations[i]);
                                 return Hit.Annotation;
+                            // case TEXT:
+                            //     mSelectedAnnotationIndex = i;
+                            //     editSelectedAnnotation();
                         }
                     }
 		}
@@ -539,12 +542,22 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 
     public void editSelectedAnnotation() {
-        if (mSelectedAnnotationIndex != -1) {
-            PointF[][] arcs = mAnnotations[mSelectedAnnotationIndex].arcs;
-            if(arcs != null)
-            {
-                setDraw(arcs);
-                deleteSelectedAnnotation();
+        Annotation annot;
+        if (mSelectedAnnotationIndex != -1 && (annot = mAnnotations[mSelectedAnnotationIndex]) != null) {
+            
+            switch(annot.type){
+                case INK:
+                    PointF[][] arcs = mAnnotations[mSelectedAnnotationIndex].arcs;
+                    if(arcs != null)
+                    {
+                        setDraw(arcs);
+                        deleteSelectedAnnotation();
+                    }
+                    break;
+                case TEXT:
+                    deleteSelectedAnnotation();
+//                    addTextAnnotFromUserInput(annot.left, annot.top, annot);
+                    break;
             }
         }
     }
@@ -552,8 +565,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
     
     public boolean selectedAnnotationIsEditable() {
         if (mSelectedAnnotationIndex != -1) {
-            PointF[][] arcs = mAnnotations[mSelectedAnnotationIndex].arcs;
-            if(arcs != null)
+            if(mAnnotations[mSelectedAnnotationIndex].arcs != null || mAnnotations[mSelectedAnnotationIndex].text != null)
                 return true;
             else
                 return false;
@@ -643,7 +655,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
                 // }
             };
-            mAddTextAnnotation.execute(new PointF[]{new PointF(docRelX, docRelY), new PointF(docRelX+docRelSize, docRelY-docRelSize)});
+            mAddTextAnnotation.execute(new PointF[]{new PointF(docRelX-0.3f*docRelSize, docRelY+0.7f*docRelSize), new PointF(docRelX+0.7f*docRelSize, docRelY-0.3f*docRelSize)});
 	}
 
 	@Override

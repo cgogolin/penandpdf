@@ -39,6 +39,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     abstract protected void onDocMotion();
     abstract protected void onHit(Hit item);
     abstract protected void onNumberOfStrokesChanged(int numberOfStrokes);
+    abstract protected void addTextAnnotFromUserInput(float x, float y, Annotation annot);
     
     public void setLinksEnabled(boolean b) {
         mLinksEnabled = b;
@@ -155,8 +156,9 @@ abstract public class MuPDFReaderView extends ReaderView {
         }
         else if(mMode == Mode.AddingTextAnnot && !tapDisabled)
         {
-                //Make the Page view add a Text Annotation
-            ((MuPDFPageView)pageView).addTextAnnotation(e.getX(), e.getY(), "test string 2.0");
+                //Ask the user to provide text
+            addTextAnnotFromUserInput(e.getX(), e.getY(), null);
+                //Reset the mode and menu                
             mMode = Mode.Viewing;
             onTapMainDocArea();
         }
@@ -167,7 +169,12 @@ abstract public class MuPDFReaderView extends ReaderView {
             
         return super.onSingleTapUp(e);
     }
-    
+
+
+    void addTextAnnot(float x, float y, String text) {
+        MuPDFView pageView = (MuPDFView)getSelectedView();
+        ((MuPDFPageView)pageView).addTextAnnotation(x, y, text);
+    }
 
     @Override
     public boolean onDown(MotionEvent e) {

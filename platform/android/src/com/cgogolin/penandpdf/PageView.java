@@ -126,6 +126,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private       float     docRelXmin = Float.POSITIVE_INFINITY;
     private       boolean   mIsBlank;
     private       boolean   mHighlightLinks;
+
+    private       Bitmap mTextAnnotationBitmap;
     
     private       PatchView mEntireView; // Page rendered at minimum zoom
     private       Bitmap    mEntireBm;
@@ -275,7 +277,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     class OverlayView extends View {
         Path mDrawingPath = new Path();
-        Bitmap mTextAnnotationBitmap;
         
         class TextSelectionDrawer implements TextProcessor
         {
