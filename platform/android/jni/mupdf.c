@@ -1427,7 +1427,7 @@ JNI_FN(MuPDFCore_textAsHtml)(JNIEnv * env, jobject thiz)
 }
 
 JNIEXPORT void JNICALL
-JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjectArray points, fz_annot_type type)
+JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjectArray points, fz_annot_type type, jstring jtext)
 {
     globals *glo = get_globals(env, thiz);
     if (glo == NULL) return;
@@ -1443,10 +1443,11 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
     float alpha;
     float line_height;
     float line_thickness;
-
+    const char *text;
+    
     if (idoc == NULL)
-        return;
-
+        return;    
+            
     switch (type)
     {
         case FZ_ANNOT_HIGHLIGHT:
@@ -1473,6 +1474,9 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
             line_thickness = LINE_THICKNESS;
             line_height = STRIKE_HEIGHT;
             break;
+        case FZ_ANNOT_TEXT:
+            LOGE("addMarkupAnnotationInternal: adding a text annotation");
+            break;
         default:
             return;
     }
@@ -1494,6 +1498,8 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
         y_fid = (*env)->GetFieldID(env, pt_cls, "y", "F");
         if (y_fid == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "GetFieldID(y)");
 
+        LOGE("addMarkupAnnotationInternal: go until here1");
+        
         n = (*env)->GetArrayLength(env, points);
 
         pts = fz_malloc_array(ctx, n, sizeof(fz_point));
@@ -1520,12 +1526,23 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
         }
 
         annot = (fz_annot *)pdf_create_annot(idoc, (pdf_page *)pc->page, type); //in pdf-annot.c
-        pdf_set_markup_annot_quadpoints(idoc, (pdf_annot *)annot, pts, n); //in pdf-annot.c
-        if(type == FZ_ANNOT_HIGHLIGHT) 
-            pdf_set_markup_appearance_highlight(idoc, (pdf_annot *)annot, color, &alpha, line_thickness, line_height); //in pdf-appearance.c
-        else
-            pdf_set_markup_appearance(idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height); //in pdf-appearance.c
                 
+        if(type == FZ_ANNOT_TEXT)
+        {
+            fz_rect rect = {pts[0].x, pts[0].y, pts[1].x, pts[1].y};
+            text = (*env)->GetStringUTFChars(env, jtext, NULL);
+            pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, text);
+        }
+        else
+        {
+            pdf_set_markup_annot_quadpoints(idoc, (pdf_annot *)annot, pts, n); //in pdf-annot.c
+            
+            if(type == FZ_ANNOT_HIGHLIGHT) 
+                pdf_set_markup_appearance_highlight(idoc, (pdf_annot *)annot, color, &alpha, line_thickness, line_height); //in pdf-appearance.c
+            else
+                pdf_set_markup_appearance(idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height); //in pdf-appearance.c
+        }
+        
         dump_annotation_display_lists(glo);
     }
     fz_always(ctx)
@@ -1534,7 +1551,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
     }
     fz_catch(ctx)
     {
-        LOGE("addStrikeOutAnnotation: %s failed", ctx->error->message);
+        LOGE("addMarkupAnnotationInternal: %s failed", ctx->error->message);
         jclass cls = (*env)->FindClass(env, "java/lang/OutOfMemoryError");
         if (cls != NULL)
             (*env)->ThrowNew(env, cls, "Out of memory in MuPDFCore_searchPage");
@@ -1946,6 +1963,8 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
     {
         fz_rect rect;
         fz_annot_type type = pdf_annot_type((pdf_annot *)annot);
+
+        LOGI("found annotation of type %d", type);
         
         pdf_obj *inklist = pdf_annot_inklist((pdf_annot *)annot);
         int nArcs = pdf_array_len(inklist);

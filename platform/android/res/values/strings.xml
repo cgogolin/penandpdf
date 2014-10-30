@@ -42,6 +42,7 @@
 	<string name="leaving_reflow_mode">Leaving reflow mode</string>
 	<string name="print_failed">Print failed</string>
 	<string name="select_text">Select text first</string>
+	<string name="tap_to_add_annotation">Tap to add annotation</string>
 	<string name="copied_to_clipboard">Copied to clipboard</string>
 	<string name="no_text_selected">No text selected</string>
 	<string name="draw_annotation">Draw annotation</string>
@@ -66,6 +67,7 @@
 	<string name="format_currently_not_supported">Format currently not supported</string>
 	<string name="save_before_print">Save to a file before printing</string>
 	<string name="toggle_reflow_mode">Toggle reflow mode</string>
+	<string name="menu_add_text_annot">Add text annotation</string>
 	<string name="menu_linkback">Back before link clicked</string>
 	<string name="menu_next">Next</string>
 	<string name="menu_previous">Previous</string>

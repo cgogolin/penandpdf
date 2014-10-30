@@ -97,6 +97,11 @@ void pdf_set_ink_annot_list(pdf_document *doc, pdf_annot *annot, fz_point *pts, 
 */
 void pdf_set_free_text_details(pdf_document *doc, pdf_annot *annot, fz_point *pos, char *text, char *font_name, float font_size, float color[3]);
 
+/*
+	pdf_set_text_details: set the position and text for a text annotation.
+*/
+void pdf_set_text_details(pdf_document *doc, pdf_annot *annot, const fz_rect *rect, char *text);
+
 fz_annot_type pdf_annot_obj_type(pdf_obj *obj);
 
 pdf_obj * pdf_annot_inklist(pdf_annot *annot);

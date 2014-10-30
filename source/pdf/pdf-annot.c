@@ -561,6 +561,9 @@ pdf_load_annots(pdf_document *doc, pdf_obj *annots, pdf_page *page)
 			 * stream into this list, so remove any that don't
 			 * (such as links) and continue. */
 			keep_annot = pdf_is_dict(ap);
+                            //NO WE DON'T!!!
+                        keep_annot = 1;
+                        
 			if (!keep_annot)
 				break;
 
@@ -1070,4 +1073,32 @@ void pdf_set_free_text_details(pdf_document *doc, pdf_annot *annot, fz_point *po
 	{
 		fz_rethrow(ctx);
 	}
+}
+
+
+
+void pdf_set_text_details(pdf_document *doc, pdf_annot *annot, const fz_rect *rect, char *text)
+{
+    fz_context *ctx = doc->ctx;
+//    fz_matrix ctm;
+
+    fz_try(ctx)
+    {
+        pdf_dict_puts_drop(annot->obj, "Rect", pdf_new_rect(doc, rect));
+        update_rect(ctx, annot);
+
+            /* FIXME: should convert to WinAnsiEncoding */
+        pdf_dict_puts_drop(annot->obj, "Contents", pdf_new_string(doc, text, strlen(text)));
+
+        /* fz_display_list *dlist = NULL; */
+        /* dlist = fz_new_display_list(ctx); */
+        /* pdf_set_annot_appearance(doc, annot, rect, dlist); */
+    }
+    fz_always(ctx)
+    {
+    }
+    fz_catch(ctx)
+    {
+        fz_rethrow(ctx);
+    }
 }

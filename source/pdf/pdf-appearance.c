@@ -1344,7 +1344,7 @@ static void update_rect(fz_context *ctx, pdf_annot *annot)
 	annot->pagerect = annot->rect;
 	fz_transform_rect(&annot->pagerect, &annot->page->ctm);
 }
-//heureka Heureka HEUREKA
+
 void pdf_set_annot_appearance(pdf_document *doc, pdf_annot *annot, fz_rect *rect, fz_display_list *disp_list)
 {
 	fz_context *ctx = doc->ctx;

@@ -71,6 +71,12 @@
 	android:showAsAction="always"
 	android:background="?android:selectableItemBackground"
 	/>-->
+  <item android:id="@+id/menu_add_text_annot"
+	android:icon="@drawable/ic_action_new_label"
+	android:title="@string/menu_add_text_annot" 
+	android:showAsAction="always"
+	android:background="?android:selectableItemBackground"
+	/>
   <item android:id="@+id/menu_selection"
 	android:icon="@drawable/ic_action_selection"
 	android:title="@string/menu_selection" 

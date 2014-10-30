@@ -73,7 +73,7 @@ class ThreadPerTaskExecutor implements Executor {
 
 public class PenAndPDFActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener, FilePicker.FilePickerSupport
 {       
-    enum ActionBarMode {Main, Annot, Edit, Search, Selection, Hidden};
+    enum ActionBarMode {Main, Annot, Edit, Search, Selection, Hidden, AddingTextAnnot};
     
     private SearchView searchView = null;
     private String latestTextInSearchBox = "";
@@ -525,6 +525,9 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 case Hidden:
                     inflater.inflate(R.menu.empty_menu, menu);
                     break;
+                case AddingTextAnnot:
+                    inflater.inflate(R.menu.add_text_annot_menu, menu);
+                    break;
                 default:
             }
             return true;
@@ -596,6 +599,12 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 mActionBarMode = ActionBarMode.Annot;
                 invalidateOptionsMenu();
                 return true;
+            case R.id.menu_add_text_annot:
+                mDocView.setMode(MuPDFReaderView.Mode.AddingTextAnnot);
+                mActionBarMode = ActionBarMode.AddingTextAnnot;
+                invalidateOptionsMenu();
+                showInfo(getString(R.string.tap_to_add_annotation));
+                return true;
             case R.id.menu_erase:
                 mDocView.setMode(MuPDFReaderView.Mode.Drawing);
                 invalidateOptionsMenu();
@@ -664,6 +673,9 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     case Selection:
                         mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         pageView.deselectText();
+                        break;
+                    case AddingTextAnnot:
+                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         break;
                 }
                 mActionBarMode = ActionBarMode.Main;
@@ -900,10 +912,10 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
 
                     @Override
                     protected void onTapMainDocArea() {
-                        if (mActionBarMode == ActionBarMode.Edit) 
+                        if (mActionBarMode == ActionBarMode.Edit || mActionBarMode == ActionBarMode.AddingTextAnnot) 
                         {
-                            invalidateOptionsMenu();
                             mActionBarMode = ActionBarMode.Main;
+                            invalidateOptionsMenu();
                         }
                     }
                 

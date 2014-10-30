@@ -94,10 +94,10 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	private AsyncTask<Void,Void,PassClickResult> mPassClick;
 	private RectF mWidgetAreas[];
 //        private TextWord text[][] = null;
-	private Annotation mAnnotations[];
+//	private Annotation mAnnotations[];
 	private int mSelectedAnnotationIndex = -1;
-	private AsyncTask<Void,Void,RectF[]> mLoadWidgetAreas;
-	private AsyncTask<Void,Void,Annotation[]> mLoadAnnotations;
+    private AsyncTask<Void,Void,RectF[]> mLoadWidgetAreas; //Should be moved to PageView!
+//	private AsyncTask<Void,Void,Annotation[]> mLoadAnnotations;
 	private AlertDialog.Builder mTextEntryBuilder;
 	private AlertDialog.Builder mChoiceEntryBuilder;
 	private AlertDialog.Builder mSigningDialogBuilder;
@@ -109,8 +109,9 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	private EditText mEditText;
 	private AsyncTask<String,Void,Boolean> mSetWidgetText;
 	private AsyncTask<String,Void,Void> mSetWidgetChoice;
-	private AsyncTask<PointF[],Void,Void> mAddNonInkAnnotation;
-	private AsyncTask<PointF[][],Void,Void> mAddInk;
+	private AsyncTask<PointF[],Void,Void> mAddMarkupAnnotation;
+    	private AsyncTask<PointF[],Void,Void> mAddTextAnnotation;
+	private AsyncTask<PointF[][],Void,Void> mAddInkAnnotation;
 	private AsyncTask<Integer,Void,Void> mDeleteAnnotation;
 	private AsyncTask<Void,Void,String> mCheckSignature;
 	private AsyncTask<Void,Void,Boolean> mSign;
@@ -356,6 +357,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                             case SQUIGGLY:
                             case STRIKEOUT:
                             case INK:
+                            case TEXT:
                                 mSelectedAnnotationIndex = i;
                                 setItemSelectBox(mAnnotations[i]);
                                 return Hit.Annotation;
@@ -491,7 +493,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		if (quadPoints.size() == 0)
 			return false;
 
-		mAddNonInkAnnotation = new AsyncTask<PointF[],Void,Void>() {
+		mAddMarkupAnnotation = new AsyncTask<PointF[],Void,Void>() {
 			@Override
 			protected Void doInBackground(PointF[]... params) {
 				addMarkup(params[0], type);
@@ -504,7 +506,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			}
 		};
 
-		mAddNonInkAnnotation.execute(quadPoints.toArray(new PointF[quadPoints.size()]));
+		mAddMarkupAnnotation.execute(quadPoints.toArray(new PointF[quadPoints.size()]));
 
 		deselectText();
 
@@ -571,11 +573,11 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		if (path == null) return false;
                 cancelDraw();
                 
-		if (mAddInk != null) {
-			mAddInk.cancel(true);
-			mAddInk = null;
+		if (mAddInkAnnotation != null) {
+			mAddInkAnnotation.cancel(true);
+			mAddInkAnnotation = null;
 		}
-		mAddInk = new AsyncTask<PointF[][],Void,Void>() {
+		mAddInkAnnotation = new AsyncTask<PointF[][],Void,Void>() {
 			@Override
 			protected Void doInBackground(PointF[][]... params) {
 				mCore.addInkAnnotation(mPageNumber, params[0]);
@@ -583,7 +585,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 				return null;
 			}
 		};
-                mAddInk.execute(path);
+                mAddInkAnnotation.execute(path);
 
 		return true;
 	}
@@ -608,33 +610,40 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	@Override
 	protected TextWord[][] getText() {
             return mCore.textLines(mPageNumber);
-            // if(text==null)
-	    //     return text = mCore.textLines(mPageNumber);
-            // else
-            //     return text;
 	}
 
 	@Override
+	protected Annotation[] getAnnotations() {
+            return mCore.getAnnoations(mPageNumber);
+	}
+    
+	@Override
 	protected void addMarkup(PointF[] quadPoints, Annotation.Type type) {
 		mCore.addMarkupAnnotation(mPageNumber, quadPoints, type);
-	}    
+	}
 
-        private void loadAnnotations() {
-		mAnnotations = null;
-		if (mLoadAnnotations != null) mLoadAnnotations.cancel(true);
-		mLoadAnnotations = new AsyncTask<Void,Void,Annotation[]> () {
-			@Override
-			protected Annotation[] doInBackground(Void... params) {
-				return mCore.getAnnoations(mPageNumber);
-			}
+    	@Override
+	protected void addTextAnnotation(float x, float y, final String text) {
+            
+            float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+            final float docRelX = (x - getLeft())/scale;
+            final float docRelY = (getBottom() - y)/scale;
+            final float docRelSize = 0.025f*Math.max(getWidth(),getHeight())/scale;
+            
+            mAddTextAnnotation = new AsyncTask<PointF[],Void,Void>() {
+                @Override
+                protected Void doInBackground(PointF[]... params) {
+                    mCore.addTextAnnotation(mPageNumber, params[0], text);
+                    loadAnnotations();
+                    return null;
+                }
+                
+                // @Override
+                // protected void onPostExecute(Void result) {
 
-			@Override
-			protected void onPostExecute(Annotation[] result) {
-				mAnnotations = result;
-                                redraw(true);
-			}
-		};
-		mLoadAnnotations.execute();
+                // }
+            };
+            mAddTextAnnotation.execute(new PointF[]{new PointF(docRelX, docRelY), new PointF(docRelX+docRelSize, docRelY-docRelSize)});
 	}
 
 	@Override
@@ -675,11 +684,6 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			mLoadWidgetAreas = null;
 		}
 
-		if (mLoadAnnotations != null) {
-			mLoadAnnotations.cancel(true);
-			mLoadAnnotations = null;
-		}
-
 		if (mSetWidgetText != null) {
 			mSetWidgetText.cancel(true);
 			mSetWidgetText = null;
@@ -690,9 +694,14 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			mSetWidgetChoice = null;
 		}
 
-		if (mAddNonInkAnnotation != null) {
-			mAddNonInkAnnotation.cancel(true);
-			mAddNonInkAnnotation = null;
+		if (mAddMarkupAnnotation != null) {
+			mAddMarkupAnnotation.cancel(true);
+			mAddMarkupAnnotation = null;
+		}
+
+                if (mAddInkAnnotation != null) {
+			mAddInkAnnotation.cancel(true);
+			mAddInkAnnotation = null;
 		}
 
 		if (mDeleteAnnotation != null) {

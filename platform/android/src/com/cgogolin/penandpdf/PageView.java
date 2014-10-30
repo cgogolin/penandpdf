@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -125,28 +126,28 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private       float     docRelXmin = Float.POSITIVE_INFINITY;
     private       boolean   mIsBlank;
     private       boolean   mHighlightLinks;
-
-
-//    private       ImageView mEntireView; // Image rendered at minimum zoom
+    
     private       PatchView mEntireView; // Page rendered at minimum zoom
     private       Bitmap    mEntireBm;
     private       Matrix    mEntireMat;    
-//    private       AsyncTask<Void,Void,Void> mDrawEntire;
 
     private       PatchView mHqView;
-//    private       AsyncTask<PatchInfo,Void,PatchInfo> mDrawPatch;
     
     private       TextWord  mText[][];
-    private       AsyncTask<Void,Void,TextWord[][]> mGetText;
+    private       AsyncTask<Void,Void,TextWord[][]> mLoadText;
     protected     LinkInfo  mLinks[];
-    private       AsyncTask<Void,Void,LinkInfo[]> mGetLinkInfo;
+    private       AsyncTask<Void,Void,LinkInfo[]> mLoadLinkInfo;
+    protected     Annotation mAnnotations[];
+    private       AsyncTask<Void,Void,Annotation[]> mLoadAnnotations;
 
     private       View      mOverlayView;
     private       SearchResult mSearchResult = null;
     private       RectF     mSelectBox;
     private       RectF     mItemSelectBox;
+    
     protected     ArrayDeque<ArrayList<ArrayList<PointF>>> mDrawingHistory = new ArrayDeque<ArrayList<ArrayList<PointF>>>();
     protected     ArrayList<ArrayList<PointF>> mDrawing;
+    
     private       PointF eraser = null;    
 
     private       ProgressBar mBusyIndicator;
@@ -161,12 +162,15 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private static int strikeoutColor = 0x80AC7225;
     private static boolean useSmartTextSelection = false;    
     
-        //To be overrwritten in MuPDFPageView
+        //To be overrwritten ny any superclass
     protected abstract void drawPage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
     protected abstract void updatePage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
     protected abstract LinkInfo[] getLinkInfo();
     protected abstract TextWord[][] getText();
+    protected abstract Annotation[] getAnnotations();
     protected abstract void addMarkup(PointF[] quadPoints, Annotation.Type type);
+    protected abstract void addTextAnnotation(float x, float y, String text);
+
 
         //The ViewGroup PageView has three main child views: mEntireView, mHqView, and mOverlayView, all of which are defined below
         //mEntireView is the view that holds a image of the whole document at a resolution corresponding to zoom=1.0
@@ -271,6 +275,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     class OverlayView extends View {
         Path mDrawingPath = new Path();
+        Bitmap mTextAnnotationBitmap;
         
         class TextSelectionDrawer implements TextProcessor
         {
@@ -431,6 +436,19 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 }
             }
 
+                // Draw Text annotations
+            if (!mIsBlank && mAnnotations != null && mAnnotations != null) {
+                    //Load the bitmap once
+                if(mTextAnnotationBitmap == null)
+                    mTextAnnotationBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_action_labels_mod);
+                
+                for (Annotation annot : mAnnotations)
+                {
+                    if(annot.type == Annotation.Type.TEXT)
+                        canvas.drawBitmap(mTextAnnotationBitmap, null, new RectF(annot.left*scale, annot.top*scale, annot.right*scale, annot.bottom*scale), null);
+                }
+            }
+
                 // Draw the text selection
             if (!mIsBlank && mSelectBox != null && mText != null) {
                 textSelectionDrawer.reset(canvas, scale);                                                        
@@ -496,13 +514,13 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
     
     private void reset() {
-        if (mGetLinkInfo != null) {
-            mGetLinkInfo.cancel(true);
-            mGetLinkInfo = null;
+        if (mLoadLinkInfo != null) {
+            mLoadLinkInfo.cancel(true);
+            mLoadLinkInfo = null;
         }
-        if (mGetText != null) {
-            mGetText.cancel(true);
-            mGetText = null;
+        if (mLoadText != null) {
+            mLoadText.cancel(true);
+            mLoadText = null;
         }
 
             //Reset the child views
@@ -526,6 +544,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
 
     public void releaseResources() {
+        if (mLoadAnnotations != null) {
+            mLoadAnnotations.cancel(true);
+            mLoadAnnotations = null;
+        }
         
         reset();
         
@@ -540,7 +562,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     public void releaseBitmaps() {
         reset();
-        
+        mTextAnnotationBitmap = null;
         mEntireBm = null;
     }
 
@@ -574,8 +596,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         addEntire(false);
 
             // Get the link info and text in the background
-        getLinkInfoInBackground();
-        getTextInBackground();
+        loadLinkInfo();
+        loadText();
         
             //Create the mOverlayView if not present
         if (mOverlayView == null) {
@@ -633,12 +655,16 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
         mOverlayView.invalidate();
 
-        getTextInBackground(); //We should do this earlier in the background ...
+        loadText(); //We should do this earlier in the background ...
     }
 
-    private void getTextInBackground() { 
-        if (mGetText == null) { 
-            mGetText = new AsyncTask<Void,Void,TextWord[][]>() {
+
+        //The following three helper methods use the methods getText(), getLinkInfo(), and getAnnotations()
+        //that are to be provided by any super class to asynchronously load the Text, LinkInfo, and Annotations
+        //respectively
+    private void loadText() { 
+        if (mLoadText == null) {
+            mLoadText = new AsyncTask<Void,Void,TextWord[][]>() {
                 @Override
                 protected TextWord[][] doInBackground(Void... params) {
                     return getText();
@@ -649,12 +675,12 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                     mOverlayView.invalidate();
                 }
             };   
-            mGetText.execute();
+            mLoadText.execute();
         }
     }
 
-    private void getLinkInfoInBackground() {
-        mGetLinkInfo = new AsyncTask<Void,Void,LinkInfo[]>() {
+    private void loadLinkInfo() {
+        mLoadLinkInfo = new AsyncTask<Void,Void,LinkInfo[]>() {
             protected LinkInfo[] doInBackground(Void... v) {
                 return getLinkInfo();
             }
@@ -664,7 +690,25 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 if (mOverlayView != null) mOverlayView.invalidate();
             }
         };
-        mGetLinkInfo.execute();
+        mLoadLinkInfo.execute();
+    }
+
+    protected void loadAnnotations() {
+        mAnnotations = null;
+        if (mLoadAnnotations != null) mLoadAnnotations.cancel(true);
+        mLoadAnnotations = new AsyncTask<Void,Void,Annotation[]> () {
+            @Override
+            protected Annotation[] doInBackground(Void... params) {
+                return getAnnotations();
+            }
+            
+            @Override
+            protected void onPostExecute(Annotation[] result) {
+                mAnnotations = result;
+                redraw(true);
+            }
+        };
+        mLoadAnnotations.execute();
     }
     
     
@@ -717,7 +761,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     public void startErase(final float x, final float y) {
         savemDrawingToHistory();
-        
+        final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+        final float docRelX = (x - getLeft())/scale;
+        final float docRelY = (y - getTop())/scale;
+        eraser = new PointF(docRelX,docRelY);
         continueErase(x,y);
     }
     
@@ -725,7 +772,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
         final float docRelX = (x - getLeft())/scale;
         final float docRelY = (y - getTop())/scale;
-        eraser = new PointF(docRelX,docRelY);
+
+        eraser.set(docRelX,docRelY);
+        
         ArrayList<ArrayList<PointF>> newArcs = new ArrayList<ArrayList<PointF>>();
         if (mDrawing != null && mDrawing.size() > 0) {
             for (ArrayList<PointF> arc : mDrawing)
@@ -1002,7 +1051,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         mOverlayView.invalidate();
     }
 
-    public float getScae() {
+    public float getScale() {
         return mSourceScale*(float)getWidth()/(float)mSize.x;
     }
 

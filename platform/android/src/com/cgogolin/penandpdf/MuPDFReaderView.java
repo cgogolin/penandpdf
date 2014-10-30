@@ -21,7 +21,7 @@ import android.graphics.RectF;
 import android.util.Log;
 
 abstract public class MuPDFReaderView extends ReaderView {
-    enum Mode {Viewing, Selecting, Drawing, Erasing}
+    enum Mode {Viewing, Selecting, Drawing, Erasing, AddingTextAnnot}
     private final Context mContext;
     private boolean mLinksEnabled = true;
     private Mode mMode = Mode.Viewing;
@@ -79,84 +79,94 @@ abstract public class MuPDFReaderView extends ReaderView {
             tapPageMargin = dm.heightPixels/5;
     }
 
-    public boolean onSingleTapUp(MotionEvent e)
-        {
-            if (mMode == Mode.Viewing && !tapDisabled) {
-                MuPDFView pageView = (MuPDFView)getSelectedView();
-                if (pageView == null ) return super.onSingleTapUp(e);
-
-                Hit item = pageView.passClickEvent(e.getX(), e.getY());
-                onHit(item);
+    public boolean onSingleTapUp(MotionEvent e) {
+        MuPDFView pageView = (MuPDFView)getSelectedView();
+        if (pageView == null ) return super.onSingleTapUp(e);
+        
+        if (mMode == Mode.Viewing && !tapDisabled) {
+            Hit item = pageView.passClickEvent(e.getX(), e.getY());
+            onHit(item);
                 
-                LinkInfo link = null;
-                if (mLinksEnabled && (item == Hit.LinkInternal || item == Hit.LinkExternal || item == Hit.LinkRemote) && (link = pageView.hitLink(e.getX(), e.getY())) != null)
-                {
-                    link.acceptVisitor(new LinkInfoVisitor() {
-                            @Override
-                            public void visitInternal(LinkInfoInternal li) {
-                                    // Clicked on an internal (GoTo) link
-                                setDisplayedViewIndex(li.pageNumber);
-                                if(li.target != null)
+            LinkInfo link = null;
+            if (mLinksEnabled && (item == Hit.LinkInternal || item == Hit.LinkExternal || item == Hit.LinkRemote) && (link = pageView.hitLink(e.getX(), e.getY())) != null)
+            {
+                link.acceptVisitor(new LinkInfoVisitor() {
+                        @Override
+                        public void visitInternal(LinkInfoInternal li) {
+                                // Clicked on an internal (GoTo) link
+                            setDisplayedViewIndex(li.pageNumber);
+                            if(li.target != null)
+                            {
+                                    //Scroll the left top to the right position
+                                if((li.targetFlags & LinkInfoInternal.fz_link_flag_l_valid) == LinkInfoInternal.fz_link_flag_l_valid)  
+                                    setDocRelXScroll(li.target.left);
+                                if((li.targetFlags & LinkInfoInternal.fz_link_flag_t_valid) == LinkInfoInternal.fz_link_flag_t_valid)
+                                    setDocRelYScroll(li.target.top);
+                                    //If the link target is of /XYZ type r might be a zoom value
+                                if( (li.targetFlags & LinkInfoInternal.fz_link_flag_r_is_zoom) == LinkInfoInternal.fz_link_flag_r_is_zoom && (li.targetFlags & LinkInfoInternal.fz_link_flag_r_valid) == LinkInfoInternal.fz_link_flag_r_valid )
                                 {
-                                        //Scroll the left top to the right position
-                                    if((li.targetFlags & LinkInfoInternal.fz_link_flag_l_valid) == LinkInfoInternal.fz_link_flag_l_valid)  
-                                        setDocRelXScroll(li.target.left);
-                                    if((li.targetFlags & LinkInfoInternal.fz_link_flag_t_valid) == LinkInfoInternal.fz_link_flag_t_valid)
-                                        setDocRelYScroll(li.target.top);
-                                        //If the link target is of /XYZ type r might be a zoom value
-                                    if( (li.targetFlags & LinkInfoInternal.fz_link_flag_r_is_zoom) == LinkInfoInternal.fz_link_flag_r_is_zoom && (li.targetFlags & LinkInfoInternal.fz_link_flag_r_valid) == LinkInfoInternal.fz_link_flag_r_valid )
-                                    {
-                                        Toast.makeText(getContext(), "zoom="+li.target.right, Toast.LENGTH_SHORT).show();
-                                        if(li.target.right > 0 && li.target.right <= 1.0f)
-                                            setScale(li.target.right);
-                                    }
-                                    
-                                    if( (li.targetFlags & LinkInfoInternal.fz_link_flag_fit_h) == LinkInfoInternal.fz_link_flag_fit_h && (li.targetFlags & LinkInfoInternal.fz_link_flag_fit_v) == LinkInfoInternal.fz_link_flag_fit_v )
-                                    {
-                                        setScale(1.0f);
-                                    }
-                                    else if( (li.targetFlags & LinkInfoInternal.fz_link_flag_fit_h) == LinkInfoInternal.fz_link_flag_fit_h )
-                                    {
-                                            //Fit width
-                                    }
-                                    else if( (li.targetFlags & LinkInfoInternal.fz_link_flag_fit_v) == LinkInfoInternal.fz_link_flag_fit_v )
-                                    {
-                                            //Fit height
-                                    }
-                                        //NOTE: FitR is not handled!!!
-                                        //Toast.makeText(getContext(), "unhandled flags="+li.targetFlags ,Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getContext(), "zoom="+li.target.right, Toast.LENGTH_SHORT).show();
+                                    if(li.target.right > 0 && li.target.right <= 1.0f)
+                                        setScale(li.target.right);
                                 }
-                            }                
-                            @Override
-                            public void visitExternal(LinkInfoExternal li) {
-                                    //Clicked on an external link
-                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri
-                                                           .parse(li.url));
-                                mContext.startActivity(intent);
+                                    
+                                if( (li.targetFlags & LinkInfoInternal.fz_link_flag_fit_h) == LinkInfoInternal.fz_link_flag_fit_h && (li.targetFlags & LinkInfoInternal.fz_link_flag_fit_v) == LinkInfoInternal.fz_link_flag_fit_v )
+                                {
+                                    setScale(1.0f);
+                                }
+                                else if( (li.targetFlags & LinkInfoInternal.fz_link_flag_fit_h) == LinkInfoInternal.fz_link_flag_fit_h )
+                                {
+                                        //Fit width
+                                }
+                                else if( (li.targetFlags & LinkInfoInternal.fz_link_flag_fit_v) == LinkInfoInternal.fz_link_flag_fit_v )
+                                {
+                                        //Fit height
+                                }
+                                    //NOTE: FitR is not handled!!!
+                                    //Toast.makeText(getContext(), "unhandled flags="+li.targetFlags ,Toast.LENGTH_SHORT).show();
                             }
-                            @Override
-                            public void visitRemote(LinkInfoRemote li) {
-                                    // Clicked on a remote (GoToR) link
-                            }
-                        });
-                }
-                else if(item == Hit.Nothing)
-                {
-                    if (e.getX() > super.getWidth() - tapPageMargin) 
-                        onBottomRightMargin();
-                    else if (e.getX() < tapPageMargin) 
-                        onTapTopLeftMargin();
-                    else if (e.getY() > super.getHeight() - tapPageMargin) 
-                        onBottomRightMargin();
-                    else if (e.getY() < tapPageMargin) 
-                        onTapTopLeftMargin();
-                    else
-                        onTapMainDocArea();
-                }
+                        }                
+                        @Override
+                        public void visitExternal(LinkInfoExternal li) {
+                                //Clicked on an external link
+                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri
+                                                       .parse(li.url));
+                            mContext.startActivity(intent);
+                        }
+                        @Override
+                        public void visitRemote(LinkInfoRemote li) {
+                                // Clicked on a remote (GoToR) link
+                        }
+                    });
             }
-            
-            return super.onSingleTapUp(e);
+            else if(item == Hit.Nothing)
+            {
+                if (e.getX() > super.getWidth() - tapPageMargin) 
+                    onBottomRightMargin();
+                else if (e.getX() < tapPageMargin) 
+                    onTapTopLeftMargin();
+                else if (e.getY() > super.getHeight() - tapPageMargin) 
+                    onBottomRightMargin();
+                else if (e.getY() < tapPageMargin) 
+                    onTapTopLeftMargin();
+                else
+                    onTapMainDocArea();
+            }
         }
+        else if(mMode == Mode.AddingTextAnnot && !tapDisabled)
+        {
+                //Make the Page view add a Text Annotation
+            ((MuPDFPageView)pageView).addTextAnnotation(e.getX(), e.getY(), "test string 2.0");
+            mMode = Mode.Viewing;
+            onTapMainDocArea();
+        }
+        // else if (mMode == Mode.Selecting && !tapDisabled) {
+        //     MuPDFView pageView = (MuPDFView)getSelectedView();
+        //     if(pageView!=null) pageView.deselectText();            
+        // }        
+            
+        return super.onSingleTapUp(e);
+    }
     
 
     @Override
