@@ -116,7 +116,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	private AsyncTask<Void,Void,String> mCheckSignature;
 	private AsyncTask<Void,Void,Boolean> mSign;
 	private Runnable changeReporter;
-
+    
 	public MuPDFPageView(Context context, FilePicker.FilePickerSupport filePickerSupport, MuPDFCore core, ViewGroup parent) {
                 super(context, parent);
 		mFilePickerSupport = filePickerSupport;
@@ -357,13 +357,14 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                             case SQUIGGLY:
                             case STRIKEOUT:
                             case INK:
-                            case TEXT:
+//                            case TEXT:
                                 mSelectedAnnotationIndex = i;
                                 setItemSelectBox(mAnnotations[i]);
                                 return Hit.Annotation;
-                            // case TEXT:
-                            //     mSelectedAnnotationIndex = i;
-                            //     editSelectedAnnotation();
+                            case TEXT:
+                                mSelectedAnnotationIndex = i;
+                                ((MuPDFReaderView)mParent).addTextAnnotFromUserInput(mAnnotations[i]);
+                                deleteSelectedAnnotation();
                         }
                     }
 		}
@@ -551,13 +552,14 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                     if(arcs != null)
                     {
                         setDraw(arcs);
+                        ((MuPDFReaderView)mParent).setMode(MuPDFReaderView.Mode.Drawing);
                         deleteSelectedAnnotation();
                     }
                     break;
-                case TEXT:
-                    deleteSelectedAnnotation();
-//                    addTextAnnotFromUserInput(annot.left, annot.top, annot);
-                    break;
+                // case TEXT:
+                //     deleteSelectedAnnotation();
+                //     ((MuPDFReaderView)mParent).addTextAnnotFromUserInput(annot.left, annot.top, annot);
+                //     break;
             }
         }
     }
@@ -635,17 +637,12 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	}
 
     	@Override
-	protected void addTextAnnotation(float x, float y, final String text) {
-            
-            float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
-            final float docRelX = (x - getLeft())/scale;
-            final float docRelY = (getBottom() - y)/scale;
-            final float docRelSize = 0.025f*Math.max(getWidth(),getHeight())/scale;
+	protected void addTextAnnotation(final Annotation annot) {
             
             mAddTextAnnotation = new AsyncTask<PointF[],Void,Void>() {
                 @Override
                 protected Void doInBackground(PointF[]... params) {
-                    mCore.addTextAnnotation(mPageNumber, params[0], text);
+                    mCore.addTextAnnotation(mPageNumber, params[0], annot.text);
                     loadAnnotations();
                     return null;
                 }
@@ -655,7 +652,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
                 // }
             };
-            mAddTextAnnotation.execute(new PointF[]{new PointF(docRelX-0.3f*docRelSize, docRelY+0.7f*docRelSize), new PointF(docRelX+0.7f*docRelSize, docRelY-0.3f*docRelSize)});
+            mAddTextAnnotation.execute(new PointF[]{new PointF(annot.left, getHeight()/getScale()-annot.top), new PointF(annot.right, getHeight()/getScale()-annot.bottom)});
 	}
 
 	@Override

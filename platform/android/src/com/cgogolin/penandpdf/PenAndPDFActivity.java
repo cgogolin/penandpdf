@@ -591,7 +591,6 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 return true;
             case R.id.menu_edit:
                 ((MuPDFPageView)pageView).editSelectedAnnotation();
-                mDocView.setMode(MuPDFReaderView.Mode.Drawing);
                 mActionBarMode = ActionBarMode.Annot;
                 invalidateOptionsMenu();
                 return true;
@@ -948,7 +947,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     }
 
                     @Override
-                    protected void addTextAnnotFromUserInput(final float x, final float y, final Annotation annot) {
+                    protected void addTextAnnotFromUserInput(final Annotation annot) {
 
                         final LinearLayout editTextLayout = new LinearLayout(getContext());
                         editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
@@ -972,13 +971,14 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                                 {
                                     public void onClick(DialogInterface dialog, int whichButton) 
                                         {
-                                            addTextAnnot(x, y, input.getText().toString());
+                                            annot.text = input.getText().toString();
+                                            addTextAnnotion(annot);
                                         }
                             });
                         mAlertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), new DialogInterface.OnClickListener() 
                                 {public void onClick(DialogInterface dialog, int whichButton)
                                         {
-                                            if(annot != null) addTextAnnot(x, y, annot.text);
+                                            if(annot != null) addTextAnnotion(annot);
                                         }
                             });
                         if(annot != null) mAlertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.delete), new DialogInterface.OnClickListener() 

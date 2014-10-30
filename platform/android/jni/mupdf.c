@@ -1918,7 +1918,7 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
 {
     jclass annotClass, pt_cls, ptarr_cls;
     jfieldID x_fid, y_fid;
-    jmethodID ctor, ctor2, ctor3;
+    jmethodID ctor, ctor2, ctor3, ctor4;
     jobjectArray arr;
     jobject jannot;
     fz_annot *annot;
@@ -1933,7 +1933,9 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
     if (annotClass == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "FindClass");
     ctor = (*env)->GetMethodID(env, annotClass, "<init>", "(FFFFI)V");
     ctor2 = (*env)->GetMethodID(env, annotClass, "<init>", "(FFFFI[[Landroid/graphics/PointF;)V");
-    if (ctor == NULL || ctor2 == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetMethodID");
+    ctor4 = (*env)->GetMethodID(env, annotClass, "<init>", "(FFFFILjava/lang/String;)V");
+    
+    if (ctor == NULL || ctor2 == NULL || ctor4 == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetMethodID");
 
     pt_cls = (*env)->FindClass(env, "android/graphics/PointF");
     if (pt_cls == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "FindClass");
@@ -1964,14 +1966,18 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
         fz_rect rect;
         fz_annot_type type = pdf_annot_type((pdf_annot *)annot);
 
-        LOGI("found annotation of type %d", type);
+//        LOGI("found annotation of type %d", type);
         
         pdf_obj *inklist = pdf_annot_inklist((pdf_annot *)annot);
+        
+        jstring text = (*env)->NewStringUTF(env, pdf_to_str_buf(pdf_annot_text((pdf_annot *)annot)));
+        
         int nArcs = pdf_array_len(inklist);
 //        LOGI("found %d arcs", nArcs);
         jobjectArray arcs;
         
         int i;
+        float pageHeight = (&glo->pages[glo->current])->height;
         for(i = 0; i < nArcs; i++)
         {
             pdf_obj *inklisti = pdf_array_get(inklist, i);
@@ -1998,7 +2004,7 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
                 point.x = pdf_to_real(pdf_array_get(inklisti, j));
                 point.y = pdf_to_real(pdf_array_get(inklisti, j+1));
                 fz_transform_point(&point, &ctm);
-                point.y = (&glo->pages[glo->current])->height - point.y;//Flip y here because pdf coordinate system is upside down
+                point.y = pageHeight - point.y;//Flip y here because pdf coordinate system is upside down
                 jobject pfobj = (*env)->NewObject(env, pt_cls, ctor3, point.x, point.y);
                 (*env)->SetObjectArrayElement(env, arci, j/2, pfobj);
                 (*env)->DeleteLocalRef(env, pfobj);
@@ -2009,10 +2015,15 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
         
         fz_bound_annot(glo->doc, annot, &rect);
         fz_transform_rect(&rect, &ctm);
-        if (ctor2 != NULL && inklist != NULL)
+        if (ctor2 != NULL && inklist != NULL) //We have found something that can be interpreted as a ink annotaiton
         {
             jannot = (*env)->NewObject(env, annotClass, ctor2,
                                        (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1, type, arcs);
+        }
+        else if(ctor4 != NULL && text != NULL) //We have found something that can be interpreted as a text annotation
+        {
+            jannot = (*env)->NewObject(env, annotClass, ctor4,
+                                       (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1, type, text);
         }
         else if(ctor != NULL)
         {

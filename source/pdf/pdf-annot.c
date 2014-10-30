@@ -714,6 +714,13 @@ pdf_annot_inklist(pdf_annot *annot)
         return pdf_dict_gets(annot->obj, "InkList");
 }
 
+pdf_obj *
+pdf_annot_text(pdf_annot *annot)
+{
+        return pdf_dict_gets(annot->obj, "Contents");
+}
+
+
 
 pdf_annot *
 pdf_create_annot(pdf_document *doc, pdf_page *page, fz_annot_type type)

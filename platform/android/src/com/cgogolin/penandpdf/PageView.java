@@ -117,7 +117,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private static final int PROGRESS_DIALOG_DELAY = 200;
     
     protected final Context mContext;
-    private ViewGroup mParent;
+    protected ViewGroup mParent;
     
     protected     int       mPageNumber;
     protected     Point     mSize;   // Size of page at minimum zoom
@@ -171,7 +171,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     protected abstract TextWord[][] getText();
     protected abstract Annotation[] getAnnotations();
     protected abstract void addMarkup(PointF[] quadPoints, Annotation.Type type);
-    protected abstract void addTextAnnotation(float x, float y, String text);
+    protected abstract void addTextAnnotation(Annotation annot);
 
 
         //The ViewGroup PageView has three main child views: mEntireView, mHqView, and mOverlayView, all of which are defined below

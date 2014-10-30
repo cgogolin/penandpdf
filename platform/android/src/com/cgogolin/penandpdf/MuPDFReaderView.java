@@ -39,7 +39,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     abstract protected void onDocMotion();
     abstract protected void onHit(Hit item);
     abstract protected void onNumberOfStrokesChanged(int numberOfStrokes);
-    abstract protected void addTextAnnotFromUserInput(float x, float y, Annotation annot);
+    abstract protected void addTextAnnotFromUserInput(Annotation annot);
     
     public void setLinksEnabled(boolean b) {
         mLinksEnabled = b;
@@ -156,8 +156,18 @@ abstract public class MuPDFReaderView extends ReaderView {
         }
         else if(mMode == Mode.AddingTextAnnot && !tapDisabled)
         {
+                //Prepare the annotation
+            MuPDFPageView cv = (MuPDFPageView)getSelectedView();
+            float scale = cv.getScale();
+            final float docRelX = (e.getX() - cv.getLeft())/scale;
+//            final float docRelY = (cv.getBottom() - e.getY())/scale;
+            final float docRelY = (e.getY() - cv.getTop())/scale;
+            final float docRelSize = 0.025f*Math.max(cv.getWidth(), cv.getHeight())/scale;
+            Annotation annot = new Annotation(docRelX-0.3f*docRelSize, docRelY+0.7f*docRelSize, docRelX+0.7f*docRelSize, docRelY-0.3f*docRelSize, Annotation.Type.TEXT);
+            
                 //Ask the user to provide text
-            addTextAnnotFromUserInput(e.getX(), e.getY(), null);
+//            addTextAnnotFromUserInput(e.getX(), e.getY(), null);
+                addTextAnnotFromUserInput(annot);
                 //Reset the mode and menu                
             mMode = Mode.Viewing;
             onTapMainDocArea();
@@ -171,9 +181,9 @@ abstract public class MuPDFReaderView extends ReaderView {
     }
 
 
-    void addTextAnnot(float x, float y, String text) {
+    protected void addTextAnnotion(Annotation annot) {
         MuPDFView pageView = (MuPDFView)getSelectedView();
-        ((MuPDFPageView)pageView).addTextAnnotation(x, y, text);
+        ((MuPDFPageView)pageView).addTextAnnotation(annot);
     }
 
     @Override
