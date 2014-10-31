@@ -1918,7 +1918,8 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
 {
     jclass annotClass, pt_cls, ptarr_cls;
     jfieldID x_fid, y_fid;
-    jmethodID ctor, ctor2, ctor3, ctor4;
+    jmethodID Annotation;
+    jmethodID PointF;
     jobjectArray arr;
     jobject jannot;
     fz_annot *annot;
@@ -1927,15 +1928,15 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
     int count;
     page_cache *pc;
     globals *glo = get_globals(env, thiz);
+    
+    
     if (glo == NULL) return;
 
     annotClass = (*env)->FindClass(env, PACKAGENAME "/Annotation");
     if (annotClass == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "FindClass");
-    ctor = (*env)->GetMethodID(env, annotClass, "<init>", "(FFFFI)V");
-    ctor2 = (*env)->GetMethodID(env, annotClass, "<init>", "(FFFFI[[Landroid/graphics/PointF;)V");
-    ctor4 = (*env)->GetMethodID(env, annotClass, "<init>", "(FFFFILjava/lang/String;)V");
     
-    if (ctor == NULL || ctor2 == NULL || ctor4 == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetMethodID");
+    Annotation = (*env)->GetMethodID(env, annotClass, "<init>", "(FFFFI[[Landroid/graphics/PointF;Ljava/lang/String;)V"); 
+    if (Annotation == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetMethodID");
 
     pt_cls = (*env)->FindClass(env, "android/graphics/PointF");
     if (pt_cls == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "FindClass");
@@ -1943,7 +1944,7 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
     if (x_fid == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetFieldID(x)");
     y_fid = (*env)->GetFieldID(env, pt_cls, "y", "F");
     if (y_fid == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetFieldID(y)");
-    ctor3 = (*env)->GetMethodID(env, pt_cls, "<init>", "(FF)V");
+    PointF = (*env)->GetMethodID(env, pt_cls, "<init>", "(FF)V");
     
     JNI_FN(MuPDFCore_gotoPageInternal)(env, thiz, pageNumber);
     pc = &glo->pages[glo->current];
@@ -1974,7 +1975,7 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
         
         int nArcs = pdf_array_len(inklist);
 //        LOGI("found %d arcs", nArcs);
-        jobjectArray arcs;
+        jobjectArray arcs = NULL;
         
         int i;
         float pageHeight = (&glo->pages[glo->current])->height;
@@ -2005,7 +2006,7 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
                 point.y = pdf_to_real(pdf_array_get(inklisti, j+1));
                 fz_transform_point(&point, &ctm);
                 point.y = pageHeight - point.y;//Flip y here because pdf coordinate system is upside down
-                jobject pfobj = (*env)->NewObject(env, pt_cls, ctor3, point.x, point.y);
+                jobject pfobj = (*env)->NewObject(env, pt_cls, PointF, point.x, point.y);
                 (*env)->SetObjectArrayElement(env, arci, j/2, pfobj);
                 (*env)->DeleteLocalRef(env, pfobj);
             }
@@ -2015,21 +2016,12 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
         
         fz_bound_annot(glo->doc, annot, &rect);
         fz_transform_rect(&rect, &ctm);
-        if (ctor2 != NULL && inklist != NULL) //We have found something that can be interpreted as a ink annotaiton
+
+        if(Annotation != NULL)
         {
-            jannot = (*env)->NewObject(env, annotClass, ctor2,
-                                       (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1, type, arcs);
+            jannot = (*env)->NewObject(env, annotClass, Annotation, (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1, type, arcs, text); 
         }
-        else if(ctor4 != NULL && text != NULL) //We have found something that can be interpreted as a text annotation
-        {
-            jannot = (*env)->NewObject(env, annotClass, ctor4,
-                                       (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1, type, text);
-        }
-        else if(ctor != NULL)
-        {
-            jannot = (*env)->NewObject(env, annotClass, ctor,
-                                   (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1, type);
-        }
+        
         
         if (jannot == NULL) return NULL;
         (*env)->SetObjectArrayElement(env, arr, count, jannot);

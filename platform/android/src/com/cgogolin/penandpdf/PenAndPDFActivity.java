@@ -522,6 +522,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     searchView.setIconified(false);
                     searchView.setOnCloseListener(this); //Implemented in: public void onClose(View view)
                     searchView.setOnQueryTextListener(this); //Implemented in: public boolean onQueryTextChange(String query) and public boolean onQueryTextSubmit(String query)
+                    textOfLastSearch = "";
                     searchView.setQuery(latestTextInSearchBox, true); //Set the query text and submit it to perform a search
                 case Hidden:
                     inflater.inflate(R.menu.empty_menu, menu);
@@ -536,6 +537,13 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
 
     @Override
     public boolean onClose() {//???
+        hideKeyboard();
+        textOfLastSearch = "";
+        searchView.setQuery("", false);
+        mDocView.clearSearchResults();
+        mDocView.resetupChildren();
+        mActionBarMode = ActionBarMode.Main;
+        invalidateOptionsMenu();
         return false;
     }
     
@@ -559,7 +567,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     public boolean onQueryTextSubmit(String query) {//For search
         mDocView.requestFocus();
         hideKeyboard();
-        if(!textOfLastSearch.equals(query)) //only perform a search if the query has changed    
+        if(!query.equals(textOfLastSearch)) //only perform a search if the query has changed    
             search(1);
         return true; //We handle this here and don't want onNewIntent() to be called
     }
@@ -949,6 +957,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     @Override
                     protected void addTextAnnotFromUserInput(final Annotation annot) {
 
+                        if (annot != null && annot.text == null) annot.text = "";
+                        
                         final LinearLayout editTextLayout = new LinearLayout(getContext());
                         editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
                         editTextLayout.setOrientation(1);
@@ -959,7 +969,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
 //        input.setSingleLine();
                         input.setHint(getString(R.string.add_a_note));
 //                        input.setMinLines(3);
-                        input.setFocusable(true);
+//                        input.setFocusable(true);
+                        input.setBackground(null);
                         if(annot != null) input.setText(annot.text);
                         editTextLayout.addView(input);
                         mAlertDialog = mAlertBuilder.create();
@@ -975,19 +986,24 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                                             addTextAnnotion(annot);
                                         }
                             });
-                        mAlertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), new DialogInterface.OnClickListener() 
+                        mAlertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), new DialogInterface.OnClickListener() 
                                 {public void onClick(DialogInterface dialog, int whichButton)
                                         {
                                             if(annot != null) addTextAnnotion(annot);
                                         }
                             });
-                        if(annot != null) mAlertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.delete), new DialogInterface.OnClickListener() 
+                        if(annot != null) mAlertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.delete), new DialogInterface.OnClickListener() 
                                 {public void onClick(DialogInterface dialog, int whichButton)
                                         {
                                                 //Nothing to do
                                         }
                             });
                         mAlertDialog.setCanceledOnTouchOutside(true);
+                        mAlertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                public void onCancel(DialogInterface dialog) {
+                                    if(annot != null) addTextAnnotion(annot);
+                                }
+                            });
                         mAlertDialog.show();
                         input.requestFocus();
                     }
@@ -1362,6 +1378,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 return;
             case Search:
                 hideKeyboard();
+                textOfLastSearch = "";
+                searchView.setQuery("", false);
                 mDocView.clearSearchResults();
                 mDocView.resetupChildren();
                 mActionBarMode = ActionBarMode.Main;
