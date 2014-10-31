@@ -956,13 +956,11 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
 
                     @Override
                     protected void addTextAnnotFromUserInput(final Annotation annot) {
-
-                        if (annot != null && annot.text == null) annot.text = "";
                         
                         final LinearLayout editTextLayout = new LinearLayout(getContext());
                         editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
                         editTextLayout.setOrientation(1);
-                        editTextLayout.setPadding(16, 0, 16, 0);
+                        editTextLayout.setPadding(16, 16, 16, 0);
                         final EditText input = new EditText(getContext());
 //        input.setRawInputType(0x00000011); // 0x00000011=textUri
                         input.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_NORMAL|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
@@ -970,8 +968,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                         input.setHint(getString(R.string.add_a_note));
 //                        input.setMinLines(3);
 //                        input.setFocusable(true);
-                        input.setBackground(null);
-                        if(annot != null) input.setText(annot.text);
+                        input.setBackgroundDrawable(null);
+                        if(annot != null && annot.text != null) input.setText(annot.text);
                         editTextLayout.addView(input);
                         mAlertDialog = mAlertBuilder.create();
 //                        new AlertDialog.Builder(getApplicationContext())
@@ -989,10 +987,10 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                         mAlertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), new DialogInterface.OnClickListener() 
                                 {public void onClick(DialogInterface dialog, int whichButton)
                                         {
-                                            if(annot != null) addTextAnnotion(annot);
+                                            if(annot != null && annot.text != null) addTextAnnotion(annot);
                                         }
                             });
-                        if(annot != null) mAlertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.delete), new DialogInterface.OnClickListener() 
+                        if(annot != null && annot.text != null) mAlertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.delete), new DialogInterface.OnClickListener() 
                                 {public void onClick(DialogInterface dialog, int whichButton)
                                         {
                                                 //Nothing to do
@@ -1001,7 +999,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                         mAlertDialog.setCanceledOnTouchOutside(true);
                         mAlertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
                                 public void onCancel(DialogInterface dialog) {
-                                    if(annot != null) addTextAnnotion(annot);
+                                    if(annot != null && annot.text != null) addTextAnnotion(annot);
                                 }
                             });
                         mAlertDialog.show();

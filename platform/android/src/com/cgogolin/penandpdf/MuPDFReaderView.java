@@ -163,7 +163,7 @@ abstract public class MuPDFReaderView extends ReaderView {
 //            final float docRelY = (cv.getBottom() - e.getY())/scale;
             final float docRelY = (e.getY() - cv.getTop())/scale;
             final float docRelSize = 0.025f*Math.max(cv.getWidth(), cv.getHeight())/scale;
-            Annotation annot = new Annotation(docRelX-0.3f*docRelSize, docRelY+0.3f*docRelSize, docRelX+0.7f*docRelSize, docRelY-0.7f*docRelSize, Annotation.Type.TEXT, null, "");
+            Annotation annot = new Annotation(docRelX-0.3f*docRelSize, docRelY+0.3f*docRelSize, docRelX+0.7f*docRelSize, docRelY-0.7f*docRelSize, Annotation.Type.TEXT, null, null); //we set the text to null to indicate that the annotation is new
             
                 //Ask the user to provide text
 //            addTextAnnotFromUserInput(e.getX(), e.getY(), null);
