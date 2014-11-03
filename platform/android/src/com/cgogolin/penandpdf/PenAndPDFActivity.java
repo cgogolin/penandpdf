@@ -462,6 +462,32 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                             shareIntent.setType("*/*");
                             shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(Uri.parse(core.getPath()).getPath())));
                             if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
+                            // mShareActionProvider.setOnShareTargetSelectedListener(new ShareActionProvider.OnShareTargetSelectedListener() {
+                            //         @Override
+                            //         public boolean onShareTargetSelected(ShareActionProvider source, Intent intent) {
+                            //                 //This almost duplicated code in onBackPressed()...
+                            //             if (core.hasChanges()) {
+                            //                 DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+                            //                         public void onClick(DialogInterface dialog, int which) {
+                            //                             if (which == AlertDialog.BUTTON_POSITIVE) {
+                            //                                 if(!save()) showInfo(getString(R.string.error_saveing));
+                            //                             }
+                            //                             if (which == AlertDialog.BUTTON_NEGATIVE) {
+                                                            
+                            //                             }
+                            //                         }
+                            //                     };
+                                            
+                            //                 AlertDialog alert = mAlertBuilder.create();
+                            //                 alert.setTitle(getString(R.string.app_name));
+                            //                 alert.setMessage(getString(R.string.document_has_changes_save_them_before_sharing));
+                            //                 alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), listener);
+                            //                 alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
+                            //                 alert.show();
+                            //             }
+                            //             return false; //The return result is ignored. Always return false for consistency.
+                            //         }
+                            //     });
                         }   
                     }
                     break;
