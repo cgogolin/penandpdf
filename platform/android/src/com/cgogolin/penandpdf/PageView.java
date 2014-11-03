@@ -136,11 +136,11 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private       PatchView mHqView;
     
     private       TextWord  mText[][];
-    private       AsyncTask<Void,Void,TextWord[][]> mLoadText;
+    private       AsyncTask<Void,Void,TextWord[][]> mLoadTextTask;
     protected     LinkInfo  mLinks[];
-    private       AsyncTask<Void,Void,LinkInfo[]> mLoadLinkInfo;
+    private       AsyncTask<Void,Void,LinkInfo[]> mLoadLinkInfoTask;
     protected     Annotation mAnnotations[];
-    private       AsyncTask<Void,Void,Annotation[]> mLoadAnnotations;
+    private       AsyncTask<Void,Void,Annotation[]> mLoadAnnotationsTask;
 
     private       View      mOverlayView;
     private       SearchResult mSearchResult = null;
@@ -231,6 +231,11 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 mDrawPatch = null;
             }
 
+                //Already set the view area so that subsequent calls to addHq()
+                //with the same area do not span new rendering processes
+            setArea(patchInfo.viewArea);
+            setImageBitmap(null);
+            
             mDrawPatch = new AsyncTask<PatchInfo,Void,PatchInfo>() {
                 protected PatchInfo doInBackground(PatchInfo... v) {                    
                     if (v[0].completeRedraw) {
@@ -246,10 +251,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 }
                 protected void onPostExecute(PatchInfo v) {
                     removeBusyIndicator();
-                    setArea(v.viewArea);
+//                    setArea(v.viewArea);
                     setImageBitmap(v.patchBm);
-                    invalidate();
                     layout(v.patchArea.left, v.patchArea.top, v.patchArea.right, v.patchArea.bottom);
+                    invalidate();
                 }
                 protected void onCanceled() {
                     removeBusyIndicator(); //Do we really want to do this here?
@@ -515,13 +520,17 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
     
     private void reset() {
-        if (mLoadLinkInfo != null) {
-            mLoadLinkInfo.cancel(true);
-            mLoadLinkInfo = null;
+        if (mLoadAnnotationsTask != null) {
+            mLoadAnnotationsTask.cancel(true);
+            mLoadAnnotationsTask = null;
         }
-        if (mLoadText != null) {
-            mLoadText.cancel(true);
-            mLoadText = null;
+        if (mLoadLinkInfoTask != null) {
+            mLoadLinkInfoTask.cancel(true);
+            mLoadLinkInfoTask = null;
+        }
+        if (mLoadTextTask != null) {
+            mLoadTextTask.cancel(true);
+            mLoadTextTask = null;
         }
 
             //Reset the child views
@@ -544,12 +553,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         mItemSelectBox = null;
     }
 
-    public void releaseResources() {
-        if (mLoadAnnotations != null) {
-            mLoadAnnotations.cancel(true);
-            mLoadAnnotations = null;
-        }
-        
+    public void releaseResources() {        
         reset();
         
         if (mBusyIndicator != null) {
@@ -664,8 +668,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         //that are to be provided by any super class to asynchronously load the Text, LinkInfo, and Annotations
         //respectively
     private void loadText() { 
-        if (mLoadText == null) {
-            mLoadText = new AsyncTask<Void,Void,TextWord[][]>() {
+        if (mLoadTextTask == null) {
+            mLoadTextTask = new AsyncTask<Void,Void,TextWord[][]>() {
                 @Override
                 protected TextWord[][] doInBackground(Void... params) {
                     return getText();
@@ -676,12 +680,12 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                     mOverlayView.invalidate();
                 }
             };   
-            mLoadText.execute();
+            mLoadTextTask.execute();
         }
     }
 
     private void loadLinkInfo() {
-        mLoadLinkInfo = new AsyncTask<Void,Void,LinkInfo[]>() {
+        mLoadLinkInfoTask = new AsyncTask<Void,Void,LinkInfo[]>() {
             protected LinkInfo[] doInBackground(Void... v) {
                 return getLinkInfo();
             }
@@ -691,13 +695,13 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 if (mOverlayView != null) mOverlayView.invalidate();
             }
         };
-        mLoadLinkInfo.execute();
+        mLoadLinkInfoTask.execute();
     }
 
     protected void loadAnnotations() {
         mAnnotations = null;
-        if (mLoadAnnotations != null) mLoadAnnotations.cancel(true);
-        mLoadAnnotations = new AsyncTask<Void,Void,Annotation[]> () {
+        if (mLoadAnnotationsTask != null) mLoadAnnotationsTask.cancel(true);
+        mLoadAnnotationsTask = new AsyncTask<Void,Void,Annotation[]> () {
             @Override
             protected Annotation[] doInBackground(Void... params) {
                 return getAnnotations();
@@ -709,7 +713,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 redraw(true);
             }
         };
-        mLoadAnnotations.execute();
+        mLoadAnnotationsTask.execute();
     }
     
     
@@ -965,11 +969,11 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
             else
             {
-                mEntireView.setVisibility(View.VISIBLE);
                 mEntireMat.setScale(w/(float)mSize.x, h/(float)mSize.y);
                 mEntireView.setImageMatrix(mEntireMat);
-                mEntireView.invalidate();
                 mEntireView.layout(0, 0, w, h);
+                mEntireView.setVisibility(View.VISIBLE);
+                mEntireView.invalidate();
             }
         }
 
@@ -1017,8 +1021,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
     
     
-    public void addHq(boolean update) {
+    public void addHq(boolean update) {        
         Rect viewArea = new Rect(getLeft(),getTop(),getRight(),getBottom());
+//        Log.v("PageView", "addHq() page="+mPageNumber+", update="+update);
         
             // If the viewArea's size matches the unzoomed size, there is no need for a hq patch
         if (viewArea.width() == mSize.x && viewArea.height() == mSize.y) return;
@@ -1026,6 +1031,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             //Construct the PatchInfo (important: the bitmap is shared between all page views that belong to a given readerview, so we ask the ReadderView to provide it)
         PatchInfo patchInfo = new PatchInfo(viewArea, ((ReaderView)mParent).getPatchBm(), mHqView, update);
 
+//        Log.v("PageView", "addHq() intersects="+patchInfo.intersects+", area changed="+patchInfo.areaChanged);
+        
             //If there is no itersection there is no need to draw anything
         if(!patchInfo.intersects) return;
         
@@ -1038,7 +1045,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             addView(mHqView);
             if(mOverlayView != null) mOverlayView.bringToFront();
         }
-        
+
+//        Log.v("PageView", "addHq() rendering now");
         mHqView.renderInBackground(patchInfo);
     }
 
@@ -1052,6 +1060,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         mOverlayView.invalidate();
     }
 
+    @Override
     public float getScale() {
         return mSourceScale*(float)getWidth()/(float)mSize.x;
     }
