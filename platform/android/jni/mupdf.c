@@ -1475,7 +1475,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
             line_height = STRIKE_HEIGHT;
             break;
         case FZ_ANNOT_TEXT:
-            LOGE("addMarkupAnnotationInternal: adding a text annotation");
+//            LOGE("addMarkupAnnotationInternal: adding a text annotation");
             break;
         default:
             return;
@@ -1498,7 +1498,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
         y_fid = (*env)->GetFieldID(env, pt_cls, "y", "F");
         if (y_fid == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "GetFieldID(y)");
 
-        LOGE("addMarkupAnnotationInternal: go until here1");
+//        LOGE("addMarkupAnnotationInternal: go until here1");
         
         n = (*env)->GetArrayLength(env, points);
 
@@ -1530,8 +1530,33 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
         if(type == FZ_ANNOT_TEXT)
         {
             fz_rect rect = {pts[0].x, pts[0].y, pts[1].x, pts[1].y};
-            text = (*env)->GetStringUTFChars(env, jtext, NULL);
-            pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, text);
+
+           text = (*env)->GetStringChars(env, jtext, NULL);
+           int length = 2*(*env)->GetStringLength(env, jtext);
+
+               //Check if we should encode with UTF-16 or PDFDocEncoding
+           if(text != NULL && length > 2 && ( (text[0] == 254 && text[1] == 255) || (text[0] == 255 && text[1] == 254) ) )
+           { //We found a BOM an hence try to add a UTF-16 string
+               jchar * text16 = (jchar *)(void *)text;
+               if (text16[0] == 0xfeff) 
+               { //So we must swap the byte order because the PDF specs say so
+                   int i;
+                   for (i=0; i< length/2; i++)
+                        text16[i] = (text16[i]<<8) | (text16[i]>>8);
+               }
+                   //Add the annotation
+               pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, text, length); //in pdf-annot.c
+               (*env)->ReleaseStringChars(env, jtext, text);
+           }
+           else
+           { //No BOM so we just add the string as is and hope for the best (In principle we should use PDFDocEncoding but this should never happen anyway as we are called from Java)
+                   //Get the UTF chars instead
+               (*env)->ReleaseStringChars(env, jtext, text);
+               text = (*env)->GetStringUTFChars(env, jtext, NULL);
+                   //Add the annotation
+               pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, text, length); //in pdf-annot.c
+               (*env)->ReleaseStringUTFChars(env, jtext, text);
+           }
         }
         else
         {
@@ -1964,69 +1989,104 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
     count = 0;
     for (annot = fz_first_annot(glo->doc, pc->page); annot; annot = fz_next_annot(glo->doc, annot))
     {
-        fz_rect rect;
+            //Get the type
         fz_annot_type type = pdf_annot_type((pdf_annot *)annot);
 
-//        LOGI("found annotation of type %d", type);
-        
-        pdf_obj *inklist = pdf_annot_inklist((pdf_annot *)annot);
-        
-        jstring text = (*env)->NewStringUTF(env, pdf_to_str_buf(pdf_annot_text((pdf_annot *)annot)));
-        
-        int nArcs = pdf_array_len(inklist);
-//        LOGI("found %d arcs", nArcs);
-        jobjectArray arcs = NULL;
-        
-        int i;
-        float pageHeight = (&glo->pages[glo->current])->height;
-        for(i = 0; i < nArcs; i++)
+            //Get the text of the annotatoin
+        jstring jtext = NULL;
+        jchar * text16 = NULL;
+//        boolean isUTF16;
+        if(type == FZ_ANNOT_TEXT)
         {
-            pdf_obj *inklisti = pdf_array_get(inklist, i);
-            int nArc = pdf_array_len(inklisti);
-//            LOGI(" of legth %d ", nArc/2);
-            jobjectArray arci = (*env)->NewObjectArray(env, nArc/2, pt_cls, NULL);
-
-            if(i==0) { //Get the class of the array of pointF and create the array of arrays 
-                ptarr_cls = (*env)->GetObjectClass(env, arci);
-                if (ptarr_cls == NULL) {
-                    fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetObjectClass()");
-                }
-                else {
-                    arcs = (*env)->NewObjectArray(env, nArcs, ptarr_cls, NULL);
-                    if (arcs == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "arcs == NULL");
-                }
-            }
-            
-            if (arci == NULL) return NULL;
-            int j;
-            for(j = 0; j < nArc; j+=2)
+            pdf_obj * obj = pdf_annot_text((pdf_annot *)annot);
+            char * text = pdf_to_str_buf(obj);
+            int length = pdf_to_str_len(obj);
+                //Test if the string is in UTF-16 or PDFDocEncoding
+            if(text != NULL && length > 2 && text[0] == 254 && text[1] == 255)
             {
-                fz_point point; 
-                point.x = pdf_to_real(pdf_array_get(inklisti, j));
-                point.y = pdf_to_real(pdf_array_get(inklisti, j+1));
-                fz_transform_point(&point, &ctm);
-                point.y = pageHeight - point.y;//Flip y here because pdf coordinate system is upside down
-                jobject pfobj = (*env)->NewObject(env, pt_cls, PointF, point.x, point.y);
-                (*env)->SetObjectArrayElement(env, arci, j/2, pfobj);
-                (*env)->DeleteLocalRef(env, pfobj);
+                    //UTF-16
+//                isUTF16 = true;
+                text16 = (jchar *)(void *)text;
+                length = length/2;
+                if (text16[0] == 0xfffe) 
+                { //So we must swap the byte order because NewString() doesn't respect the BOM
+//                    LOGI("mupdf.c: swapping the byte order because we found %x as first jchar", text16[0]);
+                    int i;
+                    for (i=0; i< length; i++)
+                        text16[i] = (text16[i]<<8) | (text16[i]>>8);
+                }
+                jtext = (*env)->NewString(env, text16, length);
             }
-            (*env)->SetObjectArrayElement(env, arcs, i, arci);
-            (*env)->DeleteLocalRef(env, arci);
+            else if(text != NULL && length > 0)
+            {
+//                isUTF16 = false;
+                    //PDFDocEncoding (some special characters can be lost here but nobobdy seems to use it anyway)
+                jtext = (*env)->NewStringUTF(env, text);
+            }
         }
+
         
+            //Get the inklist
+        jobjectArray arcs = NULL;
+        if(type == FZ_ANNOT_INK)
+        {
+            pdf_obj *inklist = pdf_annot_inklist((pdf_annot *)annot);
+            int nArcs = pdf_array_len(inklist);
+            int i;
+            float pageHeight = (&glo->pages[glo->current])->height;
+            for(i = 0; i < nArcs; i++)
+            {
+                pdf_obj *inklisti = pdf_array_get(inklist, i);
+                int nArc = pdf_array_len(inklisti);
+                jobjectArray arci = (*env)->NewObjectArray(env, nArc/2, pt_cls, NULL);
+                
+                if(i==0) { //Get the class of the array of pointF and create the array of arrays 
+                    ptarr_cls = (*env)->GetObjectClass(env, arci);
+                    if (ptarr_cls == NULL) {
+                        fz_throw(glo->ctx, FZ_ERROR_GENERIC, "GetObjectClass()");
+                    }
+                    else {
+                        arcs = (*env)->NewObjectArray(env, nArcs, ptarr_cls, NULL);
+                        if (arcs == NULL) fz_throw(glo->ctx, FZ_ERROR_GENERIC, "arcs == NULL");
+                    }
+                }
+                
+                if (arci == NULL) return NULL;
+                int j;
+                for(j = 0; j < nArc; j+=2)
+                {
+                    fz_point point; 
+                    point.x = pdf_to_real(pdf_array_get(inklisti, j));
+                    point.y = pdf_to_real(pdf_array_get(inklisti, j+1));
+                    fz_transform_point(&point, &ctm);
+                    point.y = pageHeight - point.y;//Flip y here because pdf coordinate system is upside down
+                    jobject pfobj = (*env)->NewObject(env, pt_cls, PointF, point.x, point.y);
+                    (*env)->SetObjectArrayElement(env, arci, j/2, pfobj);
+                    (*env)->DeleteLocalRef(env, pfobj);
+            }
+                (*env)->SetObjectArrayElement(env, arcs, i, arci);
+                (*env)->DeleteLocalRef(env, arci);
+            }
+        }
+
+            //Get the rect
+        fz_rect rect;
         fz_bound_annot(glo->doc, annot, &rect);
         fz_transform_rect(&rect, &ctm);
 
+            //Creat the annotation
         if(Annotation != NULL)
         {
-            jannot = (*env)->NewObject(env, annotClass, Annotation, (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1, type, arcs, text); 
+            jannot = (*env)->NewObject(env, annotClass, Annotation, (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1, type, arcs, jtext); 
         }
-        
-        
+            
         if (jannot == NULL) return NULL;
         (*env)->SetObjectArrayElement(env, arr, count, jannot);
-        (*env)->DeleteLocalRef(env, jannot);
 
+            //Clean up
+        (*env)->DeleteLocalRef(env, jannot);
+//        ReleaseStringChars(env, jtext, text16);
+        
         count ++;
     }
 

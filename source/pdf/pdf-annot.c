@@ -749,7 +749,7 @@ pdf_create_annot(pdf_document *doc, pdf_page *page, fz_annot_type type)
                         //Say that we want this to be renderd "behind" the text
                     pdf_dict_puts_drop(annot_obj, "BM", pdf_new_name(doc, "Multiply"));
                 }
-                const char* creator = "CreatedByMuPdf";
+                const char* creator = "PenAndPDF";
                 pdf_dict_puts_drop(annot_obj, "NM", pdf_new_string(doc, creator, strlen(creator)));
 
                 pdf_dict_puts_drop(annot_obj, "Type", pdf_new_name(doc, "Annot"));
@@ -1048,7 +1048,7 @@ void pdf_set_free_text_details(pdf_document *doc, pdf_annot *annot, fz_point *po
 		da_len = fz_buffer_storage(ctx, fzbuf, &da_str);
 		pdf_dict_puts_drop(annot->obj, "DA", pdf_new_string(doc, (char *)da_str, da_len));
 
-		/* FIXME: should convert to WinAnsiEncoding */
+                    /* FIXME: should convert to UTF-16! */
 		pdf_dict_puts_drop(annot->obj, "Contents", pdf_new_string(doc, text, strlen(text)));
 
 		font_desc = pdf_load_font(doc, NULL, font, 0);
@@ -1084,22 +1084,17 @@ void pdf_set_free_text_details(pdf_document *doc, pdf_annot *annot, fz_point *po
 
 
 
-void pdf_set_text_details(pdf_document *doc, pdf_annot *annot, const fz_rect *rect, char *text)
+void pdf_set_text_details(pdf_document *doc, pdf_annot *annot, const fz_rect *rect, const char *text, unsigned int length)
 {
     fz_context *ctx = doc->ctx;
-//    fz_matrix ctm;
 
     fz_try(ctx)
     {
         pdf_dict_puts_drop(annot->obj, "Rect", pdf_new_rect(doc, rect));
-        update_rect(ctx, annot);
-
-            /* FIXME: should convert to WinAnsiEncoding */
-        pdf_dict_puts_drop(annot->obj, "Contents", pdf_new_string(doc, text, strlen(text)));
-
-        /* fz_display_list *dlist = NULL; */
-        /* dlist = fz_new_display_list(ctx); */
-        /* pdf_set_annot_appearance(doc, annot, rect, dlist); */
+        update_rect(ctx, annot);  
+      
+//        pdf_dict_puts_drop(annot->obj, "Contents", pdf_new_string(doc, text, strlen(text)));
+        pdf_dict_puts_drop(annot->obj, "Contents", pdf_new_string(doc, text, length));
     }
     fz_always(ctx)
     {

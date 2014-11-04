@@ -28,6 +28,12 @@ fz_rect *pdf_bound_annot(pdf_document *doc, pdf_annot *annot, fz_rect *rect);
 fz_annot_type pdf_annot_type(pdf_annot *annot);
 
 /*
+	pdf_annot_text: Return the text of an annotation
+*/
+pdf_obj *pdf_annot_text(pdf_annot *annot);
+
+
+/*
 	pdf_run_annot: Interpret an annotation and render it on a device.
 
 	page: A page loaded by pdf_load_page.
@@ -100,7 +106,7 @@ void pdf_set_free_text_details(pdf_document *doc, pdf_annot *annot, fz_point *po
 /*
 	pdf_set_text_details: set the position and text for a text annotation.
 */
-void pdf_set_text_details(pdf_document *doc, pdf_annot *annot, const fz_rect *rect, char *text);
+void pdf_set_text_details(pdf_document *doc, pdf_annot *annot, const fz_rect *rect, const char *text, unsigned int length);
 
 fz_annot_type pdf_annot_obj_type(pdf_obj *obj);
 
