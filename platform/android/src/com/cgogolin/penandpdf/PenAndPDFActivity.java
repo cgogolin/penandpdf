@@ -1006,26 +1006,30 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                                 {
                                     public void onClick(DialogInterface dialog, int whichButton) 
                                         {
+                                            ((MuPDFPageView)getSelectedView()).deleteSelectedAnnotation();
                                             annot.text = input.getText().toString();
                                             addTextAnnotion(annot);
+                                            mAlertDialog.setOnCancelListener(null);
                                         }
                             });
                         mAlertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), new DialogInterface.OnClickListener() 
                                 {public void onClick(DialogInterface dialog, int whichButton)
                                         {
-                                            if(annot != null && annot.text != null) addTextAnnotion(annot);
+                                            ((MuPDFPageView)getSelectedView()).deselectAnnotation();
+                                            mAlertDialog.setOnCancelListener(null);
                                         }
                             });
                         if(annot != null && annot.text != null) mAlertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.delete), new DialogInterface.OnClickListener() 
                                 {public void onClick(DialogInterface dialog, int whichButton)
                                         {
-                                                //Nothing to do
+                                            ((MuPDFPageView)getSelectedView()).deleteSelectedAnnotation();
+                                            mAlertDialog.setOnCancelListener(null);
                                         }
                             });
                         mAlertDialog.setCanceledOnTouchOutside(true);
                         mAlertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
                                 public void onCancel(DialogInterface dialog) {
-                                    if(annot != null && annot.text != null) addTextAnnotion(annot);
+                                    ((MuPDFPageView)getSelectedView()).deselectAnnotation();
                                 }
                             });
                         mAlertDialog.show();

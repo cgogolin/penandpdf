@@ -1671,10 +1671,12 @@ static void fmt_obj(struct fmt *fmt, pdf_obj *obj)
 			else if (c < 32 || c >= 127)
 				added += 3;
 		}
-		if (added < len)
-			fmt_str(fmt, obj);
-		else
-			fmt_hex(fmt, obj);
+                    //Disabled this to increase compatibility with
+                    //other pdf readers
+		/* if (added < len) */
+                fmt_str(fmt, obj); 
+		/* else */
+		/* 	fmt_hex(fmt, obj); */
 	}
 	else if (pdf_is_name(obj))
 		fmt_name(fmt, obj);

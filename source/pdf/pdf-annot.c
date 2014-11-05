@@ -714,10 +714,47 @@ pdf_annot_inklist(pdf_annot *annot)
         return pdf_dict_gets(annot->obj, "InkList");
 }
 
-pdf_obj *
-pdf_annot_text(pdf_annot *annot)
+/* Contents can be in either UTF-16 encoding or PDFDocEncoding here we
+ * decode this to UTF-16 and make *text point to a buffer of length bytes
+ * containing the decoded string. */
+void
+pdf_annot_text(pdf_annot *annot, unsigned short **text, unsigned int *length)
 {
-        return pdf_dict_gets(annot->obj, "Contents");
+        pdf_obj *contents = pdf_dict_gets(annot->obj, "Contents");
+        unsigned char *srcptr = (unsigned char *) pdf_to_str_buf(contents);
+        int srclen = pdf_to_str_len(contents);
+        unsigned short *dstptr;
+        int i;
+        
+        if (srclen >= 2 && srcptr[0] == 254 && srcptr[1] == 255)
+	{
+            *length = (srclen-2)/2;
+            dstptr = (unsigned short *)malloc(srclen-2);
+            *text = dstptr;
+            for (i = 2; i + 1 < srclen; i += 2)
+                *dstptr++ = srcptr[i] << 8 | srcptr[i+1];
+	}
+	else if (srclen >= 2 && srcptr[0] == 255 && srcptr[1] == 254)
+	{
+            *length = (srclen-2)/2;
+            dstptr = (unsigned short *)malloc(srclen-2);
+            *text = dstptr;
+            for (i = 2; i + 1 < srclen; i += 2)
+                *dstptr++ = srcptr[i] | srcptr[i+1] << 8;
+	}
+	else if (srclen >= 1)
+	{
+            *length = 2*srclen;
+            dstptr = (unsigned short *)malloc(2*srclen);
+            *text = dstptr;
+            for (i = 0; i < srclen; i++)
+                *dstptr++ = 0x00 | srcptr[i] << 8;
+	}
+        else
+        {
+            *length = 0;
+            *text = NULL;
+        }
 }
 
 
@@ -1083,18 +1120,50 @@ void pdf_set_free_text_details(pdf_document *doc, pdf_annot *annot, fz_point *po
 }
 
 
-
-void pdf_set_text_details(pdf_document *doc, pdf_annot *annot, const fz_rect *rect, const char *text, unsigned int length)
+//length is in number of short sized characters
+void pdf_set_text_details(pdf_document *doc, pdf_annot *annot, const fz_rect *rect, const unsigned short *text, unsigned int length)
 {
     fz_context *ctx = doc->ctx;
 
     fz_try(ctx)
     {
         pdf_dict_puts_drop(annot->obj, "Rect", pdf_new_rect(doc, rect));
-        update_rect(ctx, annot);  
-      
-//        pdf_dict_puts_drop(annot->obj, "Contents", pdf_new_string(doc, text, strlen(text)));
-        pdf_dict_puts_drop(annot->obj, "Contents", pdf_new_string(doc, text, length));
+        update_rect(ctx, annot);
+//        pdf_dict_puts_drop(annot->obj, "Contents", pdf_new_string(doc, "foobar test", strlen("foobar test")));
+
+        unsigned char *srcptr = (unsigned char *)(void *)text;
+        unsigned short *dstptr;
+        int i;
+        char * pdfText;
+        
+        if (length >= 2 && srcptr[0] == 254 && srcptr[1] == 255)
+	{
+            pdfText = (char *)(void *)text;
+	}
+	else if (length >= 2 && srcptr[0] == 255 && srcptr[1] == 254)
+	{
+            dstptr = (unsigned short *)malloc(length*sizeof(unsigned short));
+            pdfText = (char *)(void *)dstptr;
+            for (i = 0; i < 2*length; i += 2)
+                *dstptr++ = srcptr[i] | srcptr[i+1] << 8;
+	}
+	else if (length >= 1)
+	{
+            dstptr = (unsigned short *)malloc((length+1)*sizeof(unsigned short));
+            pdfText = (char *)(void *)dstptr;
+            *dstptr++ = 0xfffe;
+            for (i = 0; i < 2*length; i += 2)
+                *dstptr++ = srcptr[i] << 8 | srcptr[i+1];
+            length++;
+	}
+        else
+        {
+            length = 0;
+            pdfText = (char *)malloc(sizeof(unsigned short));
+            *pdfText = 0xfffe;
+        }        
+
+        pdf_dict_puts_drop(annot->obj, "Contents", pdf_new_string(doc, (const char *)pdfText, 2*length));
     }
     fz_always(ctx)
     {

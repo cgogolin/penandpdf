@@ -1443,7 +1443,6 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
     float alpha;
     float line_height;
     float line_thickness;
-    const char *text;
     
     if (idoc == NULL)
         return;    
@@ -1475,7 +1474,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
             line_height = STRIKE_HEIGHT;
             break;
         case FZ_ANNOT_TEXT:
-//            LOGE("addMarkupAnnotationInternal: adding a text annotation");
+            LOGI("mupdf.c: adding a text annotation!");
             break;
         default:
             return;
@@ -1526,38 +1525,89 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
         }
 
         annot = (fz_annot *)pdf_create_annot(idoc, (pdf_page *)pc->page, type); //in pdf-annot.c
-                
+
+            
         if(type == FZ_ANNOT_TEXT)
         {
             fz_rect rect = {pts[0].x, pts[0].y, pts[1].x, pts[1].y};
 
-           text = (*env)->GetStringChars(env, jtext, NULL);
-           int length = 2*(*env)->GetStringLength(env, jtext);
+            const jchar * text = (*env)->GetStringChars(env, jtext, NULL);
+            unsigned int length = (*env)->GetStringLength(env, jtext);
 
-               //Check if we should encode with UTF-16 or PDFDocEncoding
-           if(text != NULL && length > 2 && ( (text[0] == 254 && text[1] == 255) || (text[0] == 255 && text[1] == 254) ) )
-           { //We found a BOM an hence try to add a UTF-16 string
-               jchar * text16 = (jchar *)(void *)text;
-               if (text16[0] == 0xfeff) 
-               { //So we must swap the byte order because the PDF specs say so
-                   int i;
-                   for (i=0; i< length/2; i++)
-                        text16[i] = (text16[i]<<8) | (text16[i]>>8);
-               }
-                   //Add the annotation
-               pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, text, length); //in pdf-annot.c
-               (*env)->ReleaseStringChars(env, jtext, text);
-           }
-           else
-           { //No BOM so we just add the string as is and hope for the best (In principle we should use PDFDocEncoding but this should never happen anyway as we are called from Java)
-                   //Get the UTF chars instead
-               (*env)->ReleaseStringChars(env, jtext, text);
-               text = (*env)->GetStringUTFChars(env, jtext, NULL);
-                   //Add the annotation
-               pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, text, length); //in pdf-annot.c
-               (*env)->ReleaseStringUTFChars(env, jtext, text);
-           }
-        }
+           /* int i; */
+           /* for (i=0; i< length; i++) */
+           /*     LOGI("mupdf.c: raw chars of new annotation: %x", text[i]); */
+            
+            pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, text, length); //in pdf-annot.c
+            
+            (*env)->ReleaseStringChars(env, jtext, text);
+            
+            
+/*             if(0) */
+/*             { */
+            
+/*             fz_rect rect = {pts[0].x, pts[0].y, pts[1].x, pts[1].y}; */
+/*             const jchar *text; */
+/*             text = (*env)->GetStringChars(env, jtext, NULL); */
+/*             int length = (*env)->GetStringLength(env, jtext); */
+
+/*             jchar * text16 = (jchar *)(void *)text; */
+/*             if(text16[0] != 0xfeff) */
+/*             { //The is no BOM jet, so we add one hoping that we get the byte order right */
+/*                 text16 = (jchar *)malloc((length+1)*sizeof(jchar)); */
+/*                 text16[0] = 0xfeff; //feff means that we will swap later... */
+/*                 memcpy(text16+1, text, length*sizeof(jchar)); */
+/*             }             */
+            
+/*            int i; */
+/*            for (i=0; i< length+1; i++) */
+/*                LOGI("mupdf.c: chars of new annotation before swap: %x", text16[i]); */
+
+/*                //Swap the byte order if necessary */
+/*            if(text16[0] == 0xfeff) */
+/*            { */
+/*                for (i=0; i< length+1; i++) */
+/*                    text16[i] = (text16[i]<<8) | (text16[i]>>8); */
+/*            } */
+           
+/*            for (i=0; i< length+1; i++) */
+/*                 LOGI("mupdf.c: chars of new annotation: %x", text16[i]); */
+               
+/*            /\*     //Check if we should encode with UTF-16 or PDFDocEncoding *\/ */
+/*            /\* if(text != NULL && length > 2 && ( (text[0] == 254 && text[1] == 255) || (text[0] == 255 && text[1] == 254) ) ) *\/ */
+/*            /\* { //We found a BOM an hence try to add a UTF-16 string *\/ */
+/*            /\*     LOGI("mupdf.c: encoding in UTF-16: %x", text[0]); *\/ */
+/*            /\*     jchar * text16 = (jchar *)(void *)text; *\/ */
+/*            /\*     if (text16[0] == 0xfeff) *\/ */
+/*            /\*     { //So we must swap the byte order because the PDF specs say so *\/ */
+/*            /\*         int i; *\/ */
+/*            /\*         for (i=0; i< length/2; i++) *\/ */
+/*            /\*              text16[i] = (text16[i]<<8) | (text16[i]>>8); *\/ */
+/*            /\*     } *\/ */
+               
+/*            /\*     int i; *\/ */
+/*            /\*     for (i=0; i< length; i++) *\/ */
+/*            /\*         LOGI("mupdf.c: chars of new annotation: %x", text[i]); *\/ */
+               
+/*                    //Add the annotation */
+/* //            pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, (char *)(void *)text16, sizeof(jchar)*(length+1)); //in pdf-annot.c */
+/*             (*env)->ReleaseStringChars(env, jtext, text); */
+/*             free(text16); */
+/*                 /\* } *\/ */
+/*            /\* else *\/ */
+/*            /\* { //No BOM so we just add the string as is and hope for the best (In principle we should use PDFDocEncoding but this should never happen anyway as we are called from Java) *\/ */
+/*            /\*     LOGI("mupdf.c: not encoding in UTF-16"); *\/ */
+/*            /\*         //Get the UTF chars instead *\/ */
+/*            /\*     (*env)->ReleaseStringChars(env, jtext, text); *\/ */
+/*            /\*     text = (*env)->GetStringUTFChars(env, jtext, NULL); *\/ */
+/*            /\*         //Add the annotation *\/ */
+/*            /\*     pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, text, length); //in pdf-annot.c *\/ */
+/*            /\*     (*env)->ReleaseStringUTFChars(env, jtext, text); *\/ */
+/*            /\* } *\/ */
+/*             } */
+
+            
+        } //Add a markup annotation
         else
         {
             pdf_set_markup_annot_quadpoints(idoc, (pdf_annot *)annot, pts, n); //in pdf-annot.c
@@ -1994,35 +2044,60 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
 
             //Get the text of the annotatoin
         jstring jtext = NULL;
-        jchar * text16 = NULL;
-//        boolean isUTF16;
+//        jchar * text16 = NULL;
         if(type == FZ_ANNOT_TEXT)
         {
-            pdf_obj * obj = pdf_annot_text((pdf_annot *)annot);
-            char * text = pdf_to_str_buf(obj);
-            int length = pdf_to_str_len(obj);
-                //Test if the string is in UTF-16 or PDFDocEncoding
-            if(text != NULL && length > 2 && text[0] == 254 && text[1] == 255)
-            {
-                    //UTF-16
-//                isUTF16 = true;
-                text16 = (jchar *)(void *)text;
-                length = length/2;
-                if (text16[0] == 0xfffe) 
-                { //So we must swap the byte order because NewString() doesn't respect the BOM
-//                    LOGI("mupdf.c: swapping the byte order because we found %x as first jchar", text16[0]);
-                    int i;
-                    for (i=0; i< length; i++)
-                        text16[i] = (text16[i]<<8) | (text16[i]>>8);
-                }
-                jtext = (*env)->NewString(env, text16, length);
-            }
-            else if(text != NULL && length > 0)
-            {
-//                isUTF16 = false;
-                    //PDFDocEncoding (some special characters can be lost here but nobobdy seems to use it anyway)
-                jtext = (*env)->NewStringUTF(env, text);
-            }
+//            pdf_obj * obj = pdf_annot_text((pdf_annot *)annot);
+            unsigned short *text;
+            unsigned int length;
+            pdf_annot_text((pdf_annot *)annot, &text, &length); //does the memory allocation!
+            jtext = (*env)->NewString(env, text, length);
+            free(text); //free here!
+            
+//            jtext = (*env)->NewString(env, "abcd", 2);
+//            LOGI("mupdf.c: length=%d", length);
+            /* int i; */
+            /* for (i=0; i< length/2; i++) */
+            /*     LOGI("mupdf.c: length=%d chars of annotation: %x", length, text[i]); */
+            
+            
+//            unsigned int bufferLength = (pdf_to_str_len(obj) + 1)*2;
+//            unsigned short *buffer = malloc(bufferLength);
+//            pdf_to_ucs2_buf(buffer, obj);
+//            jtext = (*env)->NewString(env, pdf_to_str_buf(obj), pdf_to_str_len(obj));
+            /* jtext = (*env)->NewString(env, buffer, pdf_to_str_len(obj)); */
+            /* free(buffer); */
+            
+            
+/*             char * text = pdf_to_str_buf(obj); */
+/*             int length = pdf_to_str_len(obj); */
+/*                 //Test if the string is in UTF-16 or PDFDocEncoding */
+/*             if(text != NULL && length > 2 && text[0] == 254 && text[1] == 255) */
+/*             { */
+/*                     //UTF-16 */
+/* //                isUTF16 = true; */
+/*                 text16 = (jchar *)(void *)text; */
+/*                 length = length/2; */
+/*                 if (text16[0] == 0xfffe)  */
+/*                 { //So we must swap the byte order because NewString() doesn't respect the BOM */
+/* //                    LOGI("mupdf.c: swapping the byte order because we found %x as first jchar", text16[0]); */
+/*                     int i; */
+/*                     for (i=0; i< length; i++) */
+/*                         text16[i] = (text16[i]<<8) | (text16[i]>>8); */
+/*                 } */
+
+/*                 int i; */
+/*                 for (i=0; i< length; i++) */
+/*                 LOGI("mupdf.c: chars of annotation: %x", text16[i]); */
+                
+/*                 jtext = (*env)->NewString(env, text16, length); */
+/*             } */
+/*             else if(text != NULL && length > 0) */
+/*             { */
+/* //                isUTF16 = false; */
+/*                     //PDFDocEncoding (some special characters can be lost here but nobobdy seems to use it anyway) */
+/*                 jtext = (*env)->NewStringUTF(env, text); */
+/*             } */
         }
 
         
@@ -2085,7 +2160,7 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
 
             //Clean up
         (*env)->DeleteLocalRef(env, jannot);
-//        ReleaseStringChars(env, jtext, text16);
+        (*env)->DeleteLocalRef(env, jtext);
         
         count ++;
     }
