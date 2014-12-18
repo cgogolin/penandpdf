@@ -4,7 +4,7 @@ import android.content.SharedPreferences;
 import android.graphics.PointF;
 import android.graphics.RectF;
 
-enum Hit {Nothing, Widget, Annotation, Link, LinkInternal, LinkExternal, LinkRemote, Debug};
+enum Hit {Nothing, Widget, Annotation, Link, LinkInternal, LinkExternal, LinkRemote, Debug, TextAnnotation}; //This must be restructured in the future!!!
 
 public interface MuPDFView {
     public void setPage(int page, PointF size);

@@ -234,7 +234,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 //Already set the view area so that subsequent calls to addHq()
                 //with the same area do not span new rendering processes
             setArea(patchInfo.viewArea);
-            setImageBitmap(null);
+//            setImageBitmap(null); //Don't reset the bitmap jet beause it leads to flicker
             
             mDrawPatch = new AsyncTask<PatchInfo,Void,PatchInfo>() {
                 protected PatchInfo doInBackground(PatchInfo... v) {                    

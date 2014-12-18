@@ -1044,6 +1044,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                                 invalidateOptionsMenu();
                                 selectedAnnotationIsEditable = ((MuPDFPageView)getSelectedView()).selectedAnnotationIsEditable();
                                 break;
+                            case TextAnnotation:
+                                break;
                             case Nothing:
                                 if(mActionBarMode != ActionBarMode.Search)
                                 {

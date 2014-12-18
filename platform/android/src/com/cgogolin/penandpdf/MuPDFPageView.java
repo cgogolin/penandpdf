@@ -366,7 +366,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                                 setItemSelectBox(mAnnotations[i]);
                                 ((MuPDFReaderView)mParent).addTextAnnotFromUserInput(mAnnotations[i]);
 //                                deleteSelectedAnnotation();
-                                return Hit.Nothing; //We lie here because we want the main activity to behave as if nothing was hit. This is a consequence of legacy code and should be changed in the futur
+                                return Hit.TextAnnotation;
                         }
                     }
 		}
