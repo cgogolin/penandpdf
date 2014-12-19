@@ -9,7 +9,7 @@
 <!--  <uses-permission android:name="android.permission.READ_LOGS" />
   <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL" />-->
 
-  <uses-sdk android:minSdkVersion="11" android:targetSdkVersion="11" />
+  <uses-sdk android:minSdkVersion="11" android:targetSdkVersion="21" />
   <supports-screens
       android:smallScreens="true"
       android:normalScreens="true"
@@ -26,11 +26,11 @@
 	android:label="@string/app_name"
 	android:launchMode="standard"
 	>
-      <intent-filter>
+<!--      <intent-filter>
 	<action android:name="android.intent.action.MAIN"/>
 	<category android:name="android.intent.category.LAUNCHER"/>
 	<category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
-      </intent-filter>
+      </intent-filter>-->
       <intent-filter>
 	<action android:name="android.intent.action.PICK" />
 	<category android:name="android.intent.category.DEFAULT" />
@@ -46,17 +46,22 @@
 	     android:uiOptions="splitActionBarWhenNarrow"-->
 <!--      <meta-data android:name="android.support.UI_OPTIONS"
 		 android:value="splitActionBarWhenNarrow" />-->
-      <intent-filter>
+<!--      <intent-filter>
 	<action android:name="android.intent.action.VIEW"/>
 	<category android:name="android.intent.category.DEFAULT"/>
 	<data android:mimeType="application/vnd.ms-xpsdocument"/>
+      </intent-filter>-->
+      <intent-filter>
+	<action android:name="android.intent.action.MAIN"/>
+	<category android:name="android.intent.category.LAUNCHER"/>
+	<category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
       </intent-filter>
       <intent-filter>
 	<action android:name="android.intent.action.VIEW"/>
 	<category android:name="android.intent.category.DEFAULT"/>
 	<data android:mimeType="application/pdf"/>
       </intent-filter>
-      <intent-filter>
+<!--      <intent-filter>
 	<action android:name="android.intent.action.VIEW"/>
 	<category android:name="android.intent.category.DEFAULT"/>
 	<data android:mimeType="application/x-cbz"/>
@@ -69,7 +74,7 @@
 	<data android:mimeType="*/*"/>
 	<data android:pathPattern=".*\\.xps"/>
 	<data android:host="*"/>
-      </intent-filter>
+      </intent-filter>-->
       <intent-filter>
 	<action android:name="android.intent.action.VIEW"/>
 	<category android:name="android.intent.category.DEFAULT"/>
@@ -79,7 +84,7 @@
 	<data android:pathPattern=".*\\.pdf"/>
 	<data android:host="*"/>
       </intent-filter>
-      <intent-filter>
+<!--      <intent-filter>
 	<action android:name="android.intent.action.VIEW"/>
 	<category android:name="android.intent.category.DEFAULT"/>
 	<category android:name="android.intent.category.BROWSABLE"/>
@@ -87,7 +92,7 @@
 	<data android:mimeType="*/*"/>
 	<data android:pathPattern=".*\\.cbz"/>
 	<data android:host="*"/>
-      </intent-filter>
+      </intent-filter>-->
     </activity>
     <activity
 	android:name="SettingsActivity"

@@ -5,6 +5,11 @@
 	android:showAsAction="never"
 	android:background="?android:selectableItemBackground"
 	/>
+  <item android:id="@+id/menu_open"
+	android:title="@string/menu_open"
+	android:showAsAction="never"
+	android:background="?android:selectableItemBackground"
+	/>
   <item android:id="@+id/menu_gotopage"
 	android:title="@string/menu_gotopage"
 	android:showAsAction="never"

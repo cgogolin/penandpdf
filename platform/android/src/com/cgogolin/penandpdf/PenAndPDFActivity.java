@@ -94,6 +94,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     private final int    PRINT_REQUEST=1;
     private final int    FILEPICK_REQUEST = 2;
     private final int    SAVEAS_REQUEST=3;
+    private final int    EDIT_REQUEST = 4;
+    
     private MuPDFCore    core;
     private MuPDFReaderView mDocView;
     Parcelable mDocViewParcelable;
@@ -230,7 +232,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         }
     }
 
-    private MuPDFCore openFile(String path)
+    private MuPDFCore coreFromURI(String path)
 	{
             System.out.println("Trying to open "+path);
             try
@@ -247,7 +249,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             return core;
 	}
 
-    private MuPDFCore openBuffer(byte buffer[], String displayName)
+    private MuPDFCore coreFromBuffer(byte buffer[], String displayName)
 	{
             System.out.println("Trying to open byte buffer");
             try
@@ -279,7 +281,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             // }
             
             super.onCreate(savedInstanceState);
-            
+
                 //Set default preferences on first start
             PreferenceManager.setDefaultValues(this, SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS, R.xml.preferences, false);
             
@@ -343,7 +345,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 SharedPreferences.Editor edit = prefs.edit();
                 saveRecentFiles(prefs, edit, core.getPath());
             }
-            else //Something went wrong
+            else if(Intent.ACTION_VIEW.equals(getIntent().getAction()))
             {
                 AlertDialog alert = mAlertBuilder.create();
                 alert.setTitle(R.string.cannot_open_document);
@@ -755,6 +757,9 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     search(-1);
                 }
                 return true;
+            case R.id.menu_open:
+                openDocument();
+                return true;                
             case R.id.menu_save:
                 DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
@@ -815,29 +820,39 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         if (core == null) {
             mDocViewNeedsNewAdapter = true;
             Intent intent = getIntent();
-            if (Intent.ACTION_VIEW.equals(intent.getAction()))
+            if (Intent.ACTION_MAIN.equals(intent.getAction()))
+            {
+                openDocument();
+            }
+            else if (Intent.ACTION_VIEW.equals(intent.getAction()))
             {
                 Uri uri = intent.getData();
                 String error = null;
-            
+
+                Log.v("PenAndPDF", "got uri="+uri);
+                
                 if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
                 {
-                    core = openFile(Uri.decode(uri.getEncodedPath()));
+                    core = coreFromURI(Uri.decode(uri.getEncodedPath()));
                 }
                 else if (uri.toString().startsWith("content://")) //Uri points to a content provider
                 {
                     byte buffer[] = null;
-                    Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.DATA, MediaStore.MediaColumns.TITLE}, null, null, null); //This should be done asynchonously!
+//                    Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.DATA, MediaStore.MediaColumns.TITLE}, null, null, null); //This should be done asynchonously!
+                    Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null); //This should be done asynchonously!
+
+//                    android.provider.MediaStore.Files.FileColumns.DATA
+                    
                     if (cursor != null && cursor.moveToFirst())
                     {
                         String displayName = null;
-                        String data = null;
+//                        String data = null;
                         int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
-                        int dataIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
-                        int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);                       
+//                        int dataIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+//                        int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.TITLE);
                         if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
-                        if(displayName == null && titleIndex >= 0) displayName = Uri.parse(cursor.getString(titleIndex)).getLastPathSegment();
-                        if(dataIndex >= 0) data = cursor.getString(dataIndex);//Can return null!
+//                        if(displayName == null && titleIndex >= 0) displayName = Uri.parse(cursor.getString(titleIndex)).getLastPathSegment();
+//                        if(dataIndex >= 0) data = cursor.getString(dataIndex);//Can return null!
                         try {
                             InputStream is = getContentResolver().openInputStream(uri);
                             if(is != null)
@@ -852,7 +867,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                             error = e.toString();
                         }
                         cursor.close();
-                        if(buffer != null) core = openBuffer(buffer,displayName);
+                        if(buffer != null) core = coreFromBuffer(buffer,displayName);
                     }
                 }
                 else
@@ -1104,10 +1119,53 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         }
     }
 
+    public void openDocument() {
+        if (android.os.Build.VERSION.SDK_INT < 19 && Intent.ACTION_MAIN.equals(getIntent().getAction()))
+        {
+                //Should do a start activity for result here
+            Intent intent = new Intent(this, PenAndPDFFileChooser.class);
+            startActivity(intent);
+            finish();
+        }
+        else
+        {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/pdf");
+//            intent.setType("*/pdf");   
+            startActivityForResult(intent, EDIT_REQUEST);
+        }
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         switch (requestCode) {
+            case EDIT_REQUEST:
+                if(resultCode == Activity.RESULT_OK)
+                {
+                    if (intent != null) {
+                        Uri uri = intent.getData();
+                        
+                        final int takeFlags = intent.getFlags()
+                            & (Intent.FLAG_GRANT_READ_URI_PERMISSION
+                               | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                            // Check for the freshest data.
+                        getContentResolver().takePersistableUriPermission(uri, takeFlags);
+                        
+                        getIntent().setAction(Intent.ACTION_VIEW);
+                        getIntent().setData(uri);
+                        if (core != null) {
+                            core.onDestroy();
+                            core = null;
+                        }
+                        onResume();
+                    }
+                }
+                else
+                {
+                    finish();
+                }
+                break;
             case OUTLINE_REQUEST:
                 if (resultCode >= 0)
                     mDocView.setDisplayedViewIndex(resultCode);
@@ -1535,5 +1593,4 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         // Nothing to do
         }
     }
-    
 }
