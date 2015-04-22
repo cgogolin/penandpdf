@@ -830,6 +830,10 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 String error = null;
 
                 Log.v("PenAndPDF", "got uri="+uri);
+
+                    //The following throws a security exception!
+                // final int takeFlags = (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                // getContentResolver().takePersistableUriPermission(uri, takeFlags);
                 
                 if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
                 {
@@ -1130,8 +1134,10 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         else
         {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+//            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("application/pdf");
+//            intent.setType("*/*");
 //            intent.setType("*/pdf");   
             startActivityForResult(intent, EDIT_REQUEST);
         }

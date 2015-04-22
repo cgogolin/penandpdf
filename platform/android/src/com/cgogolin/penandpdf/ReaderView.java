@@ -663,7 +663,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             //If we were asked to display a different view do so now...
         if(mHasNewCurrent)
         {
-            if (cv != null) postUnsettle(cv);
+//            if (cv != null) postUnsettle(cv);
+            if (cv != null) onUnsettle(cv);
                 //Reset scroll amounts
             mXScroll = mYScroll = 0;
             onMoveOffChild(mCurrent);
