@@ -164,7 +164,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private static int strikeoutColor = 0x80AC7225;
     private static boolean useSmartTextSelection = false;    
     
-        //To be overrwritten ny any superclass
+        //To be overrwritten by any superclass
     protected abstract void drawPage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
     protected abstract void updatePage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
     protected abstract LinkInfo[] getLinkInfo();
@@ -225,6 +225,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         }
 
         public void renderInBackground(PatchInfo patchInfo) {
+                //If we are already rendering / have rendered the area there is nothing to do
+            if(area == patchInfo.viewArea) return;
+            
                 // Stop the drawing of previous patch if still going
             if (mDrawPatch != null) {
                 mDrawPatch.cancel(true);
@@ -232,9 +235,11 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
 
                 //Already set the view area so that subsequent calls to addHq()
-                //with the same area do not span new rendering processes
-            setArea(patchInfo.viewArea);
-//            setImageBitmap(null); //Don't reset the bitmap jet beause it leads to flicker
+                //with the same area do not span new rendering processes (causes problems!!!)
+//            setArea(patchInfo.viewArea);
+            
+                //Don't reset the bitmap jet beause it leads to flicker
+//            setImageBitmap(null); 
             
             mDrawPatch = new AsyncTask<PatchInfo,Void,PatchInfo>() {
                 protected PatchInfo doInBackground(PatchInfo... v) {                    
@@ -251,7 +256,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 }
                 protected void onPostExecute(PatchInfo v) {
                     removeBusyIndicator();
-//                    setArea(v.viewArea);
+                    setArea(v.viewArea);
                     setImageBitmap(v.patchBm);
                     layout(v.patchArea.left, v.patchArea.top, v.patchArea.right, v.patchArea.bottom);
                     invalidate();
@@ -1021,7 +1026,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
     
     
-    public void addHq(boolean update) {        
+    public void addHq(boolean update) {//If update is true a more efficient method is used to redraw the patch but it is redrawn even if the area hasn't changed!
         Rect viewArea = new Rect(getLeft(),getTop(),getRight(),getBottom());
 //        Log.v("PageView", "addHq() page="+mPageNumber+", update="+update);
         

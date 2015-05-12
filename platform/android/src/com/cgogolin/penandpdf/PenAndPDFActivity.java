@@ -1128,6 +1128,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         {
                 //Should do a start activity for result here
             Intent intent = new Intent(this, PenAndPDFFileChooser.class);
+            intent.setAction(Intent.ACTION_MAIN);
             startActivity(intent);
             finish();
         }
