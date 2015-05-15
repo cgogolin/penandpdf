@@ -232,37 +232,37 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         }
     }
 
-    private MuPDFCore coreFromURI(String path)
-	{
-            System.out.println("Trying to open "+path);
-            try
-            {
-                core = new MuPDFCore(this, path);
-                    // New file: drop the old outline data
-//                OutlineActivityData.set(null);
-            }
-            catch (Exception e)
-            {
-                System.out.println(e);
-                return null;
-            }
-            return core;
-	}
+    // private MuPDFCore coreFromURI(String path)
+    //     {
+//             System.out.println("Trying to open "+path);
+//             try
+//             {
+//            core = new MuPDFCore(this, path);
+//                     // New file: drop the old outline data
+// //                OutlineActivityData.set(null);
+//             }
+//             catch (Exception e)
+//             {
+//                 System.out.println(e);
+//                 return null;
+//             }
+        //     return core;
+	// }
 
-    private MuPDFCore coreFromBuffer(byte buffer[], String displayName)
-	{
-            System.out.println("Trying to open byte buffer");
-            try
-            {
-                core = new MuPDFCore(this, buffer, displayName);
-            }
-            catch (Exception e)
-            {
-                System.out.println(e);
-                return null;
-            }
-            return core;
-	}
+    // private MuPDFCore coreFromBuffer(byte buffer[], String displayName)
+    //     {
+            // System.out.println("Trying to open byte buffer");
+            // try
+            // {
+        //core = new MuPDFCore(this, buffer, displayName);
+            // }
+            // catch (Exception e)
+            // {
+            //     System.out.println(e);
+            //     return null;
+            // }
+        //     return core;
+	// }
 
 
     // @Override
@@ -345,18 +345,23 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 SharedPreferences.Editor edit = prefs.edit();
                 saveRecentFiles(prefs, edit, core.getPath());
             }
-            else if(Intent.ACTION_VIEW.equals(getIntent().getAction()))
-            {
-                AlertDialog alert = mAlertBuilder.create();
-                alert.setTitle(R.string.cannot_open_document);
-                alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        finish();
-                                    }
-                                });
-                alert.show();
-            }
+            // else if(Intent.ACTION_VIEW.equals(getIntent().getAction()))
+            // {
+            //     AlertDialog alert = mAlertBuilder.create();
+            //     alert.setTitle(R.string.cannot_open_document);
+            //     alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
+            //                     new DialogInterface.OnClickListener() {
+            //                         public void onClick(DialogInterface dialog, int which) {
+            //                             finish();
+            //                         }
+            //                     });
+            //     alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            //             public void onDismiss(DialogInterface dialog) {
+            //                 finish();
+            //             }
+            //         });
+            //     alert.show();
+            // }
             invalidateOptionsMenu();
         }
     
@@ -837,7 +842,15 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 
                 if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
                 {
-                    core = coreFromURI(Uri.decode(uri.getEncodedPath()));
+                    try
+                    {
+                        core = new MuPDFCore(this, Uri.decode(uri.getEncodedPath()));
+                    }
+                    catch (Exception e)
+                    {
+                        error = e.toString();
+                    }
+                    if(core == null) error = getResources().getString(R.string.unable_to_interpret_uri)+" "+uri;
                 }
                 else if (uri.toString().startsWith("content://")) //Uri points to a content provider
                 {
@@ -871,13 +884,23 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                             error = e.toString();
                         }
                         cursor.close();
-                        if(buffer != null) core = coreFromBuffer(buffer,displayName);
+                        if(buffer != null)
+                            try 
+                            {
+                                core = new MuPDFCore(this, buffer, displayName);
+                            }
+                            catch (Exception e)
+                            {
+                                error = e.toString();
+                            }
+                        if(core == null) error = getResources().getString(R.string.unable_to_interpret_uri)+" "+uri;
                     }
                 }
                 else
                 {
                     error = getResources().getString(R.string.unable_to_interpret_uri)+" "+uri;
                 }
+
                 if (error != null) //There was an error
                 {
                     AlertDialog alert = mAlertBuilder.create();
@@ -889,8 +912,14 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                                             finish();
                                         }
                                     });
+                    alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                            public void onDismiss(DialogInterface dialog) {
+                                finish();
+                            }
+                        });
                     alert.show();
-                    finish();
+                    core = null;
+//                    finish();
                 }
             }
             if (core != null && core.needsPassword()) {
@@ -1124,11 +1153,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     }
 
     public void openDocument() {
-        if (android.os.Build.VERSION.SDK_INT < 19
-                //&& Intent.ACTION_MAIN.equals(getIntent().getAction())
-            )
+        if (android.os.Build.VERSION.SDK_INT < 19)
         {
-
             if (core!=null && core.hasChanges()) {
                 DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
@@ -1180,6 +1206,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
 //            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("application/pdf");
+//            intent.setType("application/*");
+            intent.putExtra("CONTENT_TYPE", "*/*"); //Not sure what this does
 //            intent.setType("*/*");
 //            intent.setType("*/pdf");   
             startActivityForResult(intent, EDIT_REQUEST);
@@ -1546,7 +1574,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         //     return;
         // }
         
-        if (core.hasChanges()) {
+        if (core != null && core.hasChanges()) {
             DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         if (which == AlertDialog.BUTTON_POSITIVE) {

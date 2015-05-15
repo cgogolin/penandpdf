@@ -57,6 +57,7 @@
 	<string name="unable_to_interpret_uri">Unable to interpret</string>
 	<string name="reason">Reason</string>
 	<string name="cannot_open_file_Path">Cannot open file: %1$s</string>
+	<string name="cannot_interpret_file">Cannot interpret file: %1$s</string>
 	<string name="cannot_open_buffer">Cannot open buffer</string>
 	<string name="fill_out_text_field">Fill out text field</string>
 	<string name="okay">Okay</string>

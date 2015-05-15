@@ -104,6 +104,7 @@ public class MuPDFCore
                 throw new Exception(String.format(context.getString(R.string.cannot_open_file_Path), path));
             }
             file_format = fileFormatInternal();
+            if(file_format == null) throw new Exception(String.format(context.getString(R.string.cannot_interpret_file), path));
 	}
     
     public MuPDFCore(Context context, byte buffer[], String displayName) throws Exception
@@ -117,6 +118,7 @@ public class MuPDFCore
                 throw new Exception(context.getString(R.string.cannot_open_buffer));
             }
             file_format = fileFormatInternal();
+            if(file_format == null) throw new Exception(String.format(context.getString(R.string.cannot_interpret_file), displayName));
 	}
 
     public  int countPages()
