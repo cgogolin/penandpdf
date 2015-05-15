@@ -154,6 +154,7 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
             case ChoosePDF:
                     // Start an activity to display the PDF file
                 startActivity(intent);
+                getActivity().finish();
                 break;
             case PickFile:
                 getActivity().setResult(Activity.RESULT_OK, intent);

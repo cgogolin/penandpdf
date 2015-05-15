@@ -1124,13 +1124,55 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     }
 
     public void openDocument() {
-        if (android.os.Build.VERSION.SDK_INT < 19 && Intent.ACTION_MAIN.equals(getIntent().getAction()))
+        if (android.os.Build.VERSION.SDK_INT < 19
+                //&& Intent.ACTION_MAIN.equals(getIntent().getAction())
+            )
         {
-                //Should do a start activity for result here
-            Intent intent = new Intent(this, PenAndPDFFileChooser.class);
-            intent.setAction(Intent.ACTION_MAIN);
-            startActivity(intent);
-            finish();
+
+            if (core!=null && core.hasChanges()) {
+                DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (which == AlertDialog.BUTTON_POSITIVE) {
+                                mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //No need to save twice
+                                if(!save())
+                                    showInfo(getString(R.string.error_saveing));
+                                else
+                                {
+                                        //Should do a start activity for result here
+                                    Intent intent = new Intent(getApplicationContext(), PenAndPDFFileChooser.class);
+                                    intent.setAction(Intent.ACTION_MAIN);
+                                    startActivity(intent);
+                                    finish();
+                                }
+                            }
+                            if (which == AlertDialog.BUTTON_NEGATIVE) {
+                                mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true;
+                                    //Should do a start activity for result here
+                                Intent intent = new Intent(getApplicationContext(), PenAndPDFFileChooser.class);
+                                intent.setAction(Intent.ACTION_MAIN);
+                                startActivity(intent);
+                                finish();
+                            }
+                            if (which == AlertDialog.BUTTON_NEUTRAL) {
+                            }
+                        }
+                    };
+                AlertDialog alert = mAlertBuilder.create();
+                alert.setTitle(getString(R.string.app_name));
+                alert.setMessage(getString(R.string.document_has_changes_save_them));
+                alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), listener);
+                alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
+                alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
+                alert.show();
+            }
+            else
+            {
+                    //Should do a start activity for result here
+                Intent intent = new Intent(this, PenAndPDFFileChooser.class);
+                intent.setAction(Intent.ACTION_MAIN);
+                startActivity(intent);
+                finish();
+            }
         }
         else
         {
