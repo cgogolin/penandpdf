@@ -111,7 +111,7 @@ public class MuPDFCore
 	{
             fileBuffer = buffer;
             mFileName = displayName;
-                
+            
             globals = openBuffer();
             if (globals == 0)
             {

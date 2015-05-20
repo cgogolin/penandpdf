@@ -33,6 +33,7 @@ import android.text.format.Time;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
+import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -63,7 +64,10 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.Runtime;
 import java.util.concurrent.Executor;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.Set;
+
 
 
 class ThreadPerTaskExecutor implements Executor {
@@ -868,6 +872,27 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
 //                        int dataIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
 //                        int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.TITLE);
                         if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
+
+                        Log.v("PenAndPDF/PenAndPDFActivity", "displayName = '"+displayName+"'");
+
+                            //Some programms encode parts of the filename in utf-8 base 64 encoding if the filename contains special charcters. This can look like this: '=?UTF-8?B?.*==?=' Here we decode such cases:
+                        Pattern utf8BPattern = Pattern.compile("=\\?UTF-8\\?B\\?(.+)\\?=");
+                        Matcher matcher = utf8BPattern.matcher(displayName);
+                        while (matcher.find()) {
+                            String base64 = matcher.group(1);
+                            byte[] data = Base64.decode(base64, Base64.DEFAULT);
+                            String decodedText = "";
+                            try
+                            {
+                                decodedText = new String(data, "UTF-8");
+                            }
+                            catch(Exception e)
+                            {}
+//                            Log.v("PenAndPDF/PenAndPDFActivity", "text = '"+decodedText+"' matcher.group()="+matcher.group()+"'");
+                            displayName = displayName.replace(matcher.group(),decodedText);
+//                            Log.v("PenAndPDF/PenAndPDFActivity", "new displayName = '"+displayName+"'");
+                        }
+                        
 //                        if(displayName == null && titleIndex >= 0) displayName = Uri.parse(cursor.getString(titleIndex)).getLastPathSegment();
 //                        if(dataIndex >= 0) data = cursor.getString(dataIndex);//Can return null!
                         try {
@@ -1207,7 +1232,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("application/pdf");
 //            intent.setType("application/*");
-            intent.putExtra("CONTENT_TYPE", "*/*"); //Not sure what this does
+//            intent.putExtra("CONTENT_TYPE", "*/*"); //Not sure what this does
 //            intent.setType("*/*");
 //            intent.setType("*/pdf");   
             startActivityForResult(intent, EDIT_REQUEST);

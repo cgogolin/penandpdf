@@ -217,7 +217,8 @@ public class FileBrowserFragment extends ListFragment {
             if(mFilename != null) editText.setText(mFilename);
             editText.setVisibility(View.VISIBLE);
             editText.requestFocus();
-            editText.setSelection(mFilename.lastIndexOf("."));
+            int indexOfDot = mFilename.lastIndexOf(".");
+            if(indexOfDot > -1) editText.setSelection(indexOfDot);
             editText.setOnEditorActionListener(new OnEditorActionListener() {
                     @Override
                     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
