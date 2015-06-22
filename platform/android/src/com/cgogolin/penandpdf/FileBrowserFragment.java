@@ -69,8 +69,15 @@ public class FileBrowserFragment extends ListFragment {
         }
         
         File directory = null;
-        if(purpose == Purpose.PickFile && intent.getData() != null)
-            directory = (new File(intent.getData().getPath())).getParentFile();
+        try
+        {
+            if(purpose == Purpose.PickFile && intent.getData() != null)
+                directory = (new File(intent.getData().getPath())).getParentFile();
+        }
+        catch(Exception e)
+        {
+                //Nothing we can do if that fails, and it seems to do so on certain android versions if the path contains special characters...
+        }
             
             //Put the collected data in a Bundle
         Bundle bundle = new Bundle(3);
@@ -214,11 +221,14 @@ public class FileBrowserFragment extends ListFragment {
         
         if(mPurpose == Purpose.PickFile) {
             final EditText editText = (EditText)rootView.findViewById(R.id.newfilenamefield);
-            if(mFilename != null) editText.setText(mFilename);
+            if(mFilename != null)
+            {
+                int indexOfDot = mFilename.lastIndexOf(".");
+                if(indexOfDot > -1) editText.setSelection(indexOfDot);
+                editText.setText(mFilename);
+            }
             editText.setVisibility(View.VISIBLE);
             editText.requestFocus();
-            int indexOfDot = mFilename.lastIndexOf(".");
-            if(indexOfDot > -1) editText.setSelection(indexOfDot);
             editText.setOnEditorActionListener(new OnEditorActionListener() {
                     @Override
                     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {

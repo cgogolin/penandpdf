@@ -63,6 +63,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.Runtime;
+import java.util.ArrayList;
 import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -471,7 +472,13 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                             shareIntent.setAction(Intent.ACTION_SEND);
                             shareIntent.setType("plain/text");
                             shareIntent.setType("*/*");
-                            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(Uri.parse(core.getPath()).getPath())));
+                            
+                            Log.e("PenAndPDF", core.getPath());
+//                            Log.e("PenAndPDF", Uri.parse(core.getPath()).getPath());
+                            
+//                            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(Uri.parse(core.getPath()).getPath())));
+                            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(core.getPath())));
+                            
                             if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
                             // mShareActionProvider.setOnShareTargetSelectedListener(new ShareActionProvider.OnShareTargetSelectedListener() {
                             //         @Override
@@ -785,8 +792,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                             }
                             if (which == AlertDialog.BUTTON_NEUTRAL) {
                                 Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
-                                if (core.getPath() != null) intent.setData(Uri.parse(core.getPath()));
-                                else if (core.getFileName() != null) intent.setData(Uri.parse(core.getFileName()));
+                                if (core.getPath() != null && Uri.parse(core.getPath()) != null) intent.setData(Uri.parse(core.getPath()));
+                                else if (core.getFileName() != null && Uri.parse(core.getFileName()) != null) intent.setData(Uri.parse(core.getFileName()));
                                 intent.setAction(Intent.ACTION_PICK);
                                 mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //Do not save when we are stopped for the new request
                                 startActivityForResult(intent, SAVEAS_REQUEST);
@@ -850,7 +857,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     {
                         core = new MuPDFCore(this, Uri.decode(uri.getEncodedPath()));
                     }
-                    catch (Exception e)
+                    catch(Exception e)
                     {
                         error = e.toString();
                     }
@@ -875,7 +882,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
 
                         Log.v("PenAndPDF/PenAndPDFActivity", "displayName = '"+displayName+"'");
 
-                            //Some programms encode parts of the filename in utf-8 base 64 encoding if the filename contains special charcters. This can look like this: '=?UTF-8?B?.*==?=' Here we decode such cases:
+                            //Some programms encode parts of the filename in utf-8 base 64 encoding if the filename contains special charcters. This can look like this: '=?UTF-8?B?[text here]==?=' Here we decode such cases:
                         Pattern utf8BPattern = Pattern.compile("=\\?UTF-8\\?B\\?(.+)\\?=");
                         Matcher matcher = utf8BPattern.matcher(displayName);
                         while (matcher.find()) {
@@ -1227,15 +1234,35 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         }
         else
         {
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-//            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("application/pdf");
-//            intent.setType("application/*");
-//            intent.putExtra("CONTENT_TYPE", "*/*"); //Not sure what this does
-//            intent.setType("*/*");
-//            intent.setType("*/pdf");   
-            startActivityForResult(intent, EDIT_REQUEST);
+                //Shown only some action providers
+            // Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            // intent.addCategory(Intent.CATEGORY_OPENABLE);
+            // intent.setType("application/pdf");
+            // startActivityForResult(intent, EDIT_REQUEST);
+
+                //Shows hopefully more
+            Intent chooser = new Intent(Intent.ACTION_CHOOSER);
+            chooser.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            
+            Intent getContentIntent = new Intent(Intent.ACTION_GET_CONTENT);
+            getContentIntent.addCategory(Intent.CATEGORY_OPENABLE);
+            getContentIntent.setType("application/pdf");
+//            chooser.putExtra(Intent.EXTRA_INTENT, getContentIntent);
+            
+            Intent openDocumentIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            openDocumentIntent.addCategory(Intent.CATEGORY_OPENABLE);
+            openDocumentIntent.setType("application/pdf");
+//            chooser.putExtra(Intent.EXTRA_INTENT, openDocumentIntent);
+            
+            ArrayList<Intent> extraIntents = new ArrayList<Intent>();
+//            extraIntents.add(openDocumentIntent);
+            extraIntents.add(getContentIntent);
+
+//            chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents.toArray(new Intent[] { }));
+//            startActivityForResult(chooser, EDIT_REQUEST);
+            
+            openDocumentIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents.toArray(new Intent[] { }));
+            startActivityForResult(openDocumentIntent, EDIT_REQUEST);
         }
     }
 
@@ -1251,8 +1278,16 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                         final int takeFlags = intent.getFlags()
                             & (Intent.FLAG_GRANT_READ_URI_PERMISSION
                                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                            // Check for the freshest data.
-                        getContentResolver().takePersistableUriPermission(uri, takeFlags);
+                        
+                            // Try to take permissions
+                        try
+                        {
+                            getContentResolver().takePersistableUriPermission(uri, takeFlags);
+                        }
+                        catch(Exception e)
+                        {
+                                //noting to do
+                        }
                         
                         getIntent().setAction(Intent.ACTION_VIEW);
                         getIntent().setData(uri);
