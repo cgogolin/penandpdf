@@ -17,7 +17,6 @@ import android.content.Intent;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.RectF;
 import android.net.Uri;
@@ -26,14 +25,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
-import android.provider.MediaStore.MediaColumns;
-import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.format.Time;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
-import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -65,8 +61,6 @@ import java.lang.reflect.Field;
 import java.lang.Runtime;
 import java.util.ArrayList;
 import java.util.concurrent.Executor;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.Set;
 
 
@@ -101,7 +95,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     private final int    SAVEAS_REQUEST=3;
     private final int    EDIT_REQUEST = 4;
     
-    private MuPDFCore    core;
+    private PenAndPDFCore    core;
     private MuPDFReaderView mDocView;
     Parcelable mDocViewParcelable;
     private EditText     mPasswordView;
@@ -237,39 +231,6 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         }
     }
 
-    // private MuPDFCore coreFromURI(String path)
-    //     {
-//             System.out.println("Trying to open "+path);
-//             try
-//             {
-//            core = new MuPDFCore(this, path);
-//                     // New file: drop the old outline data
-// //                OutlineActivityData.set(null);
-//             }
-//             catch (Exception e)
-//             {
-//                 System.out.println(e);
-//                 return null;
-//             }
-        //     return core;
-	// }
-
-    // private MuPDFCore coreFromBuffer(byte buffer[], String displayName)
-    //     {
-            // System.out.println("Trying to open byte buffer");
-            // try
-            // {
-        //core = new MuPDFCore(this, buffer, displayName);
-            // }
-            // catch (Exception e)
-            // {
-            //     System.out.println(e);
-            //     return null;
-            // }
-        //     return core;
-	// }
-
-
     // @Override
     // public void onNewIntent(Intent intent)
     //     {}
@@ -311,7 +272,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             
                 //Get the core saved with onRetainNonConfigurationInstance()
             if (core == null) {
-                core = (MuPDFCore)getLastNonConfigurationInstance();
+                core = (PenAndPDFCore)getLastNonConfigurationInstance();
                 if(core != null) mDocViewNeedsNewAdapter = true;
             }
         }
@@ -348,7 +309,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     //Update the recent files list
                 SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
                 SharedPreferences.Editor edit = prefs.edit();
-                saveRecentFiles(prefs, edit, core.getPath());
+                saveRecentFiles(prefs, edit, core.getUri());
             }
             // else if(Intent.ACTION_VIEW.equals(getIntent().getAction()))
             // {
@@ -381,7 +342,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         if (core != null)
         {
                 //Save the Viewport and update the recent files list
-            saveViewportAndRecentFiles(core.getPath());
+            saveViewportAndRecentFiles(core.getUri());
                 //Stop receiving alerts
             core.stopAlerts();
             destroyAlertWaiter();
@@ -396,7 +357,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             //Save only during onStop() as this can take some time
         if(core != null && !isChangingConfigurations())
         {
-            if(!mNotSaveOnStopThisTime && core.hasChanges() && core.getFileName() != null && mSaveOnStop)
+            if(!mNotSaveOnStopThisTime && core.canSaveToCurrentLocation() && mSaveOnStop)
             {
                 if(!save())
                     showInfo(getString(R.string.error_saveing));
@@ -424,7 +385,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             if(core != null && !isChangingConfigurations())
             {
                 SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
-                if(!mNotSaveOnDestroyThisTime && core.hasChanges() && core.getFileName() != null && mSaveOnDestroy)
+                if(!mNotSaveOnDestroyThisTime && core.canSaveToCurrentLocation() && mSaveOnDestroy)
                 {
                     if(!save())
                         showInfo(getString(R.string.error_saveing));
@@ -459,7 +420,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     
                         // Set up the share action
                     MenuItem shareItem = menu.findItem(R.id.menu_share);
-                    if (core == null || core.getPath() == null)
+                    if (core == null || core.getUri() == null)
                     {
                         shareItem.setEnabled(false).setVisible(false);
                     }
@@ -472,40 +433,9 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                             shareIntent.setAction(Intent.ACTION_SEND);
                             shareIntent.setType("plain/text");
                             shareIntent.setType("*/*");
-                            
-                            Log.e("PenAndPDF", core.getPath());
-//                            Log.e("PenAndPDF", Uri.parse(core.getPath()).getPath());
-                            
-//                            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(Uri.parse(core.getPath()).getPath())));
-                            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(core.getPath())));
-                            
+//                            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(core.getPath())));
+                            shareIntent.putExtra(Intent.EXTRA_STREAM, core.getUri());
                             if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
-                            // mShareActionProvider.setOnShareTargetSelectedListener(new ShareActionProvider.OnShareTargetSelectedListener() {
-                            //         @Override
-                            //         public boolean onShareTargetSelected(ShareActionProvider source, Intent intent) {
-                            //                 //This almost duplicated code in onBackPressed()...
-                            //             if (core.hasChanges()) {
-                            //                 DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
-                            //                         public void onClick(DialogInterface dialog, int which) {
-                            //                             if (which == AlertDialog.BUTTON_POSITIVE) {
-                            //                                 if(!save()) showInfo(getString(R.string.error_saveing));
-                            //                             }
-                            //                             if (which == AlertDialog.BUTTON_NEGATIVE) {
-                                                            
-                            //                             }
-                            //                         }
-                            //                     };
-                                            
-                            //                 AlertDialog alert = mAlertBuilder.create();
-                            //                 alert.setTitle(getString(R.string.app_name));
-                            //                 alert.setMessage(getString(R.string.document_has_changes_save_them_before_sharing));
-                            //                 alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), listener);
-                            //                 alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
-                            //                 alert.show();
-                            //             }
-                            //             return false; //The return result is ignored. Always return false for consistency.
-                            //         }
-                            //     });
                         }   
                     }
                     break;
@@ -791,12 +721,29 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                                 }
                             }
                             if (which == AlertDialog.BUTTON_NEUTRAL) {
-                                Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
-                                if (core.getPath() != null && Uri.parse(core.getPath()) != null) intent.setData(Uri.parse(core.getPath()));
-                                else if (core.getFileName() != null && Uri.parse(core.getFileName()) != null) intent.setData(Uri.parse(core.getFileName()));
-                                intent.setAction(Intent.ACTION_PICK);
                                 mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //Do not save when we are stopped for the new request
-                                startActivityForResult(intent, SAVEAS_REQUEST);
+                                if (android.os.Build.VERSION.SDK_INT < 19)
+                                {
+                                    Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
+//                                    if (core.getPath() != null && Uri.parse(core.getPath()) != null) intent.setData(Uri.parse(core.getPath()));
+                                    if (core.getUri() != null) intent.setData(core.getUri());
+                                    else if (core.getFileName() != null && Uri.parse(core.getFileName()) != null) intent.setData(Uri.parse(core.getFileName()));
+                                    intent.setAction(Intent.ACTION_PICK);
+                                    startActivityForResult(intent, SAVEAS_REQUEST);
+                                }
+                                else
+                                {
+                                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                                    
+                                        // Filter to only show results that can be "opened", such as
+                                        // a file (as opposed to a list of contacts or timezones).
+                                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                                    
+                                        // Create a file with the requested MIME type.
+                                    intent.setType("application/pdf");
+                                    intent.putExtra(Intent.EXTRA_TITLE, core.getFileName());
+                                    startActivityForResult(intent, SAVEAS_REQUEST);
+                                }
                             }
                             if (which == AlertDialog.BUTTON_NEGATIVE) {
                             }
@@ -805,12 +752,12 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 AlertDialog alert = mAlertBuilder.create();
                 alert.setTitle(getString(R.string.app_name));
                 alert.setMessage(getString(R.string.how_do_you_want_to_save));
-//                if (core != null && core.getFileName() != null && core.getPath() != null)
                 alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
                 alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.saveas), listener);
                 alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), listener);
                 alert.show();
-                if (core == null || core.getFileName() == null || core.getPath() == null)
+//                if (core == null || core.getFileName() == null || core.getPath() == null)
+                if (core == null || !core.canSaveToCurrentLocation())
                     alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
                 return true;
             case R.id.menu_gotopage:
@@ -843,101 +790,16 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             else if (Intent.ACTION_VIEW.equals(intent.getAction()))
             {
                 Uri uri = intent.getData();
-                String error = null;
-
-                Log.v("PenAndPDF", "got uri="+uri);
-
-                    //The following throws a security exception!
-                // final int takeFlags = (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                // getContentResolver().takePersistableUriPermission(uri, takeFlags);
-                
-                if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
+                try 
                 {
-                    try
-                    {
-                        core = new MuPDFCore(this, Uri.decode(uri.getEncodedPath()));
-                    }
-                    catch(Exception e)
-                    {
-                        error = e.toString();
-                    }
-                    if(core == null) error = getResources().getString(R.string.unable_to_interpret_uri)+" "+uri;
+                    core = new PenAndPDFCore(this, uri);
+                    if(core == null) throw new Exception(getResources().getString(R.string.unable_to_interpret_uri)+" "+uri);
                 }
-                else if (uri.toString().startsWith("content://")) //Uri points to a content provider
-                {
-                    byte buffer[] = null;
-//                    Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.DATA, MediaStore.MediaColumns.TITLE}, null, null, null); //This should be done asynchonously!
-                    Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null); //This should be done asynchonously!
-
-//                    android.provider.MediaStore.Files.FileColumns.DATA
-                    
-                    if (cursor != null && cursor.moveToFirst())
-                    {
-                        String displayName = null;
-//                        String data = null;
-                        int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
-//                        int dataIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
-//                        int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.TITLE);
-                        if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
-
-                        Log.v("PenAndPDF/PenAndPDFActivity", "displayName = '"+displayName+"'");
-
-                            //Some programms encode parts of the filename in utf-8 base 64 encoding if the filename contains special charcters. This can look like this: '=?UTF-8?B?[text here]==?=' Here we decode such cases:
-                        Pattern utf8BPattern = Pattern.compile("=\\?UTF-8\\?B\\?(.+)\\?=");
-                        Matcher matcher = utf8BPattern.matcher(displayName);
-                        while (matcher.find()) {
-                            String base64 = matcher.group(1);
-                            byte[] data = Base64.decode(base64, Base64.DEFAULT);
-                            String decodedText = "";
-                            try
-                            {
-                                decodedText = new String(data, "UTF-8");
-                            }
-                            catch(Exception e)
-                            {}
-//                            Log.v("PenAndPDF/PenAndPDFActivity", "text = '"+decodedText+"' matcher.group()="+matcher.group()+"'");
-                            displayName = displayName.replace(matcher.group(),decodedText);
-//                            Log.v("PenAndPDF/PenAndPDFActivity", "new displayName = '"+displayName+"'");
-                        }
-                        
-//                        if(displayName == null && titleIndex >= 0) displayName = Uri.parse(cursor.getString(titleIndex)).getLastPathSegment();
-//                        if(dataIndex >= 0) data = cursor.getString(dataIndex);//Can return null!
-                        try {
-                            InputStream is = getContentResolver().openInputStream(uri);
-                            if(is != null)
-                            {
-                                int len = is.available();
-                                buffer = new byte[len];
-                                is.read(buffer, 0, len);
-                                is.close();
-                            }
-                        }
-                        catch (Exception e) {
-                            error = e.toString();
-                        }
-                        cursor.close();
-                        if(buffer != null)
-                            try 
-                            {
-                                core = new MuPDFCore(this, buffer, displayName);
-                            }
-                            catch (Exception e)
-                            {
-                                error = e.toString();
-                            }
-                        if(core == null) error = getResources().getString(R.string.unable_to_interpret_uri)+" "+uri;
-                    }
-                }
-                else
-                {
-                    error = getResources().getString(R.string.unable_to_interpret_uri)+" "+uri;
-                }
-
-                if (error != null) //There was an error
+                catch (Exception e)
                 {
                     AlertDialog alert = mAlertBuilder.create();
                     alert.setTitle(R.string.cannot_open_document);
-                    alert.setMessage(getResources().getString(R.string.reason)+": "+error);
+                    alert.setMessage(getResources().getString(R.string.reason)+": "+e.toString());
                     alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int which) {
@@ -951,14 +813,16 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                         });
                     alert.show();
                     core = null;
-//                    finish();
                 }
+                
+                    //The following throws a security exception!
+                // final int takeFlags = (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                // getContentResolver().takePersistableUriPermission(uri, takeFlags);
             }
             if (core != null && core.needsPassword()) {
                 requestPassword();
             }
-            if (core != null && core.countPages() == 0)
-            {
+            if (core != null && core.countPages() == 0) {
                 core = null;
             }
             if (core != null) {
@@ -1222,6 +1086,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
                 alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
                 alert.show();
+                if (core == null || !core.canSaveToCurrentLocation())
+                    alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false); //Todo!!!
             }
             else
             {
@@ -1314,6 +1180,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             case SAVEAS_REQUEST:
                 if (resultCode == RESULT_OK) {
                     final Uri uri = intent.getData();
+                                    
                     if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Warn if file already exists
                     {
                         DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
@@ -1356,48 +1223,55 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
 
     private boolean saveAs(Uri uri) { //Attention! Potentially destroyes the core !!
         if (core == null) return false;
-            //Save the file to the new location
-        boolean success = core.saveAs(uri.toString());
-        if(success)
+        try
         {
-                //Set the uri of this intent to the new file path
-            getIntent().setData(uri);
-                //Save the viewport under the new name
-            saveViewportAndRecentFiles(uri.getPath());
-                //Stop alerts
-            core.stopAlerts();
-            destroyAlertWaiter();
-                //Destroy the core
-            core.onDestroy();
-            core = null;
-                //Resetup the ShareActionProvider
-            Intent shareIntent = new Intent();
-            shareIntent.setAction(Intent.ACTION_SEND);
-            shareIntent.setType("plain/text");
-            shareIntent.setType("*/*");
-            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(uri.getPath())));
-            if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
+            core.saveAs(this, uri);
         }
-        return success;
+        catch(Exception e)
+        {
+            return false;
+        }
+            //Set the uri of this intent to the new file path
+        getIntent().setData(uri);
+            //Save the viewport under the new name
+        saveViewportAndRecentFiles(core.getUri());
+            //Stop alerts
+        core.stopAlerts();
+        destroyAlertWaiter();
+            //Destroy the core
+        core.onDestroy();
+        core = null;
+            //Resetup the ShareActionProvider
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.setType("plain/text");
+        shareIntent.setType("*/*");
+        shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(uri.getPath())));
+        if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
+        return true;
     }
 
     
     private boolean save() { //Attention! Potentially destroyes the core !!
         if (core == null) return false;
-        boolean success = core.save();
-        if(success)
-        {
-                //Save the viewport
-            saveViewportAndRecentFiles(core.getPath());
-                //Stop alerts
-            core.stopAlerts();
-            destroyAlertWaiter();
-                //Destroy the core
-            core.onDestroy();  
-            core = null;
-            mDocView = null;
+        try
+        {   
+            core.save(this);
         }
-        return success;
+        catch(Exception e)
+        {
+            return false;
+        }
+            //Save the viewport
+        saveViewportAndRecentFiles(core.getUri());
+            //Stop alerts
+        core.stopAlerts();
+        destroyAlertWaiter();
+            //Destroy the core
+        core.onDestroy();  
+        core = null;
+        mDocView = null;
+        return true;
     }
     
             
@@ -1415,19 +1289,20 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
 
     private void restoreVieport() {
         if (core != null && mDocView != null) {
-            String path = core.getPath(); //Can be null
+//            String path = core.getPath(); //Can be null
             SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-            if(path != null)
-                setViewport(prefs, path);
-            else
-                setViewport(prefs, core.getFileName());
+        //     if(path != null)
+        //         setViewport(prefs, path);
+        //     else
+        //         setViewport(prefs, core.getFileName());
+            setViewport(prefs, core.getUri());
         }
     }
 
 
-    private void setViewport(SharedPreferences prefs, String path) {
-        if(path == null) path = "/nopath";
-        setViewport(prefs.getInt("page"+path, 0),prefs.getFloat("normalizedscale"+path, 0.0f),prefs.getFloat("normalizedxscroll"+path, 0.0f), prefs.getFloat("normalizedyscroll"+path, 0.0f));
+//    private void setViewport(SharedPreferences prefs, String path) {
+    private void setViewport(SharedPreferences prefs, Uri uri) {
+        setViewport(prefs.getInt("page"+uri.toString(), 0),prefs.getFloat("normalizedscale"+uri.toString(), 0.0f),prefs.getFloat("normalizedxscroll"+uri.toString(), 0.0f), prefs.getFloat("normalizedyscroll"+uri.toString(), 0.0f));
     }
 
     
@@ -1438,31 +1313,31 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     }
 
 
-    private void saveRecentFiles(SharedPreferences prefs, SharedPreferences.Editor edit, String path) {
+    private void saveRecentFiles(SharedPreferences prefs, SharedPreferences.Editor edit, Uri uri) {
             //Read the recent files list from preferences
         RecentFilesList recentFilesList = new RecentFilesList(prefs);                    
             //Add the current file
-        recentFilesList.push(path);
+        recentFilesList.push(uri.toString());
             //Write the recent files list
         recentFilesList.write(edit);
     }
     
     
-    private void saveViewportAndRecentFiles(String path) {
+    private void saveViewportAndRecentFiles(Uri uri) {
         SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
         SharedPreferences.Editor edit = prefs.edit();
-        if(path != null)
+        if(uri != null)
         {
-            saveRecentFiles(prefs, edit, path);
-            saveViewport(edit, path);
+            saveRecentFiles(prefs, edit, uri);
+            saveViewport(edit, uri.toString());
         }
         else
-            saveViewport(edit, core.getFileName());
+            saveViewport(edit, uri.toString());
     }
     
         @Override
     public Object onRetainNonConfigurationInstance() { //Called if the app is destroyed for a configuration change
-        MuPDFCore mycore = core;
+        PenAndPDFCore mycore = core;
         core = null;
         return mycore;
     }
@@ -1505,18 +1380,19 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             return;
         }
 
-        Intent intent = getIntent();
-        Uri docUri = intent != null ? intent.getData() : null;
+        // Intent intent = getIntent();
+        // Uri docUri = intent != null ? intent.getData() : null;
 
-        if (docUri == null) {
-            showInfo(getString(R.string.print_failed));
-        }
+        // if (docUri == null) {
+        //     showInfo(getString(R.string.print_failed));
+        // }
 
-        if (docUri.getScheme() == null)
-            docUri = Uri.parse("file://"+docUri.toString());
+        // if (docUri.getScheme() == null)
+        //     docUri = Uri.parse("file://"+docUri.toString());
 
         Intent printIntent = new Intent(this, PrintDialogActivity.class);
-        printIntent.setDataAndType(docUri, "aplication/pdf");
+//        printIntent.setDataAndType(docUri, "aplication/pdf");
+        printIntent.setDataAndType(core.getUri(), "aplication/pdf");
         printIntent.putExtra("title", core.getFileName());
         startActivityForResult(printIntent, PRINT_REQUEST);
     }
@@ -1659,6 +1535,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
             alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
             alert.show();
+            if (core == null || !core.canSaveToCurrentLocation())
+                alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false); //Todo!!!
         } else {
             super.onBackPressed();
         }
@@ -1718,7 +1596,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     public void onAnimationEnd(Animator animation) {
                         if(mDocView != null) {
                             mDocView.setScale(1.0f);
-                            saveViewportAndRecentFiles(core.getPath()); //So that we show the right page when the mDocView is recreated
+                            saveViewportAndRecentFiles(core.getUri()); //So that we show the right page when the mDocView is recreated
                         }
                         mDocView = null;
                         setupDocView();

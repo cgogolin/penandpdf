@@ -2788,7 +2788,7 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
         {
             fz_var(written);
             
-                //We save incremental if the current path is set
+                //We save incremental if the current path is set first copying from current path 
             if (glo->current_path)
             {
                 opts.do_incremental = 1;
@@ -2858,7 +2858,6 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
         }
     }
     if (jpath != NULL && new_path != NULL) (*env)->ReleaseStringUTFChars(env, jpath, new_path);
-                
     return written-1; //return -1 on error and 0 on success 
 }
 

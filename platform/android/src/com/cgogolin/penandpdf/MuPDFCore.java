@@ -9,6 +9,13 @@ import android.graphics.PointF;
 import android.graphics.RectF;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.File;
+import android.os.ParcelFileDescriptor;
+
 
 public class MuPDFCore
 {
@@ -77,7 +84,7 @@ public class MuPDFCore
     private native void destroying();
     private native boolean hasChangesInternal();
 //	private native int saveInternal();
-    private native int saveAsInternal(String path);
+    protected native int saveAsInternal(String path);
     private native int insertPageBeforeInternal(int position);
 
     public native void setInkThickness(float inkThickness);
@@ -90,7 +97,15 @@ public class MuPDFCore
     
     public static native boolean javascriptSupported();
 
+    public MuPDFCore() //Hack to work around the fact that Java doesn't allow to call base class constructors later in the constructors of derived classes.
+        {}
+    
     public MuPDFCore(Context context, String path) throws Exception
+        {
+            init(context, path);
+        }
+    
+    protected void init(Context context, String path) throws Exception
 	{
             if(path == null) throw new Exception(String.format(context.getString(R.string.cannot_open_file_Path), path));
                 
@@ -106,11 +121,16 @@ public class MuPDFCore
             file_format = fileFormatInternal();
             if(file_format == null) throw new Exception(String.format(context.getString(R.string.cannot_interpret_file), path));
 	}
+
+    public MuPDFCore(Context context, byte buffer[], String fileName) throws Exception
+        {
+            init(context, buffer, fileName);
+        }
     
-    public MuPDFCore(Context context, byte buffer[], String displayName) throws Exception
+    protected void init(Context context, byte buffer[], String fileName) throws Exception
 	{
             fileBuffer = buffer;
-            mFileName = displayName;
+            mFileName = fileName;
             
             globals = openBuffer();
             if (globals == 0)
@@ -118,7 +138,7 @@ public class MuPDFCore
                 throw new Exception(context.getString(R.string.cannot_open_buffer));
             }
             file_format = fileFormatInternal();
-            if(file_format == null) throw new Exception(String.format(context.getString(R.string.cannot_interpret_file), displayName));
+            if(file_format == null) throw new Exception(String.format(context.getString(R.string.cannot_interpret_file), fileName));
 	}
 
     public  int countPages()
@@ -404,14 +424,6 @@ public class MuPDFCore
 
     public synchronized boolean hasChanges() {
         return hasChangesInternal();
-    }
-
-    public synchronized boolean save() {
-        return saveAs(null);
-    }
-
-    public synchronized boolean saveAs(String path) {
-        return saveAsInternal(path)==0 ? true : false;
     }
     
     public String getPath() {
