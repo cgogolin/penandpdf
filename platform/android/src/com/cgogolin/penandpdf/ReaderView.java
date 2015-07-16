@@ -21,12 +21,13 @@ import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.Scroller;
 import android.widget.Toast;
+import android.widget.ImageView;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 import android.util.Log;
 
-abstract public class ReaderView extends AdapterView<Adapter> implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, Runnable //, android.view.View.OnLayoutChangeListener
+abstract public class ReaderView extends AdapterView<Adapter> implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, Runnable
 {
     private static final int  MOVING_DIAGONALLY = 0;
     private static final int  MOVING_LEFT       = 1;
@@ -45,7 +46,9 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     protected static boolean mUseStylus = false;
     protected static boolean mFitWidth = false;
 
-    private Bitmap mSharedHqBm;
+    private Bitmap mSharedHqBm1;
+    private Bitmap mSharedHqBm2;
+
     private Adapter           mAdapter;
     private int               mCurrent = INVALID_POSITION;    // Adapter's index for the current view
     private int               mNewCurrent;
@@ -95,27 +98,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         mScaleGestureDetector = new ScaleGestureDetector(context, this);
         mScroller        = new Scroller(context);
         mScroller.forceFinished(true); //Otherwise mScroller.isFinished() is not true which prevents the generation of the Hq area
-            //We want to get notified if the size we have changes
-//        addOnLayoutChangeListener(this);
     }
-
-    // public ReaderView(Context context, AttributeSet attrs) {
-    //     super(context, attrs);
-    //     mGestureDetector = new GestureDetector(this);
-    //     mScaleGestureDetector = new ScaleGestureDetector(context, this);
-    //     mScroller        = new Scroller(context);
-    //         //We want to get notified if the size we have changes
-    //     addOnLayoutChangeListener(this);
-    // }
-
-    // public ReaderView(Context context, AttributeSet attrs, int defStyle) {
-    //     super(context, attrs, defStyle);
-    //     mGestureDetector = new GestureDetector(this);
-    //     mScaleGestureDetector = new ScaleGestureDetector(context, this);
-    //     mScroller        = new Scroller(context);
-    //         //We want to get notified if the size we have changes
-    //     addOnLayoutChangeListener(this);
-    // }
 
     @Override
         public int getSelectedItemPosition() {
@@ -368,17 +351,12 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     abstract protected void onMoveOffChild(int i);
     abstract protected void onSettle(View v);
     abstract protected void onUnsettle(View v);
-//    abstract protected void onNotInUse(View v);
     abstract protected void onScaleChild(View v, Float scale);
     abstract protected void onNumberOfStrokesChanged(int numberOfStrokes);
     
     public View getView(int i) {
         return mChildViews.get(i); //Can return null while waiting for onLayout()!
     }
-
-    // public View getDisplayedView() {
-    //     return mChildViews.get(mCurrent); //Can return null while waiting for onLayout()!
-    // }
 
     public void run() {
         if (!mScroller.isFinished()) {
@@ -622,35 +600,27 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             measureView(getChildAt(i));
     }
 
-    // @Override
-    // public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-//         final int oldWidth = oldRight-oldLeft;
-//         final int oldHeight = oldBottom-oldTop;
-//         final int width = right-left;
-//         final int height = bottom-top;
-        
-//             //Tell the Adapter to adjust the size of the HQ bitmap and all existing views that the parent size has changed
-//         if(oldWidth != width || oldHeight != height)
-//         {
-//             applyToChildren(new ViewMapper() {
-//                     @Override
-//                     void applyToView(View view) {
-//                         ((PageView)view).setParentSize(new Point(width, height));
-// //                        ((PageView)view).setHqBm(getSharedHqBm(width, height));
-//                     }
-//                 });
-//         }
-//         requestLayout();
-//    }
-
-
     public Bitmap getPatchBm() {
-        if (mSharedHqBm == null || mSharedHqBm.getWidth() != getWidth() || mSharedHqBm.getHeight() != getHeight())
+            //We must make sure that we always return one of two
+            //bitmaps in an alternating manner, so that the native code can draw to one
+            //while the other is set to the Hq view
+        Bitmap currentBitmap = ((PageView)getSelectedView()).getHqImageBitmap();
+
+        if(currentBitmap == null || currentBitmap == mSharedHqBm2)
         {
-//            Log.i("PageView", "creating new HqBm w="+getWidth()+" h="+getHeight());
-            mSharedHqBm = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+            if (mSharedHqBm1 == null || mSharedHqBm1.getWidth() != getWidth() || mSharedHqBm1.getHeight() != getHeight())
+            {
+                mSharedHqBm1 = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+            }
+            return mSharedHqBm1;
         }
-        return mSharedHqBm;
+        else {
+            if (mSharedHqBm2 == null || mSharedHqBm2.getWidth() != getWidth() || mSharedHqBm2.getHeight() != getHeight())
+            {
+                mSharedHqBm2 = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+            }
+            return mSharedHqBm2;
+        }
     }
     
     
@@ -663,7 +633,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             //If we were asked to display a different view do so now...
         if(mHasNewCurrent)
         {
-//            if (cv != null) postUnsettle(cv);
             if (cv != null) onUnsettle(cv);
                 //Reset scroll amounts
             mXScroll = mYScroll = 0;
@@ -744,18 +713,10 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                     
                     if(mHasNewNormalizedXScroll){
                         XScroll = (int)(mNewNormalizedXScroll*cv.getMeasuredWidth()*mScale*scale);
-                        // if(cv.getMeasuredWidth() < getWidth()) {
-                        //     Toast.makeText(getContext(), "correcting XScroll by "+(float)(cv.getMeasuredWidth() - getWidth())/2, Toast.LENGTH_LONG).show();
-                        //     XScroll += (float)(cv.getMeasuredWidth() - getWidth())/2;
-                        // }
                         mHasNewNormalizedXScroll = false;
                     }
                     if(mHasNewNormalizedYScroll){
                         YScroll = (int)(mNewNormalizedYScroll*cv.getMeasuredHeight()*mScale*scale);
-//                        Toast.makeText(getContext(), "measuredHeight="+cv.getMeasuredHeight()+" getHeight="+getHeight()+" mScale="+mScale+" scale="+scale, Toast.LENGTH_LONG).show();
-                        // if(cv.getMeasuredHeight()*scale < getHeight()) {
-                        // YScroll += (float)(cv.getMeasuredHeight() - getHeight())/2;
-                        // }
                         mHasNewNormalizedYScroll = false;
                     }
 
@@ -765,20 +726,11 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                         XScroll+=getWidth()/2;
                         YScroll+=getHeight()/2;
                     }
-//                    scrollToPos(XScroll, YScroll);
-                    
-                    // mScrollerLastX = mScrollerLastY = 0;
-                    // mXScroll = mYScroll = 0;
-                    // mScroller.forceFinished(true);
-                    // mScroller.startScroll(0, 0, XScroll-cv.getLeft(), YScroll-cv.getTop(), 200);
-                    // post(this);
 
                     mScroller.forceFinished(true);
                     mScrollerLastX = mScrollerLastY = 0;
                     mXScroll = XScroll - cv.getLeft();
                     mYScroll = YScroll - cv.getTop();
-//                    postSettle(cv);
-//                    post(this);
                 }
             }
             
@@ -795,24 +747,13 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         cvBottom = cvTop  + cv.getMeasuredHeight();
 
             //If the user is not interacting and the scroller is finished move the view so that no gaps are left
-        if (!mUserInteracting && mScroller.isFinished() && !changed) {
-//            Log.i("PageView", "cvLeft="+cvLeft+" cvTop="+cvTop+" cvRight="+cvRight+" cvBottom="+cvBottom+" left="+left+" top="+top+" right="+right+" bottom="+bottom+" changed="+changed);
-            
+        if (!mUserInteracting && mScroller.isFinished() && !changed) {            
             Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
             cvRight  += corr.x;
             cvLeft   += corr.x;
             cvTop    += corr.y;
             cvBottom += corr.y;
-        }
-
-        
-//             // If the current view is smaller than the screen in height, clamp
-//             // it vertically
-//         else if (cv.getMeasuredHeight() <= getHeight()) {
-//             Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
-//             cvTop    += corr.y;
-//             cvBottom += corr.y;
-//         }
+        }        
 
             //Finally layout the child view with the calculated values
         cv.layout(cvLeft, cvTop, cvRight, cvBottom);
@@ -843,9 +784,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         }
 
         invalidate();
-        
-            // post to ensure generation of hq area
-//        post(this);
     }
 
     
@@ -909,21 +847,11 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             return mViewCache.removeFirst();
     }
 
-    // private Bitmap getSharedHqBm(int width, int height) {
-    //     if (mSharedHqBm == null || mSharedHqBm.getWidth() != width || mSharedHqBm.getHeight() != height)
-    //     {
-    //         Log.i("PageView", "creating new HqBm");
-    //         mSharedHqBm = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-    //     }
-    //     return mSharedHqBm;
-    // }
 
     private View getOrCreateChild(int i, int width, int height) {
         View v = mChildViews.get(i);
         if (v == null) {
             v = mAdapter.getView(i, getCached(), this);
-//            Log.i("PageView", "getOrCreateChild page="+i);
-//            ((PageView)v).setHqBm(getSharedHqBm(width, height));
             onChildSetup(i, v);
             onScaleChild(v, mScale);
             addAndMeasureChild(i, v);
@@ -1126,19 +1054,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     public void doNextScrollWithCenter()
     {
         mNextScrollWithCenter = true;
-    }
-    
-    // private void scrollToPos(int XScroll, int YScroll)
-    // {
-    //     View cv = getSelectedView();
-    //     if (cv == null) return;
-        
-    //     mScrollerLastX = mScrollerLastY = 0;
-    //     mXScroll = mYScroll = 0;
-    //     mScroller.forceFinished(true);
-    //     mScroller.startScroll(0, 0, XScroll-cv.getLeft(), YScroll-cv.getTop(), 0);
-    //     post(this);
-    // }
+    }    
 
     public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
         mUseStylus = sharedPref.getBoolean(SettingsActivity.PREF_USE_STYLUS, false);

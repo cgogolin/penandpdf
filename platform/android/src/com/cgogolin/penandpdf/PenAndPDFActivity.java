@@ -357,7 +357,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             //Save only during onStop() as this can take some time
         if(core != null && !isChangingConfigurations())
         {
-            if(!mNotSaveOnStopThisTime && core.canSaveToCurrentLocation() && mSaveOnStop)
+            if(!mNotSaveOnStopThisTime && core.canSaveToCurrentLocation(this) && mSaveOnStop)
             {
                 if(!save())
                     showInfo(getString(R.string.error_saveing));
@@ -385,13 +385,16 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             if(core != null && !isChangingConfigurations())
             {
                 SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
-                if(!mNotSaveOnDestroyThisTime && core.canSaveToCurrentLocation() && mSaveOnDestroy)
+                if(!mNotSaveOnDestroyThisTime && core.canSaveToCurrentLocation(this) && mSaveOnDestroy)
                 {
                     if(!save())
                         showInfo(getString(R.string.error_saveing));
                 }
-                core.onDestroy(); //Destroy even if not saved as we have no choice
-                core = null;
+                if(core!=null)
+                {
+                    core.onDestroy(); //Destroy even if not saved as we have no choice
+                    core = null;
+                }
             }
             
             if (mAlertTask != null) {
@@ -548,13 +551,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
     
     @Override
     public boolean onOptionsItemSelected(MenuItem item) { //Handel clicks in the options menu
-        MuPDFView pageView = (MuPDFView) mDocView.getSelectedView();
         switch (item.getItemId()) 
         {
-            case R.id.menu_undo:
-                pageView.undoDraw();
-                mDocView.onNumberOfStrokesChanged(pageView.getDrawingSize());
-                return true;
             case R.id.menu_addpage:
                     //Insert a new blank page at the end
                 if(core!=null) core.insertBlankPageAtEnd();
@@ -571,13 +569,116 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 Intent intent = new Intent(this,SettingsActivity.class);
                 startActivity(intent);
                 return true;
-            case R.id.menu_edit:
-                ((MuPDFPageView)pageView).editSelectedAnnotation();
+            case R.id.menu_draw:
+                mDocView.setMode(MuPDFReaderView.Mode.Drawing);
                 mActionBarMode = ActionBarMode.Annot;
                 invalidateOptionsMenu();
                 return true;
-            case R.id.menu_draw:
-                mDocView.setMode(MuPDFReaderView.Mode.Drawing);
+            // case R.id.menu_print:
+            //     printDoc();
+            //     return true;
+            case R.id.menu_search:
+                mActionBarMode = ActionBarMode.Search;
+                invalidateOptionsMenu();
+                return true;
+            // case R.id.menu_search_box:
+            //     onSearchRequested();
+            //     return true;
+            case R.id.menu_next:
+                if (!latestTextInSearchBox.equals(""))
+                {
+                    hideKeyboard();
+                    search(1);
+                }
+                return true;
+            case R.id.menu_previous:
+                if (!latestTextInSearchBox.equals(""))
+                {
+                    hideKeyboard();
+                    search(-1);
+                }
+                return true;
+            case R.id.menu_open:
+                openDocument();
+                return true;                
+            case R.id.menu_save:
+                DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (which == AlertDialog.BUTTON_POSITIVE) {
+                                if(core != null)
+                                {
+                                    if(!save())
+                                        showInfo(getString(R.string.error_saveing));
+                                    else
+                                    {
+                                        onResume(); //This is a hack but allows me to not duplicate code. Remeber that save() usually destroyes the core!
+                                    }
+                                }
+                            }
+                            if (which == AlertDialog.BUTTON_NEUTRAL) {
+                                mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //Do not save when we are stopped for the new request
+                                if (android.os.Build.VERSION.SDK_INT < 19)
+                                {
+                                    Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
+//                                    if (core.getPath() != null && Uri.parse(core.getPath()) != null) intent.setData(Uri.parse(core.getPath()));
+                                    if (core.getUri() != null) intent.setData(core.getUri());
+                                    else if (core.getFileName() != null && Uri.parse(core.getFileName()) != null) intent.setData(Uri.parse(core.getFileName()));
+                                    intent.setAction(Intent.ACTION_PICK);
+                                    startActivityForResult(intent, SAVEAS_REQUEST);
+                                }
+                                else
+                                {
+                                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                                    
+                                        // Filter to only show results that can be "opened", such as
+                                        // a file (as opposed to a list of contacts or timezones).
+                                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                                    
+                                        // Create a file with the requested MIME type.
+                                    intent.setType("application/pdf");
+                                    intent.putExtra(Intent.EXTRA_TITLE, core.getFileName());
+                                    startActivityForResult(intent, SAVEAS_REQUEST);
+                                }
+                            }
+                            if (which == AlertDialog.BUTTON_NEGATIVE) {
+                            }
+                        }
+                    };
+                AlertDialog alert = mAlertBuilder.create();
+                alert.setTitle(getString(R.string.app_name));
+                alert.setMessage(getString(R.string.how_do_you_want_to_save));
+                alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
+                alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.saveas), listener);
+                alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), listener);
+                alert.show();
+//                if (core == null || core.getFileName() == null || core.getPath() == null)
+                if (core == null || !core.canSaveToCurrentLocation(this))
+                    alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+                return true;
+            case R.id.menu_gotopage:
+                showGoToPageDialoge();
+                return true;
+            case R.id.menu_selection:
+                mDocView.setMode(MuPDFReaderView.Mode.Selecting);
+                mActionBarMode = ActionBarMode.Selection;
+                invalidateOptionsMenu();
+                return true;
+            case R.id.menu_linkback:
+                setViewport(mPageBeforeInternalLinkHit,mNormalizedScaleBeforeInternalLinkHit, mNormalizedXScrollBeforeInternalLinkHit, mNormalizedYScrollBeforeInternalLinkHit);
+                mPageBeforeInternalLinkHit = -1;
+                invalidateOptionsMenu();
+                return true;
+        }
+
+        MuPDFView pageView = (MuPDFView) mDocView.getSelectedView();
+        switch (item.getItemId()) 
+        {
+            case R.id.menu_undo:
+                pageView.undoDraw();
+                mDocView.onNumberOfStrokesChanged(pageView.getDrawingSize());
+                return true;
+            case R.id.menu_edit:
+                ((MuPDFPageView)pageView).editSelectedAnnotation();
                 mActionBarMode = ActionBarMode.Annot;
                 invalidateOptionsMenu();
                 return true;
@@ -679,103 +780,11 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 mActionBarMode = ActionBarMode.Main;
                 invalidateOptionsMenu();
                 return true;
-            // case R.id.menu_print:
-            //     printDoc();
-            //     return true;
-            case R.id.menu_search:
-                mActionBarMode = ActionBarMode.Search;
-                invalidateOptionsMenu();
-                return true;
-            // case R.id.menu_search_box:
-            //     onSearchRequested();
-            //     return true;
-            case R.id.menu_next:
-                if (!latestTextInSearchBox.equals(""))
-                {
-                    hideKeyboard();
-                    search(1);
-                }
-                return true;
-            case R.id.menu_previous:
-                if (!latestTextInSearchBox.equals(""))
-                {
-                    hideKeyboard();
-                    search(-1);
-                }
-                return true;
-            case R.id.menu_open:
-                openDocument();
-                return true;                
-            case R.id.menu_save:
-                DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            if (which == AlertDialog.BUTTON_POSITIVE) {
-                                if(core != null)
-                                {
-                                    if(!save())
-                                        showInfo(getString(R.string.error_saveing));
-                                    else
-                                    {
-                                        onResume(); //This is a hack but allows me to not duplicate code. Remeber that save() usually destroyes the core!
-                                    }
-                                }
-                            }
-                            if (which == AlertDialog.BUTTON_NEUTRAL) {
-                                mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //Do not save when we are stopped for the new request
-                                if (android.os.Build.VERSION.SDK_INT < 19)
-                                {
-                                    Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
-//                                    if (core.getPath() != null && Uri.parse(core.getPath()) != null) intent.setData(Uri.parse(core.getPath()));
-                                    if (core.getUri() != null) intent.setData(core.getUri());
-                                    else if (core.getFileName() != null && Uri.parse(core.getFileName()) != null) intent.setData(Uri.parse(core.getFileName()));
-                                    intent.setAction(Intent.ACTION_PICK);
-                                    startActivityForResult(intent, SAVEAS_REQUEST);
-                                }
-                                else
-                                {
-                                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                                    
-                                        // Filter to only show results that can be "opened", such as
-                                        // a file (as opposed to a list of contacts or timezones).
-                                    intent.addCategory(Intent.CATEGORY_OPENABLE);
-                                    
-                                        // Create a file with the requested MIME type.
-                                    intent.setType("application/pdf");
-                                    intent.putExtra(Intent.EXTRA_TITLE, core.getFileName());
-                                    startActivityForResult(intent, SAVEAS_REQUEST);
-                                }
-                            }
-                            if (which == AlertDialog.BUTTON_NEGATIVE) {
-                            }
-                        }
-                    };
-                AlertDialog alert = mAlertBuilder.create();
-                alert.setTitle(getString(R.string.app_name));
-                alert.setMessage(getString(R.string.how_do_you_want_to_save));
-                alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
-                alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.saveas), listener);
-                alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), listener);
-                alert.show();
-//                if (core == null || core.getFileName() == null || core.getPath() == null)
-                if (core == null || !core.canSaveToCurrentLocation())
-                    alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-                return true;
-            case R.id.menu_gotopage:
-                showGoToPageDialoge();
-                return true;
-            case R.id.menu_selection:
-                mDocView.setMode(MuPDFReaderView.Mode.Selecting);
-                mActionBarMode = ActionBarMode.Selection;
-                invalidateOptionsMenu();
-                return true;
-            case R.id.menu_linkback:
-                setViewport(mPageBeforeInternalLinkHit,mNormalizedScaleBeforeInternalLinkHit, mNormalizedXScrollBeforeInternalLinkHit, mNormalizedYScrollBeforeInternalLinkHit);
-                mPageBeforeInternalLinkHit = -1;
-                invalidateOptionsMenu();
-                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+
+        
     }
 
 
@@ -815,9 +824,15 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     core = null;
                 }
                 
-                    //The following throws a security exception!
-                // final int takeFlags = (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                // getContentResolver().takePersistableUriPermission(uri, takeFlags);
+                try
+                {
+                    final int takeFlags = (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    getContentResolver().takePersistableUriPermission(uri, takeFlags);
+                }
+                catch(Exception e)
+                {
+                        //Nothing we can do if we don't get the permission
+                }
             }
             if (core != null && core.needsPassword()) {
                 requestPassword();
@@ -1086,7 +1101,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
                 alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
                 alert.show();
-                if (core == null || !core.canSaveToCurrentLocation())
+                if (core == null || !core.canSaveToCurrentLocation(this))
                     alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false); //Todo!!!
             }
             else
@@ -1140,19 +1155,16 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 {
                     if (intent != null) {
                         Uri uri = intent.getData();
-                        
-                        final int takeFlags = intent.getFlags()
-                            & (Intent.FLAG_GRANT_READ_URI_PERMISSION
-                               | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                        
+
                             // Try to take permissions
                         try
                         {
+                            final int takeFlags = intent.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                             getContentResolver().takePersistableUriPermission(uri, takeFlags);
                         }
                         catch(Exception e)
                         {
-                                //noting to do
+                                //noting we can do if we don't get the permission
                         }
                         
                         getIntent().setAction(Intent.ACTION_VIEW);
@@ -1535,7 +1547,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
             alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
             alert.show();
-            if (core == null || !core.canSaveToCurrentLocation())
+            if (core == null || !core.canSaveToCurrentLocation(this))
                 alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false); //Todo!!!
         } else {
             super.onBackPressed();

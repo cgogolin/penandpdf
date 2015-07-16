@@ -83,7 +83,6 @@ public class MuPDFCore
     private native void stopAlertsInternal();
     private native void destroying();
     private native boolean hasChangesInternal();
-//	private native int saveInternal();
     protected native int saveAsInternal(String path);
     private native int insertPageBeforeInternal(int position);
 

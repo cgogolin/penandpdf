@@ -96,13 +96,12 @@ public class PenAndPDFCore extends MuPDFCore
                 if(tmpFile == null) {
                     File cacheDir = context.getCacheDir();
                     tmpFile = File.createTempFile("prefix", "pdf", cacheDir);
-                }    
-                
-                saveAsInternal(tmpFile.getPath());
+                }
+                if(saveAsInternal(tmpFile.getPath()) != 0) throw new java.io.IOException("native code failed to save to "+tmpFile.getPath());
                 
                 ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "w");
-                FileOutputStream fileOutputStream = new FileOutputStream(pfd.getFileDescriptor());
                 FileInputStream fileInputStream = new FileInputStream(tmpFile);
+                FileOutputStream fileOutputStream = new FileOutputStream(pfd.getFileDescriptor());
                 copyStream(fileInputStream,fileOutputStream);             
                 fileInputStream.close();
                 fileOutputStream.close();
@@ -121,8 +120,22 @@ public class PenAndPDFCore extends MuPDFCore
             }
         }
 
-    public boolean canSaveToCurrentLocation() {
-        return getFileName() != null && getPath() != null;
+    public boolean canSaveToCurrentLocation(Context context) {
+        try
+        {
+            ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "wa");
+            if(pfd != null) 
+            {
+                pfd.close();
+                return true;
+            }
+            else
+                return false;
+        }
+        catch(Exception e)
+        {
+            return false;
+        }
     }
 
     public Uri getUri(){
