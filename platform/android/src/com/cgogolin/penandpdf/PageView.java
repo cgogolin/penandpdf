@@ -437,16 +437,15 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                     
         @Override
         protected void onDraw(final Canvas canvas) {
-            super.onDraw(canvas);
-
-                // Maybe invalidate(Rect dirty) can be used to speed up things?
-            
-
-//                        Log.v("PageView", "onDraw() of page "+mPageNumber+" of OverlayView"+this);
-                        
+            super.onDraw(canvas);                        
                 //Clip to the canvas size (not sure if this is necessary)
-            canvas.clipRect(0,0, canvas.getWidth(), canvas.getHeight(), Region.Op.INTERSECT);
-                //Move the canvas so that it covers the visible region (not sure why the -2 is necessary)
+//            canvas.clipRect(0,0, canvas.getWidth(), canvas.getHeight(), Region.Op.INTERSECT);
+
+                //We can get the rect set in invalidate(Rect) like this:
+//            final Rect r = canvas.getClipBounds();
+                //To further speed things up we could also use a Picture...
+            
+                //Move the canvas so that it covers the visible region
             canvas.translate(PageView.this.getLeft(), PageView.this.getTop());
                         
                 // Work out current total scale factor from source to view
@@ -775,14 +774,22 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         
         if (mDrawing != null && mDrawing.size() > 0) {
             ArrayList<PointF> arc = mDrawing.get(mDrawing.size() - 1);
-            int lastElementIndex = arc.size()-1;
+            // int lastElementIndex = arc.size()-1;
             // if(lastElementIndex >= 2 && PointFMath.pointToLineDistance(arc.get(lastElementIndex-2),point,arc.get(lastElementIndex-1)) < inkThickness && PointFMath.pointToLineDistance(arc.get(lastElementIndex-2),arc.get(lastElementIndex),arc.get(lastElementIndex-1)) < inkThickness) {
             //     arc.remove(lastElementIndex-1);
             // }
             // if(lastElementIndex >= 2 && PointFMath.distance(arc.get(lastElementIndex-1), point) < inkThickness)
             //     arc.remove(lastElementIndex);
             arc.add(point);
+            
             mOverlayView.invalidate();
+//            mOverlayView.invalidate(new Rect(0,0,100,100)); // inkThickness * scale
+            
+            // Rect invalidRect = new Rect();
+
+            // invalidRect.union((int)(point.x*scale), (int)(point.y*scale));
+            // invalidRect.union((int)(arc.get(arc.size()-2).x*scale), (int)(arc.get(arc.size()-2).y*scale));
+            // mOverlayView.invalidate(invalidRect);
         }
     }
     
@@ -1068,7 +1075,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         if (viewArea.width() == mSize.x && viewArea.height() == mSize.y) return;
 
             //Construct the PatchInfo (important: the bitmap is shared between all page views that belong to a given readerview, so we ask the ReadderView to provide it)
-        PatchInfo patchInfo = new PatchInfo(viewArea, ((ReaderView)mParent).getPatchBm(), mHqView, update);
+        PatchInfo patchInfo = new PatchInfo(viewArea, ((ReaderView)mParent).getPatchBm(update), mHqView, update);
 
         Log.e("PenAndPDF", "got "+patchInfo.patchBm);
 

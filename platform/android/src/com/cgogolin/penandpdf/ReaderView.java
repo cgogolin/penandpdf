@@ -600,13 +600,15 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             measureView(getChildAt(i));
     }
 
-    public Bitmap getPatchBm() {
-            //We must make sure that we always return one of two
+    public Bitmap getPatchBm(boolean update) {
+            //We must make sure that we return one of two
             //bitmaps in an alternating manner, so that the native code can draw to one
             //while the other is set to the Hq view
+            //if update=true the situation changes, then the native code should
+            //precisely draw to the bitmap currently shown
         Bitmap currentBitmap = ((PageView)getSelectedView()).getHqImageBitmap();
 
-        if(currentBitmap == null || currentBitmap == mSharedHqBm2)
+        if(currentBitmap == null || (currentBitmap == mSharedHqBm2 && !update) || (currentBitmap == mSharedHqBm1 && update))
         {
             if (mSharedHqBm1 == null || mSharedHqBm1.getWidth() != getWidth() || mSharedHqBm1.getHeight() != getHeight())
             {
