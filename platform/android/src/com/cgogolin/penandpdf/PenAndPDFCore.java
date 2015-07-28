@@ -85,10 +85,11 @@ public class PenAndPDFCore extends MuPDFCore
     public synchronized void saveAs(Context context, Uri uri) throws java.io.IOException, java.io.FileNotFoundException
         {
             this.uri = uri;
-            
-            if(new File(Uri.decode(uri.getEncodedPath())).isFile())
-            {
+
+            if(new File(Uri.decode(uri.getEncodedPath())).getParentFile().isDirectory())
+            {   
                 String path = Uri.decode(uri.getEncodedPath());
+                
                 if(saveAsInternal(path) != 0) throw new java.io.IOException("native code failed to save to "+uri.toString());
             }
             else //Not a file so we have to write to a tmp file from the native code first 
@@ -121,6 +122,8 @@ public class PenAndPDFCore extends MuPDFCore
         }
 
     public boolean canSaveToCurrentLocation(Context context) {
+        Log.e("PenAndPDF", "cheching if we can save to "+uri+" canWrite()="+new File(Uri.decode(uri.getEncodedPath())).canWrite());
+        
         try
         {
             ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "wa");
@@ -129,12 +132,16 @@ public class PenAndPDFCore extends MuPDFCore
                 pfd.close();
                 return true;
             }
-            else
-                return false;
+            
         }
         catch(Exception e)
+        {}
+        finally
         {
-            return false;
+            if(new File(Uri.decode(uri.getEncodedPath())).canWrite() )
+                return true;
+            else
+                return false;
         }
     }
 

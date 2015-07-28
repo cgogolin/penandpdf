@@ -223,9 +223,9 @@ public class FileBrowserFragment extends ListFragment {
             final EditText editText = (EditText)rootView.findViewById(R.id.newfilenamefield);
             if(mFilename != null)
             {
+                editText.setText(mFilename);
                 int indexOfDot = mFilename.lastIndexOf(".");
                 if(indexOfDot > -1) editText.setSelection(indexOfDot);
-                editText.setText(mFilename);
             }
             editText.setVisibility(View.VISIBLE);
             editText.requestFocus();

@@ -267,7 +267,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             
             setPatchArea(null);
 
-            Log.e("PenAndPDF", "drawing to "+patchInfo.patchBm);
+//            Log.e("PenAndPDF", "drawing to "+patchInfo.patchBm);
             
             mDrawPatch = new AsyncTask<PatchInfo,Void,PatchInfo>() {
                     protected PatchInfo doInBackground(PatchInfo... v) {
@@ -1077,7 +1077,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             //Construct the PatchInfo (important: the bitmap is shared between all page views that belong to a given readerview, so we ask the ReadderView to provide it)
         PatchInfo patchInfo = new PatchInfo(viewArea, ((ReaderView)mParent).getPatchBm(update), mHqView, update);
 
-        Log.e("PenAndPDF", "got "+patchInfo.patchBm);
+//        Log.e("PenAndPDF", "got "+patchInfo.patchBm);
 
 //        Log.v("PageView", "addHq() intersects="+patchInfo.intersects+", area changed="+patchInfo.areaChanged);
         

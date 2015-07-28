@@ -357,7 +357,6 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                             case SQUIGGLY:
                             case STRIKEOUT:
                             case INK:
-//                            case TEXT:
                                 mSelectedAnnotationIndex = i;
                                 setItemSelectBox(mAnnotations[i]);
                                 return Hit.Annotation;

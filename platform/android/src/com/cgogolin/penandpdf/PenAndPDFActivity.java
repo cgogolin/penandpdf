@@ -823,15 +823,18 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     alert.show();
                     core = null;
                 }
-                
-                try
+
+                if (android.os.Build.VERSION.SDK_INT >= 19)
                 {
-                    final int takeFlags = (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                    getContentResolver().takePersistableUriPermission(uri, takeFlags);
-                }
-                catch(Exception e)
-                {
-                        //Nothing we can do if we don't get the permission
+                    try
+                    {
+                        final int takeFlags = (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        getContentResolver().takePersistableUriPermission(uri, takeFlags);
+                    }
+                    catch(Exception e)
+                    {
+                            //Nothing we can do if we don't get the permission
+                    }
                 }
             }
             if (core != null && core.needsPassword()) {
@@ -1155,16 +1158,19 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 {
                     if (intent != null) {
                         Uri uri = intent.getData();
-
+                        
                             // Try to take permissions
-                        try
+                        if (android.os.Build.VERSION.SDK_INT >= 19)
                         {
-                            final int takeFlags = intent.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                            getContentResolver().takePersistableUriPermission(uri, takeFlags);
-                        }
-                        catch(Exception e)
-                        {
-                                //noting we can do if we don't get the permission
+                            try
+                            {
+                                final int takeFlags = intent.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                                getContentResolver().takePersistableUriPermission(uri, takeFlags);
+                            }
+                            catch(Exception e)
+                            {
+                                    //noting we can do if we don't get the permission
+                            }
                         }
                         
                         getIntent().setAction(Intent.ACTION_VIEW);
@@ -1192,7 +1198,9 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             case SAVEAS_REQUEST:
                 if (resultCode == RESULT_OK) {
                     final Uri uri = intent.getData();
-                                    
+
+//                    Log.e("PenAndPDF", "got uri="+uri);
+                    
                     if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Warn if file already exists
                     {
                         DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
