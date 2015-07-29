@@ -218,7 +218,7 @@ static void show_alert(globals *glo, pdf_alert_event *alert)
     pthread_mutex_lock(&glo->fin_lock2);
     pthread_mutex_lock(&glo->alert_lock);
 
-    LOGT("Enter show_alert: %s", alert->title);
+        //LOGT("Enter show_alert: %s", alert->title);
     alert->button_pressed = 0;
 
     if (glo->alerts_active)
@@ -233,7 +233,7 @@ static void show_alert(globals *glo, pdf_alert_event *alert)
         glo->current_alert = NULL;
     }
 
-    LOGT("Exit show_alert");
+        //LOGT("Exit show_alert");
 
     pthread_mutex_unlock(&glo->alert_lock);
     pthread_mutex_unlock(&glo->fin_lock2);
@@ -268,7 +268,7 @@ static void alerts_init(globals *glo)
     pthread_cond_init(&glo->alert_reply_cond, NULL);
 
     pdf_set_doc_event_callback(idoc, event_cb, glo);
-    LOGT("alert_init");
+        //LOGT("alert_init");
     glo->alerts_initialised = 1;
 }
 
@@ -278,7 +278,7 @@ static void alerts_fin(globals *glo)
     if (!glo->alerts_initialised)
         return;
 
-    LOGT("Enter alerts_fin");
+        //LOGT("Enter alerts_fin");
     if (idoc)
         pdf_set_doc_event_callback(idoc, NULL, NULL);
 
@@ -301,7 +301,7 @@ static void alerts_fin(globals *glo)
     pthread_mutex_destroy(&glo->alert_lock);
     pthread_mutex_destroy(&glo->fin_lock2);
     pthread_mutex_destroy(&glo->fin_lock);
-    LOGT("Exit alerts_fin");
+        //LOGT("Exit alerts_fin");
     glo->alerts_initialised = 0;
 }
 
@@ -376,7 +376,7 @@ JNI_FN(MuPDFCore_openFile)(JNIEnv * env, jobject thiz, jstring jfilename)
     {
         glo->colorspace = fz_device_rgb(ctx);
 
-        LOGI("Opening document...");
+            //LOGI("Opening document...");
         fz_try(ctx)
         {
             glo->current_path = fz_strdup(ctx, (char *)filename);
@@ -387,7 +387,7 @@ JNI_FN(MuPDFCore_openFile)(JNIEnv * env, jobject thiz, jstring jfilename)
         {
             fz_throw(ctx, FZ_ERROR_GENERIC, "Cannot open document: '%s'", filename);
         }
-        LOGI("Done!");
+            //LOGI("Done!");
     }
     fz_catch(ctx)
     {
@@ -495,7 +495,7 @@ JNI_FN(MuPDFCore_openBuffer)(JNIEnv * env, jobject thiz)
 
         glo->colorspace = fz_device_rgb(ctx);
 
-        LOGI("Opening document...");
+            //LOGI("Opening document...");
         fz_try(ctx)
         {
             glo->current_path = NULL;
@@ -506,7 +506,7 @@ JNI_FN(MuPDFCore_openBuffer)(JNIEnv * env, jobject thiz)
         {
             fz_throw(ctx, FZ_ERROR_GENERIC, "Cannot open memory document");
         }
-        LOGI("Done!");
+            //LOGI("Done!");
     }
     fz_always(ctx)
     {
@@ -704,27 +704,26 @@ JNI_FN(MuPDFCore_drawPage)(JNIEnv *env, jobject thiz, jobject bitmap,
     fz_var(pix);
     fz_var(dev);
 
-    LOGI("In native method\n");
+        //LOGI("In native method\n");
     if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
         LOGE("AndroidBitmap_getInfo() failed ! error=%d", ret);
         return 0;
     }
 
-    LOGI("Checking format\n");
+        //LOGI("Checking format\n");
     if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
         LOGE("Bitmap format is not RGBA_8888 !");
         return 0;
     }
 
-    LOGI("locking pixels\n");
+        //LOGI("locking pixels\n");
     if ((ret = AndroidBitmap_lockPixels(env, bitmap, &pixels)) < 0) {
         LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
         return 0;
     }
 
 	/* Call mupdf to render display list to screen */
-    LOGI("Rendering page(%d)=%dx%d patch=[%d,%d,%d,%d]",
-         pc->number, pageW, pageH, patchX, patchY, patchW, patchH);
+        //LOGI("Rendering page(%d)=%dx%d patch=[%d,%d,%d,%d]", pc->number, pageW, pageH, patchX, patchY, patchW, patchH);
 
     fz_try(ctx)
     {
@@ -793,7 +792,7 @@ JNI_FN(MuPDFCore_drawPage)(JNIEnv *env, jobject thiz, jobject bitmap,
             clock_t time;
             int i;
 
-            LOGI("Executing display list");
+                //LOGI("Executing display list");
             time = clock();
             for (i=0; i<100;i++) {
 #endif
@@ -804,13 +803,13 @@ JNI_FN(MuPDFCore_drawPage)(JNIEnv *env, jobject thiz, jobject bitmap,
 #ifdef TIME_DISPLAY_LIST
             }
             time = clock() - time;
-            LOGI("100 renders in %d (%d per sec)", time, CLOCKS_PER_SEC);
+                //LOGI("100 renders in %d (%d per sec)", time, CLOCKS_PER_SEC);
         }
 #endif
         fz_free_device(dev);
         dev = NULL;
         fz_drop_pixmap(ctx, pix);
-        LOGI("Rendered");
+            //LOGI("Rendered");
     }
     fz_always(ctx)
     {
@@ -888,27 +887,26 @@ JNI_FN(MuPDFCore_updatePageInternal)(JNIEnv *env, jobject thiz, jobject bitmap, 
     fz_var(pix);
     fz_var(dev);
 
-    LOGI("In native method\n");
+        //LOGI("In native method\n");
     if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
         LOGE("AndroidBitmap_getInfo() failed ! error=%d", ret);
         return 0;
     }
 
-    LOGI("Checking format\n");
+        //LOGI("Checking format\n");
     if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
         LOGE("Bitmap format is not RGBA_8888 !");
         return 0;
     }
 
-    LOGI("locking pixels\n");
+        //LOGI("locking pixels\n");
     if ((ret = AndroidBitmap_lockPixels(env, bitmap, &pixels)) < 0) {
         LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
         return 0;
     }
 
 	/* Call mupdf to render display list to screen */
-    LOGI("Rendering page(%d)=%dx%d patch=[%d,%d,%d,%d]",
-         pc->number, pageW, pageH, patchX, patchY, patchW, patchH);
+        //LOGI("Rendering page(%d)=%dx%d patch=[%d,%d,%d,%d]", pc->number, pageW, pageH, patchX, patchY, patchW, patchH);
 
     fz_try(ctx)
     {
@@ -962,7 +960,7 @@ JNI_FN(MuPDFCore_updatePageInternal)(JNIEnv *env, jobject thiz, jobject bitmap, 
         rect = pc->media_box;
         fz_transform_rect(&rect, &ctm);
 
-        LOGI("Start partial update");
+            //LOGI("Start partial update");
         for (crect = hq ? pc->hq_changed_rects : pc->changed_rects; crect; crect = crect->next)
         {
             fz_irect abox;
@@ -970,10 +968,10 @@ JNI_FN(MuPDFCore_updatePageInternal)(JNIEnv *env, jobject thiz, jobject bitmap, 
             fz_intersect_rect(fz_transform_rect(&arect, &ctm), &rect);
             fz_round_rect(&abox, &arect);
 
-            LOGI("Update rectangle (%d, %d, %d, %d)", abox.x0, abox.y0, abox.x1, abox.y1);
+                //LOGI("Update rectangle (%d, %d, %d, %d)", abox.x0, abox.y0, abox.x1, abox.y1);
             if (!fz_is_empty_irect(&abox))
             {
-                LOGI("And it isn't empty");
+                    //LOGI("And it isn't empty");
                 fz_clear_pixmap_rect_with_value(ctx, pix, 0xff, &abox);
                 dev = fz_new_draw_device_with_bbox(ctx, pix, &abox);
                 if (pc->page_list)
@@ -984,12 +982,12 @@ JNI_FN(MuPDFCore_updatePageInternal)(JNIEnv *env, jobject thiz, jobject bitmap, 
                 dev = NULL;
             }
         }
-        LOGI("End partial update");
+            //LOGI("End partial update");
 
             /* Drop the changed rects we've just rendered */
         drop_changed_rects(ctx, hq ? &pc->hq_changed_rects : &pc->changed_rects);
 
-        LOGI("Rendered");
+            //LOGI("Rendered");
     }
     fz_always(ctx)
     {
@@ -1577,7 +1575,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
 
            int i;
            for (i=0; i< length+1; i++)
-               LOGI("mupdf.c: raw chars of new annotation: %x", dstptr[i]);
+                   //LOGI("mupdf.c: raw chars of new annotation: %x", dstptr[i]);
            
 //            pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, text, length); //in pdf-annot.c
            pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, dstptr, length+1); //in pdf-annot.c
@@ -1830,7 +1828,7 @@ JNI_FN(MuPDFCore_destroying)(JNIEnv * env, jobject thiz)
     globals *glo = get_globals(env, thiz);
     if (glo == NULL) return;
     
-    LOGI("Destroying");
+        //LOGI("Destroying");
     fz_free(glo->ctx, glo->current_path);
     glo->current_path = NULL;
     close_doc(glo);
@@ -1838,10 +1836,10 @@ JNI_FN(MuPDFCore_destroying)(JNIEnv * env, jobject thiz)
     glo->ctx = NULL;
     free(glo);
 #ifdef MEMENTO
-    LOGI("Destroying dump start");
+        //LOGI("Destroying dump start");
     Memento_listBlocks();
     Memento_stats();
-    LOGI("Destroying dump end");
+        //LOGI("Destroying dump end");
 #endif
 #ifdef NDK_PROFILER
 	// Apparently we should really be writing to whatever path we get
@@ -2113,7 +2111,7 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
             }
             if(inHighBits && length >= 2) // => non standard encoding
             {
-                LOGI("mupdf.c: assuming a non-standard encoding");
+                    //LOGI("mupdf.c: assuming a non-standard encoding");
                 length = length/2;
                 jchar * text16 = (jchar *)(void *)text;
                 int i;
@@ -2127,35 +2125,32 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
                 length = length/2;
                 if (text16[0] == 0xfffe)
                 { //We must swap the byte order because NewString() doesn't respect the BOM
-                    LOGI("mupdf.c: foud UTF-16LE encoding");
+                        //LOGI("mupdf.c: foud UTF-16LE encoding");
                     int i;
                     for (i=0; i< length; i++)
                         text16[i] = (text16[i]<<8) | (text16[i]>>8);
                 }
                 else
                 {
-                    LOGI("mupdf.c: foud UTF-16BE encoding");
+                        //LOGI("mupdf.c: foud UTF-16BE encoding");
                 }
                 
                 jtext = (*env)->NewString(env, text16, length);
             }
             else if(text != NULL && length > 0)
             {
-                LOGI("mupdf.c: assuming PDFDocEncoding");
+                    //LOGI("mupdf.c: assuming PDFDocEncoding");
                 
-                int i;
-                for (i=0; i< length; i++)
-                    LOGI("mupdf.c: shorts of annotation: %x", text[i]);
-                
-                
-//                jtext = (*env)->NewStringUTF(env, text);  //?
-              
-//                jtext = (*env)->NewString(env, text, length);  //?
-
-                    //Implement this properly!!!
+                /* int i; */
+                /* for (i=0; i< length; i++) */
+                /* LOGI("mupdf.c: shorts of annotation: %x", text[i]); */
+                    //Check this properly!!!
                 jchar *dstptr = (jchar *)malloc(length*sizeof(jchar));
                 for (i = 0; i < length; i++)
-                    dstptr[i] = PDFDocEncoding[text[i]];
+                    if(text[i] <= 0x00ff)
+                        dstptr[i] = PDFDocEncoding[text[i]];
+                    else
+                        dstptr[i] = text[i];
                 jtext = (*env)->NewString(env, dstptr, length);
                 free(dstptr);
             }
@@ -2705,7 +2700,7 @@ JNI_FN(MuPDFCore_waitForAlertInternal)(JNIEnv * env, jobject thiz)
     int alert_present;
     pdf_alert_event alert;
 
-    LOGT("Enter waitForAlert");
+        //LOGT("Enter waitForAlert");
     pthread_mutex_lock(&glo->fin_lock);
     pthread_mutex_lock(&glo->alert_lock);
 
@@ -2720,7 +2715,7 @@ JNI_FN(MuPDFCore_waitForAlertInternal)(JNIEnv * env, jobject thiz)
 
     pthread_mutex_unlock(&glo->alert_lock);
     pthread_mutex_unlock(&glo->fin_lock);
-    LOGT("Exit waitForAlert %d", alert_present);
+        //LOGT("Exit waitForAlert %d", alert_present);
 
     if (!alert_present)
         return NULL;
@@ -2763,7 +2758,7 @@ JNI_FN(MuPDFCore_replyToAlertInternal)(JNIEnv * env, jobject thiz, jobject alert
 
     button_pressed = (*env)->GetIntField(env, alert, field);
 
-    LOGT("Enter replyToAlert");
+        //LOGT("Enter replyToAlert");
     pthread_mutex_lock(&glo->alert_lock);
 
     if (glo->alerts_active && glo->current_alert)
@@ -2775,7 +2770,7 @@ JNI_FN(MuPDFCore_replyToAlertInternal)(JNIEnv * env, jobject thiz, jobject alert
     }
 
     pthread_mutex_unlock(&glo->alert_lock);
-    LOGT("Exit replyToAlert");
+        //LOGT("Exit replyToAlert");
 }
 
 JNIEXPORT void JNICALL
@@ -2786,7 +2781,7 @@ JNI_FN(MuPDFCore_startAlertsInternal)(JNIEnv * env, jobject thiz)
     if (!glo->alerts_initialised)
         return;
 
-    LOGT("Enter startAlerts");
+        //LOGT("Enter startAlerts");
     pthread_mutex_lock(&glo->alert_lock);
 
     glo->alert_reply = 0;
@@ -2795,7 +2790,7 @@ JNI_FN(MuPDFCore_startAlertsInternal)(JNIEnv * env, jobject thiz)
     glo->current_alert = NULL;
 
     pthread_mutex_unlock(&glo->alert_lock);
-    LOGT("Exit startAlerts");
+        //LOGT("Exit startAlerts");
 }
 
 JNIEXPORT void JNICALL
@@ -2806,7 +2801,7 @@ JNI_FN(MuPDFCore_stopAlertsInternal)(JNIEnv * env, jobject thiz)
     if (!glo->alerts_initialised)
         return;
 
-    LOGT("Enter stopAlerts");
+        //LOGT("Enter stopAlerts");
     pthread_mutex_lock(&glo->alert_lock);
 
     glo->alert_reply = 0;
@@ -2817,7 +2812,7 @@ JNI_FN(MuPDFCore_stopAlertsInternal)(JNIEnv * env, jobject thiz)
     pthread_cond_signal(&glo->alert_request_cond);
 
     pthread_mutex_unlock(&glo->alert_lock);
-    LOGT("Exit stopAleerts");
+        //LOGT("Exit stopAleerts");
 }
 
 JNIEXPORT jboolean JNICALL
