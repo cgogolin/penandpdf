@@ -434,15 +434,18 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             setMeasuredDimension(x, y);
         }
 
-                    
+            //Used in onDraw but defined here for perfomance
+        private PointF mP;
+        private Iterator<ArrayList<PointF>> it;
+        private ArrayList<PointF> arc;
+        private Iterator<PointF> iit;
+        private float mX1, mY1, mX2, mY2;
+        
         @Override
         protected void onDraw(final Canvas canvas) {
-            super.onDraw(canvas);                        
-                //Clip to the canvas size (not sure if this is necessary)
-//            canvas.clipRect(0,0, canvas.getWidth(), canvas.getHeight(), Region.Op.INTERSECT);
+            super.onDraw(canvas);
 
-                //We can get the rect set in invalidate(Rect) like this:
-//            final Rect r = canvas.getClipBounds();
+                //As we use HW acceleration canvas.getClipBounds()) alwas returns the full view.
                 //To further speed things up we could also use a Picture...
             
                 //Move the canvas so that it covers the visible region
@@ -505,23 +508,27 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
                 // Draw the current hand drawing
             if (!mIsBlank && mDrawing != null) {
-                PointF p;
-                Iterator<ArrayList<PointF>> it = mDrawing.iterator();
+                // PointF mP; //These are defined as membe variables for performance 
+                // Iterator<ArrayList<PointF>> it;
+                // ArrayList<PointF> arc;
+                // Iterator<PointF> iit;
+                // float mX1, mY1, mX2, mY2;
+                it = mDrawing.iterator();
                 while (it.hasNext()) {
-                    ArrayList<PointF> arc = it.next();
+                    arc = it.next();
                     if (arc.size() >= 2) {
-                        Iterator<PointF> iit = arc.iterator();
+                        iit = arc.iterator();
                         if(iit.hasNext())
                         {
-                            p = iit.next();
-                            float mX = p.x * scale;
-                            float mY = p.y * scale;
-                            mDrawingPath.moveTo(mX, mY);
+                            mP = iit.next();
+                            mX1 = mP.x * scale;
+                            mY1 = mP.y * scale;
+                            mDrawingPath.moveTo(mX1, mY1);
                             while (iit.hasNext()) {
-                                p = iit.next();
-                                float x = p.x * scale;
-                                float y = p.y * scale;
-                                mDrawingPath.lineTo(x, y);
+                                mP = iit.next();
+                                mX2 = mP.x * scale;
+                                mY2 = mP.y * scale;
+                                mDrawingPath.lineTo(mX2, mY2);
                             }
                         }
                         if(!canvas.quickReject(mDrawingPath, Canvas.EdgeType.AA))
@@ -536,7 +543,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
 
                 // Draw the eraser
-            if (eraser != null) {
+            if (!mIsBlank && eraser != null) {
                 canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, eraserInnerPaint);
                 canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, eraserOuterPaint);
             }
@@ -782,14 +789,14 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             //     arc.remove(lastElementIndex);
             arc.add(point);
             
-            mOverlayView.invalidate();
-//            mOverlayView.invalidate(new Rect(0,0,100,100)); // inkThickness * scale
-            
-            // Rect invalidRect = new Rect();
-
-            // invalidRect.union((int)(point.x*scale), (int)(point.y*scale));
-            // invalidRect.union((int)(arc.get(arc.size()-2).x*scale), (int)(arc.get(arc.size()-2).y*scale));
-            // mOverlayView.invalidate(invalidRect);
+                //Invalidate only the region arround the point where we are actually drawing
+                //            mOverlayView.invalidate();
+            PointF point0 = arc.get(arc.size()-2);
+            Rect invalidRect = new Rect();
+            invalidRect.union((int)(point.x*scale+getLeft()), (int)(point.y*scale+getTop()));
+            invalidRect.union((int)(arc.get(arc.size()-2).x*scale+getLeft()), (int)(arc.get(arc.size()-2).y*scale+getTop()));
+            int inkWidth = (int)(inkThickness*scale)+1;
+            mOverlayView.invalidate(invalidRect.left-inkWidth, invalidRect.top-inkWidth, invalidRect.right+inkWidth, invalidRect.bottom+inkWidth);
         }
     }
     
@@ -804,8 +811,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 arc.add(new PointF(lastArc.x,lastArc.y+0.5f*inkThickness));
                 arc.add(lastArc);
                 arc.add(new PointF(lastArc.x+0.5f*inkThickness,lastArc.y));
-                mOverlayView.invalidate();
             }
+            mOverlayView.invalidate();
         }
     }
 
@@ -1026,7 +1033,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             //Layout the overlay view
         if (mOverlayView != null) {
             mOverlayView.layout(-left, -top, -left+mOverlayView.getMeasuredWidth(), -top+mOverlayView.getMeasuredHeight());
-            mOverlayView.invalidate();
+            if(changed) mOverlayView.invalidate();
         }
 
             //Layout the busy indicator

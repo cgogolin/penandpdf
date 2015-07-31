@@ -368,7 +368,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             mScrollerLastX = x;
             mScrollerLastY = y;
             requestLayout();
-            post(this);
+            if(!mScrollDisabled) post(this);
         }
         else if (!mUserInteracting) {
                 // End of an inertial scroll and the user is not interacting.
@@ -583,7 +583,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             }
         }
 
-        requestLayout();
+//        requestLayout();
         return true;
     }
 
@@ -785,7 +785,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                       (cvBottom + cvTop + rv.getMeasuredHeight())/2);
         }
 
-        invalidate();
+//        invalidate();
     }
 
     

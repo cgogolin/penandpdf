@@ -122,7 +122,7 @@ public class PenAndPDFCore extends MuPDFCore
         }
 
     public boolean canSaveToCurrentLocation(Context context) {
-        Log.e("PenAndPDF", "cheching if we can save to "+uri+" canWrite()="+new File(Uri.decode(uri.getEncodedPath())).canWrite());
+//        Log.e("PenAndPDF", "cheching if we can save to "+uri+" canWrite()="+new File(Uri.decode(uri.getEncodedPath())).canWrite());
         
         try
         {
@@ -132,11 +132,10 @@ public class PenAndPDFCore extends MuPDFCore
                 pfd.close();
                 return true;
             }
-            
+            else
+                throw new Exception();
         }
         catch(Exception e)
-        {}
-        finally
         {
             if(new File(Uri.decode(uri.getEncodedPath())).canWrite() )
                 return true;
