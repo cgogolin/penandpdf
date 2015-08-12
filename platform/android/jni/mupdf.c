@@ -1562,12 +1562,27 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
             
         if(type == FZ_ANNOT_TEXT)
         {
+                //Ensure order of points
+            if(pts[0].x > pts[1].x)
+            {
+                float z = pts[1].x;
+                pts[1].x = pts[0].x;
+                pts[0].x = z;
+            }
+            if(pts[0].y > pts[1].y)
+            {
+                float z = pts[1].y;
+                pts[1].y = pts[0].y;
+                pts[0].y = z;
+            }
+            
+            
             fz_rect rect = {pts[0].x, pts[0].y, pts[1].x, pts[1].y};
 
             const jchar * text = (*env)->GetStringChars(env, jtext, NULL);
             unsigned int length = (*env)->GetStringLength(env, jtext);
 
-               //Add the BOM to make clear this is UTF-16BE encoding
+               //Add the BOM to make clear this is UTF-16BE encoding (this is what we get from the java side)
            jchar *dstptr = (jchar *)malloc((length+1)*sizeof(jchar));
            dstptr[0] = 0xfeff;
            for (i = 0; i < length; i++)
@@ -1582,6 +1597,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
            
                //Genreate appearance for annotation (this should only be done once for each document and then the relevant xobject just referenced...)
            float color[3];
+               // color should not be hard coded!!
            color[0] = 0.8;
            color[1] = 0.8;
            color[2] = 0.0;

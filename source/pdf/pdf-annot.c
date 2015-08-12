@@ -1135,32 +1135,24 @@ void pdf_set_text_details(pdf_document *doc, pdf_annot *annot, const fz_rect *re
         unsigned short *dstptr;
         int i;
         char * pdfText;
-        
-        if (length >= 2 && srcptr[0] == 254 && srcptr[1] == 255)
+
+            //We swap the byte order (if we gat a BOM) and write always LE to make (old versions of?) evince and okular happy even though BE is also OK according to the PDF standard!
+        if (length >= 2 && text[0] == 0xfffe)
 	{
             pdfText = (char *)(void *)text;
 	}
-	else if (length >= 2 && srcptr[0] == 255 && srcptr[1] == 254)
+	else if (length >= 2 && text[0] == 0xfeff)
 	{
             dstptr = (unsigned short *)malloc(length*sizeof(unsigned short));
+            for (i = 0; i < length; i++)
+            {
+                dstptr[i] = srcptr[2*i] << 8 | srcptr[2*i+1] ;
+            }
             pdfText = (char *)(void *)dstptr;
-            for (i = 0; i < 2*length; i += 2)
-                *dstptr++ = srcptr[i] | srcptr[i+1] << 8;
 	}
-	else if (length >= 1)
-	{
-            dstptr = (unsigned short *)malloc((length+1)*sizeof(unsigned short));
-            pdfText = (char *)(void *)dstptr;
-            *dstptr++ = 0xfffe;
-            for (i = 0; i < 2*length; i += 2)
-                *dstptr++ = srcptr[i] << 8 | srcptr[i+1];
-            length++;
-	}
-        else
+        else //No BOM so hope for the best...
         {
-            length = 0;
-            pdfText = (char *)malloc(sizeof(unsigned short));
-            *pdfText = 0xfffe;
+            pdfText = (char *)(void *)text;
         }        
 
         pdf_dict_puts_drop(annot->obj, "Contents", pdf_new_string(doc, (const char *)pdfText, 2*length));
