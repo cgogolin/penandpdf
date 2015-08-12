@@ -1528,7 +1528,7 @@ void pdf_set_markup_appearance(pdf_document *doc, pdf_annot *annot, float* color
 	}
 	fz_always(ctx)
 	{
-		fz_free(ctx, qp);
+                fz_free(ctx, qp);
 		fz_free_device(dev);
 		fz_drop_stroke_state(ctx, stroke);
 		fz_free_path(ctx, path);
@@ -1541,7 +1541,7 @@ void pdf_set_markup_appearance(pdf_document *doc, pdf_annot *annot, float* color
 }
 
 
-/* This is the wiredest bug I have ever come across. If I change the 'float* alpha' to 'float alpha' and try to call this function as follows */
+/* This is the wiredest bug I have ever come across. If I changed the 'float* alpha' to 'float alpha' and try to call this function as follows */
 /* pdf_set_markup_appearance_highlight(idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height); */
 /* the value of apha doesn't make it accross properly. I have NO idea what is causing this. */
 

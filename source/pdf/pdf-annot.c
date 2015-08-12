@@ -786,8 +786,8 @@ pdf_create_annot(pdf_document *doc, pdf_page *page, fz_annot_type type)
                         //Say that we want this to be renderd "behind" the text
                     pdf_dict_puts_drop(annot_obj, "BM", pdf_new_name(doc, "Multiply"));
                 }
-                const char* creator = "PenAndPDF";
-                pdf_dict_puts_drop(annot_obj, "NM", pdf_new_string(doc, creator, strlen(creator)));
+                /* const char* creator = "PenAndPDF"; */
+                /* pdf_dict_puts_drop(annot_obj, "NM", pdf_new_string(doc, creator, strlen(creator))); */
 
                 pdf_dict_puts_drop(annot_obj, "Type", pdf_new_name(doc, "Annot"));
 
@@ -1164,6 +1164,7 @@ void pdf_set_text_details(pdf_document *doc, pdf_annot *annot, const fz_rect *re
         }        
 
         pdf_dict_puts_drop(annot->obj, "Contents", pdf_new_string(doc, (const char *)pdfText, 2*length));
+        pdf_dict_puts_drop(annot->obj, "Name", pdf_new_name(doc, "Comment"));
     }
     fz_always(ctx)
     {

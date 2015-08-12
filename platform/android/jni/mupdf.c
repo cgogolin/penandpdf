@@ -1579,75 +1579,68 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
            
 //            pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, text, length); //in pdf-annot.c
            pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, dstptr, length+1); //in pdf-annot.c
-           free(dstptr);
-            
-            (*env)->ReleaseStringChars(env, jtext, text);
-            
-            
-/*             if(0) */
-/*             { */
-            
-/*             fz_rect rect = {pts[0].x, pts[0].y, pts[1].x, pts[1].y}; */
-/*             const jchar *text; */
-/*             text = (*env)->GetStringChars(env, jtext, NULL); */
-/*             int length = (*env)->GetStringLength(env, jtext); */
-
-/*             jchar * text16 = (jchar *)(void *)text; */
-/*             if(text16[0] != 0xfeff) */
-/*             { //The is no BOM jet, so we add one hoping that we get the byte order right */
-/*                 text16 = (jchar *)malloc((length+1)*sizeof(jchar)); */
-/*                 text16[0] = 0xfeff; //feff means that we will swap later... */
-/*                 memcpy(text16+1, text, length*sizeof(jchar)); */
-/*             }             */
-            
-/*            int i; */
-/*            for (i=0; i< length+1; i++) */
-/*                LOGI("mupdf.c: chars of new annotation before swap: %x", text16[i]); */
-
-/*                //Swap the byte order if necessary */
-/*            if(text16[0] == 0xfeff) */
-/*            { */
-/*                for (i=0; i< length+1; i++) */
-/*                    text16[i] = (text16[i]<<8) | (text16[i]>>8); */
-/*            } */
            
-/*            for (i=0; i< length+1; i++) */
-/*                 LOGI("mupdf.c: chars of new annotation: %x", text16[i]); */
-               
-/*            /\*     //Check if we should encode with UTF-16 or PDFDocEncoding *\/ */
-/*            /\* if(text != NULL && length > 2 && ( (text[0] == 254 && text[1] == 255) || (text[0] == 255 && text[1] == 254) ) ) *\/ */
-/*            /\* { //We found a BOM an hence try to add a UTF-16 string *\/ */
-/*            /\*     LOGI("mupdf.c: encoding in UTF-16: %x", text[0]); *\/ */
-/*            /\*     jchar * text16 = (jchar *)(void *)text; *\/ */
-/*            /\*     if (text16[0] == 0xfeff) *\/ */
-/*            /\*     { //So we must swap the byte order because the PDF specs say so *\/ */
-/*            /\*         int i; *\/ */
-/*            /\*         for (i=0; i< length/2; i++) *\/ */
-/*            /\*              text16[i] = (text16[i]<<8) | (text16[i]>>8); *\/ */
-/*            /\*     } *\/ */
-               
-/*            /\*     int i; *\/ */
-/*            /\*     for (i=0; i< length; i++) *\/ */
-/*            /\*         LOGI("mupdf.c: chars of new annotation: %x", text[i]); *\/ */
-               
-/*                    //Add the annotation */
-/* //            pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, (char *)(void *)text16, sizeof(jchar)*(length+1)); //in pdf-annot.c */
-/*             (*env)->ReleaseStringChars(env, jtext, text); */
-/*             free(text16); */
-/*                 /\* } *\/ */
-/*            /\* else *\/ */
-/*            /\* { //No BOM so we just add the string as is and hope for the best (In principle we should use PDFDocEncoding but this should never happen anyway as we are called from Java) *\/ */
-/*            /\*     LOGI("mupdf.c: not encoding in UTF-16"); *\/ */
-/*            /\*         //Get the UTF chars instead *\/ */
-/*            /\*     (*env)->ReleaseStringChars(env, jtext, text); *\/ */
-/*            /\*     text = (*env)->GetStringUTFChars(env, jtext, NULL); *\/ */
-/*            /\*         //Add the annotation *\/ */
-/*            /\*     pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, text, length); //in pdf-annot.c *\/ */
-/*            /\*     (*env)->ReleaseStringUTFChars(env, jtext, text); *\/ */
-/*            /\* } *\/ */
-/*             } */
+               //Genreate appearance for annotation (this should only be done once for each document and then the relevant xobject just referenced...)
+           float color[3];
+           color[0] = 0.8;
+           color[1] = 0.8;
+           color[2] = 0.0;
+           const float alpha = 1.0;
+           const float linewidth = (pts[1].x - pts[0].x)*0.06;
+           const fz_matrix *page_ctm = &((pdf_annot *)annot)->page->ctm;
+           fz_display_list *dlist = NULL;
+           fz_device *dev = NULL;
+           fz_path *path = NULL;
+           fz_stroke_state *stroke = NULL;
+           
+           fz_var(path);
+           fz_var(stroke);
+           fz_var(dev);
+           fz_var(dlist);
+           fz_try(ctx)
+           {
+               dlist = fz_new_display_list(ctx);
+               dev = fz_new_list_device(ctx, dlist);
 
-            
+               stroke = fz_new_stroke_state(ctx);
+               stroke->linewidth = linewidth;
+               const float halflinewidth = linewidth*0.5;
+               path = fz_new_path(ctx);
+
+               fz_moveto(ctx, path, pts[0].x, pts[1].y-halflinewidth);
+               fz_lineto(ctx, path, pts[1].x-halflinewidth, pts[1].y-halflinewidth);
+               fz_lineto(ctx, path, pts[1].x-halflinewidth, 0.8*pts[0].y+0.2*pts[1].y);
+               fz_lineto(ctx, path, 0.3*pts[1].x+0.7*pts[0].x, 0.8*pts[0].y+0.2*pts[1].y);
+               fz_lineto(ctx, path, pts[0].x+halflinewidth, pts[0].y+halflinewidth);
+               fz_lineto(ctx, path, pts[0].x+halflinewidth, pts[1].y);
+
+               
+               fz_moveto(ctx, path, 0.8*pts[0].x+0.2*pts[1].x, 0.8*pts[1].y+0.2*pts[0].y-halflinewidth);
+               fz_lineto(ctx, path, 0.2*pts[0].x+0.8*pts[1].x, 0.8*pts[1].y+0.2*pts[0].y-halflinewidth);
+               fz_moveto(ctx, path, 0.8*pts[0].x+0.2*pts[1].x, 0.6*pts[1].y+0.4*pts[0].y);
+               fz_lineto(ctx, path, 0.2*pts[0].x+0.8*pts[1].x, 0.6*pts[1].y+0.4*pts[0].y);
+               fz_moveto(ctx, path, 0.8*pts[0].x+0.2*pts[1].x, 0.4*pts[1].y+0.6*pts[0].y+halflinewidth);
+               fz_lineto(ctx, path, 0.4*pts[0].x+0.6*pts[1].x, 0.4*pts[1].y+0.6*pts[0].y+halflinewidth);
+               
+               fz_stroke_path(dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
+               fz_transform_rect(&rect, page_ctm);
+               
+               pdf_set_annot_appearance(idoc, (pdf_annot *)annot, &rect, dlist);
+           }
+           fz_always(ctx)
+           {
+               fz_free_device(dev);
+               fz_drop_display_list(ctx, dlist);
+               fz_drop_stroke_state(ctx, stroke);
+               fz_free_path(ctx, path);
+
+               free(dstptr);
+               (*env)->ReleaseStringChars(env, jtext, text);
+           }
+           fz_catch(ctx)
+           {
+               fz_rethrow(ctx);
+           }
         } //Add a markup annotation
         else
         {

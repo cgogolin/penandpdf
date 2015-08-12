@@ -483,17 +483,17 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
 
                 // Draw Text annotations
-            if (!mIsBlank && mAnnotations != null && mAnnotations != null) {
-                    //Load the bitmap once
-                if(mTextAnnotationBitmap == null)
-                    mTextAnnotationBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_action_labels_mod);
+            // if (!mIsBlank && mAnnotations != null && mAnnotations != null) {
+            //         //Load the bitmap once
+            //     if(mTextAnnotationBitmap == null)
+            //         mTextAnnotationBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_action_labels_mod);
                 
-                for (Annotation annot : mAnnotations)
-                {
-                    if(annot.type == Annotation.Type.TEXT)
-                        canvas.drawBitmap(mTextAnnotationBitmap, null, new RectF(annot.left*scale, annot.top*scale, annot.right*scale, annot.bottom*scale), null);
-                }
-            }
+            //     for (Annotation annot : mAnnotations)
+            //     {
+            //         if(annot.type == Annotation.Type.TEXT)
+            //             canvas.drawBitmap(mTextAnnotationBitmap, null, new RectF(annot.left*scale, annot.top*scale, annot.right*scale, annot.bottom*scale), null);
+            //     }
+            // }
 
                 // Draw the text selection
             if (!mIsBlank && mSelectBox != null && mText != null) {
