@@ -983,7 +983,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                                             mAlertDialog.setOnCancelListener(null);
                                         }
                             });
-                        if(annot != null) mAlertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.delete), new DialogInterface.OnClickListener() 
+                        if(annot != null && annot.text != null) mAlertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.delete), new DialogInterface.OnClickListener() 
                                 {public void onClick(DialogInterface dialog, int whichButton)
                                         {
                                             ((MuPDFPageView)getSelectedView()).deleteSelectedAnnotation();

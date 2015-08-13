@@ -160,14 +160,12 @@ abstract public class MuPDFReaderView extends ReaderView {
             MuPDFPageView cv = (MuPDFPageView)getSelectedView();
             float scale = cv.getScale();
             final float docRelX = (e.getX() - cv.getLeft())/scale;
-//            final float docRelY = (cv.getBottom() - e.getY())/scale;
             final float docRelY = (e.getY() - cv.getTop())/scale;
             final float docRelSize = 0.025f*Math.max(cv.getWidth(), cv.getHeight())/scale;
-            Annotation annot = new Annotation(docRelX-0.3f*docRelSize, docRelY+0.3f*docRelSize, docRelX+0.7f*docRelSize, docRelY-0.7f*docRelSize, Annotation.Type.TEXT, null, null); //we set the text to null to indicate that the annotation is new
+            Annotation annot = new Annotation(docRelX-0.0f*docRelSize, docRelY+0.0f*docRelSize, docRelX+1.0f*docRelSize, docRelY-1.0f*docRelSize, Annotation.Type.TEXT, null, null); //we set the text to null to indicate that the annotation is new
             
                 //Ask the user to provide text
-//            addTextAnnotFromUserInput(e.getX(), e.getY(), null);
-                addTextAnnotFromUserInput(annot);
+            addTextAnnotFromUserInput(annot);
                 //Reset the mode and menu                
             mMode = Mode.Viewing;
             onTapMainDocArea();

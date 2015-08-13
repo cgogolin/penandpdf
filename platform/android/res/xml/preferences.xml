@@ -90,6 +90,11 @@
 	  android:title="@string/strikeout_color"
 	  android:summary="@string/strikeout_color_summ" 
 	  android:defaultValue="15" />
+      <ListPreference
+	  android:key="pref_textannoticon_color"
+	  android:title="@string/textannoticon_color"
+	  android:summary="@string/textannoticon_color_summ" 
+	  android:defaultValue="10" />
 <!--      <EditTextPreference
 	  android:key="pref_ink_color"
 	  android:title="@string/ink_color"

@@ -118,6 +118,8 @@
 	<string name="underline_color_summ">Set color for underlining text.</string>
 	<string name="strikeout_color">Strikeout color</string>
 	<string name="strikeout_color_summ">Set color for striking out text.</string>
+	<string name="textannoticon_color">Text annotation icon color</string>
+	<string name="textannoticon_color_summ">Set color for the icon of text annotations.</string>
 	<string name="fit_width">Snap to fit width</string>
 	<string name="fit_width_summ">Snaps zoom to fit the width of the page if close.</string>
 

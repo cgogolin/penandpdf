@@ -91,6 +91,7 @@ public class MuPDFCore
     public native void setHighlightColor(float r, float g, float b);
     public native void setUnderlineColor(float r, float g, float b);
     public native void setStrikeoutColor(float r, float g, float b);
+    public native void setTextAnnotIconColor(float r, float g, float b);
     public native int insertBlankPageBeforeInternal(int position);
 
     
@@ -447,6 +448,8 @@ public class MuPDFCore
         setUnderlineColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
         colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, "0" ));
         setStrikeoutColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
+        colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_TEXTANNOTICON_COLOR, "0" ));
+        setTextAnnotIconColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
     }
 
     public boolean insertBlankPageAtEnd() {

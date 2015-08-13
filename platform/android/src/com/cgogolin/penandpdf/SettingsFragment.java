@@ -22,10 +22,11 @@ public class SettingsFragment extends PreferenceFragment {
             // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.preferences);
 
-        ListPreference prefInkColor = (ListPreference) findPreference("pref_ink_color");
-        ListPreference prefHighlightColor = (ListPreference) findPreference("pref_highlight_color");
-        ListPreference prefUnderlineColor = (ListPreference) findPreference("pref_underline_color");
-        ListPreference prefStrikeOutColor = (ListPreference) findPreference("pref_strikeout_color");    
+        ListPreference prefInkColor = (ListPreference) findPreference(SettingsActivity.PREF_INK_COLOR);
+        ListPreference prefHighlightColor = (ListPreference) findPreference(SettingsActivity.PREF_HIGHLIGHT_COLOR);
+        ListPreference prefUnderlineColor = (ListPreference) findPreference(SettingsActivity.PREF_UNDERLINE_COLOR);
+        ListPreference prefStrikeOutColor = (ListPreference) findPreference(SettingsActivity.PREF_STRIKEOUT_COLOR);
+        ListPreference prefTextAnnotIconColor = (ListPreference) findPreference(SettingsActivity.PREF_TEXTANNOTICON_COLOR);    
         
         prefInkColor.setEntries(ColorPalette.getColorNames());
         prefInkColor.setEntryValues(ColorPalette.getColorNumbers());
@@ -35,5 +36,7 @@ public class SettingsFragment extends PreferenceFragment {
         prefUnderlineColor.setEntryValues(ColorPalette.getColorNumbers());
         prefStrikeOutColor.setEntries(ColorPalette.getColorNames());
         prefStrikeOutColor.setEntryValues(ColorPalette.getColorNumbers());
+        prefTextAnnotIconColor.setEntries(ColorPalette.getColorNames());
+        prefTextAnnotIconColor.setEntryValues(ColorPalette.getColorNumbers());
     }
 }

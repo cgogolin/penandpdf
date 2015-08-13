@@ -49,6 +49,9 @@
 #define STRIKEOUT_COLORr (1.0f)
 #define STRIKEOUT_COLORg (0.0f)
 #define STRIKEOUT_COLORb (0.0f)
+#define TEXTANNOTICON_COLORr (0.0f)
+#define TEXTANNOTICON_COLORg (0.0f)
+#define TEXTANNOTICON_COLORb (1.0f)
 
 #define SMALL_FLOAT (0.00001)
 
@@ -168,6 +171,7 @@ struct globals_s
     float highlightColor[3];
     float underlineColor[3];
     float strikeoutColor[3];
+    float textAnnotIconColor[3];
 };
 
 static jfieldID global_fid;
@@ -351,7 +355,9 @@ JNI_FN(MuPDFCore_openFile)(JNIEnv * env, jobject thiz, jstring jfilename)
     glo->strikeoutColor[0] = STRIKEOUT_COLORr;
     glo->strikeoutColor[1] = STRIKEOUT_COLORg;
     glo->strikeoutColor[2] = STRIKEOUT_COLORb;
-        
+    glo->textAnnotIconColor[0] = TEXTANNOTICON_COLORr;
+    glo->textAnnotIconColor[1] = TEXTANNOTICON_COLORg;
+    glo->textAnnotIconColor[2] = TEXTANNOTICON_COLORb;
         
     filename = (*env)->GetStringUTFChars(env, jfilename, NULL);
     if (filename == NULL)
@@ -1510,6 +1516,10 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
             line_height = STRIKE_HEIGHT;
             break;
         case FZ_ANNOT_TEXT:
+            color[0] = glo->textAnnotIconColor[0];
+            color[1] = glo->textAnnotIconColor[1];
+            color[2] = glo->textAnnotIconColor[2];
+            alpha = 1.0;
             break;
         default:
             return;
@@ -1596,12 +1606,13 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
            pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, dstptr, length+1); //in pdf-annot.c
            
                //Genreate appearance for annotation (this should only be done once for each document and then the relevant xobject just referenced...)
-           float color[3];
-               // color should not be hard coded!!
-           color[0] = 0.8;
-           color[1] = 0.8;
-           color[2] = 0.0;
-           const float alpha = 1.0;
+
+           /* float color[3]; */
+           /*     // color should not be hard coded!! */
+           /* color[0] = 0.8; */
+           /* color[1] = 0.8; */
+           /* color[2] = 0.0; */
+           /* const float alpha = 1.0; */
            const float linewidth = (pts[1].x - pts[0].x)*0.06;
            const fz_matrix *page_ctm = &((pdf_annot *)annot)->page->ctm;
            fz_display_list *dlist = NULL;
@@ -3040,6 +3051,15 @@ JNI_FN(MuPDFCore_setStrikeoutColor)(JNIEnv * env, jobject thiz, float r, float g
     glo->strikeoutColor[2] = b;
 }
 
+JNIEXPORT jobjectArray JNICALL
+JNI_FN(MuPDFCore_setTextAnnotIconColor)(JNIEnv * env, jobject thiz, float r, float g, float b)
+{
+    globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return NULL;
+    glo->textAnnotIconColor[0] = r;
+    glo->textAnnotIconColor[1] = g;
+    glo->textAnnotIconColor[2] = b;
+}
 
 JNIEXPORT int JNICALL
 JNI_FN(MuPDFCore_insertBlankPageBeforeInternal)(JNIEnv * env, jobject thiz, int position)
