@@ -62,17 +62,23 @@ public class FileBrowserFragment extends ListFragment {
             purpose = Purpose.PickFile;
         else
             purpose = Purpose.PickKeyFile;
-        
+
+            //Try to retrieve file name and path
         String filename = null;
         if(purpose == Purpose.PickFile) {
-            if(intent.getData() != null) filename = intent.getData().getLastPathSegment();
+            filename = intent.getStringExtra(Intent.EXTRA_TITLE);
+            if(filename == null) filename = intent.getData().getLastPathSegment();
         }
-        
         File directory = null;
         try
         {
             if(purpose == Purpose.PickFile && intent.getData() != null)
-                directory = (new File(intent.getData().getPath())).getParentFile();
+            {
+//                File file = (new File(intent.getData().getPath()));
+                File file = new File(Uri.decode(intent.getData().getEncodedPath()));
+                if(file.canWrite())
+                    directory = file.getParentFile();
+            }
         }
         catch(Exception e)
         {

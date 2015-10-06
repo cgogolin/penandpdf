@@ -359,7 +359,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             //Save only during onStop() as this can take some time
         if(core != null && !isChangingConfigurations())
         {
-            if(!mNotSaveOnStopThisTime && core.canSaveToCurrentLocation(this) && mSaveOnStop)
+            if(!mNotSaveOnStopThisTime && core.canSaveToCurrentUri(this) && mSaveOnStop)
             {
                 if(!save())
                     showInfo(getString(R.string.error_saveing));
@@ -387,7 +387,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             if(core != null && !isChangingConfigurations())
             {
                 SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
-                if(!mNotSaveOnDestroyThisTime && core.canSaveToCurrentLocation(this) && mSaveOnDestroy)
+                if(!mNotSaveOnDestroyThisTime && core.canSaveToCurrentUri(this) && mSaveOnDestroy)
                 {
                     if(!save())
                         showInfo(getString(R.string.error_saveing));
@@ -624,7 +624,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                                     Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
 //                                    if (core.getPath() != null && Uri.parse(core.getPath()) != null) intent.setData(Uri.parse(core.getPath()));
                                     if (core.getUri() != null) intent.setData(core.getUri());
-                                    else if (core.getFileName() != null && Uri.parse(core.getFileName()) != null) intent.setData(Uri.parse(core.getFileName()));
+//                                    else if (core.getFileName() != null && Uri.parse(core.getFileName()) != null) intent.setData(Uri.parse(core.getFileName()));
+                                    intent.putExtra(Intent.EXTRA_TITLE, core.getFileName());
                                     intent.setAction(Intent.ACTION_PICK);
                                     startActivityForResult(intent, SAVEAS_REQUEST);
                                 }
@@ -654,7 +655,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), listener);
                 alert.show();
 //                if (core == null || core.getFileName() == null || core.getPath() == null)
-                if (core == null || !core.canSaveToCurrentLocation(this))
+                if (core == null || !core.canSaveToCurrentUri(this))
                     alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
                 return true;
             case R.id.menu_gotopage:
@@ -1106,7 +1107,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
                 alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
                 alert.show();
-                if (core == null || !core.canSaveToCurrentLocation(this))
+                if (core == null || !core.canSaveToCurrentUri(this))
                     alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false); //Todo!!!
             }
             else
@@ -1251,6 +1252,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         }
         catch(Exception e)
         {
+            Log.e("Core", "Exception="+e);
             return false;
         }
             //Set the uri of this intent to the new file path
@@ -1282,6 +1284,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         }
         catch(Exception e)
         {
+            Log.e("Core", "Exception="+e);
             return false;
         }
             //Save the viewport
@@ -1557,7 +1560,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
             alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
             alert.show();
-            if (core == null || !core.canSaveToCurrentLocation(this))
+            if (core == null || !core.canSaveToCurrentUri(this))
                 alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false); //Todo!!!
         } else {
             super.onBackPressed();

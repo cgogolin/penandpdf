@@ -22,7 +22,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.File;
 import android.os.ParcelFileDescriptor;
-
+import android.content.pm.PackageManager;
+import android.content.Intent;
 
 public class PenAndPDFCore extends MuPDFCore
 {
@@ -31,19 +32,34 @@ public class PenAndPDFCore extends MuPDFCore
 
     public PenAndPDFCore(Context context, Uri uri) throws Exception
 	{
+            Log.e("Core", "creating with uri="+uri);
+            
             this.uri = uri;
+
             if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
             {
+                Log.e("Core", "uri points to file");
                 super.init(context, Uri.decode(uri.getEncodedPath()));
             }
             else if (uri.toString().startsWith("content://")) //Uri points to a content provider
             {
+                Log.e("Core", "uri points to content");
                 String displayName = null;
-                Cursor cursor = context.getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null); //This should be done asynchonously!            
+                Cursor cursor = context.getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null); //This should be done asynchonously!
+
                 if (cursor != null && cursor.moveToFirst())
                 {
+
+                        //Try to get the display name/title
                     int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
                     if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
+                    if(displayName==null)
+                    {
+                        int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+                        if(titleIndex >= 0) displayName = cursor.getString(titleIndex);             
+                        if(displayName==null)
+                            displayName="NoName.pdf";
+                    }       
                     cursor.close();
                     
                         //Some programms encode parts of the filename in utf-8 base 64 encoding if the filename contains special charcters. This can look like this: '=?UTF-8?B?[text here]==?=' Here we decode such cases:
@@ -84,29 +100,38 @@ public class PenAndPDFCore extends MuPDFCore
     
     public synchronized void saveAs(Context context, Uri uri) throws java.io.IOException, java.io.FileNotFoundException
         {
-            this.uri = uri;
-
-            if(new File(Uri.decode(uri.getEncodedPath())).getParentFile().isDirectory())
-            {   
-                String path = Uri.decode(uri.getEncodedPath());
-                
-                if(saveAsInternal(path) != 0) throw new java.io.IOException("native code failed to save to "+uri.toString());
-            }
-            else //Not a file so we have to write to a tmp file from the native code first 
+            if(canSaveToUriViaContentResolver(context, uri))
             {
                 if(tmpFile == null) {
                     File cacheDir = context.getCacheDir();
                     tmpFile = File.createTempFile("prefix", "pdf", cacheDir);
                 }
                 if(saveAsInternal(tmpFile.getPath()) != 0) throw new java.io.IOException("native code failed to save to "+tmpFile.getPath());
-                
+
                 ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "w");
                 FileInputStream fileInputStream = new FileInputStream(tmpFile);
                 FileOutputStream fileOutputStream = new FileOutputStream(pfd.getFileDescriptor());
-                copyStream(fileInputStream,fileOutputStream);             
+                copyStream(fileInputStream,fileOutputStream);
                 fileInputStream.close();
                 fileOutputStream.close();
                 pfd.close();
+                this.uri = uri;
+            }
+            else
+            {
+                File file = new File(Uri.decode(uri.getEncodedPath()));
+                if(!file.exists())
+                    file.createNewFile(); //Try to create the file first so that we can then check if we can write to it.
+                if(canSaveToUriAsFile(context, uri))
+                {
+                    String path = Uri.decode(uri.getEncodedPath());
+                    if(saveAsInternal(path) != 0)
+                        throw new java.io.IOException("native code failed to save to "+uri.toString());
+                    this.uri = uri;
+                    Log.e("Core", "saving done!");                
+                }
+                else
+                    throw new java.io.IOException("no way to save to "+uri.toString());
             }
         }
     
@@ -121,28 +146,71 @@ public class PenAndPDFCore extends MuPDFCore
             }
         }
 
-    public boolean canSaveToCurrentLocation(Context context) {
-//        Log.e("PenAndPDF", "cheching if we can save to "+uri+" canWrite()="+new File(Uri.decode(uri.getEncodedPath())).canWrite());
-        
+    public boolean canSaveToUriViaContentResolver(Context context, Uri uri) {
         try
         {
             ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "wa");
-            if(pfd != null) 
-            {
+            if(pfd != null) {
                 pfd.close();
                 return true;
             }
             else
-                throw new Exception();
+                return false;
         }
         catch(Exception e)
         {
-            if(new File(Uri.decode(uri.getEncodedPath())).canWrite() )
-                return true;
-            else
                 return false;
         }
     }
+
+    public boolean canSaveToUriAsFile(Context context, Uri uri) {
+        try
+        {
+                //The way we use here to determine whether we can write to a file is error prone but I have so far not found a better way
+            if(uri.toString().startsWith("content:"))
+                return false;
+            File file = new File(Uri.decode(uri.getEncodedPath()));
+            if(file.exists() && file.isFile() && file.canWrite())
+                return true;
+            // else if(!file.exists() && file.getParentFile().isDirectory())
+            // {
+            //     return true;
+            // }
+            // else
+                return false;
+        }
+        catch(Exception e)
+        {
+            return false;
+        }
+    }
+
+    public boolean canSaveToCurrentUri(Context context) {
+        return canSaveToUriViaContentResolver(context, getUri()) || canSaveToUriAsFile(context, getUri());
+    }
+    
+//     public boolean canSaveToCurrentLocation(Context context) {
+// //        Log.e("PenAndPDF", "cheching if we can save to "+uri+" canWrite()="+new File(Uri.decode(uri.getEncodedPath())).canWrite());
+//         try
+//         {
+//                 //Try if Uri can be resolved with the content resolver. If not, then try to directly open a file from the Uri
+//             ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "wa");
+//             if(pfd != null) 
+//             {
+//                 pfd.close();
+//                 return true;
+//             }
+//             else
+//                 throw new Exception();
+//         }
+//         catch(Exception e)
+//         {
+//             if(new File(Uri.decode(uri.getEncodedPath())).canWrite() )
+//                 return true;
+//             else
+//                 return false;
+//         }
+//     }
 
     public Uri getUri(){
         return uri;

@@ -2870,20 +2870,13 @@ static char *tmp_path(char *path)
 }
 
 
-/* JNIEXPORT int JNICALL */
-/* JNI_FN(MuPDFCore_saveInternal)(JNIEnv * env, jobject thiz) */
-/* { */
-/*     MuPDFCore_saveAsInternal(""); */
-/* } */
-
-
 JNIEXPORT int JNICALL
 JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
 {    
     int written = 0;
     
     globals *glo = get_globals(env, thiz);
-    if (glo == NULL) return 0;
+    if (glo == NULL) return -1;
     fz_context *ctx = glo->ctx;
 
         //Try to get the new path from jpath
@@ -2893,8 +2886,10 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
     {
         new_path = (*env)->GetStringUTFChars(env, jpath, NULL);
     }
-        
-    if (glo->doc && (glo->current_path || new_path) )
+
+    LOGE("Core: current_path=%s new_path=%s", glo->current_path, new_path);
+    
+    if (glo->doc != NULL && (glo->current_path != NULL || new_path != NULL) )
     {
         char *tmp;
         fz_write_options opts;
@@ -2904,7 +2899,9 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
             tmp = tmp_path((char *)new_path);
         else
             tmp = tmp_path(glo->current_path);
-
+        
+        LOGE("Core: tmp=%s", tmp);
+        
         if (tmp)
         {
             fz_var(written);
@@ -2941,7 +2938,7 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
                     {
                         fz_write_document(glo->doc, tmp, &opts);
                         written = 1;
-                    }   
+                    }
                 }
                 fz_catch(ctx)
                 {
@@ -2959,8 +2956,13 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
 
                 fz_try(ctx)
                 {
-                    fz_write_document(glo->doc, tmp, &opts);
-                    written = 1;
+                    FILE *fout = fopen(tmp, "wb");
+                    if (fout)
+                    {
+                        fclose(fout);
+                        fz_write_document(glo->doc, tmp, &opts);
+                        written = 1;
+                    }
                 }
                 fz_catch(ctx)
                 {
@@ -2969,11 +2971,13 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
             }
             if (written)
             {
+                LOGE("Core: closing");
                 close_doc(glo);
                 if (new_path == NULL)
                     rename(tmp, glo->current_path);
                 else
                     rename(tmp, new_path);
+                LOGE("Core: renamed %i", written);
             }
             free(tmp);
         }
