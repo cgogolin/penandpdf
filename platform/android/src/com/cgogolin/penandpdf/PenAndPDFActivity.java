@@ -618,30 +618,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                                 }
                             }
                             if (which == AlertDialog.BUTTON_NEUTRAL) {
-                                mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //Do not save when we are stopped for the new request
-                                if (android.os.Build.VERSION.SDK_INT < 19)
-                                {
-                                    Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
-//                                    if (core.getPath() != null && Uri.parse(core.getPath()) != null) intent.setData(Uri.parse(core.getPath()));
-                                    if (core.getUri() != null) intent.setData(core.getUri());
-//                                    else if (core.getFileName() != null && Uri.parse(core.getFileName()) != null) intent.setData(Uri.parse(core.getFileName()));
-                                    intent.putExtra(Intent.EXTRA_TITLE, core.getFileName());
-                                    intent.setAction(Intent.ACTION_PICK);
-                                    startActivityForResult(intent, SAVEAS_REQUEST);
-                                }
-                                else
-                                {
-                                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                                    
-                                        // Filter to only show results that can be "opened", such as
-                                        // a file (as opposed to a list of contacts or timezones).
-                                    intent.addCategory(Intent.CATEGORY_OPENABLE);
-                                    
-                                        // Create a file with the requested MIME type.
-                                    intent.setType("application/pdf");
-                                    intent.putExtra(Intent.EXTRA_TITLE, core.getFileName());
-                                    startActivityForResult(intent, SAVEAS_REQUEST);
-                                }
+                                saveAs();
                             }
                             if (which == AlertDialog.BUTTON_NEGATIVE) {
                             }
@@ -1243,6 +1220,32 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         super.onActivityResult(requestCode, resultCode, intent);
     }
 
+    private void saveAs() {
+        mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //Do not save when we are stopped for the new request
+        if (android.os.Build.VERSION.SDK_INT < 19)
+        {
+            Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
+//                                    if (core.getPath() != null && Uri.parse(core.getPath()) != null) intent.setData(Uri.parse(core.getPath()));
+            if (core.getUri() != null) intent.setData(core.getUri());
+//                                    else if (core.getFileName() != null && Uri.parse(core.getFileName()) != null) intent.setData(Uri.parse(core.getFileName()));
+            intent.putExtra(Intent.EXTRA_TITLE, core.getFileName());
+            intent.setAction(Intent.ACTION_PICK);
+            startActivityForResult(intent, SAVEAS_REQUEST);
+        }
+        else
+        {
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                                    
+                // Filter to only show results that can be "opened", such as
+                // a file (as opposed to a list of contacts or timezones).
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+                                    
+                // Create a file with the requested MIME type.
+            intent.setType("application/pdf");
+            intent.putExtra(Intent.EXTRA_TITLE, core.getFileName());
+            startActivityForResult(intent, SAVEAS_REQUEST);
+        }
+    }
 
     private boolean saveAs(Uri uri) { //Attention! Potentially destroyes the core !!
         if (core == null) return false;
@@ -1540,10 +1543,15 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     public void onClick(DialogInterface dialog, int which) {
                         if (which == AlertDialog.BUTTON_POSITIVE) {
                             mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //No need to save twice
-                            if(!save())
-                                showInfo(getString(R.string.error_saveing));
+                            if(core.canSaveToCurrentUri(PenAndPDFActivity.this))
+                            {
+                                if(!save())
+                                    showInfo(getString(R.string.error_saveing));
+                                else
+                                    finish();
+                            }
                             else
-                                finish();
+                                saveAs();
                         }
                         if (which == AlertDialog.BUTTON_NEGATIVE) {
                             mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true;
@@ -1556,12 +1564,13 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             AlertDialog alert = mAlertBuilder.create();
             alert.setTitle(getString(R.string.app_name));
             alert.setMessage(getString(R.string.document_has_changes_save_them));
-            alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), listener);
+            if(core.canSaveToCurrentUri(this))
+                alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
+            else
+                alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.saveas), listener);      
             alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
             alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
             alert.show();
-            if (core == null || !core.canSaveToCurrentUri(this))
-                alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false); //Todo!!!
         } else {
             super.onBackPressed();
         }

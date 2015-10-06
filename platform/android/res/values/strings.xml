@@ -48,7 +48,7 @@
 	<string name="no_text_selected">No text selected</string>
 	<string name="draw_annotation">Draw annotation</string>
 	<string name="nothing_to_save">Nothing to save</string>
-	<string name="document_has_changes_save_them">Document has changes. Save them?</string>
+	<string name="document_has_changes_save_them">Document has changes. Do you want to save them?</string>
 	<string name="document_has_changes_save_them_before_sharing">Document has changes. Save them before sharing?</string>
 	<string name="how_do_you_want_to_save">How do you want to save?</string>
 	<string name="cannot_open_document">Cannot open document</string>

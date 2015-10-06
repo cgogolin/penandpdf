@@ -2,6 +2,7 @@ package com.cgogolin.penandpdf;
 import java.util.ArrayList;
 
 import android.util.Base64;
+import android.content.pm.PackageManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import android.provider.MediaStore.MediaColumns;
@@ -149,13 +150,20 @@ public class PenAndPDFCore extends MuPDFCore
     public boolean canSaveToUriViaContentResolver(Context context, Uri uri) {
         try
         {
-            ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "wa");
-            if(pfd != null) {
-                pfd.close();
-                return true;
-            }
-            else
+            Log.e("PenAndPDF", "check permissions returns "+context.checkCallingUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)+" where granted="+PackageManager.PERMISSION_GRANTED+" and denied="+PackageManager.PERMISSION_DENIED+" for uri="+uri.toString());
+
+            if(context.checkCallingUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != PackageManager.PERMISSION_GRANTED)
                 return false;
+            else
+            {
+                ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "wa");
+                if(pfd != null) {
+                    pfd.close();
+                    return true;
+                }
+                else
+                    return false;
+            }
         }
         catch(Exception e)
         {
