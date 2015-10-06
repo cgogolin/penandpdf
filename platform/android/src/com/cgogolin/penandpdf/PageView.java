@@ -508,11 +508,13 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
                 // Draw the current hand drawing
             if (!mIsBlank && mDrawing != null) {
-                // PointF mP; //These are defined as membe variables for performance 
+                // PointF mP; //These are defined as member variables for performance 
                 // Iterator<ArrayList<PointF>> it;
                 // ArrayList<PointF> arc;
                 // Iterator<PointF> iit;
                 // float mX1, mY1, mX2, mY2;
+                drawingPaint.setStrokeWidth(inkThickness * scale);
+                drawingPaint.setColor(inkColor);  //Should be done only on settings change
                 it = mDrawing.iterator();
                 while (it.hasNext()) {
                     arc = it.next();
@@ -533,8 +535,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                         }
                         if(!canvas.quickReject(mDrawingPath, Canvas.EdgeType.AA))
                         {
-                            drawingPaint.setStrokeWidth(inkThickness * scale);
-                            drawingPaint.setColor(inkColor);  //Should be done only on settings change
                             canvas.drawPath(mDrawingPath, drawingPaint);
                         }
                         mDrawingPath.reset();

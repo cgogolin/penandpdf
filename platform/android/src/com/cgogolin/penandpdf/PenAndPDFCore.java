@@ -3,6 +3,7 @@ import java.util.ArrayList;
 
 import android.util.Base64;
 import android.content.pm.PackageManager;
+import android.content.UriPermission;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import android.provider.MediaStore.MediaColumns;
@@ -33,18 +34,18 @@ public class PenAndPDFCore extends MuPDFCore
 
     public PenAndPDFCore(Context context, Uri uri) throws Exception
 	{
-            Log.e("Core", "creating with uri="+uri);
+//            Log.e("Core", "creating with uri="+uri);
             
             this.uri = uri;
 
             if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
             {
-                Log.e("Core", "uri points to file");
+//                Log.e("Core", "uri points to file");
                 super.init(context, Uri.decode(uri.getEncodedPath()));
             }
             else if (uri.toString().startsWith("content://")) //Uri points to a content provider
             {
-                Log.e("Core", "uri points to content");
+//                Log.e("Core", "uri points to content");
                 String displayName = null;
                 Cursor cursor = context.getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null); //This should be done asynchonously!
 
@@ -129,7 +130,7 @@ public class PenAndPDFCore extends MuPDFCore
                     if(saveAsInternal(path) != 0)
                         throw new java.io.IOException("native code failed to save to "+uri.toString());
                     this.uri = uri;
-                    Log.e("Core", "saving done!");                
+//                    Log.e("Core", "saving done!");                
                 }
                 else
                     throw new java.io.IOException("no way to save to "+uri.toString());
@@ -150,11 +151,25 @@ public class PenAndPDFCore extends MuPDFCore
     public boolean canSaveToUriViaContentResolver(Context context, Uri uri) {
         try
         {
-            Log.e("PenAndPDF", "check permissions returns "+context.checkCallingUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)+" where granted="+PackageManager.PERMISSION_GRANTED+" and denied="+PackageManager.PERMISSION_DENIED+" for uri="+uri.toString());
-
-            if(context.checkCallingUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != PackageManager.PERMISSION_GRANTED)
-                return false;
+//            Log.e("PenAndPDF", "check permissions returns "+context.checkCallingUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)+" where granted="+PackageManager.PERMISSION_GRANTED+" and denied="+PackageManager.PERMISSION_DENIED+" for uri="+uri.toString());
+            boolean haveWritePermissionToUri = false;
+            if (android.os.Build.VERSION.SDK_INT >= 19)
+            {
+                for( UriPermission permission : context.getContentResolver().getPersistedUriPermissions()) {
+                    if(permission.isWritePermission() && permission.getUri().equals(uri))
+                    {
+//                        Log.e("PenAndPDF", "Have taken permissions");
+                        haveWritePermissionToUri = true;
+                    }
+                }
+            }
             else
+            {
+                if(context.checkCallingUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED)
+                    haveWritePermissionToUri = true;
+            }
+            
+            if(haveWritePermissionToUri)
             {
                 ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "wa");
                 if(pfd != null) {
@@ -164,6 +179,8 @@ public class PenAndPDFCore extends MuPDFCore
                 else
                     return false;
             }
+            else
+                return false;
         }
         catch(Exception e)
         {
@@ -180,11 +197,7 @@ public class PenAndPDFCore extends MuPDFCore
             File file = new File(Uri.decode(uri.getEncodedPath()));
             if(file.exists() && file.isFile() && file.canWrite())
                 return true;
-            // else if(!file.exists() && file.getParentFile().isDirectory())
-            // {
-            //     return true;
-            // }
-            // else
+            else
                 return false;
         }
         catch(Exception e)
