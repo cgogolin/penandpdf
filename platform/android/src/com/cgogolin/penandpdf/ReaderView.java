@@ -583,7 +583,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             }
         }
 
-//        requestLayout();
         return true;
     }
 

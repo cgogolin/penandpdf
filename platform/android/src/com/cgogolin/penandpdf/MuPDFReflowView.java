@@ -86,7 +86,7 @@ public class MuPDFReflowView extends WebView implements MuPDFView {
     public void setBlankPage(int page) {
     }
 
-    public Hit passClickEvent(float x, float y) {
+    public Hit passClickEvent(MotionEvent e) {
         return Hit.Nothing;
     }
 

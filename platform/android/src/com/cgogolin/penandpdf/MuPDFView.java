@@ -3,13 +3,14 @@ package com.cgogolin.penandpdf;
 import android.content.SharedPreferences;
 import android.graphics.PointF;
 import android.graphics.RectF;
+import android.view.MotionEvent;
 
 enum Hit {Nothing, Widget, Annotation, Link, LinkInternal, LinkExternal, LinkRemote, Debug, TextAnnotation}; //This must be restructured in the future!!!
 
 public interface MuPDFView {
     public void setPage(int page, PointF size);
     public void setScale(float scale);
-    public Hit passClickEvent(float x, float y);
+    public Hit passClickEvent(MotionEvent e);
     public LinkInfo hitLink(float x, float y);
     public void selectText(float x0, float y0, float x1, float y1);
     public void deselectText();

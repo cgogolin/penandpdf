@@ -1,24 +1,27 @@
 package com.cgogolin.penandpdf;
 
 import android.util.SparseArray;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Parcelable;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
 import android.graphics.RectF;
 
 import android.util.Log;
+
+import java.lang.Math;
 
 abstract public class MuPDFReaderView extends ReaderView {
     enum Mode {Viewing, Selecting, Drawing, Erasing, AddingTextAnnot}
@@ -29,8 +32,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     private int tapPageMargin;
 //    private static final int BACKGROUND_COLOR = 0xF0F0F0F0;
     
-    private SparseArray<SearchResult> SearchResults = new SparseArray<SearchResult>();
-    
+    private SparseArray<SearchResult> SearchResults = new SparseArray<SearchResult>();    
         //To be overwritten in PenAndPDFActivity:
     abstract protected void onMoveToChild(int pageNumber);
     abstract protected void onTapMainDocArea();
@@ -40,6 +42,20 @@ abstract public class MuPDFReaderView extends ReaderView {
     abstract protected void onHit(Hit item);
     abstract protected void onNumberOfStrokesChanged(int numberOfStrokes);
     abstract protected void addTextAnnotFromUserInput(Annotation annot);
+
+        //Gesture detector for long press
+    private final Handler longPressHandler = new Handler();
+    private MotionEvent longPressStartEvent;
+    Runnable longPressed;//  = new Runnable() { 
+        //     public void run() { 
+        //             //Process the long press event
+        //         if(mMode == Mode.Viewing)
+        //         {
+                    
+        //         }
+        //     }   
+        // };
+
     
     public void setLinksEnabled(boolean b) {
         mLinksEnabled = b;
@@ -83,9 +99,13 @@ abstract public class MuPDFReaderView extends ReaderView {
     public boolean onSingleTapUp(MotionEvent e) {
         MuPDFView pageView = (MuPDFView)getSelectedView();
         if (pageView == null ) return super.onSingleTapUp(e);
+
+            //Stop the long tap handler
+        longPressHandler.removeCallbacks(longPressed);
+        longPressStartEvent = null;
         
         if (mMode == Mode.Viewing && !tapDisabled) {
-            Hit item = pageView.passClickEvent(e.getX(), e.getY());
+            Hit item = pageView.passClickEvent(e);
             onHit(item);
                 
             LinkInfo link = null;
@@ -183,33 +203,75 @@ abstract public class MuPDFReaderView extends ReaderView {
         MuPDFView pageView = (MuPDFView)getSelectedView();
         ((MuPDFPageView)pageView).addTextAnnotation(annot);
     }
-
+    
     @Override
     public boolean onDown(MotionEvent e) {
-        switch (mMode) {
-            case Selecting:
-                MuPDFView pageView = (MuPDFView)getSelectedView();
-                if(pageView!=null) pageView.deselectText();
+        // switch (mMode) {
+        //     case Selecting:
+        //         MuPDFView pageView = (MuPDFView)getSelectedView();
+        //         if(pageView!=null) pageView.deselectText();
+        // }
+        
+            //Make text selectable by long press
+        MuPDFPageView cv = (MuPDFPageView)getSelectedView();
+        if( (mMode == Mode.Viewing || mMode == Mode.Selecting) && cv != null && !cv.hitsLeftMarker(e.getX(),e.getY()) && !cv.hitsRightMarker(e.getX(),e.getY()) )
+        {
+            longPressStartEvent = e;
+            longPressed = new Runnable() { 
+                    public void run() {
+                            //Process the long press event
+                        if(mMode == Mode.Viewing || mMode == Mode.Selecting)
+                        {
+                            MuPDFPageView cv = (MuPDFPageView)getSelectedView();
+                            if(cv==null) return;
+                            setMode(MuPDFReaderView.Mode.Selecting);
+                                //Strangely getY() doesn't return the correct coordinate relative to the view on my device so we have to compute them ourselves from the getRaw methods. I hope this works on multiwindow devices...
+                            int[] locationOnScreen = new int[2];
+                            getLocationOnScreen(locationOnScreen);
+                            
+                            cv.selectText(longPressStartEvent.getX(),longPressStartEvent.getRawY()-locationOnScreen[1],longPressStartEvent.getX()+1,longPressStartEvent.getRawY()+1-locationOnScreen[1]);
+                        }
+                    }   
+                };
+            longPressHandler.postDelayed(longPressed, android.view.ViewConfiguration.getLongPressTimeout());
         }
         return super.onDown(e);
     }
 
+    private boolean scrollStartedAtLeftMarker = false;
+    private boolean scrollStartedAtRightMarker = false;
+    
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
                             float distanceY) {
-        MuPDFView pageView = (MuPDFView)getSelectedView();
+        MuPDFPageView pageView = (MuPDFPageView)getSelectedView();
+
+        if( longPressStartEvent != null && (Math.abs(longPressStartEvent.getX() - e1.getX()) > ViewConfiguration.get(mContext).getScaledTouchSlop() || Math.abs(longPressStartEvent.getY() - e1.getY()) > ViewConfiguration.get(mContext).getScaledTouchSlop()) ) 
+        {
+            longPressHandler.removeCallbacks(longPressed);
+            longPressStartEvent = null;
+        }
+        
         switch (mMode) {
             case Viewing:
                 if (!tapDisabled) onDocMotion();
                 return super.onScroll(e1, e2, distanceX, distanceY);
             case Selecting:
                 if (pageView != null)
-                {
-                    boolean hadSelection = pageView.hasSelection();
-                    pageView.selectText(e1.getX(), e1.getY(), e2.getX(), e2.getY());
-//                    if (hadSelection != pageView.hasSelection()) onSelectionStatusChanged();
+                {   
+                    if(pageView.hitsLeftMarker(e1.getX(),e1.getY()) || scrollStartedAtLeftMarker) {
+                        scrollStartedAtLeftMarker = true;
+                        pageView.moveLeftMarker(e2);
+                    }
+                    else if(pageView.hitsRightMarker(e1.getX(),e1.getY()) || scrollStartedAtRightMarker) {
+                        scrollStartedAtRightMarker = true;
+                        pageView.moveRightMarker(e2);
+                    }
+                    else {
+                        return super.onScroll(e1, e2, distanceX, distanceY);
+                    }
                 }
-                return true;
+                return false;
             default:
                 return true;
         }
@@ -218,8 +280,13 @@ abstract public class MuPDFReaderView extends ReaderView {
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
                            float velocityY) {
+
+        longPressHandler.removeCallbacks(longPressed);
+        longPressStartEvent = null;
+        
         switch (mMode) {
             case Viewing:
+            case Selecting:
                 return super.onFling(e1, e2, velocityX, velocityY);
             default:
                 return true;
@@ -230,14 +297,62 @@ abstract public class MuPDFReaderView extends ReaderView {
             // Disabled showing the buttons until next touch.
             // Not sure why this is needed, but without it
             // pinch zoom can make the buttons appear
+        longPressHandler.removeCallbacks(longPressed);
+        longPressStartEvent = null;
+        
         tapDisabled = true;
         return super.onScaleBegin(d);
     }
 
+    @Override
     public boolean onTouchEvent(MotionEvent event) {
         final MuPDFView pageView = (MuPDFView)getSelectedView();
         if (pageView == null) super.onTouchEvent(event);
+
+        if(event.getAction() == MotionEvent.ACTION_UP)
+        {
+            scrollStartedAtLeftMarker = false;
+            scrollStartedAtRightMarker = false;
+            longPressHandler.removeCallbacks(longPressed);
+            longPressStartEvent = null;
+        }
+        
+        
+        //     //Make text selectable by long press
+        // if( (mMode == Mode.Viewing || mMode == Mode.Selecting ) && event.getAction() == MotionEvent.ACTION_DOWN)
+        // {
+        //     longPressStartEvent = event;
+        //     longPressed = new Runnable() { 
+        //             public void run() {
+        //                     //Process the long press event
+        //                 if(mMode == Mode.Viewing || mMode == Mode.Selecting)
+        //                 {
+        //                     MuPDFPageView cv = (MuPDFPageView)getSelectedView();
+        //                     if(cv==null) return;
+        //                     setMode(MuPDFReaderView.Mode.Selecting);
+        //                         //Strangely getY() doesn't return the correct coordinate relative to the view on my device so we have to compute them ourselves from the getRaw methods. I hope this works on multiwindow devices...
+        //                     int[] locationOnScreen = new int[2];
+        //                     getLocationOnScreen(locationOnScreen);
+                            
+        //                     cv.selectText(longPressStartEvent.getX(),longPressStartEvent.getRawY()-locationOnScreen[1],longPressStartEvent.getX()+1,longPressStartEvent.getRawY()+1-locationOnScreen[1]);
+        //                 }
+        //             }   
+        //         };
+        //     longPressHandler.postDelayed(longPressed, android.view.ViewConfiguration.getLongPressTimeout());
+        // }
+        // if(event.getAction() == MotionEvent.ACTION_UP || ( (event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_HOVER_MOVE) && longPressStartEvent != null && (Math.abs(longPressStartEvent.getX() - event.getX()) > 20 || Math.abs(longPressStartEvent.getY() - event.getY()) > 20) ))  //Must not use event.getX() here as this is not necessarially the current position of the pointer but can also be the start point of a swipe!
+        // {
+        //     Log.e("Pen", "startx="+longPressStartEvent.getX()+" curent="+event.getX());
             
+        //     longPressHandler.removeCallbacks(longPressed);
+        //     longPressStartEvent = null;
+        // }
+
+
+
+        
+            // Now we process events to be interpreted as drawing or ereasing or as events that start drawing
+            // 
             // By default use the first pointer
         int pointerIndexToUse = 0; 
             // If in stylus mode use the stylus istead
@@ -251,12 +366,18 @@ abstract public class MuPDFReaderView extends ReaderView {
                 }
             }
             pointerIndexToUse = pointerIndexOfStylus; // is pointer index of stylus or -1 if no stylus event occured
+
+                //Automaticall switch to drawing mode if touched with stylus in viewing mode
+            if(mUseStylus && mMode == Mode.Viewing && event.getActionIndex() == pointerIndexToUse && event.getAction() == MotionEvent.ACTION_DOWN){
+                setMode(MuPDFReaderView.Mode.Drawing);
+            }
         }
         
         if (event.getActionIndex() == pointerIndexToUse || !mUseStylus)
         {
             final float x = event.getX(pointerIndexToUse);
             final float y = event.getY(pointerIndexToUse);
+            
             if ( mMode == Mode.Drawing )
             {
                 switch(event.getAction())

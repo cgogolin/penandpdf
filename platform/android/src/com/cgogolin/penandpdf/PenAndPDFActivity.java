@@ -473,7 +473,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                                 @Override
                                 public void onClick(View v) {
                                     mDocView.setMode(MuPDFReaderView.Mode.Erasing);
-                                    invalidateOptionsMenu();
+//                                    invalidateOptionsMenu();
                                 }
                             });
                         drawImageButton.setOnLongClickListener(new OnLongClickListener() {
@@ -573,8 +573,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 return true;
             case R.id.menu_draw:
                 mDocView.setMode(MuPDFReaderView.Mode.Drawing);
-                mActionBarMode = ActionBarMode.Annot;
-                invalidateOptionsMenu();
+                // mActionBarMode = ActionBarMode.Annot;
+                // invalidateOptionsMenu();
                 return true;
             // case R.id.menu_print:
             //     printDoc();
@@ -638,11 +638,11 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             case R.id.menu_gotopage:
                 showGoToPageDialoge();
                 return true;
-            case R.id.menu_selection:
-                mDocView.setMode(MuPDFReaderView.Mode.Selecting);
-                mActionBarMode = ActionBarMode.Selection;
-                invalidateOptionsMenu();
-                return true;
+            // case R.id.menu_selection:
+            //     mDocView.setMode(MuPDFReaderView.Mode.Selecting);
+            //     // mActionBarMode = ActionBarMode.Selection;
+            //     // invalidateOptionsMenu();
+            //     return true;
             case R.id.menu_linkback:
                 setViewport(mPageBeforeInternalLinkHit,mNormalizedScaleBeforeInternalLinkHit, mNormalizedXScrollBeforeInternalLinkHit, mNormalizedYScrollBeforeInternalLinkHit);
                 mPageBeforeInternalLinkHit = -1;
@@ -664,20 +664,20 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 return true;
             case R.id.menu_add_text_annot:
                 mDocView.setMode(MuPDFReaderView.Mode.AddingTextAnnot);
-                mActionBarMode = ActionBarMode.AddingTextAnnot;
-                invalidateOptionsMenu();
+                // mActionBarMode = ActionBarMode.AddingTextAnnot;
+                // invalidateOptionsMenu();
                 showInfo(getString(R.string.tap_to_add_annotation));
                 return true;
             case R.id.menu_erase:
                 mDocView.setMode(MuPDFReaderView.Mode.Drawing);
-                invalidateOptionsMenu();
+//                invalidateOptionsMenu();
                 return true;
             case R.id.menu_highlight:
                 if (pageView.hasSelection()) {
                     pageView.markupSelection(Annotation.Type.HIGHLIGHT);
                     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                    mActionBarMode = ActionBarMode.Main;
-                    invalidateOptionsMenu();
+                    // mActionBarMode = ActionBarMode.Main;
+                    // invalidateOptionsMenu();
                 }
                 else
                     showInfo(getString(R.string.select_text));
@@ -686,8 +686,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 if (pageView.hasSelection()) {
                     pageView.markupSelection(Annotation.Type.UNDERLINE);
                     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                    mActionBarMode = ActionBarMode.Main;
-                    invalidateOptionsMenu();
+                    // mActionBarMode = ActionBarMode.Main;
+                    // invalidateOptionsMenu();
                 }
                 else
                     showInfo(getString(R.string.select_text));
@@ -696,8 +696,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 if (pageView.hasSelection()) {
                     pageView.markupSelection(Annotation.Type.STRIKEOUT);
                     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                    mActionBarMode = ActionBarMode.Main;
-                    invalidateOptionsMenu();
+                    // mActionBarMode = ActionBarMode.Main;
+                    // invalidateOptionsMenu();
                 }
                 else
                     showInfo(getString(R.string.select_text));
@@ -707,8 +707,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     boolean success = pageView.copySelection();
                     showInfo(success?getString(R.string.copied_to_clipboard):getString(R.string.no_text_selected));
                     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                    mActionBarMode = ActionBarMode.Main;
-                    invalidateOptionsMenu();
+                    // mActionBarMode = ActionBarMode.Main;
+                    // invalidateOptionsMenu();
                 }
                 else
                     showInfo(getString(R.string.select_text));
@@ -716,16 +716,16 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
             case R.id.menu_cancel:
                 switch (mActionBarMode) {
                     case Annot:
-//                    case Copy:
                         if (pageView != null) {
                                 pageView.deselectText();
                                 pageView.cancelDraw();
                         }
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+//                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         break;
                     case Edit:
                         if (pageView != null)
                             pageView.deleteSelectedAnnotation();
+//                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         break;
                     case Search:
                         hideKeyboard();
@@ -734,31 +734,34 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                         mDocView.resetupChildren();
                         break;
                     case Selection:
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+//                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         pageView.deselectText();
                         break;
                     case AddingTextAnnot:
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+//                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         break;
                 }
-                mActionBarMode = ActionBarMode.Main;
-                invalidateOptionsMenu();
+                mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                // mActionBarMode = ActionBarMode.Main;
+                // invalidateOptionsMenu();
                 return true;
             case R.id.menu_accept:
                 switch (mActionBarMode) {
                     case Annot:
 //                    case Copy:
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         if (pageView != null) {
                             pageView.saveDraw();
                         }
+                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         break;
                     case Edit:
                         if (pageView != null)
                             pageView.deselectAnnotation();
+                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                        break;
                 }
-                mActionBarMode = ActionBarMode.Main;
-                invalidateOptionsMenu();
+                // mActionBarMode = ActionBarMode.Main;
+                // invalidateOptionsMenu();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -875,6 +878,28 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         if(mDocView == null)
         {
             mDocView = new MuPDFReaderView(this) {
+                    
+                    @Override
+                    public void setMode(Mode m) {
+                        super.setMode(m);
+                        switch(m)
+                        {
+                            case Viewing:
+                                mActionBarMode = ActionBarMode.Main;
+                                break;
+                            case Drawing:
+                                mActionBarMode = ActionBarMode.Annot;
+                                break;
+                            case Selecting:
+                                mActionBarMode = ActionBarMode.Selection;
+                                break;
+                            case AddingTextAnnot:
+                                mActionBarMode = ActionBarMode.AddingTextAnnot;
+                                break;
+                        }
+                        invalidateOptionsMenu();
+                    }
+                    
                     @Override
                     protected void onMoveToChild(int pageNumber) {
                         setTitle();
@@ -1516,10 +1541,10 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 return;
             case Selection:
                 mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                // mActionBarMode = ActionBarMode.Main;
+                // invalidateOptionsMenu();
                 MuPDFView pageView = (MuPDFView) mDocView.getSelectedView();
                 if (pageView != null) pageView.deselectText();
-                mActionBarMode = ActionBarMode.Main;
-                invalidateOptionsMenu();
                 return;
         }
         

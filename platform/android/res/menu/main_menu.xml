@@ -82,12 +82,12 @@
 	android:showAsAction="always"
 	android:background="?android:selectableItemBackground"
 	/>
-  <item android:id="@+id/menu_selection"
+<!--  <item android:id="@+id/menu_selection"
 	android:icon="@drawable/ic_action_selection"
 	android:title="@string/menu_selection" 
 	android:showAsAction="always"
 	android:background="?android:selectableItemBackground"
-	/>
+	/>-->
   <item android:id="@+id/menu_draw"
 	android:icon="@drawable/ic_action_edit"
 	android:title="@string/menu_draw" 

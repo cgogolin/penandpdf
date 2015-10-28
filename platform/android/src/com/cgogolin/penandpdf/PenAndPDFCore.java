@@ -108,7 +108,8 @@ public class PenAndPDFCore extends MuPDFCore
                     File cacheDir = context.getCacheDir();
                     tmpFile = File.createTempFile("prefix", "pdf", cacheDir);
                 }
-                if(saveAsInternal(tmpFile.getPath()) != 0) throw new java.io.IOException("native code failed to save to "+tmpFile.getPath());
+                if(saveAsInternal(tmpFile.getPath()) != 0)
+                    throw new java.io.IOException("native code failed to save to "+tmpFile.getPath());
 
                 ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "w");
                 FileInputStream fileInputStream = new FileInputStream(tmpFile);
@@ -121,19 +122,22 @@ public class PenAndPDFCore extends MuPDFCore
             }
             else
             {
-                File file = new File(Uri.decode(uri.getEncodedPath()));
-                if(!file.exists())
-                    file.createNewFile(); //Try to create the file first so that we can then check if we can write to it.
-                if(canSaveToUriAsFile(context, uri))
-                {
+                // File file = new File(Uri.decode(uri.getEncodedPath()));
+                // if(!file.exists()) 
+                // {
+                //     file.createNewFile(); //Try to create the file first so and try to take permissions so that we can then check if we can write to it.
+                //     context.getContentResolver().takePersistableUriPermission(uri, (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION));
+                // }
+                // if(canSaveToUriAsFile(context, uri))//Problem is actually in here!
+                // {
                     String path = Uri.decode(uri.getEncodedPath());
                     if(saveAsInternal(path) != 0)
                         throw new java.io.IOException("native code failed to save to "+uri.toString());
                     this.uri = uri;
 //                    Log.e("Core", "saving done!");                
-                }
-                else
-                    throw new java.io.IOException("no way to save to "+uri.toString());
+                // }
+                // else
+                //     throw new java.io.IOException("no way to save to "+uri.toString());
             }
         }
     

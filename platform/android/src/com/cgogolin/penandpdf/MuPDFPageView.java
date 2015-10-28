@@ -15,6 +15,7 @@ import android.os.AsyncTask;
 import android.text.method.PasswordTransformationMethod;
 import android.view.inputmethod.EditorInfo;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -310,11 +311,13 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	}
 
 	public void setChangeReporter(Runnable reporter) {
-		changeReporter = reporter;
+            changeReporter = reporter;
 	}
 
-	public Hit passClickEvent(float x, float y) {
-		float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+	public Hit passClickEvent(MotionEvent e) {
+            float x = e.getX();
+            float y = e.getY();
+            float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
 		final float docRelX = (x - getLeft())/scale;
 		final float docRelY = (y - getTop())/scale;
 		boolean hit = false;

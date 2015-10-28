@@ -28,6 +28,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
+import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.view.View;
 import android.view.View.OnLayoutChangeListener;
@@ -110,6 +111,7 @@ class TextSelector
 
 public abstract class PageView extends ViewGroup implements MuPDFView {
     private static final int SELECTION_COLOR = 0x8033B5E5;
+    private static final int SELECTION_MARKER_COLOR = 0xFF33B5E5;
     private static final int GRAYEDOUT_COLOR = 0x30000000;
     private static final int SEARCHRESULTS_COLOR = 0x3033B5E5;
     private static final int HIGHLIGHTED_SEARCHRESULT_COLOR = 0xFF33B5E5;
@@ -315,12 +317,83 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         }
     }
 
+        //Update in following TextSelectionDrawer (coordinates are relative to document)
+    private RectF leftMarkerRect = new RectF();
+    private RectF rightMarkerRect= new RectF();
+
+    public boolean hitsLeftMarker(float x, float y)
+        {
+            float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+            float docRelX = (x - getLeft())/scale;
+            float docRelY = (y - getTop())/scale;            
+            return leftMarkerRect != null && leftMarkerRect.contains(docRelX,docRelY); 
+        }
+    public boolean hitsRightMarker(float x, float y)
+        {
+            float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+            float docRelX = (x - getLeft())/scale;
+            float docRelY = (y - getTop())/scale;
+            return rightMarkerRect != null && rightMarkerRect.contains(docRelX,docRelY); 
+        }
+    public void moveLeftMarker(MotionEvent e){
+        float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+        float docRelX = (e.getX() - getLeft())/scale;
+        float docRelY = (e.getY() - getTop())/scale;
+
+        Log.e("Pen", "old mSelectBox="+mSelectBox);
+
+        if(docRelX < mSelectBox.right)
+            mSelectBox.left=docRelX;
+        else {
+            mSelectBox.left=mSelectBox.right;
+            mSelectBox.right=docRelX;
+        }
+        if(docRelY < mSelectBox.bottom)
+            mSelectBox.top=docRelY;
+        else {
+            mSelectBox.top=mSelectBox.bottom;
+            mSelectBox.bottom=docRelY;
+        }                
+        if(docRelX>docRelXmax) docRelXmax = docRelX;
+        if(docRelX<docRelXmin) docRelXmin = docRelX;
+        mOverlayView.invalidate();
+    }
+    
+    public void moveRightMarker(MotionEvent e){
+        float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+        float docRelX = (e.getX() - getLeft())/scale;
+        float docRelY = (e.getY() - getTop())/scale;
+        if(docRelX > mSelectBox.left)
+            mSelectBox.right=docRelX;
+        else {
+            mSelectBox.right=mSelectBox.left;
+            mSelectBox.left=docRelX;
+        }
+        if(docRelY > mSelectBox.top)
+            mSelectBox.bottom=docRelY;
+        else {
+            mSelectBox.bottom=mSelectBox.top;
+            mSelectBox.top=docRelY;
+        }
+        if(docRelX>docRelXmax) docRelXmax = docRelX;
+        if(docRelX<docRelXmin) docRelXmin = docRelX;
+        mOverlayView.invalidate();
+    }
+    
+    
     class OverlayView extends View {
         Path mDrawingPath = new Path();
         
         class TextSelectionDrawer implements TextProcessor
         {
             RectF rect;
+//            boolean firstLine = true;
+            RectF firstLineRect = new RectF();
+            RectF lastLineRect = new RectF();
+            Path leftMarker = new Path();
+            Path rightMarker = new Path();
+            float height;
+            float oldHeight = 0f;
             float docRelXmaxSelection = Float.NEGATIVE_INFINITY;
             float docRelXminSelection = Float.POSITIVE_INFINITY;
             float scale;
@@ -329,6 +402,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             public void reset(Canvas canvas, float scale) {
                 this.canvas = canvas;
                 this.scale = scale;
+                // firstLineRect = new RectF();
+                // lastLineRect = new RectF();
+                firstLineRect = null;
+                lastLineRect = null;
                 docRelXmaxSelection = Float.NEGATIVE_INFINITY;
                 docRelXminSelection = Float.POSITIVE_INFINITY;
             }
@@ -344,7 +421,26 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             public void onEndLine() {
                 if (!rect.isEmpty())
                 {
+                    // if(firstLine)
+                    // {
+                    //     firstLineRect.set(rect);
+                    //     firstLine = false;
+                    // }
+                    // lastLineRect.set(rect);
+                    if(firstLineRect == null || firstLineRect.top > rect.top)
+                    {
+                        if(firstLineRect == null) firstLineRect = new RectF();
+                        firstLineRect.set(rect);
+                    }
+                    if(lastLineRect == null || lastLineRect.bottom < rect.bottom)
+                    {
+                        if(lastLineRect == null) lastLineRect = new RectF();
+                        lastLineRect.set(rect);
+                    }
+                    
+                        
                     canvas.drawRect(rect.left*scale, rect.top*scale, rect.right*scale, rect.bottom*scale, selectBoxPaint);
+                    
                     docRelXmaxSelection = Math.max(docRelXmaxSelection,Math.max(rect.right,docRelXmax));
                     docRelXminSelection = Math.min(docRelXminSelection,Math.min(rect.left,docRelXmin));
                 }
@@ -353,6 +449,44 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             public void onEndText() {
                 if (useSmartTextSelection)
                 {
+                    if(firstLineRect != null && lastLineRect != null)
+                    {
+                        height = Math.max(Math.max(firstLineRect.bottom - firstLineRect.top, lastLineRect.bottom - lastLineRect.top), getResources().getDisplayMetrics().xdpi*0.1f);
+
+                        leftMarkerRect.set(firstLineRect.left-0.9f*height,firstLineRect.top,firstLineRect.left,firstLineRect.top+1.9f*height);
+                        rightMarkerRect.set(lastLineRect.right,lastLineRect.top,lastLineRect.right+0.9f*height,lastLineRect.top+1.9f*height);
+
+                        // canvas.drawRect(leftMarkerRect, selectBoxPaint);
+                        // canvas.drawRect(rightMarkerRect, selectBoxPaint);
+                        //canvas.drawRect(mSelectBox, itemSelectBoxPaint);
+                        
+                        if(height != oldHeight || true)
+                        {
+                            leftMarker.rewind();
+                            leftMarker.moveTo(0f,0f);
+                            leftMarker.rLineTo(0f,1.9f*height*scale);
+                            leftMarker.rLineTo(-0.9f*height*scale,0f);
+                            leftMarker.rLineTo(0f,-0.9f*height*scale);
+                            leftMarker.close();
+                            
+                            rightMarker.rewind();
+                            rightMarker.moveTo(0f,0f);
+                            rightMarker.rLineTo(0f,1.9f*height*scale);
+                            rightMarker.rLineTo(0.9f*height*scale,0f);
+                            rightMarker.rLineTo(0f,-0.9f*height*scale);
+                            rightMarker.close();
+                            oldHeight = height;
+                        }
+                        
+                        leftMarker.offset(firstLineRect.left*scale, firstLineRect.top*scale);
+                        rightMarker.offset(lastLineRect.right*scale, lastLineRect.top*scale);
+                        canvas.drawPath(leftMarker, selectMarkerPaint);
+                        canvas.drawPath(rightMarker, selectMarkerPaint);
+                            //Undo the offset so that we can reuse the path
+                        leftMarker.offset(-firstLineRect.left*scale, -firstLineRect.top*scale);
+                        rightMarker.offset(-lastLineRect.right*scale, -lastLineRect.top*scale);                        
+                    }
+                        
                     canvas.drawRect(0, 0, docRelXminSelection*scale, PageView.this.getHeight(), selectOverlayPaint);
                     canvas.drawRect(docRelXmaxSelection*scale, 0, PageView.this.getWidth(), PageView.this.getHeight(), selectOverlayPaint);
                 }
@@ -362,6 +496,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         private final Paint highlightedSearchResultPaint = new Paint();
         private final Paint linksPaint = new Paint();
         private final Paint selectBoxPaint = new Paint();
+        private final Paint selectMarkerPaint = new Paint();
         private final Paint selectOverlayPaint = new Paint();
         private final Paint itemSelectBoxPaint = new Paint();
         private final Paint drawingPaint = new Paint();
@@ -385,7 +520,11 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             selectBoxPaint.setColor(SELECTION_COLOR);
             selectBoxPaint.setStyle(Paint.Style.FILL);
             selectBoxPaint.setStrokeWidth(0);
-                            
+
+            selectMarkerPaint.setColor(SELECTION_MARKER_COLOR);
+            selectMarkerPaint.setStyle(Paint.Style.FILL);
+            selectMarkerPaint.setStrokeWidth(0);
+            
             selectOverlayPaint.setColor(GRAYEDOUT_COLOR);
             selectOverlayPaint.setStyle(Paint.Style.FILL);
                             
@@ -691,17 +830,17 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         float docRelY0 = (y0 - getTop())/scale;
         float docRelX1 = (x1 - getLeft())/scale;
         float docRelY1 = (y1 - getTop())/scale;
-
-            //Adjust the min/max x values between which text is selected
-        if(Math.max(docRelX0,docRelX1)>docRelXmax) docRelXmax = Math.max(docRelX0,docRelX1);
-        if(Math.min(docRelX0,docRelX1)<docRelXmin) docRelXmin = Math.min(docRelX0,docRelX1);
-                
+        
             // Order on Y but maintain the point grouping
         if (docRelY0 <= docRelY1)
             mSelectBox = new RectF(docRelX0, docRelY0, docRelX1, docRelY1);
         else
             mSelectBox = new RectF(docRelX1, docRelY1, docRelX0, docRelY0);
 
+            //Adjust the min/max x values between which text is selected
+        if(Math.max(docRelX0,docRelX1)>docRelXmax) docRelXmax = Math.max(docRelX0,docRelX1);
+        if(Math.min(docRelX0,docRelX1)<docRelXmin) docRelXmin = Math.min(docRelX0,docRelX1);
+        
         mOverlayView.invalidate();
 
         loadText(); //We should do this earlier in the background ...
