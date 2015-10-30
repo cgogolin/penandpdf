@@ -569,6 +569,11 @@ public class MuPDFPageView extends PageView implements MuPDFView {
         }
     }
 
+
+    public Annotation.Type selectedAnnotationType() {
+        return mAnnotations[mSelectedAnnotationIndex].type; 
+    }
+    
     
     public boolean selectedAnnotationIsEditable() {
         if (mSelectedAnnotationIndex != -1) {

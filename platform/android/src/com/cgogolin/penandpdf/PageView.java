@@ -451,7 +451,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 {
                     if(firstLineRect != null && lastLineRect != null)
                     {
-                        height = Math.max(Math.max(firstLineRect.bottom - firstLineRect.top, lastLineRect.bottom - lastLineRect.top), getResources().getDisplayMetrics().xdpi*0.1f);
+                        height = Math.max(Math.max(firstLineRect.bottom - firstLineRect.top, lastLineRect.bottom - lastLineRect.top), getResources().getDisplayMetrics().xdpi*0.07f/scale);
 
                         leftMarkerRect.set(firstLineRect.left-0.9f*height,firstLineRect.top,firstLineRect.left,firstLineRect.top+1.9f*height);
                         rightMarkerRect.set(lastLineRect.right,lastLineRect.top,lastLineRect.right+0.9f*height,lastLineRect.top+1.9f*height);
@@ -530,7 +530,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                             
             itemSelectBoxPaint.setColor(BOX_COLOR);
             itemSelectBoxPaint.setStyle(Paint.Style.STROKE);
-            itemSelectBoxPaint.setStrokeWidth(0);
+            itemSelectBoxPaint.setStrokeWidth(3);
                             
             drawingPaint.setAntiAlias(true);
             drawingPaint.setDither(true);

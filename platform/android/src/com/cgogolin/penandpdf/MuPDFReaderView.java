@@ -46,16 +46,7 @@ abstract public class MuPDFReaderView extends ReaderView {
         //Gesture detector for long press
     private final Handler longPressHandler = new Handler();
     private MotionEvent longPressStartEvent;
-    Runnable longPressed;//  = new Runnable() { 
-        //     public void run() { 
-        //             //Process the long press event
-        //         if(mMode == Mode.Viewing)
-        //         {
-                    
-        //         }
-        //     }   
-        // };
-
+    Runnable longPressed;
     
     public void setLinksEnabled(boolean b) {
         mLinksEnabled = b;
@@ -229,6 +220,7 @@ abstract public class MuPDFReaderView extends ReaderView {
                             int[] locationOnScreen = new int[2];
                             getLocationOnScreen(locationOnScreen);
                             
+                            cv.deselectText();
                             cv.selectText(longPressStartEvent.getX(),longPressStartEvent.getRawY()-locationOnScreen[1],longPressStartEvent.getX()+1,longPressStartEvent.getRawY()+1-locationOnScreen[1]);
                         }
                     }   
@@ -306,7 +298,7 @@ abstract public class MuPDFReaderView extends ReaderView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        final MuPDFView pageView = (MuPDFView)getSelectedView();
+        final MuPDFPageView pageView = (MuPDFPageView)getSelectedView();
         if (pageView == null) super.onTouchEvent(event);
 
         if(event.getAction() == MotionEvent.ACTION_UP)
@@ -369,7 +361,17 @@ abstract public class MuPDFReaderView extends ReaderView {
 
                 //Automaticall switch to drawing mode if touched with stylus in viewing mode
             if(mUseStylus && mMode == Mode.Viewing && event.getActionIndex() == pointerIndexToUse && event.getAction() == MotionEvent.ACTION_DOWN){
-                setMode(MuPDFReaderView.Mode.Drawing);
+
+                Hit item = pageView.passClickEvent(event);
+                if(item != null && Hit.Annotation.equals(item) && pageView.selectedAnnotationIsEditable() && Annotation.Type.INK == pageView.selectedAnnotationType()){
+                    pageView.editSelectedAnnotation();
+//                    onHit(item);
+                }
+                else if(item == null || Hit.Nothing.equals(item) )
+                {
+                    pageView.deselectAnnotation();
+                    setMode(MuPDFReaderView.Mode.Drawing);
+                }
             }
         }
         
