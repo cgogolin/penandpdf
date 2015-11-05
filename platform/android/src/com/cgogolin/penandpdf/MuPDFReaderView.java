@@ -225,7 +225,10 @@ abstract public class MuPDFReaderView extends ReaderView {
                         }
                     }   
                 };
-            longPressHandler.postDelayed(longPressed, android.view.ViewConfiguration.getLongPressTimeout());
+            if(!mUseStylus)
+                longPressHandler.postDelayed(longPressed, android.view.ViewConfiguration.getLongPressTimeout());
+            else
+                longPressHandler.postDelayed(longPressed, 2*android.view.ViewConfiguration.getLongPressTimeout()); //Use a longer timeout to interfere less with drawing
         }
         return super.onDown(e);
     }
@@ -301,14 +304,27 @@ abstract public class MuPDFReaderView extends ReaderView {
         final MuPDFPageView pageView = (MuPDFPageView)getSelectedView();
         if (pageView == null) super.onTouchEvent(event);
 
-        if(event.getAction() == MotionEvent.ACTION_UP)
-        {
-            scrollStartedAtLeftMarker = false;
-            scrollStartedAtRightMarker = false;
-            longPressHandler.removeCallbacks(longPressed);
-            longPressStartEvent = null;
-        }
-        
+        switch(event.getAction()) {
+            case MotionEvent.ACTION_UP:
+                scrollStartedAtLeftMarker = false;
+                scrollStartedAtRightMarker = false;
+                
+                longPressHandler.removeCallbacks(longPressed);
+                longPressStartEvent = null;
+                break;
+            case MotionEvent.ACTION_HOVER_ENTER:
+            case MotionEvent.ACTION_HOVER_EXIT:
+            case MotionEvent.ACTION_HOVER_MOVE:
+                    //If a stylus is hovering interup the long press handler to avoid swithcing to selectio mode
+                for(int pointerIndex = 0; pointerIndex < event.getPointerCount(); pointerIndex++) {
+                    if (event.getToolType(pointerIndex) == android.view.MotionEvent.TOOL_TYPE_STYLUS) {
+                        longPressHandler.removeCallbacks(longPressed);
+                        longPressStartEvent = null;
+                        break;
+                    }
+                }
+                break;
+        }        
         
         //     //Make text selectable by long press
         // if( (mMode == Mode.Viewing || mMode == Mode.Selecting ) && event.getAction() == MotionEvent.ACTION_DOWN)
@@ -361,13 +377,14 @@ abstract public class MuPDFReaderView extends ReaderView {
 
                 //Automaticall switch to drawing mode if touched with stylus in viewing mode
             if(mUseStylus && mMode == Mode.Viewing && event.getActionIndex() == pointerIndexToUse && event.getAction() == MotionEvent.ACTION_DOWN){
-
-                Hit item = pageView.passClickEvent(event);
-                if(item != null && Hit.Annotation.equals(item) && pageView.selectedAnnotationIsEditable() && Annotation.Type.INK == pageView.selectedAnnotationType()){
+                
+                Hit item = pageView.clickWouldHit(event);
+                if(item != null && Hit.InkAnnotation.equals(item)){
+                    pageView.passClickEvent(event);
                     pageView.editSelectedAnnotation();
 //                    onHit(item);
                 }
-                else if(item == null || Hit.Nothing.equals(item) )
+                else //if(item == null || Hit.Nothing.equals(item) )
                 {
                     pageView.deselectAnnotation();
                     setMode(MuPDFReaderView.Mode.Drawing);

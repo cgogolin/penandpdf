@@ -58,9 +58,11 @@ public class PenAndPDFCore extends MuPDFCore
                     if(displayName==null)
                     {
                         int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
-                        if(titleIndex >= 0) displayName = cursor.getString(titleIndex);             
+                        if(titleIndex >= 0) displayName = cursor.getString(titleIndex);
                         if(displayName==null)
+                        {
                             displayName="NoName.pdf";
+                        }
                     }       
                     cursor.close();
                     

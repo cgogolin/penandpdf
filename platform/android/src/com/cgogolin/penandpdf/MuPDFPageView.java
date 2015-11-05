@@ -359,10 +359,13 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                             case UNDERLINE:
                             case SQUIGGLY:
                             case STRIKEOUT:
-                            case INK:
                                 mSelectedAnnotationIndex = i;
                                 setItemSelectBox(mAnnotations[i]);
                                 return Hit.Annotation;
+                            case INK:
+                                mSelectedAnnotationIndex = i;
+                                setItemSelectBox(mAnnotations[i]);
+                                return Hit.InkAnnotation;
                             case TEXT:
                                 mSelectedAnnotationIndex = i;
                                 setItemSelectBox(mAnnotations[i]);
@@ -431,6 +434,73 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 		return Hit.Nothing;
 	}
+
+
+    	public Hit clickWouldHit(MotionEvent e) {
+            float x = e.getX();
+            float y = e.getY();
+            float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+		final float docRelX = (x - getLeft())/scale;
+		final float docRelY = (y - getTop())/scale;
+		boolean hit = false;
+		int i;
+
+		if (mLinks != null)
+                    for (LinkInfo l: mLinks)
+                        if (l.rect.contains(docRelX, docRelY))
+                        {
+                            switch(l.type())
+                            {
+                                case Internal:
+                                    return Hit.LinkInternal;
+                                case External:
+                                    return Hit.LinkExternal;
+                                case Remote:
+                                    return Hit.LinkRemote;
+                            }
+                        }
+                
+		if (mAnnotations != null) {
+                    for (i = 0; i < mAnnotations.length; i++)
+                    {
+                            //If multiple annotations overlap, make sure we
+                            //return a different annotation as hit each
+                            //time we are called 
+                        int j = (i+lastHitAnnotation) % mAnnotations.length;
+                        if (mAnnotations[j].contains(docRelX, docRelY))
+                        {
+                            hit = true;
+                            break;
+                        }
+                    }
+                    if (hit) {
+                        switch (mAnnotations[i].type) {
+                            case HIGHLIGHT:
+                            case UNDERLINE:
+                            case SQUIGGLY:
+                            case STRIKEOUT:
+                                return Hit.Annotation;
+                            case INK:
+                                return Hit.InkAnnotation;
+                            case TEXT:
+                                return Hit.TextAnnotation;
+                        }
+                    }
+		}
+                
+                if (!MuPDFCore.javascriptSupported())
+                    return Hit.Nothing;
+		if (mWidgetAreas != null) {
+			for (i = 0; i < mWidgetAreas.length && !hit; i++)
+				if (mWidgetAreas[i].contains(docRelX, docRelY))
+					hit = true;
+		}
+		if (hit) {
+			return Hit.Widget;
+		}
+		return Hit.Nothing;
+	}
+    
 
 	public boolean copySelection() {
 		final StringBuilder text = new StringBuilder();

@@ -99,7 +99,7 @@
 	<string name="display_settings">Display settings</string>
 	<string name="annotation_settings">Annotation settings</string>
 	<string name="use_stylus">Use stylus</string>
-	<string name="use_stylus_summ">Detect and use stylus for free hand annotations.</string>
+	<string name="use_stylus_summ">Use only the stylus for free hand annotations and start drawing immediately.</string>
 	<string name="use_smart_text_selection">Use smart text selection</string>
 	<string name="use_smart_text_selection_summ">Text selection is constrained to the area between leftmost and rightmost cursor postion during selection.</string>
 	<string name="scroll_vertical">Scroll vertical</string>

@@ -418,8 +418,6 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
         {
             super.onCreateOptionsMenu(menu);
 
-//            Log.e("Pen", "mActionBarMode="+mActionBarMode+" DocViewMode="+mDocView.getMode());
-            
             MenuInflater inflater = getMenuInflater();
             switch (mActionBarMode)
             {
@@ -1022,6 +1020,7 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                     protected void onHit(Hit item) {
                         switch(item){
                             case Annotation:
+                            case InkAnnotation:
                                 mActionBarMode = ActionBarMode.Edit;
                                 invalidateOptionsMenu();
                                 selectedAnnotationIsEditable = ((MuPDFPageView)getSelectedView()).selectedAnnotationIsEditable();
