@@ -131,7 +131,7 @@ fz_keep_glyph_cache(fz_context *ctx)
 }
 
 float
-fz_subpixel_adjust(fz_matrix *ctm, fz_matrix *subpix_ctm, unsigned char *qe, unsigned char *qf)
+fz_subpixel_adjust(fz_context *ctx, fz_matrix *ctm, fz_matrix *subpix_ctm, unsigned char *qe, unsigned char *qf)
 {
 	float size = fz_matrix_expansion(ctm);
 	int q;
@@ -182,7 +182,7 @@ fz_render_stroked_glyph(fz_context *ctx, fz_font *font, int gid, fz_matrix *trm,
 
 		if (stroke->dash_len > 0)
 			return NULL;
-		(void)fz_subpixel_adjust(trm, &subpix_trm, &qe, &qf);
+		(void)fz_subpixel_adjust(ctx, trm, &subpix_trm, &qe, &qf);
 		return fz_render_ft_stroked_glyph(ctx, font, gid, &subpix_trm, ctm, stroke);
 	}
 	return fz_render_glyph(ctx, font, gid, trm, NULL, scissor);
@@ -198,7 +198,7 @@ fz_render_stroked_glyph_pixmap(fz_context *ctx, fz_font *font, int gid, fz_matri
 
 		if (stroke->dash_len > 0)
 			return NULL;
-		(void)fz_subpixel_adjust(trm, &subpix_trm, &qe, &qf);
+		(void)fz_subpixel_adjust(ctx, trm, &subpix_trm, &qe, &qf);
 		return fz_render_ft_stroked_glyph_pixmap(ctx, font, gid, &subpix_trm, ctm, stroke);
 	}
 	return fz_render_glyph_pixmap(ctx, font, gid, trm, NULL, scissor);
@@ -246,6 +246,7 @@ fz_render_glyph(fz_context *ctx, fz_font *font, int gid, fz_matrix *ctm, fz_colo
 	fz_glyph_cache *cache;
 	fz_glyph_key key;
 	fz_matrix subpix_ctm;
+	fz_irect subpix_scissor;
 	float size;
 	fz_glyph *val;
 	int do_cache, locked, caching;
@@ -257,7 +258,7 @@ fz_render_glyph(fz_context *ctx, fz_font *font, int gid, fz_matrix *ctm, fz_colo
 	fz_var(val);
 
 	memset(&key, 0, sizeof key);
-	size = fz_subpixel_adjust(ctm, &subpix_ctm, &key.e, &key.f);
+	size = fz_subpixel_adjust(ctx, ctm, &subpix_ctm, &key.e, &key.f);
 	if (size <= MAX_GLYPH_SIZE)
 	{
 		scissor = &fz_infinite_irect;
@@ -267,6 +268,11 @@ fz_render_glyph(fz_context *ctx, fz_font *font, int gid, fz_matrix *ctm, fz_colo
 	{
 		if (font->ft_face)
 			return NULL;
+		subpix_scissor.x0 = scissor->x0 - floorf(ctm->e);
+		subpix_scissor.y0 = scissor->y0 - floorf(ctm->f);
+		subpix_scissor.x1 = scissor->x1 - floorf(ctm->e);
+		subpix_scissor.y1 = scissor->y1 - floorf(ctm->f);
+		scissor = &subpix_scissor;
 		do_cache = 0;
 	}
 
@@ -406,7 +412,7 @@ fz_render_glyph_pixmap(fz_context *ctx, fz_font *font, int gid, fz_matrix *ctm, 
 	fz_pixmap *val;
 	unsigned char qe, qf;
 	fz_matrix subpix_ctm;
-	float size = fz_subpixel_adjust(ctm, &subpix_ctm, &qe, &qf);
+	float size = fz_subpixel_adjust(ctx, ctm, &subpix_ctm, &qe, &qf);
 
 	if (size <= MAX_GLYPH_SIZE)
 	{

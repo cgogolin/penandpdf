@@ -31,24 +31,24 @@ struct fz_font_s
 
 	void *ft_face; /* has an FT_Face if used */
 	int ft_substitute; /* ... substitute metrics */
+	int ft_stretch; /* ... and stretch to match PDF metrics */
 	int ft_bold; /* ... synthesize bold */
 	int ft_italic; /* ... synthesize italic */
 	int ft_hint; /* ... force hinting for DynaLab fonts */
 
 	/* origin of font data */
-	char *ft_file;
-	unsigned char *ft_data;
-	int ft_size;
+	fz_buffer *ft_buffer;
+	char *ft_filepath; /* kept for downstream consumers (such as SumatraPDF) */
 
 	fz_matrix t3matrix;
 	void *t3resources;
 	fz_buffer **t3procs; /* has 256 entries if used */
 	struct fz_display_list_s **t3lists; /* has 256 entries if used */
 	float *t3widths; /* has 256 entries if used */
-	char *t3flags; /* has 256 entries if used */
+	unsigned short *t3flags; /* has 256 entries if used */
 	void *t3doc; /* a pdf_document for the callback */
-	void (*t3run)(void *doc, void *resources, fz_buffer *contents, struct fz_device_s *dev, const fz_matrix *ctm, void *gstate, int nestedDepth);
-	void (*t3freeres)(void *doc, void *resources);
+	void (*t3run)(fz_context *ctx, void *doc, void *resources, fz_buffer *contents, struct fz_device_s *dev, const fz_matrix *ctm, void *gstate, int nestedDepth);
+	void (*t3freeres)(fz_context *ctx, void *doc, void *resources);
 
 	fz_rect bbox;	/* font bbox is used only for t3 fonts */
 
@@ -59,17 +59,29 @@ struct fz_font_s
 
 	/* substitute metrics */
 	int width_count;
-	int *width_table; /* in 1000 units */
+	short width_default; /* in 1000 units */
+	short *width_table; /* in 1000 units */
 };
+
+/* common CJK font collections */
+enum { FZ_ADOBE_CNS_1, FZ_ADOBE_GB_1, FZ_ADOBE_JAPAN_1, FZ_ADOBE_KOREA_1 };
 
 void fz_new_font_context(fz_context *ctx);
 fz_font_context *fz_keep_font_context(fz_context *ctx);
 void fz_drop_font_context(fz_context *ctx);
 
-fz_font *fz_new_type3_font(fz_context *ctx, char *name, const fz_matrix *matrix);
+typedef fz_font *(*fz_load_system_font_func)(fz_context *ctx, const char *name, int bold, int italic, int needs_exact_metrics);
+typedef fz_font *(*fz_load_system_cjk_font_func)(fz_context *ctx, const char *name, int ros, int serif);
+void fz_install_load_system_font_funcs(fz_context *ctx, fz_load_system_font_func f, fz_load_system_cjk_font_func f_cjk);
+/* fz_load_*_font returns NULL if no font could be loaded (also on error) */
+fz_font *fz_load_system_font(fz_context *ctx, const char *name, int bold, int italic, int needs_exact_metrics);
+fz_font *fz_load_system_cjk_font(fz_context *ctx, const char *name, int ros, int serif);
 
-fz_font *fz_new_font_from_memory(fz_context *ctx, char *name, unsigned char *data, int len, int index, int use_glyph_bbox);
-fz_font *fz_new_font_from_file(fz_context *ctx, char *name, char *path, int index, int use_glyph_bbox);
+fz_font *fz_new_type3_font(fz_context *ctx, const char *name, const fz_matrix *matrix);
+
+fz_font *fz_new_font_from_memory(fz_context *ctx, const char *name, unsigned char *data, int len, int index, int use_glyph_bbox);
+fz_font *fz_new_font_from_buffer(fz_context *ctx, const char *name, fz_buffer *buffer, int index, int use_glyph_bbox);
+fz_font *fz_new_font_from_file(fz_context *ctx, const char *name, const char *path, int index, int use_glyph_bbox);
 
 fz_font *fz_keep_font(fz_context *ctx, fz_font *font);
 void fz_drop_font(fz_context *ctx, fz_font *font);
@@ -81,6 +93,9 @@ int fz_glyph_cacheable(fz_context *ctx, fz_font *font, int gid);
 void fz_run_t3_glyph(fz_context *ctx, fz_font *font, int gid, const fz_matrix *trm, struct fz_device_s *dev);
 
 void fz_decouple_type3_font(fz_context *ctx, fz_font *font, void *t3doc);
+
+float fz_advance_glyph(fz_context *ctx, fz_font *font, int glyph);
+int fz_encode_character(fz_context *ctx, fz_font *font, int unicode);
 
 #ifndef NDEBUG
 void fz_print_font(fz_context *ctx, FILE *out, fz_font *font);

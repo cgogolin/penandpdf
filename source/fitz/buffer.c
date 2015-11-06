@@ -44,12 +44,7 @@ fz_buffer *
 fz_keep_buffer(fz_context *ctx, fz_buffer *buf)
 {
 	if (buf)
-	{
-		if (buf->refs == 1 && buf->cap > buf->len+1)
-			fz_resize_buffer(ctx, buf, buf->len);
 		buf->refs ++;
-	}
-
 	return buf;
 }
 
@@ -135,7 +130,7 @@ void fz_write_buffer(fz_context *ctx, fz_buffer *buf, const void *data, int len)
 
 void fz_write_buffer_byte(fz_context *ctx, fz_buffer *buf, int val)
 {
-	if (buf->len > buf->cap)
+	if (buf->len + 1 > buf->cap)
 		fz_grow_buffer(ctx, buf);
 	buf->data[buf->len++] = val;
 	buf->unused_bits = 0;
@@ -224,45 +219,35 @@ fz_buffer_printf(fz_context *ctx, fz_buffer *buffer, const char *fmt, ...)
 	int ret;
 	va_list args;
 	va_start(args, fmt);
-
 	ret = fz_buffer_vprintf(ctx, buffer, fmt, args);
-
 	va_end(args);
-
 	return ret;
 }
 
 int
 fz_buffer_vprintf(fz_context *ctx, fz_buffer *buffer, const char *fmt, va_list old_args)
 {
+	int slack;
 	int len;
+	va_list args;
 
-	do
+	slack = buffer->cap - buffer->len;
+	va_copy(args, old_args);
+	len = fz_vsnprintf((char *)buffer->data + buffer->len, slack, fmt, args);
+	va_copy_end(args);
+
+	/* len = number of chars written, not including the terminating
+	 * NULL, so len+1 > slack means "truncated". */
+	if (len+1 > slack)
 	{
-		int slack = buffer->cap - buffer->len;
-
-		if (slack > 0)
-		{
-			va_list args;
-#ifdef _MSC_VER /* Microsoft Visual C */
-			args = old_args;
-#else
-			va_copy(args, old_args);
-#endif
-			len = vsnprintf((char *)buffer->data + buffer->len, slack, fmt, args);
-#ifndef _MSC_VER
-			va_end(args);
-#endif
-			/* len = number of chars written, not including the terminating
-			 * NULL, so len+1 > slack means "truncated". MSVC differs here
-			 * and returns -1 for truncated. */
-			if (len >= 0 && len+1 <= slack)
-				break;
-		}
 		/* Grow the buffer and retry */
-		fz_grow_buffer(ctx, buffer);
+		fz_ensure_buffer(ctx, buffer, buffer->len + len);
+		slack = buffer->cap - buffer->len;
+
+		va_copy(args, old_args);
+		len = fz_vsnprintf((char *)buffer->data + buffer->len, slack, fmt, args);
+		va_copy_end(args);
 	}
-	while (1);
 
 	buffer->len += len;
 
@@ -376,7 +361,7 @@ fz_test_buffer_write(fz_context *ctx)
 			k = (rand() & 31)+1;
 			if (k > j)
 				k = j;
-			fz_write_buffer_bits(ctx, copy, fz_read_bits(stm, k), k);
+			fz_write_buffer_bits(ctx, copy, fz_read_bits(ctx, stm, k), k);
 			j -= k;
 		}
 		while (j);
@@ -385,7 +370,7 @@ fz_test_buffer_write(fz_context *ctx)
 			fprintf(stderr, "Copied buffer is different!\n");
 		fz_seek(stm, 0, 0);
 	}
-	fz_close(stm);
+	fz_drop_stream(stm);
 	fz_drop_buffer(ctx, master);
 	fz_drop_buffer(ctx, copy);
 }

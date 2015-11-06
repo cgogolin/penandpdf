@@ -26,7 +26,7 @@ struct fz_hash_table_s
 	fz_hash_entry *ents;
 };
 
-static unsigned hash(unsigned char *s, int len)
+static unsigned hash(const unsigned char *s, int len)
 {
 	unsigned val = 0;
 	int i;
@@ -94,14 +94,14 @@ fz_hash_get_val(fz_context *ctx, fz_hash_table *table, int idx)
 }
 
 void
-fz_free_hash(fz_context *ctx, fz_hash_table *table)
+fz_drop_hash(fz_context *ctx, fz_hash_table *table)
 {
 	fz_free(ctx, table->ents);
 	fz_free(ctx, table);
 }
 
 static void *
-do_hash_insert(fz_context *ctx, fz_hash_table *table, void *key, void *val, unsigned *pos_ptr)
+do_hash_insert(fz_context *ctx, fz_hash_table *table, const void *key, void *val, unsigned *pos_ptr)
 {
 	fz_hash_entry *ents;
 	unsigned size;
@@ -159,10 +159,10 @@ fz_resize_hash(fz_context *ctx, fz_hash_table *table, int newsize)
 	}
 
 	if (table->lock == FZ_LOCK_ALLOC)
-		fz_unlock(ctx, FZ_LOCK_ALLOC);
+		fz_unlock(ctx, table->lock);
 	newents = fz_malloc_array_no_throw(ctx, newsize, sizeof(fz_hash_entry));
 	if (table->lock == FZ_LOCK_ALLOC)
-		fz_lock(ctx, FZ_LOCK_ALLOC);
+		fz_lock(ctx, table->lock);
 	if (table->lock >= 0)
 	{
 		if (table->size >= newsize)
@@ -192,14 +192,14 @@ fz_resize_hash(fz_context *ctx, fz_hash_table *table, int newsize)
 	}
 
 	if (table->lock == FZ_LOCK_ALLOC)
-		fz_unlock(ctx, FZ_LOCK_ALLOC);
+		fz_unlock(ctx, table->lock);
 	fz_free(ctx, oldents);
 	if (table->lock == FZ_LOCK_ALLOC)
-		fz_lock(ctx, FZ_LOCK_ALLOC);
+		fz_lock(ctx, table->lock);
 }
 
 void *
-fz_hash_find(fz_context *ctx, fz_hash_table *table, void *key)
+fz_hash_find(fz_context *ctx, fz_hash_table *table, const void *key)
 {
 	fz_hash_entry *ents = table->ents;
 	unsigned size = table->size;
@@ -221,7 +221,7 @@ fz_hash_find(fz_context *ctx, fz_hash_table *table, void *key)
 }
 
 void *
-fz_hash_insert(fz_context *ctx, fz_hash_table *table, void *key, void *val)
+fz_hash_insert(fz_context *ctx, fz_hash_table *table, const void *key, void *val)
 {
 	if (table->load > table->size * 8 / 10)
 	{
@@ -232,7 +232,7 @@ fz_hash_insert(fz_context *ctx, fz_hash_table *table, void *key, void *val)
 }
 
 void *
-fz_hash_insert_with_pos(fz_context *ctx, fz_hash_table *table, void *key, void *val, unsigned *pos)
+fz_hash_insert_with_pos(fz_context *ctx, fz_hash_table *table, const void *key, void *val, unsigned *pos)
 {
 	if (table->load > table->size * 8 / 10)
 	{
@@ -243,7 +243,7 @@ fz_hash_insert_with_pos(fz_context *ctx, fz_hash_table *table, void *key, void *
 }
 
 static void
-do_removal(fz_context *ctx, fz_hash_table *table, void *key, unsigned hole)
+do_removal(fz_context *ctx, fz_hash_table *table, const void *key, unsigned hole)
 {
 	fz_hash_entry *ents = table->ents;
 	unsigned size = table->size;
@@ -279,7 +279,7 @@ do_removal(fz_context *ctx, fz_hash_table *table, void *key, unsigned hole)
 }
 
 void
-fz_hash_remove(fz_context *ctx, fz_hash_table *table, void *key)
+fz_hash_remove(fz_context *ctx, fz_hash_table *table, const void *key)
 {
 	fz_hash_entry *ents = table->ents;
 	unsigned size = table->size;
@@ -309,7 +309,7 @@ fz_hash_remove(fz_context *ctx, fz_hash_table *table, void *key)
 }
 
 void
-fz_hash_remove_fast(fz_context *ctx, fz_hash_table *table, void *key, unsigned pos)
+fz_hash_remove_fast(fz_context *ctx, fz_hash_table *table, const void *key, unsigned pos)
 {
 	fz_hash_entry *ents = table->ents;
 

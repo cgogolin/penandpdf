@@ -34,7 +34,7 @@ typedef struct stream_block_s
 	int pos;
 } stream_block;
 
-OPJ_SIZE_T stream_read(void * p_buffer, OPJ_SIZE_T p_nb_bytes, void * p_user_data)
+static OPJ_SIZE_T fz_opj_stream_read(void * p_buffer, OPJ_SIZE_T p_nb_bytes, void * p_user_data)
 {
 	stream_block *sb = (stream_block *)p_user_data;
 	int len;
@@ -43,7 +43,7 @@ OPJ_SIZE_T stream_read(void * p_buffer, OPJ_SIZE_T p_nb_bytes, void * p_user_dat
 	if (len < 0)
 		len = 0;
 	if (len == 0)
-		return (OPJ_SIZE_T)-1;  /* End of file! */
+		return (OPJ_SIZE_T)-1; /* End of file! */
 	if ((OPJ_SIZE_T)len > p_nb_bytes)
 		len = p_nb_bytes;
 	memcpy(p_buffer, sb->data + sb->pos, len);
@@ -51,7 +51,7 @@ OPJ_SIZE_T stream_read(void * p_buffer, OPJ_SIZE_T p_nb_bytes, void * p_user_dat
 	return len;
 }
 
-OPJ_OFF_T stream_skip(OPJ_OFF_T skip, void * p_user_data)
+static OPJ_OFF_T fz_opj_stream_skip(OPJ_OFF_T skip, void * p_user_data)
 {
 	stream_block *sb = (stream_block *)p_user_data;
 
@@ -61,7 +61,7 @@ OPJ_OFF_T stream_skip(OPJ_OFF_T skip, void * p_user_data)
 	return sb->pos;
 }
 
-OPJ_BOOL stream_seek(OPJ_OFF_T seek_pos, void * p_user_data)
+static OPJ_BOOL fz_opj_stream_seek(OPJ_OFF_T seek_pos, void * p_user_data)
 {
 	stream_block *sb = (stream_block *)p_user_data;
 
@@ -75,7 +75,6 @@ fz_pixmap *
 fz_load_jpx(fz_context *ctx, unsigned char *data, int size, fz_colorspace *defcs, int indexed)
 {
 	fz_pixmap *img;
-	fz_colorspace *origcs;
 	opj_dparameters_t params;
 	opj_codec_t *codec;
 	opj_image_t *jpx;
@@ -106,6 +105,7 @@ fz_load_jpx(fz_context *ctx, unsigned char *data, int size, fz_colorspace *defcs
 	opj_set_error_handler(codec, fz_opj_error_callback, ctx);
 	if (!opj_setup_decoder(codec, &params))
 	{
+		opj_destroy_codec(codec);
 		fz_throw(ctx, FZ_ERROR_GENERIC, "j2k decode failed");
 	}
 
@@ -114,9 +114,9 @@ fz_load_jpx(fz_context *ctx, unsigned char *data, int size, fz_colorspace *defcs
 	sb.pos = 0;
 	sb.size = size;
 
-	opj_stream_set_read_function(stream, stream_read);
-	opj_stream_set_skip_function(stream, stream_skip);
-	opj_stream_set_seek_function(stream, stream_seek);
+	opj_stream_set_read_function(stream, fz_opj_stream_read);
+	opj_stream_set_skip_function(stream, fz_opj_stream_skip);
+	opj_stream_set_seek_function(stream, fz_opj_stream_seek);
 	opj_stream_set_user_data(stream, &sb);
 	/* Set the length to avoid an assert */
 	opj_stream_set_user_data_length(stream, size);
@@ -145,6 +145,11 @@ fz_load_jpx(fz_context *ctx, unsigned char *data, int size, fz_colorspace *defcs
 
 	for (k = 1; k < (int)jpx->numcomps; k++)
 	{
+		if (!jpx->comps[k].data)
+		{
+			opj_image_destroy(jpx);
+			fz_throw(ctx, FZ_ERROR_GENERIC, "image components are missing data");
+		}
 		if (jpx->comps[k].w != jpx->comps[0].w)
 		{
 			opj_image_destroy(jpx);
@@ -174,7 +179,6 @@ fz_load_jpx(fz_context *ctx, unsigned char *data, int size, fz_colorspace *defcs
 	else if (n > 4) { n = 4; a = 1; }
 	else { a = 0; }
 
-	origcs = defcs;
 	if (defcs)
 	{
 		if (defcs->n == n)
@@ -220,6 +224,8 @@ fz_load_jpx(fz_context *ctx, unsigned char *data, int size, fz_colorspace *defcs
 					v = v + (1 << (depth - 1));
 				if (depth > 8)
 					v = v >> (depth - 8);
+				else if (depth < 8)
+					v = v << (8 - depth);
 				*p++ = v;
 			}
 			if (!a)
@@ -239,14 +245,6 @@ fz_load_jpx(fz_context *ctx, unsigned char *data, int size, fz_colorspace *defcs
 			img = tmp;
 		}
 		fz_premultiply_pixmap(ctx, img);
-	}
-
-	if (origcs != defcs)
-	{
-		fz_pixmap *tmp = fz_new_pixmap(ctx, origcs, w, h);
-		fz_convert_pixmap(ctx, tmp, img);
-		fz_drop_pixmap(ctx, img);
-		img = tmp;
 	}
 
 	return img;

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="app_name">Pen&amp;PDF</string>
-<!--	<string name="app_label">MuPDF</string>-->
+	<string name="version">1.8 (git build)</string>
 	<string name="no_media_warning">Storage media not present</string>
 	<string name="no_media_hint">Sharing the storage media with a PC can make it inaccessible</string>
 	<string name="browse">Browse</string>
@@ -33,6 +33,8 @@
 	<string name="successfully_saved">Successfully saved</string>
 	<string name="error_saveing">Error while saving</string>
 	<string name="exit_fullscreen">Press back to exit fullscreen</string>
+	<string name="proof">Proof</string>
+	<string name="separation">Separation</string>
 	<string name="print">Print</string>
 	<string name="dismiss">Dismiss</string>
 	<string name="parent_directory">..</string>

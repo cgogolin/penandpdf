@@ -1,9 +1,7 @@
 #include "mupdf/fitz.h"
 
 fz_stream *
-fz_new_stream(fz_context *ctx, void *state,
-	int(*read)(fz_stream *stm, unsigned char *buf, int len),
-	void(*close)(fz_context *ctx, void *state))
+fz_new_stream(fz_context *ctx, void *state, fz_stream_next_fn *next, fz_stream_close_fn *close)
 {
 	fz_stream *stm;
 
@@ -25,22 +23,19 @@ fz_new_stream(fz_context *ctx, void *state,
 	stm->bits = 0;
 	stm->avail = 0;
 
-	stm->bp = stm->buf;
-	stm->rp = stm->bp;
-	stm->wp = stm->bp;
-	stm->ep = stm->buf + sizeof stm->buf;
+	stm->rp = NULL;
+	stm->wp = NULL;
 
 	stm->state = state;
-	stm->read = read;
+	stm->next = next;
 	stm->close = close;
 	stm->seek = NULL;
-	stm->ctx = ctx;
 
 	return stm;
 }
 
 fz_stream *
-fz_keep_stream(fz_stream *stm)
+fz_keep_stream(fz_context *ctx, fz_stream *stm)
 {
 	if (stm)
 		stm->refs ++;
@@ -48,7 +43,7 @@ fz_keep_stream(fz_stream *stm)
 }
 
 void
-fz_close(fz_stream *stm)
+fz_drop_stream(fz_context *ctx, fz_stream *stm)
 {
 	if (!stm)
 		return;
@@ -56,51 +51,66 @@ fz_close(fz_stream *stm)
 	if (stm->refs == 0)
 	{
 		if (stm->close)
-			stm->close(stm->ctx, stm->state);
-		fz_free(stm->ctx, stm);
+			stm->close(ctx, stm->state);
+		fz_free(ctx, stm);
 	}
 }
 
 /* File stream */
 
-static int read_file(fz_stream *stm, unsigned char *buf, int len)
+typedef struct fz_file_stream_s
 {
-	int n = read(*(int*)stm->state, buf, len);
+	FILE *file;
+	unsigned char buffer[4096];
+} fz_file_stream;
+
+static int next_file(fz_context *ctx, fz_stream *stm, int n)
+{
+	fz_file_stream *state = stm->state;
+
+	/* n is only a hint, that we can safely ignore */
+	n = fread(state->buffer, 1, sizeof(state->buffer), state->file);
 	if (n < 0)
-		fz_throw(stm->ctx, FZ_ERROR_GENERIC, "read error: %s", strerror(errno));
-	return n;
+		fz_throw(ctx, FZ_ERROR_GENERIC, "read error: %s", strerror(errno));
+	stm->rp = state->buffer;
+	stm->wp = state->buffer + n;
+	stm->pos += n;
+
+	if (n == 0)
+		return EOF;
+	return *stm->rp++;
 }
 
-static void seek_file(fz_stream *stm, int offset, int whence)
+static void seek_file(fz_context *ctx, fz_stream *stm, fz_off_t offset, int whence)
 {
-	int n = lseek(*(int*)stm->state, offset, whence);
+	fz_file_stream *state = stm->state;
+	fz_off_t n = fz_fseek(state->file, offset, whence);
 	if (n < 0)
-		fz_throw(stm->ctx, FZ_ERROR_GENERIC, "cannot lseek: %s", strerror(errno));
-	stm->pos = n;
-	stm->rp = stm->bp;
-	stm->wp = stm->bp;
+		fz_throw(ctx, FZ_ERROR_GENERIC, "cannot seek: %s", strerror(errno));
+	stm->pos = fz_ftell(state->file);
+	stm->rp = state->buffer;
+	stm->wp = state->buffer;
 }
 
-static void close_file(fz_context *ctx, void *state)
+static void close_file(fz_context *ctx, void *state_)
 {
-	int n = close(*(int*)state);
+	fz_file_stream *state = state_;
+	int n = fclose(state->file);
 	if (n < 0)
 		fz_warn(ctx, "close error: %s", strerror(errno));
 	fz_free(ctx, state);
 }
 
 fz_stream *
-fz_open_fd(fz_context *ctx, int fd)
+fz_open_file_ptr(fz_context *ctx, FILE *file)
 {
 	fz_stream *stm;
-	int *state;
-
-	state = fz_malloc_struct(ctx, int);
-	*state = fd;
+	fz_file_stream *state = fz_malloc_struct(ctx, fz_file_stream);
+	state->file = file;
 
 	fz_try(ctx)
 	{
-		stm = fz_new_stream(ctx, state, read_file, close_file);
+		stm = fz_new_stream(ctx, state, next_file, close_file);
 	}
 	fz_catch(ctx)
 	{
@@ -115,54 +125,63 @@ fz_open_fd(fz_context *ctx, int fd)
 fz_stream *
 fz_open_file(fz_context *ctx, const char *name)
 {
-#ifdef _WIN32
+	FILE *f;
+#if defined(_WIN32) || defined(_WIN64)
 	char *s = (char*)name;
 	wchar_t *wname, *d;
-	int c, fd;
+	int c;
 	d = wname = fz_malloc(ctx, (strlen(name)+1) * sizeof(wchar_t));
 	while (*s) {
 		s += fz_chartorune(&c, s);
 		*d++ = c;
 	}
 	*d = 0;
-	fd = _wopen(wname, O_BINARY | O_RDONLY, 0);
+	f = _wfopen(wname, L"rb");
 	fz_free(ctx, wname);
 #else
-	int fd = open(name, O_BINARY | O_RDONLY, 0);
+	f = fz_fopen(name, "rb");
 #endif
-	if (fd == -1)
+	if (f == NULL)
 		fz_throw(ctx, FZ_ERROR_GENERIC, "cannot open %s", name);
-	return fz_open_fd(ctx, fd);
+	return fz_open_file_ptr(ctx, f);
 }
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
 fz_stream *
 fz_open_file_w(fz_context *ctx, const wchar_t *name)
 {
-	int fd = _wopen(name, O_BINARY | O_RDONLY, 0);
-	if (fd == -1)
+	FILE *f = _wfopen(name, L"rb");
+	if (f == NULL)
 		fz_throw(ctx, FZ_ERROR_GENERIC, "cannot open file %ls", name);
-	return fz_open_fd(ctx, fd);
+	return fz_open_file_ptr(ctx, f);
 }
 #endif
 
 /* Memory stream */
 
-static int read_buffer(fz_stream *stm, unsigned char *buf, int len)
+static int next_buffer(fz_context *ctx, fz_stream *stm, int max)
 {
-	return 0;
+	return EOF;
 }
 
-static void seek_buffer(fz_stream *stm, int offset, int whence)
+static void seek_buffer(fz_context *ctx, fz_stream *stm, fz_off_t offset, int whence)
 {
-	if (whence == 0)
-		stm->rp = stm->bp + offset;
+	fz_off_t pos = stm->pos - (stm->wp - stm->rp);
+	/* Convert to absolute pos */
 	if (whence == 1)
-		stm->rp += offset;
-	if (whence == 2)
-		stm->rp = stm->ep - offset;
-	stm->rp = fz_clampp(stm->rp, stm->bp, stm->ep);
-	stm->wp = stm->ep;
+	{
+		offset += pos; /* Was relative to current pos */
+	}
+	else if (whence == 2)
+	{
+		offset += stm->pos; /* Was relative to end */
+	}
+
+	if (offset < 0)
+		offset = 0;
+	if (offset > stm->pos)
+		offset = stm->pos;
+	stm->rp += (int)(offset - pos);
 }
 
 static void close_buffer(fz_context *ctx, void *state_)
@@ -178,13 +197,11 @@ fz_open_buffer(fz_context *ctx, fz_buffer *buf)
 	fz_stream *stm;
 
 	fz_keep_buffer(ctx, buf);
-	stm = fz_new_stream(ctx, buf, read_buffer, close_buffer);
+	stm = fz_new_stream(ctx, buf, next_buffer, close_buffer);
 	stm->seek = seek_buffer;
 
-	stm->bp = buf->data;
 	stm->rp = buf->data;
 	stm->wp = buf->data + buf->len;
-	stm->ep = buf->data + buf->len;
 
 	stm->pos = buf->len;
 
@@ -196,13 +213,11 @@ fz_open_memory(fz_context *ctx, unsigned char *data, int len)
 {
 	fz_stream *stm;
 
-	stm = fz_new_stream(ctx, NULL, read_buffer, close_buffer);
+	stm = fz_new_stream(ctx, NULL, next_buffer, close_buffer);
 	stm->seek = seek_buffer;
 
-	stm->bp = data;
 	stm->rp = data;
 	stm->wp = data + len;
-	stm->ep = data + len;
 
 	stm->pos = len;
 

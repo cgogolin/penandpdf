@@ -2,6 +2,66 @@
 
 #include <jpeglib.h>
 
+#ifdef SHARE_JPEG
+
+#define JZ_CTX_FROM_CINFO(c) (fz_context *)(c->client_data)
+
+#define fz_jpg_mem_init(ctx, cinfo)
+#define fz_jpg_mem_term(cinfo)
+
+#else /* SHARE_JPEG */
+
+typedef void * backing_store_ptr;
+#include "jmemcust.h"
+
+#define JZ_CTX_FROM_CINFO(c) (fz_context *)(GET_CUST_MEM_DATA(c)->priv)
+
+static void *
+fz_jpg_mem_alloc(j_common_ptr cinfo, size_t size)
+{
+	fz_context *ctx = JZ_CTX_FROM_CINFO(cinfo);
+	return fz_malloc(ctx, size);
+}
+
+static void
+fz_jpg_mem_free(j_common_ptr cinfo, void *object, size_t size)
+{
+	fz_context *ctx = JZ_CTX_FROM_CINFO(cinfo);
+	UNUSED(size);
+	fz_free(ctx, object);
+}
+
+static void
+fz_jpg_mem_init(fz_context *ctx, struct jpeg_decompress_struct *cinfo)
+{
+	jpeg_cust_mem_data *custmptr;
+
+	custmptr = fz_malloc_struct(ctx, jpeg_cust_mem_data);
+
+	if (!jpeg_cust_mem_init(custmptr, (void *) ctx, NULL, NULL, NULL,
+				fz_jpg_mem_alloc, fz_jpg_mem_free,
+				fz_jpg_mem_alloc, fz_jpg_mem_free, NULL))
+	{
+		fz_free(ctx, custmptr);
+		fz_throw(ctx, FZ_ERROR_GENERIC, "cannot initialize custom JPEG memory handler");
+	}
+
+	cinfo->client_data = custmptr;
+}
+
+static void
+fz_jpg_mem_term(struct jpeg_decompress_struct *cinfo)
+{
+	if(cinfo->client_data)
+	{
+		fz_context *ctx = JZ_CTX_FROM_CINFO(cinfo);
+		fz_free(ctx, cinfo->client_data);
+		cinfo->client_data = NULL;
+	}
+}
+
+#endif /* SHARE_JPEG */
+
 static void error_exit(j_common_ptr cinfo)
 {
 	char msg[JMSG_LENGTH_MAX];
@@ -73,7 +133,7 @@ static int extract_exif_resolution(jpeg_saved_marker_ptr marker, int *xres, int 
 		return 0;
 
 	offset = read_value(data + 10, 4, is_big_endian) + 6;
-	if (offset < 14 || offset + 2 > marker->data_length)
+	if (offset < 14 || offset > marker->data_length - 2)
 		return 0;
 	ifd_len = read_value(data + offset, 2, is_big_endian);
 	for (offset += 2; ifd_len > 0 && offset + 12 < marker->data_length; ifd_len--, offset += 12)
@@ -85,11 +145,11 @@ static int extract_exif_resolution(jpeg_saved_marker_ptr marker, int *xres, int 
 		switch (tag)
 		{
 		case 0x11A:
-			if (type == 5 && value_off > offset && value_off + 8 <= marker->data_length)
+			if (type == 5 && value_off > offset && value_off <= marker->data_length - 8)
 				x_res = 1.0f * read_value(data + value_off, 4, is_big_endian) / read_value(data + value_off + 4, 4, is_big_endian);
 			break;
 		case 0x11B:
-			if (type == 5 && value_off > offset && value_off + 8 <= marker->data_length)
+			if (type == 5 && value_off > offset && value_off <= marker->data_length - 8)
 				y_res = 1.0f * read_value(data + value_off, 4, is_big_endian) / read_value(data + value_off + 4, 4, is_big_endian);
 			break;
 		case 0x128:
@@ -110,6 +170,11 @@ static int extract_exif_resolution(jpeg_saved_marker_ptr marker, int *xres, int 
 	{
 		*xres = (int)(x_res * 254 / 100);
 		*yres = (int)(y_res * 254 / 100);
+	}
+	else
+	{
+		*xres = 0;
+		*yres = 0;
 	}
 	return 1;
 }
@@ -132,9 +197,9 @@ static int extract_app13_resolution(jpeg_saved_marker_ptr marker, int *xres, int
 		int value_off = 11 + read_value(data + 6, 2, 1);
 		if (value_off % 2 == 1)
 			value_off++;
-		if (read_value(data, 4, 1) == 0x3842494D /* 8BIM */ && data + value_off <= data_end)
+		if (read_value(data, 4, 1) == 0x3842494D /* 8BIM */ && value_off <= data_end - data)
 			data_size = read_value(data + value_off - 4, 4, 1);
-		if (data_size < 0 || data + value_off + data_size > data_end)
+		if (data_size < 0 || data_size > data_end - data - value_off)
 			return 0;
 		if (tag == 0x3ED && data_size == 16)
 		{
@@ -162,6 +227,8 @@ fz_load_jpeg_info(fz_context *ctx, unsigned char *rbuf, int rlen, int *xp, int *
 		cinfo.client_data = ctx;
 		cinfo.err = jpeg_std_error(&err);
 		err.error_exit = error_exit;
+
+		fz_jpg_mem_init(ctx, &cinfo);
 
 		jpeg_create_decompress(&cinfo);
 
@@ -217,6 +284,7 @@ fz_load_jpeg_info(fz_context *ctx, unsigned char *rbuf, int rlen, int *xp, int *
 	fz_always(ctx)
 	{
 		jpeg_destroy_decompress(&cinfo);
+		fz_jpg_mem_term(&cinfo);
 	}
 	fz_catch(ctx)
 	{
