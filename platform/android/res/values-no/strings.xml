@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Kopier teksten til utklippstavlen</string>
 	<string name="delete">Slett</string>
 	<string name="dismiss">Avvis</string>
-	<string name="document_has_changes_save_them_">Det er endringer i dokumentet. Lagre dem?</string>
+	<string name="document_has_changes_save_them">Det er endringer i dokumentet. Lagre dem?</string>
 	<string name="draw_annotation">Lag merknad</string>
 	<string name="edit_annotations">Rediger merknader</string>
 	<string name="enter_password">Skriv inn passord</string>

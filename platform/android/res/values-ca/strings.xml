@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Copiar text al portapapers</string>
 	<string name="delete">Esborrar</string>
 	<string name="dismiss">Descartar</string>
-	<string name="document_has_changes_save_them_">El document té canvis. Desar?</string>
+	<string name="document_has_changes_save_them">El document té canvis. Desar?</string>
 	<string name="draw_annotation">Dibuixar anotació</string>
 	<string name="edit_annotations">Editar anotacions</string>
 	<string name="enter_password">Introduir contrasenya</string>

@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">テキストをクリップボードにコピー</string>
 	<string name="delete">削除</string>
 	<string name="dismiss">却下</string>
-	<string name="document_has_changes_save_them_">ドキュメントは変更されました。保存しますか？</string>
+	<string name="document_has_changes_save_them">ドキュメントは変更されました。保存しますか？</string>
 	<string name="draw_annotation">注釈を挿入する</string>
 	<string name="edit_annotations">注釈を編集する</string>
 	<string name="enter_password">パスワードを入力する</string>

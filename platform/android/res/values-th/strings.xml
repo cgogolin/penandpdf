@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">คัดลอกข้อความไปที่คลิปบอร์ด</string>
 	<string name="delete">ลบ</string>
 	<string name="dismiss">เลิกใช้</string>
-	<string name="document_has_changes_save_them_">เอกสารมีการเปลี่ยนแปลง ต้องการบันทึกหรือไม่</string>
+	<string name="document_has_changes_save_them">เอกสารมีการเปลี่ยนแปลง ต้องการบันทึกหรือไม่</string>
 	<string name="draw_annotation">เขียนคำอธิบายประกอบ</string>
 	<string name="edit_annotations">แก้ไขคำอธิบายประกอบ</string>
 	<string name="enter_password">ป้อนรหัสผ่าน</string>

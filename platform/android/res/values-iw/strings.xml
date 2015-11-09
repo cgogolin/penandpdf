@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">העתק טקסט ללוח</string>
 	<string name="delete">מחק</string>
 	<string name="dismiss">התעלם</string>
-	<string name="document_has_changes_save_them_">קיימים שינויים במסמך. לשמור אותם?</string>
+	<string name="document_has_changes_save_them">קיימים שינויים במסמך. לשמור אותם?</string>
 	<string name="draw_annotation">רשום ביאור</string>
 	<string name="edit_annotations">ערוך ביאורים</string>
 	<string name="enter_password">הזן סיסמה</string>

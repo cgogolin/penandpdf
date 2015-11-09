@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Metni panoya kopyala</string>
 	<string name="delete">Sil</string>
 	<string name="dismiss">Bırak</string>
-	<string name="document_has_changes_save_them_">Belgede değişiklikler var. Kaydetmek istiyor musunuz?</string>
+	<string name="document_has_changes_save_them">Belgede değişiklikler var. Kaydetmek istiyor musunuz?</string>
 	<string name="draw_annotation">Ek açıklama çiz</string>
 	<string name="edit_annotations">Ek açıklamalar düzenle</string>
 	<string name="enter_password">Şifreyi gir</string>

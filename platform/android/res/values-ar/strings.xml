@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">نسخ النص إلى الحافظة</string>
 	<string name="delete">حذف</string>
 	<string name="dismiss">تجاهل</string>
-	<string name="document_has_changes_save_them_">يحتوي المستند على تغييرات. هل تريد حفظها؟</string>
+	<string name="document_has_changes_save_them">يحتوي المستند على تغييرات. هل تريد حفظها؟</string>
 	<string name="draw_annotation">سحب تعليق توضيحي</string>
 	<string name="edit_annotations">تعديل التعليقات التوضيحية</string>
 	<string name="enter_password">أدخل كلمة المرور</string>

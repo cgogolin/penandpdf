@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Salin teks ke papan klip</string>
 	<string name="delete">Hapus</string>
 	<string name="dismiss">Hilangkan</string>
-	<string name="document_has_changes_save_them_">Dokumen telah berubah. Simpan perubahan?</string>
+	<string name="document_has_changes_save_them">Dokumen telah berubah. Simpan perubahan?</string>
 	<string name="draw_annotation">Gambar anotasi</string>
 	<string name="edit_annotations">Sunting anotasi</string>
 	<string name="enter_password">Masukkan kata sandi</string>

@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Kopioi teksti leikepöydälle</string>
 	<string name="delete">Poista</string>
 	<string name="dismiss">Hylkää</string>
-	<string name="document_has_changes_save_them_">Tiedostossa on muutoksia. Haluatko tallentaa muutokset?</string>
+	<string name="document_has_changes_save_them">Tiedostossa on muutoksia. Haluatko tallentaa muutokset?</string>
 	<string name="draw_annotation">Piirrä huomautus</string>
 	<string name="edit_annotations">Muokkaa huomautuksia</string>
 	<string name="enter_password">Anna salasana</string>

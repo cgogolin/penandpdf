@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Kopijuoti tekstą į iškarpinę</string>
 	<string name="delete">Naikinti</string>
 	<string name="dismiss">Atmesti</string>
-	<string name="document_has_changes_save_them_">Dokumente yra pakeitimų. Ar juos įrašyti?</string>
+	<string name="document_has_changes_save_them">Dokumente yra pakeitimų. Ar juos įrašyti?</string>
 	<string name="draw_annotation">Braižyti anotaciją</string>
 	<string name="edit_annotations">Redaguoti anotacijas</string>
 	<string name="enter_password">Įvesti slaptažodį</string>

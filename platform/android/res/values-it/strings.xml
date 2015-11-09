@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Copia testo negli appunti</string>
 	<string name="delete">Elimina</string>
 	<string name="dismiss">Ignora</string>
-	<string name="document_has_changes_save_them_">Il documento contiene modifiche. Salvare?</string>
+	<string name="document_has_changes_save_them">Il documento contiene modifiche. Salvare?</string>
 	<string name="draw_annotation">Disegna annotazione</string>
 	<string name="edit_annotations">Modifica annotazione</string>
 	<string name="enter_password">Inserisci password</string>

@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Kopírovať text do vyrovnávacej pamäti</string>
 	<string name="delete">Zmazať</string>
 	<string name="dismiss">Zrušiť</string>
-	<string name="document_has_changes_save_them_">Dokument bol zmený. Uložiť zmeny?</string>
+	<string name="document_has_changes_save_them">Dokument bol zmený. Uložiť zmeny?</string>
 	<string name="draw_annotation">Zostaviť anotáciu</string>
 	<string name="edit_annotations">Upraviť anotácie</string>
 	<string name="enter_password">Zadať heslo</string>

@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">複製文字至剪貼簿</string>
 	<string name="delete">刪除</string>
 	<string name="dismiss">取消</string>
-	<string name="document_has_changes_save_them_">你需要儲存已編輯的文件嗎？</string>
+	<string name="document_has_changes_save_them">你需要儲存已編輯的文件嗎？</string>
 	<string name="draw_annotation">繪畫註釋</string>
 	<string name="edit_annotations">編輯註釋</string>
 	<string name="enter_password">輸入密碼</string>

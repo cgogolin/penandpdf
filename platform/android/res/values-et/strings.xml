@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Kopeeri tekst lõikelauale</string>
 	<string name="delete">Kustuta</string>
 	<string name="dismiss">Lõpeta</string>
-	<string name="document_has_changes_save_them_">Dokumendis on tehtud muudatusi. Kas salvestada need?</string>
+	<string name="document_has_changes_save_them">Dokumendis on tehtud muudatusi. Kas salvestada need?</string>
 	<string name="draw_annotation">Tee marginaal</string>
 	<string name="edit_annotations">Redigeeri marginaale</string>
 	<string name="enter_password">Sisesta salasõna</string>

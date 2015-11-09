@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Kopírovat text do schránky</string>
 	<string name="delete">Smazat</string>
 	<string name="dismiss">Odmítnout</string>
-	<string name="document_has_changes_save_them_">Dokument byl změněn. Uložit?</string>
+	<string name="document_has_changes_save_them">Dokument byl změněn. Uložit?</string>
 	<string name="draw_annotation">Vložit anotaci</string>
 	<string name="edit_annotations">Upravit anotace</string>
 	<string name="enter_password">Zadat heslo</string>
