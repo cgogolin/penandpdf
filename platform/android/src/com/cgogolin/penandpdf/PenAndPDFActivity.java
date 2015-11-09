@@ -269,8 +269,8 @@ public class PenAndPDFActivity extends Activity implements SharedPreferences.OnS
                 latestTextInSearchBox = savedInstanceState.getString("latestTextInSearchBox", latestTextInSearchBox);
             }
             
-                //Initialize the alert builder
-            mAlertBuilder = new AlertDialog.Builder(this);
+                //Initialize the alert builder working arround a bug in the HoloLight.DarkActionBar theme:
+            mAlertBuilder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
             
                 //Get the core saved with onRetainNonConfigurationInstance()
             if (core == null) {
