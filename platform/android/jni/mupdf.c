@@ -3112,7 +3112,7 @@ JNI_FN(MuPDFCore_insertBlankPageBeforeInternal)(JNIEnv * env, jobject thiz, int 
     pdf_page * page = pdf_create_page(ctx, (pdf_document *)doc, pc->media_box, 72, 0);
     pdf_insert_page(ctx, (pdf_document *)doc, page, position);
     pdf_finish_edit(ctx, (pdf_document *)doc);
-    pdf_free_page((pdf_document *)doc, page);
+    pdf_drop_page((pdf_document *)doc, page);
     return 0;
 }
 

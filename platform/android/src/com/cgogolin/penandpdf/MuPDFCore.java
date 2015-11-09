@@ -48,12 +48,14 @@ public class MuPDFCore
     private native void drawPage(Bitmap bitmap,
                                  int pageW, int pageH,
                                  int patchX, int patchY,
-                                 int patchW, int patchH);
+                                 int patchW, int patchH,
+                                 long cookiePtr);
     private native void updatePageInternal(Bitmap bitmap,
                                            int page,
                                            int pageW, int pageH,
                                            int patchX, int patchY,
-                                           int patchW, int patchH);
+                                           int patchW, int patchH,
+                                           long cookiePtr);
     private native RectF[] searchPage(String text);
     private native TextChar[][][][] text();
     private native byte[] textAsHtml();
@@ -85,7 +87,11 @@ public class MuPDFCore
     private native boolean hasChangesInternal();
     protected native int saveAsInternal(String path);
     private native int insertPageBeforeInternal(int position);
+    private native long createCookie();
+    private native void destroyCookie(long cookie);
+    private native void abortCookie(long cookie);
 
+    
     public native void setInkThickness(float inkThickness);
     public native void setInkColor(float r, float g, float b);
     public native void setHighlightColor(float r, float g, float b);
@@ -97,6 +103,30 @@ public class MuPDFCore
     
     public static native boolean javascriptSupported();
 
+    public class Cookie
+    {
+        private final long cookiePtr;
+        
+        public Cookie()
+            {
+                cookiePtr = createCookie();
+                if (cookiePtr == 0)
+                    throw new OutOfMemoryError();
+            }
+        
+        public void abort()
+            {
+                abortCookie(cookiePtr);
+            }
+        
+        public void destroy()
+            {
+                    // We could do this in finalize, but there's no guarantee that
+                    // a finalize will occur before the muPDF context occurs.
+                destroyCookie(cookiePtr);
+		}
+    }
+    
     public MuPDFCore() //Hack to work around the fact that Java doesn't allow to call base class constructors later in the constructors of derived classes.
         {}
     
@@ -203,16 +233,18 @@ public class MuPDFCore
     public synchronized void drawPage(Bitmap bm, int page,
                                       int pageW, int pageH,
                                       int patchX, int patchY,
-                                      int patchW, int patchH) {
-        gotoPage(page);
-        drawPage(bm, pageW, pageH, patchX, patchY, patchW, patchH);
+                                      int patchW, int patchH,
+                                      Cookie cookie) {
+//        gotoPage(page);
+        drawPage(bm, page, pageW, pageH, patchX, patchY, patchW, patchH, cookie.cookiePtr);
     }
 
     public synchronized void updatePage(Bitmap bm, int page,
                                         int pageW, int pageH,
                                         int patchX, int patchY,
-                                        int patchW, int patchH) {
-        updatePageInternal(bm, page, pageW, pageH, patchX, patchY, patchW, patchH);
+                                        int patchW, int patchH,
+                                        Cookie cookie) {
+        updatePageInternal(bm, page, pageW, pageH, patchX, patchY, patchW, patchH, cookie.cookiePtr);
     }
 
     public synchronized PassClickResult passClickEvent(int page, float x, float y) {

@@ -2,7 +2,7 @@ package com.cgogolin.penandpdf;
 
 import android.util.Log;
 
-import com.artifex.mupdfdemo.MuPDFCore.Cookie;
+import com.cgogolin.penandpdf.MuPDFCore.Cookie;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;

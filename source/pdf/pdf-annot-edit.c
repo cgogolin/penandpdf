@@ -102,20 +102,25 @@ pdf_create_annot(fz_context *ctx, pdf_document *doc, pdf_page *page, fz_annot_ty
 		int ind_obj_num;
 		fz_rect rect = {0.0, 0.0, 0.0, 0.0};
 		const char *type_str = annot_type_str(type);
-		pdf_obj *annot_arr = pdf_dict_get(ctx, page->me, PDF_NAME_Annots);
+		pdf_obj *annot_arr = pdf_dict_gets(ctx, page->me, PDF_NAME_Annots);
 		if (annot_arr == NULL)
 		{
-			annot_arr = pdf_new_array(ctx, doc, 0);
-			pdf_dict_put_drop(ctx, page->me, PDF_NAME_Annots, annot_arr);
+                        annot_arr = pdf_new_array(ctx, doc, 0);
+			pdf_dict_puts_drop(ctx, page->me, PDF_NAME_Annots, annot_arr);
 		}
 
-		pdf_dict_put_drop(ctx, annot_obj, PDF_NAME_Type, PDF_NAME_Annot);
+                pdf_dict_puts_drop(ctx, annot_obj, "F", pdf_new_int(ctx, doc, 4)); //Make annotations printable
+                if (type == FZ_ANNOT_HIGHLIGHT) {
+                        //Say that we want this to be renderd "behind" the text
+                    pdf_dict_puts_drop(ctx, annot_obj, "BM", pdf_new_name(ctx, doc, "Multiply"));
+                }
+                /* const char* creator = "PenAndPDF"; */
+                /* pdf_dict_puts_drop(annot_obj, "NM", pdf_new_string(doc, creator, strlen(creator))); */
 
-		pdf_dict_put_drop(ctx, annot_obj, PDF_NAME_Subtype, pdf_new_name(ctx, doc, type_str));
-		pdf_dict_put_drop(ctx, annot_obj, PDF_NAME_Rect, pdf_new_rect(ctx, doc, &rect));
+                pdf_dict_puts_drop(ctx, annot_obj, PDF_NAME_Type, pdf_new_name(ctx, doc, "Annot"));
 
-		/* Make printable as default */
-		pdf_dict_put_drop(ctx, annot_obj, PDF_NAME_F, pdf_new_int(ctx, doc, F_Print));
+		pdf_dict_puts_drop(ctx, annot_obj, PDF_NAME_Subtype, pdf_new_name(ctx, doc, type_str));
+		pdf_dict_puts_drop(ctx, annot_obj, PDF_NAME_Rect, pdf_new_rect(ctx, doc, &rect));
 
 		annot = fz_malloc_struct(ctx, pdf_annot);
 		annot->page = page;
@@ -123,8 +128,7 @@ pdf_create_annot(fz_context *ctx, pdf_document *doc, pdf_page *page, fz_annot_ty
 		annot->pagerect = rect;
 		annot->ap = NULL;
 		annot->widget_type = PDF_WIDGET_TYPE_NOT_WIDGET;
-		annot->annot_type = type;
-
+		annot->annot_type = type;                
 		/*
 			Both annotation object and annotation structure are now created.
 			Insert the object in the hierarchy and the structure in the
@@ -138,17 +142,16 @@ pdf_create_annot(fz_context *ctx, pdf_document *doc, pdf_page *page, fz_annot_ty
 
 		/*
 			Linking must be done after any call that might throw because
-			pdf_drop_annot below actually frees a list. Put the new annot
-			at the end of the list, so that it will be drawn last.
+			pdf_free_annot below actually frees a list
 		*/
-		*page->annot_tailp = annot;
-		page->annot_tailp = &annot->next;
+		annot->next = page->annots;
+		page->annots = annot;
 
 		doc->dirty = 1;
 	}
 	fz_always(ctx)
 	{
-		pdf_drop_obj(ctx, annot_obj);
+                pdf_drop_obj(ctx, annot_obj);
 		pdf_drop_obj(ctx, ind_obj);
 	}
 	fz_catch(ctx)

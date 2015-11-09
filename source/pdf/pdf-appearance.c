@@ -1834,7 +1834,7 @@ void pdf_set_markup_appearance_highlight(fz_context *ctx, pdf_document *doc, pdf
                                     fz_stroke_path(ctx, dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
                                     fz_drop_stroke_state(ctx, stroke);
                                     stroke = NULL;
-                                    fz_free_path(ctx, path);
+                                    fz_drop_path(ctx, path);
                                     path = NULL;
 				}
 
@@ -1858,9 +1858,9 @@ void pdf_set_markup_appearance_highlight(fz_context *ctx, pdf_document *doc, pdf
 	fz_always(ctx)
 	{
 		fz_free(ctx, qp);
-		fz_free_device(dev);
+		fz_drop_device(ctx, dev);
 		fz_drop_stroke_state(ctx, stroke);
-		fz_free_path(ctx, path);
+		fz_drop_path(ctx, path);
 		fz_drop_display_list(ctx, strike_list);
 	}
 	fz_catch(ctx)
