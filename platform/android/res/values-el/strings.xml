@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Αντιγραφή κειμένου στο πρόχειρο</string>
 	<string name="delete">Διαγραφή</string>
 	<string name="dismiss">Ματαίωση</string>
-	<string name="document_has_changes_save_them_">Το έγγραφο έχει αλλαγές. Να αποθηκευτούν;</string>
+	<string name="document_has_changes_save_them">Το έγγραφο έχει αλλαγές. Να αποθηκευτούν;</string>
 	<string name="draw_annotation">Σχεδίαση σχολίου</string>
 	<string name="edit_annotations">Επεξεργασία σχολίων</string>
 	<string name="enter_password">Πληκτρολογήστε κωδικό πρόσβασης</string>

@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Copier le texte sur le presse-papier</string>
 	<string name="delete">Supprimer</string>
 	<string name="dismiss">Ignorer</string>
-	<string name="document_has_changes_save_them_">Des modifications ont été effectuées au document. Les sauvegarder ?</string>
+	<string name="document_has_changes_save_them">Des modifications ont été effectuées au document. Les sauvegarder ?</string>
 	<string name="draw_annotation">Dessiner une note</string>
 	<string name="edit_annotations">Éditer une note</string>
 	<string name="enter_password">Introduire le mot de passe</string>

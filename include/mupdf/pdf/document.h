@@ -21,11 +21,10 @@ enum
 
 struct pdf_lexbuf_s
 {
-	fz_context *ctx;
 	int size;
 	int base_size;
 	int len;
-	int i;
+	fz_off_t i;
 	float f;
 	char *scratch;
 	char buffer[PDF_LEXBUF_SMALL];
@@ -54,7 +53,7 @@ typedef struct pdf_doc_event_s pdf_doc_event;
 	pdf_doc_event_cb: the type of function via which the app receives
 	document events.
 */
-typedef void (pdf_doc_event_cb)(pdf_doc_event *event, void *data);
+typedef void (pdf_doc_event_cb)(fz_context *ctx, pdf_document *doc, pdf_doc_event *event, void *data);
 
 /*
 	pdf_open_document: Open a PDF document.
@@ -82,12 +81,9 @@ pdf_document *pdf_open_document(fz_context *ctx, const char *filename);
 	filename to locate the PDF document to open. Increments the
 	reference count of the stream. See fz_open_file,
 	fz_open_file_w or fz_open_fd for opening a stream, and
-	fz_close for closing an open stream.
+	fz_drop_stream for closing an open stream.
 */
 pdf_document *pdf_open_document_with_stream(fz_context *ctx, fz_stream *file);
-
-pdf_document *pdf_open_document_no_run(fz_context *ctx, const char *filename);
-pdf_document *pdf_open_document_no_run_with_stream(fz_context *ctx, fz_stream *file);
 
 /*
 	pdf_close_document: Closes and frees an opened PDF document.
@@ -97,38 +93,21 @@ pdf_document *pdf_open_document_no_run_with_stream(fz_context *ctx, fz_stream *f
 
 	Does not throw exceptions.
 */
-void pdf_close_document(pdf_document *doc);
+void pdf_close_document(fz_context *ctx, pdf_document *doc);
 
 /*
 	pdf_specific: down-cast an fz_document to a pdf_document.
 	Returns NULL if underlying document is not PDF
 */
-pdf_document *pdf_specifics(fz_document *doc);
+pdf_document *pdf_specifics(fz_context *ctx, fz_document *doc);
 
-int pdf_needs_password(pdf_document *doc);
-int pdf_authenticate_password(pdf_document *doc, const char *pw);
+int pdf_needs_password(fz_context *ctx, pdf_document *doc);
+int pdf_authenticate_password(fz_context *ctx, pdf_document *doc, const char *pw);
 
-enum
-{
-	PDF_PERM_PRINT = 1 << 2,
-	PDF_PERM_CHANGE = 1 << 3,
-	PDF_PERM_COPY = 1 << 4,
-	PDF_PERM_NOTES = 1 << 5,
-	PDF_PERM_FILL_FORM = 1 << 8,
-	PDF_PERM_ACCESSIBILITY = 1 << 9,
-	PDF_PERM_ASSEMBLE = 1 << 10,
-	PDF_PERM_HIGH_RES_PRINT = 1 << 11,
-	PDF_DEFAULT_PERM_FLAGS = 0xfffc
-};
+int pdf_has_permission(fz_context *ctx, pdf_document *doc, fz_permission p);
+int pdf_lookup_metadata(fz_context *ctx, pdf_document *doc, const char *key, char *ptr, int size);
 
-int pdf_has_permission(pdf_document *doc, int p);
-
-/*
-	Metadata interface.
-*/
-int pdf_meta(pdf_document *doc, int key, void *ptr, int size);
-
-fz_outline *pdf_load_outline(pdf_document *doc);
+fz_outline *pdf_load_outline(fz_context *ctx, pdf_document *doc);
 
 typedef struct pdf_ocg_entry_s pdf_ocg_entry;
 
@@ -160,24 +139,13 @@ struct pdf_ocg_descriptor_s
 	a call to pdf_update_page would not reliably be able to report all changed
 	areas.
 */
-void pdf_update_page(pdf_document *doc, pdf_page *page);
+void pdf_update_page(fz_context *ctx, pdf_document *doc, pdf_page *page);
 
 /*
 	Determine whether changes have been made since the
 	document was opened or last saved.
 */
-int pdf_has_unsaved_changes(pdf_document *doc);
-
-typedef struct pdf_obj_read_state_s pdf_obj_read_state;
-
-struct pdf_obj_read_state_s
-{
-	int offset;
-	int num;
-	int numofs;
-	int gen;
-	int genofs;
-};
+int pdf_has_unsaved_changes(fz_context *ctx, pdf_document *doc);
 
 typedef struct pdf_signer_s pdf_signer;
 
@@ -195,39 +163,43 @@ struct pdf_unsaved_sig_s
 	pdf_unsaved_sig *next;
 };
 
-
 struct pdf_document_s
 {
 	fz_document super;
 
-	fz_context *ctx;
 	fz_stream *file;
 
 	int version;
-	int startxref;
-	int file_size;
+	fz_off_t startxref;
+	fz_off_t file_size;
 	pdf_crypt *crypt;
 	pdf_ocg_descriptor *ocg;
 	pdf_hotspot hotspot;
 
+	int max_xref_len;
 	int num_xref_sections;
+	int num_incremental_sections;
+	int xref_base;
+	int disallow_new_increments;
 	pdf_xref *xref_sections;
-	int xref_altered;
+	int *xref_index;
 	int freeze_updates;
 	int has_xref_streams;
 
 	int page_count;
 
+	int repair_attempted;
+
 	/* State indicating which file parsing method we are using */
 	int file_reading_linearly;
-	int file_length;
+	fz_off_t file_length;
 
 	pdf_obj *linear_obj; /* Linearized object (if used) */
 	pdf_obj **linear_page_refs; /* Page objects for linear loading */
 	int linear_page1_obj_num;
 
 	/* The state for the pdf_progressive_advance parser */
-	int linear_pos;
+	fz_off_t linear_pos;
 	int linear_page_num;
 
 	int hint_object_offset;
@@ -251,17 +223,17 @@ struct pdf_document_s
 	struct
 	{
 		int number; /* Page object number */
-		int offset; /* Offset of page object */
-		int index; /* Index into shared hint_shared_ref */
+		fz_off_t offset; /* Offset of page object */
+		fz_off_t index; /* Index into shared hint_shared_ref */
 	} *hint_page;
 	int *hint_shared_ref;
 	struct
 	{
 		int number; /* Object number of first object */
-		int offset; /* Offset of first object */
+		fz_off_t offset; /* Offset of first object */
 	} *hint_shared;
 	int hint_obj_offsets_max;
-	int *hint_obj_offsets;
+	fz_off_t *hint_obj_offsets;
 
 	int resources_localised;
 
@@ -271,11 +243,11 @@ struct pdf_document_s
 	pdf_obj *focus_obj;
 
 	pdf_js *js;
+	void (*drop_js)(pdf_js *js);
 	int recalculating;
 	int dirty;
-	pdf_unsaved_sig *unsaved_sigs;
 
-	void (*update_appearance)(pdf_document *doc, pdf_annot *annot);
+	void (*update_appearance)(fz_context *ctx, pdf_document *doc, pdf_annot *annot);
 
 	pdf_doc_event_cb *event_cb;
 	void *event_cb_data;
@@ -294,16 +266,18 @@ struct pdf_document_s
 */
 pdf_document *pdf_create_document(fz_context *ctx);
 
-pdf_page *pdf_create_page(pdf_document *doc, fz_rect rect, int res, int rotate);
+pdf_page *pdf_create_page(fz_context *ctx, pdf_document *doc, fz_rect rect, int res, int rotate);
 
-void pdf_insert_page(pdf_document *doc, pdf_page *page, int at);
+void pdf_insert_page(fz_context *ctx, pdf_document *doc, pdf_page *page, int at);
 
-void pdf_delete_page(pdf_document *doc, int number);
+void pdf_delete_page(fz_context *ctx, pdf_document *doc, int number);
 
-void pdf_delete_page_range(pdf_document *doc, int start, int end);
+void pdf_delete_page_range(fz_context *ctx, pdf_document *doc, int start, int end);
 
-fz_device *pdf_page_write(pdf_document *doc, pdf_page *page);
+fz_device *pdf_page_write(fz_context *ctx, pdf_document *doc, pdf_page *page);
 
-void pdf_finish_edit(pdf_document *doc);
+void pdf_finish_edit(fz_context *ctx, pdf_document *doc);
+
+int pdf_recognize(fz_context *doc, const char *magic);
 
 #endif

@@ -1,4 +1,151 @@
-List of changes on master since MuPDF 1.2
+List of changes in MuPDF 1.8
+
+* Headline changes:
+	* New OpenGL-based barebones desktop viewer.
+	* New URW fonts with greek and cyrillic.
+	* 64-bit file support.
+	* Ghostscript proofing mode (source only; not in shipped binaries).
+
+* EPUB improvements:
+	* User style sheets.
+	* GIF images (also for CBZ).
+	* Table of contents.
+	* CJK text.
+	* Page margins.
+	* Many bug fixes.
+
+* Bug fixes:
+	* Updated FreeType to version 2.6.1.
+	* Various font substitution bug fixes.
+	* Fix setjmp/longjmp behaviour which could cause optimizing compilers to misbehave.
+
+List of changes in MuPDF 1.7a
+
+* Bugfixes
+	* Fixed bug that allocated too much memory when packing paths.
+	* Fixed EPUB font scaling bug.
+	* Fixed EPUB file type handling in viewers.
+	* Improved tolerance for broken and unsupported CSS.
+
+* Features
+	* Added mudraw -z option to compress output streams.
+
+List of changes in MuPDF 1.7
+
+* Headline changes:
+	* New 'Indie dev' licensing options - contact sales@artifex.com for more details.
+	* New HTML layout engine, and (DRM-free) EPUB viewer.
+	* Reduced memory usage - displaylists and internal PDF representation take much less memory, reducing total memory use on some files by over 60%.
+
+* Important API changes:
+	* Bound contexts have been removed; we now pass fz_contexts explicitly.
+	* Reference counting of paths and text structures.
+
+* Features:
+	* Add mutool pages option.
+	* Tweaked rendering to prevent feature dropout in common cases.
+	* Viewer tweaks
+		* Better mouse wheel handling
+		* Shift-space support
+		* Mouse button control of presentation mode
+
+* Internal changes:
+	* Removal of bound contexts; fz_contexts now passed explicitly everywhere.
+	* PDF filter revamp - simpler interface.
+	* Devices use derived structures rather than user pointer.
+	* Sparse PDF xrefs held in more compact form.
+	* New gsview viewer split out to its own repository.
+
+* Bug fixes
+	* Improved handling of broken files.
+	* Fix BBoxes of Type 3 fonts.
+	* Updated fonts (including greek and cyrillic).
+	* Various memory leaks and crashes.
+	* And many more.
+
+
+List of changes in MuPDF 1.6
+
+* Features:
+	* Color detection device (mudraw -T).
+	* Sepia mode full-page color tinting in X11 and win32 viewer (keybinding: shift-C).
+	* Re-implement printf and strtod due to portability issue with locales and number formatting.
+	* Add 'gsview' project: a Windows Modern UI viewer.
+	* Improve XML parser interface.
+* Bug fixes:
+	* CBZ page ordering
+	* ZIP64 support
+	* iOS and Android bug fixes
+	* Miscellaneous minor fixes
+
+
+List of changes in MuPDF 1.5
+
+* Bug fixes.
+
+
+List of changes in MuPDF 1.4
+
+* Headline changes:
+	* CMYK rendering (mudraw PWG and PAM formats)
+	* TIFF viewer (with multi-page support).
+	* Added MuJS Javascript interpreter.
+		* MuJS is the default, V8 and JavaScriptCore are compile time options.
+		* Javascript support has to be explicitly enabled with pdf_enable_js.
+		* All viewers now have JavaScript enabled in the default builds.
+* Viewers:
+	* X11: Horizontal scroll wheel support.
+	* X11: Status bar display with warnings.
+	* Android: Digital signatures.
+	* iOS: Links, form filling, annotation editing, and javascript.
+	* iOS: Reflow mode.
+	* WinRT: Printing.
+	* WinRT: Improved zooming behaviour.
+* Tools:
+	* mudraw: Banded rendering with -B /band-height/.
+	* mudraw: Select output format with -F /format/.
+	* mudraw: Write to stdout if you use '-' as the output file name.
+	* mudraw: Add TGA output format.
+	* mudraw: Improved SVG output.
+	* mutool show: Write output to file instead of stdout with -o /filename/.
+	* mutool clean: Clean content streams with -s option.
+* Annotations:
+	* Improved font handling.
+	* Form fields.
+	* Free text.
+	* Sticky notes.
+* Optimizations:
+	* glyph cache: Partial eviction.
+	* glyph cache: Run-length compressed glyphs.
+	* Smarter handling of subpixel metrics in text rendering.
+	* Optimized blitting functions.
+	* Optimized gradient mesh drawing.
+* API changes and additions:
+	* fz_stream API reworked: replace "read" function with "next".
+	* "Rebind" functions to associate context bound objects with another context:
+		fz_output, fz_stream, fz_device and fz_document.
+	* Introduce "document handlers" to detect and open different file types.
+		* Must now call fz_register_document_handlers() to register the defaults.
+		* May register your own handlers as well to work with fz_open_document.
+	* Hook to load system fonts: fz_install_load_system_font_funcs.
+	* PDF xref cache flushing functions (mark/clear/clear-to-mark).
+	* Add our own "printf" set of functions to format strings and write to fz_output:
+		* Format %f as short as possible while preserving precision.
+		* Has %C for formatting a unicode character as UTF-8.
+		* Has %M to format fz_matrix.
+		* Has %R to format fz_rect.
+		* Has %q and %( to format strings with escaped characters.
+	* PDF process interface: allow PDF interpreter to do more than just draw!
+		* Content stream state cleaning filter.
+		* Content stream rewriting filter.
+	* PDF digital signatures.
+	* Stroke states may now be stored on the stack.
+	* Improved fz_path internals.
+	* Gradient mesh drawing interface has been improved.
+	* Save files with incremental updates.
+
+
+List of changes in MuPDF 1.3
 
  * Windows RT viewer app for MuPDF.
  * Library changes to support progressive loading (display PDF files as
@@ -36,7 +183,7 @@ List of changes on master since MuPDF 1.2
  * Many potential crashes in Jpeg2000 and JBIG2 images fixed.
 
 
-List of changes on master since MuPDF 1.1
+List of changes in MuPDF 1.2
 
  * Important API changes:
     * fz_bbox is now fz_irect.
@@ -66,7 +213,7 @@ List of changes on master since MuPDF 1.1
  * Various rendering fixes.
 
 
-List of changes on master since MuPDF 1.0
+List of changes in MuPDF 1.1
 
  * Rendering bugs fixed (text clipping, stroked text etc).
  * Better handling of 'large' (uncachable) glyphs.

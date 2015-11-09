@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Copiar texto al portapapeles</string>
 	<string name="delete">Borrar</string>
 	<string name="dismiss">Ignorar</string>
-	<string name="document_has_changes_save_them_">El documento tiene cambios. ¿Guardar?</string>
+	<string name="document_has_changes_save_them">El documento tiene cambios. ¿Guardar?</string>
 	<string name="draw_annotation">Dibujar anotación</string>
 	<string name="edit_annotations">Editar anotaicones</string>
 	<string name="enter_password">Introducir contraseña</string>

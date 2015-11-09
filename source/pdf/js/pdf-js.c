@@ -1,7 +1,11 @@
 #include "mupdf/pdf.h"
 
+/* TODO: js->doc -> doc */
+/* TODO: js->ctx -> ctx */
+
 struct pdf_js_s
 {
+	fz_context *ctx;
 	pdf_document *doc;
 	pdf_obj *form;
 	pdf_js_event event;
@@ -15,7 +19,7 @@ struct pdf_js_s
 static pdf_jsimp_obj *app_alert(void *jsctx, void *obj, int argc, pdf_jsimp_obj *args[])
 {
 	pdf_js *js = (pdf_js *)jsctx;
-	fz_context *ctx = js->doc->ctx;
+	fz_context *ctx = js->ctx;
 	pdf_jsimp_obj *cMsg_obj = NULL;
 	pdf_jsimp_obj *nIcon_obj = NULL;
 	pdf_jsimp_obj *nType_obj = NULL;
@@ -77,7 +81,7 @@ static pdf_jsimp_obj *app_alert(void *jsctx, void *obj, int argc, pdf_jsimp_obj 
 		if (cTitle_obj)
 			event.title = pdf_jsimp_to_string(js->imp, cTitle_obj);
 
-		pdf_event_issue_alert(js->doc, &event);
+		pdf_event_issue_alert(ctx, js->doc, &event);
 		nButton_obj = pdf_jsimp_from_number(js->imp, (double)event.button_pressed);
 	}
 	fz_always(ctx)
@@ -102,7 +106,7 @@ static pdf_jsimp_obj *app_execDialog(void *jsctx, void *obj, int argc, pdf_jsimp
 {
 	pdf_js *js = (pdf_js *)jsctx;
 
-	pdf_event_issue_exec_dialog(js->doc);
+	pdf_event_issue_exec_dialog(js->ctx, js->doc);
 
 	return NULL;
 }
@@ -112,7 +116,7 @@ static pdf_jsimp_obj *app_execMenuItem(void *jsctx, void *obj, int argc, pdf_jsi
 	pdf_js *js = (pdf_js *)jsctx;
 
 	if (argc == 1)
-		pdf_event_issue_exec_menu_item(js->doc, pdf_jsimp_to_string(js->imp, args[0]));
+		pdf_event_issue_exec_menu_item(js->ctx, js->doc, pdf_jsimp_to_string(js->imp, args[0]));
 
 	return NULL;
 }
@@ -133,19 +137,18 @@ static pdf_jsimp_obj *app_launchURL(void *jsctx, void *obj, int argc, pdf_jsimp_
 		cUrl = pdf_jsimp_to_string(js->imp, args[0]);
 	}
 
-	pdf_event_issue_launch_url(js->doc, cUrl, bNewFrame);
+	pdf_event_issue_launch_url(js->ctx, js->doc, cUrl, bNewFrame);
 
 	return NULL;
 }
 
-static pdf_obj *load_color(pdf_document *doc, pdf_jsimp *imp, pdf_jsimp_obj *val)
+static pdf_obj *load_color(fz_context *ctx, pdf_document *doc, pdf_jsimp *imp, pdf_jsimp_obj *val)
 {
 	pdf_obj *col = NULL;
 	pdf_obj *comp = NULL;
 	pdf_jsimp_obj *jscomp = NULL;
 	int i;
 	int n;
-	fz_context *ctx = doc->ctx;
 
 	n = pdf_jsimp_array_len(imp, val);
 
@@ -155,7 +158,7 @@ static pdf_obj *load_color(pdf_document *doc, pdf_jsimp *imp, pdf_jsimp_obj *val
 	if (n <= 1)
 		return NULL;
 
-	col = pdf_new_array(doc, n-1);
+	col = pdf_new_array(ctx, doc, n-1);
 
 	fz_var(comp);
 	fz_var(jscomp);
@@ -164,19 +167,19 @@ static pdf_obj *load_color(pdf_document *doc, pdf_jsimp *imp, pdf_jsimp_obj *val
 		for (i = 0; i < n-1; i++)
 		{
 			jscomp = pdf_jsimp_array_item(imp, val, i+1);
-			comp = pdf_new_real(doc, pdf_jsimp_to_number(imp, jscomp));
-			pdf_array_push(col, comp);
+			comp = pdf_new_real(ctx, doc, pdf_jsimp_to_number(imp, jscomp));
+			pdf_array_push(ctx, col, comp);
 			pdf_jsimp_drop_obj(imp, jscomp);
 			jscomp = NULL;
-			pdf_drop_obj(comp);
+			pdf_drop_obj(ctx, comp);
 			comp = NULL;
 		}
 	}
 	fz_catch(ctx)
 	{
 		pdf_jsimp_drop_obj(imp, jscomp);
-		pdf_drop_obj(comp);
-		pdf_drop_obj(col);
+		pdf_drop_obj(ctx, comp);
+		pdf_drop_obj(ctx, col);
 		fz_rethrow(ctx);
 	}
 
@@ -193,7 +196,7 @@ static pdf_jsimp_obj *field_buttonSetCaption(void *jsctx, void *obj, int argc, p
 		return NULL;
 
 	name = pdf_jsimp_to_string(js->imp, args[0]);
-	pdf_field_set_button_caption(js->doc, field, name);
+	pdf_field_set_button_caption(js->ctx, js->doc, field, name);
 
 	return NULL;
 }
@@ -201,7 +204,7 @@ static pdf_jsimp_obj *field_buttonSetCaption(void *jsctx, void *obj, int argc, p
 static pdf_jsimp_obj *field_getName(void *jsctx, void *obj)
 {
 	pdf_js *js = (pdf_js *)jsctx;
-	fz_context *ctx = js->doc->ctx;
+	fz_context *ctx = js->ctx;
 	pdf_obj *field = (pdf_obj *)obj;
 	char *name;
 	pdf_jsimp_obj *oname = NULL;
@@ -209,7 +212,7 @@ static pdf_jsimp_obj *field_getName(void *jsctx, void *obj)
 	if (field == NULL)
 		return NULL;
 
-	name = pdf_field_name(js->doc, field);
+	name = pdf_field_name(ctx, js->doc, field);
 	fz_try(ctx)
 	{
 		oname = pdf_jsimp_from_string(js->imp, name);
@@ -229,7 +232,7 @@ static pdf_jsimp_obj *field_getName(void *jsctx, void *obj)
 static void field_setName(void *jsctx, void *obj, pdf_jsimp_obj *val)
 {
 	pdf_js *js = (pdf_js *)jsctx;
-	fz_warn(js->doc->ctx, "Unexpected call to field_setName");
+	fz_warn(js->ctx, "Unexpected call to field_setName");
 }
 
 static pdf_jsimp_obj *field_getDisplay(void *jsctx, void *obj)
@@ -237,7 +240,7 @@ static pdf_jsimp_obj *field_getDisplay(void *jsctx, void *obj)
 	pdf_js *js = (pdf_js *)jsctx;
 	pdf_obj *field = (pdf_obj *)obj;
 
-	return field ? pdf_jsimp_from_number(js->imp, (double)pdf_field_display(js->doc, field)) : NULL;
+	return field ? pdf_jsimp_from_number(js->imp, (double)pdf_field_display(js->ctx, js->doc, field)) : NULL;
 }
 
 static void field_setDisplay(void *jsctx, void *obj, pdf_jsimp_obj *val)
@@ -245,7 +248,7 @@ static void field_setDisplay(void *jsctx, void *obj, pdf_jsimp_obj *val)
 	pdf_js *js = (pdf_js *)jsctx;
 	pdf_obj *field = (pdf_obj *)obj;
 	if (field)
-		pdf_field_set_display(js->doc, field, (int)pdf_jsimp_to_number(js->imp, val));
+		pdf_field_set_display(js->ctx, js->doc, field, (int)pdf_jsimp_to_number(js->imp, val));
 }
 
 static pdf_jsimp_obj *field_getFillColor(void *jsctx, void *obj)
@@ -256,21 +259,21 @@ static pdf_jsimp_obj *field_getFillColor(void *jsctx, void *obj)
 static void field_setFillColor(void *jsctx, void *obj, pdf_jsimp_obj *val)
 {
 	pdf_js *js = (pdf_js *)jsctx;
-	fz_context *ctx = js->doc->ctx;
+	fz_context *ctx = js->ctx;
 	pdf_obj *field = (pdf_obj *)obj;
 	pdf_obj *col;
 
 	if (!field)
 		return;
 
-	col = load_color(js->doc, js->imp, val);
+	col = load_color(ctx, js->doc, js->imp, val);
 	fz_try(ctx)
 	{
-		pdf_field_set_fill_color(js->doc, field, col);
+		pdf_field_set_fill_color(ctx, js->doc, field, col);
 	}
 	fz_always(ctx)
 	{
-		pdf_drop_obj(col);
+		pdf_drop_obj(ctx, col);
 	}
 	fz_catch(ctx)
 	{
@@ -286,21 +289,21 @@ static pdf_jsimp_obj *field_getTextColor(void *jsctx, void *obj)
 static void field_setTextColor(void *jsctx, void *obj, pdf_jsimp_obj *val)
 {
 	pdf_js *js = (pdf_js *)jsctx;
-	fz_context *ctx = js->doc->ctx;
+	fz_context *ctx = js->ctx;
 	pdf_obj *field = (pdf_obj *)obj;
 	pdf_obj *col;
 
 	if (!field)
 		return;
 
-	col = load_color(js->doc, js->imp, val);
+	col = load_color(ctx, js->doc, js->imp, val);
 	fz_try(ctx)
 	{
-		pdf_field_set_text_color(js->doc, field, col);
+		pdf_field_set_text_color(ctx, js->doc, field, col);
 	}
 	fz_always(ctx)
 	{
-		pdf_drop_obj(col);
+		pdf_drop_obj(ctx, col);
 	}
 	fz_catch(ctx)
 	{
@@ -313,7 +316,7 @@ static pdf_jsimp_obj *field_getBorderStyle(void *jsctx, void *obj)
 	pdf_js *js = (pdf_js *)jsctx;
 	pdf_obj *field = (pdf_obj *)obj;
 
-	return field ? pdf_jsimp_from_string(js->imp, pdf_field_border_style(js->doc, field)) : NULL;
+	return field ? pdf_jsimp_from_string(js->imp, pdf_field_border_style(js->ctx, js->doc, field)) : NULL;
 }
 
 static void field_setBorderStyle(void *jsctx, void *obj, pdf_jsimp_obj *val)
@@ -322,7 +325,7 @@ static void field_setBorderStyle(void *jsctx, void *obj, pdf_jsimp_obj *val)
 	pdf_obj *field = (pdf_obj *)obj;
 
 	if (field)
-		pdf_field_set_border_style(js->doc, field, pdf_jsimp_to_string(js->imp, val));
+		pdf_field_set_border_style(js->ctx, js->doc, field, pdf_jsimp_to_string(js->imp, val));
 }
 
 static pdf_jsimp_obj *field_getValue(void *jsctx, void *obj)
@@ -334,7 +337,8 @@ static pdf_jsimp_obj *field_getValue(void *jsctx, void *obj)
 	if (!field)
 		return NULL;
 
-	fval = pdf_field_value(js->doc, field);
+	fval = pdf_field_value(js->ctx, js->doc, field);
+	/* TODO: free fval! */
 	return pdf_jsimp_from_string(js->imp, fval?fval:"");
 }
 
@@ -344,7 +348,7 @@ static void field_setValue(void *jsctx, void *obj, pdf_jsimp_obj *val)
 	pdf_obj *field = (pdf_obj *)obj;
 
 	if (field)
-		(void)pdf_field_set_value(js->doc, field, pdf_jsimp_to_string(js->imp, val));
+		(void)pdf_field_set_value(js->ctx, js->doc, field, pdf_jsimp_to_string(js->imp, val));
 }
 
 static pdf_jsimp_obj *event_getTarget(void *jsctx, void *obj)
@@ -357,7 +361,7 @@ static pdf_jsimp_obj *event_getTarget(void *jsctx, void *obj)
 static void event_setTarget(void *jsctx, void *obj, pdf_jsimp_obj *val)
 {
 	pdf_js *js = (pdf_js *)jsctx;
-	fz_warn(js->doc->ctx, "Unexpected call to event_setTarget");
+	fz_warn(js->ctx, "Unexpected call to event_setTarget");
 }
 
 static pdf_jsimp_obj *event_getValue(void *jsctx, void *obj)
@@ -371,7 +375,7 @@ static pdf_jsimp_obj *event_getValue(void *jsctx, void *obj)
 static void event_setValue(void *jsctx, void *obj, pdf_jsimp_obj *val)
 {
 	pdf_js *js = (pdf_js *)jsctx;
-	fz_context *ctx = js->doc->ctx;
+	fz_context *ctx = js->ctx;
 	fz_free(ctx, js->event.value);
 	js->event.value = NULL;
 	js->event.value = fz_strdup(ctx, pdf_jsimp_to_string(js->imp, val));
@@ -387,7 +391,7 @@ static pdf_jsimp_obj *event_getWillCommit(void *jsctx, void *obj)
 static void event_setWillCommit(void *jsctx, void *obj, pdf_jsimp_obj *val)
 {
 	pdf_js *js = (pdf_js *)jsctx;
-	fz_warn(js->doc->ctx, "Unexpected call to event_setWillCommit");
+	fz_warn(js->ctx, "Unexpected call to event_setWillCommit");
 }
 
 static pdf_jsimp_obj *event_getRC(void *jsctx, void *obj)
@@ -414,7 +418,7 @@ static pdf_jsimp_obj *doc_getEvent(void *jsctx, void *obj)
 static void doc_setEvent(void *jsctx, void *obj, pdf_jsimp_obj *val)
 {
 	pdf_js *js = (pdf_js *)jsctx;
-	fz_warn(js->doc->ctx, "Unexpected call to doc_setEvent");
+	fz_warn(js->ctx, "Unexpected call to doc_setEvent");
 }
 
 static pdf_jsimp_obj *doc_getApp(void *jsctx, void *obj)
@@ -427,7 +431,7 @@ static pdf_jsimp_obj *doc_getApp(void *jsctx, void *obj)
 static void doc_setApp(void *jsctx, void *obj, pdf_jsimp_obj *val)
 {
 	pdf_js *js = (pdf_js *)jsctx;
-	fz_warn(js->doc->ctx, "Unexpected call to doc_setApp");
+	fz_warn(js->ctx, "Unexpected call to doc_setApp");
 }
 
 static char *utf8_to_pdf(fz_context *ctx, char *utf8)
@@ -466,7 +470,7 @@ static char *utf8_to_pdf(fz_context *ctx, char *utf8)
 static pdf_jsimp_obj *doc_getField(void *jsctx, void *obj, int argc, pdf_jsimp_obj *args[])
 {
 	pdf_js *js = (pdf_js *)jsctx;
-	fz_context *ctx = js->doc->ctx;
+	fz_context *ctx = js->ctx;
 	pdf_obj *dict = NULL;
 	char *utf8;
 	char *name = NULL;
@@ -483,7 +487,7 @@ static pdf_jsimp_obj *doc_getField(void *jsctx, void *obj, int argc, pdf_jsimp_o
 		if (utf8)
 		{
 			name = utf8_to_pdf(ctx, utf8);
-			dict = pdf_lookup_field(js->form, name);
+			dict = pdf_lookup_field(js->ctx, js->form, name);
 		}
 	}
 	fz_always(ctx)
@@ -502,7 +506,7 @@ static pdf_jsimp_obj *doc_getField(void *jsctx, void *obj, int argc, pdf_jsimp_o
 
 static void reset_field(pdf_js *js, pdf_jsimp_obj *item)
 {
-	fz_context *ctx = js->doc->ctx;
+	fz_context *ctx = js->ctx;
 	char *name = NULL;
 	char *utf8 = pdf_jsimp_to_string(js->imp, item);
 
@@ -514,9 +518,9 @@ static void reset_field(pdf_js *js, pdf_jsimp_obj *item)
 		fz_try(ctx)
 		{
 			name = utf8_to_pdf(ctx, utf8);
-			field = pdf_lookup_field(js->form, name);
+			field = pdf_lookup_field(js->ctx, js->form, name);
 			if (field)
-				pdf_field_reset(js->doc, field);
+				pdf_field_reset(js->ctx, js->doc, field);
 		}
 		fz_always(ctx)
 		{
@@ -532,7 +536,7 @@ static void reset_field(pdf_js *js, pdf_jsimp_obj *item)
 static pdf_jsimp_obj *doc_resetForm(void *jsctx, void *obj, int argc, pdf_jsimp_obj *args[])
 {
 	pdf_js *js = (pdf_js *)jsctx;
-	fz_context *ctx = js->doc->ctx;
+	fz_context *ctx = js->ctx;
 	pdf_jsimp_obj *arr = NULL;
 	pdf_jsimp_obj *elem = NULL;
 
@@ -583,10 +587,10 @@ static pdf_jsimp_obj *doc_resetForm(void *jsctx, void *obj, int argc, pdf_jsimp_
 		else
 		{
 			/* No argument or null passed in means reset all. */
-			int i, n = pdf_array_len(js->form);
+			int i, n = pdf_array_len(ctx, js->form);
 
 			for (i = 0; i < n; i++)
-				pdf_field_reset(js->doc, pdf_array_get(js->form, i));
+				pdf_field_reset(js->ctx, js->doc, pdf_array_get(ctx, js->form, i));
 		}
 	}
 	fz_catch(ctx)
@@ -601,7 +605,7 @@ static pdf_jsimp_obj *doc_print(void *jsctx, void *obj, int argc, pdf_jsimp_obj 
 {
 	pdf_js *js = (pdf_js *)jsctx;
 
-	pdf_event_issue_print(js->doc);
+	pdf_event_issue_print(js->ctx, js->doc);
 
 	return NULL;
 }
@@ -609,7 +613,7 @@ static pdf_jsimp_obj *doc_print(void *jsctx, void *obj, int argc, pdf_jsimp_obj 
 static pdf_jsimp_obj *doc_mailDoc(void *jsctx, void *obj, int argc, pdf_jsimp_obj *args[])
 {
 	pdf_js *js = (pdf_js *)jsctx;
-	fz_context *ctx = js->doc->ctx;
+	fz_context *ctx = js->ctx;
 	pdf_jsimp_obj *bUI_obj = NULL;
 	pdf_jsimp_obj *cTo_obj = NULL;
 	pdf_jsimp_obj *cCc_obj = NULL;
@@ -684,7 +688,7 @@ static pdf_jsimp_obj *doc_mailDoc(void *jsctx, void *obj, int argc, pdf_jsimp_ob
 		if (cMessage_obj)
 			event.message = pdf_jsimp_to_string(js->imp, cMessage_obj);
 
-		pdf_event_issue_mail_doc(js->doc, &event);
+		pdf_event_issue_mail_doc(js->ctx, js->doc, &event);
 	}
 	fz_always(ctx)
 	{
@@ -711,7 +715,7 @@ static void declare_dom(pdf_js *js)
 	pdf_jsimp *imp = js->imp;
 
 	/* Create the document type */
-	js->doctype = pdf_jsimp_new_type(imp, NULL);
+	js->doctype = pdf_jsimp_new_type(imp, NULL, "Document");
 	pdf_jsimp_addmethod(imp, js->doctype, "getField", doc_getField);
 	pdf_jsimp_addmethod(imp, js->doctype, "resetForm", doc_resetForm);
 	pdf_jsimp_addmethod(imp, js->doctype, "print", doc_print);
@@ -720,14 +724,14 @@ static void declare_dom(pdf_js *js)
 	pdf_jsimp_addproperty(imp, js->doctype, "app", doc_getApp, doc_setApp);
 
 	/* Create the event type */
-	js->eventtype = pdf_jsimp_new_type(imp, NULL);
+	js->eventtype = pdf_jsimp_new_type(imp, NULL, "Event");
 	pdf_jsimp_addproperty(imp, js->eventtype, "target", event_getTarget, event_setTarget);
 	pdf_jsimp_addproperty(imp, js->eventtype, "value", event_getValue, event_setValue);
 	pdf_jsimp_addproperty(imp, js->eventtype, "willCommit", event_getWillCommit, event_setWillCommit);
 	pdf_jsimp_addproperty(imp, js->eventtype, "rc", event_getRC, event_setRC);
 
 	/* Create the field type */
-	js->fieldtype = pdf_jsimp_new_type(imp, NULL);
+	js->fieldtype = pdf_jsimp_new_type(imp, NULL, "Field");
 	pdf_jsimp_addproperty(imp, js->fieldtype, "value", field_getValue, field_setValue);
 	pdf_jsimp_addproperty(imp, js->fieldtype, "borderStyle", field_getBorderStyle, field_setBorderStyle);
 	pdf_jsimp_addproperty(imp, js->fieldtype, "textColor", field_getTextColor, field_setTextColor);
@@ -737,7 +741,7 @@ static void declare_dom(pdf_js *js)
 	pdf_jsimp_addmethod(imp, js->fieldtype, "buttonSetCaption", field_buttonSetCaption);
 
 	/* Create the app type */
-	js->apptype = pdf_jsimp_new_type(imp, NULL);
+	js->apptype = pdf_jsimp_new_type(imp, NULL, "Application");
 	pdf_jsimp_addmethod(imp, js->apptype, "alert", app_alert);
 	pdf_jsimp_addmethod(imp, js->apptype, "execDialog", app_execDialog);
 	pdf_jsimp_addmethod(imp, js->apptype, "execMenuItem", app_execMenuItem);
@@ -749,12 +753,19 @@ static void declare_dom(pdf_js *js)
 
 static void preload_helpers(pdf_js *js)
 {
-	/* When testing on the cluster, redefine the Date object
-	 * to use a fixed date */
+	/* When testing on the cluster:
+	 * Use a fixed date for "new Date" and Date.now().
+	 * Sadly, this breaks uses of the Date function without the new keyword.
+	 * Return a fixed number from Math.random().
+	 */
 #ifdef CLUSTER
 	pdf_jsimp_execute(js->imp,
 "var MuPDFOldDate = Date\n"
-"Date = function() { return new MuPDFOldDate(1979,5,15); }\n"
+"Date = function() { return new MuPDFOldDate(298252800000); }\n"
+"Date.now = function() { return 298252800000; }\n"
+"Date.UTC = function() { return 298252800000; }\n"
+"Date.parse = MuPDFOldDate.parse;\n"
+"Math.random = function() { return 1/4; }\n"
 	);
 #endif
 
@@ -763,9 +774,23 @@ static void preload_helpers(pdf_js *js)
 	);
 }
 
-pdf_js *pdf_new_js(pdf_document *doc)
+static void pdf_drop_js(pdf_js *js)
 {
-	fz_context *ctx = doc->ctx;
+	if (js)
+	{
+		fz_context *ctx = js->ctx;
+		fz_free(ctx, js->event.value);
+		pdf_jsimp_drop_type(js->imp, js->apptype);
+		pdf_jsimp_drop_type(js->imp, js->eventtype);
+		pdf_jsimp_drop_type(js->imp, js->fieldtype);
+		pdf_jsimp_drop_type(js->imp, js->doctype);
+		pdf_drop_jsimp(js->imp);
+		fz_free(ctx, js);
+	}
+}
+
+static pdf_js *pdf_new_js(fz_context *ctx, pdf_document *doc)
+{
 	pdf_js *js = NULL;
 
 	fz_var(js);
@@ -774,12 +799,13 @@ pdf_js *pdf_new_js(pdf_document *doc)
 		pdf_obj *root, *acroform;
 
 		js = fz_malloc_struct(ctx, pdf_js);
+		js->ctx = ctx;
 		js->doc = doc;
 
 		/* Find the form array */
-		root = pdf_dict_gets(pdf_trailer(doc), "Root");
-		acroform = pdf_dict_gets(root, "AcroForm");
-		js->form = pdf_dict_gets(acroform, "Fields");
+		root = pdf_dict_get(ctx, pdf_trailer(ctx, doc), PDF_NAME_Root);
+		acroform = pdf_dict_get(ctx, root, PDF_NAME_AcroForm);
+		js->form = pdf_dict_get(ctx, acroform, PDF_NAME_Fields);
 
 		/* Initialise the javascript engine, passing the main context
 		 * for use in memory allocation and exception handling. Also
@@ -798,10 +824,10 @@ pdf_js *pdf_new_js(pdf_document *doc)
 	return js;
 }
 
-void pdf_js_load_document_level(pdf_js *js)
+static void pdf_js_load_document_level(pdf_js *js)
 {
 	pdf_document *doc = js->doc;
-	fz_context *ctx = doc->ctx;
+	fz_context *ctx = js->ctx;
 	pdf_obj *javascript = NULL;
 	char *codebuf = NULL;
 
@@ -811,18 +837,18 @@ void pdf_js_load_document_level(pdf_js *js)
 	{
 		int len, i;
 
-		javascript = pdf_load_name_tree(doc, "JavaScript");
-		len = pdf_dict_len(javascript);
+		javascript = pdf_load_name_tree(ctx, doc, PDF_NAME_JavaScript);
+		len = pdf_dict_len(ctx, javascript);
 
 		for (i = 0; i < len; i++)
 		{
-			pdf_obj *fragment = pdf_dict_get_val(javascript, i);
-			pdf_obj *code = pdf_dict_gets(fragment, "JS");
+			pdf_obj *fragment = pdf_dict_get_val(ctx, javascript, i);
+			pdf_obj *code = pdf_dict_get(ctx, fragment, PDF_NAME_JS);
 
 			fz_var(codebuf);
 			fz_try(ctx)
 			{
-				codebuf = pdf_to_utf8(doc, code);
+				codebuf = pdf_to_utf8(ctx, doc, code);
 				pdf_jsimp_execute(js->imp, codebuf);
 			}
 			fz_always(ctx)
@@ -839,7 +865,7 @@ void pdf_js_load_document_level(pdf_js *js)
 	}
 	fz_always(ctx)
 	{
-		pdf_drop_obj(javascript);
+		pdf_drop_obj(ctx, javascript);
 	}
 	fz_catch(ctx)
 	{
@@ -847,25 +873,11 @@ void pdf_js_load_document_level(pdf_js *js)
 	}
 }
 
-void pdf_drop_js(pdf_js *js)
-{
-	if (js)
-	{
-		fz_context *ctx = js->doc->ctx;
-		fz_free(ctx, js->event.value);
-		pdf_jsimp_drop_type(js->imp, js->apptype);
-		pdf_jsimp_drop_type(js->imp, js->fieldtype);
-		pdf_jsimp_drop_type(js->imp, js->doctype);
-		pdf_drop_jsimp(js->imp);
-		fz_free(ctx, js);
-	}
-}
-
 void pdf_js_setup_event(pdf_js *js, pdf_js_event *e)
 {
 	if (js)
 	{
-		fz_context *ctx = js->doc->ctx;
+		fz_context *ctx = js->ctx;
 		char *ev = e->value ? e->value : "";
 		char *v = fz_strdup(ctx, ev);
 
@@ -886,7 +898,7 @@ void pdf_js_execute(pdf_js *js, char *code)
 {
 	if (js)
 	{
-		fz_context *ctx = js->doc->ctx;
+		fz_context *ctx = js->ctx;
 		fz_try(ctx)
 		{
 			pdf_jsimp_execute(js->imp, code);
@@ -901,7 +913,7 @@ void pdf_js_execute_count(pdf_js *js, char *code, int count)
 {
 	if (js)
 	{
-		fz_context *ctx = js->doc->ctx;
+		fz_context *ctx = js->ctx;
 		fz_try(ctx)
 		{
 			pdf_jsimp_execute_count(js->imp, code, count);
@@ -912,7 +924,23 @@ void pdf_js_execute_count(pdf_js *js, char *code, int count)
 	}
 }
 
-int pdf_js_supported(void)
+void pdf_enable_js(fz_context *ctx, pdf_document *doc)
 {
-	return 1;
+	if (!doc->js) {
+		doc->js = pdf_new_js(ctx, doc);
+		doc->drop_js = pdf_drop_js;
+		pdf_js_load_document_level(doc->js);
+	}
+}
+
+void pdf_disable_js(fz_context *ctx, pdf_document *doc)
+{
+	if (doc->js)
+		doc->drop_js(doc->js);
+	doc->js = NULL;
+}
+
+int pdf_js_supported(fz_context *ctx, pdf_document *doc)
+{
+	return doc->js != NULL;
 }

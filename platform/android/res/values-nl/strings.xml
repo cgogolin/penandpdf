@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Tekst kopiëren naar klembord</string>
 	<string name="delete">Verwijderen</string>
 	<string name="dismiss">Afwijzen</string>
-	<string name="document_has_changes_save_them_">Het document is gewijzigd. Opslaan?</string>
+	<string name="document_has_changes_save_them">Het document is gewijzigd. Opslaan?</string>
 	<string name="draw_annotation">Opmerking tekenen</string>
 	<string name="edit_annotations">Opmerkingen bewerken</string>
 	<string name="enter_password">Voer wachtwoord in</string>

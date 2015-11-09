@@ -93,7 +93,7 @@ static inline void step_edge(edge_data *edge, int n)
 }
 
 static void
-fz_paint_triangle(fz_pixmap *pix, float v[3][MAXN], int n, const fz_irect *bbox)
+fz_paint_triangle(fz_pixmap *pix, float *v[3], int n, const fz_irect *bbox)
 {
 	edge_data e0, e1;
 	int top, mid, bot;
@@ -157,48 +157,44 @@ fz_paint_triangle(fz_pixmap *pix, float v[3][MAXN], int n, const fz_irect *bbox)
 
 struct paint_tri_data
 {
-	fz_context *ctx;
 	fz_shade *shade;
 	fz_pixmap *dest;
 	const fz_irect *bbox;
+	fz_color_converter cc;
 };
 
 static void
-do_paint_tri(void *arg, fz_vertex *av, fz_vertex *bv, fz_vertex *cv)
+prepare_vertex(fz_context *ctx, void *arg, fz_vertex *v, const float *input)
 {
 	struct paint_tri_data *ptd = (struct paint_tri_data *)arg;
-	int i, k;
-	fz_vertex *vertices[3];
-	fz_vertex *v;
-	float *ltri;
-	fz_context *ctx;
-	fz_shade *shade;
-	fz_pixmap *dest;
-	float local[3][MAXN];
+	fz_shade *shade = ptd->shade;
+	fz_pixmap *dest = ptd->dest;
+	float *output = v->c;
+	int i;
 
-	vertices[0] = av;
-	vertices[1] = bv;
-	vertices[2] = cv;
+	if (shade->use_function)
+		output[0] = input[0] * 255;
+	else
+	{
+		ptd->cc.convert(ctx, &ptd->cc, output, input);
+		for (i = 0; i < dest->colorspace->n; i++)
+			output[i] *= 255;
+	}
+}
+
+static void
+do_paint_tri(fz_context *ctx, void *arg, fz_vertex *av, fz_vertex *bv, fz_vertex *cv)
+{
+	struct paint_tri_data *ptd = (struct paint_tri_data *)arg;
+	float *vertices[3];
+	fz_pixmap *dest;
+
+	vertices[0] = (float *)av;
+	vertices[1] = (float *)bv;
+	vertices[2] = (float *)cv;
 
 	dest = ptd->dest;
-	ctx = ptd->ctx;
-	shade = ptd->shade;
-	for (k = 0; k < 3; k++)
-	{
-		v = vertices[k];
-		ltri = &local[k][0];
-		ltri[0] = v->p.x;
-		ltri[1] = v->p.y;
-		if (shade->use_function)
-			ltri[2] = v->c[0] * 255;
-		else
-		{
-			fz_convert_color(ctx, dest->colorspace, &ltri[2], shade->colorspace, v->c);
-			for (i = 0; i < dest->colorspace->n; i++)
-				ltri[i + 2] *= 255;
-		}
-	}
-	fz_paint_triangle(dest, local, 2 + dest->colorspace->n, ptd->bbox);
+	fz_paint_triangle(dest, vertices, 2 + dest->colorspace->n, ptd->bbox);
 }
 
 void
@@ -208,7 +204,7 @@ fz_paint_shade(fz_context *ctx, fz_shade *shade, const fz_matrix *ctm, fz_pixmap
 	fz_pixmap *temp = NULL;
 	fz_pixmap *conv = NULL;
 	float color[FZ_MAX_COLORS];
-	struct paint_tri_data ptd;
+	struct paint_tri_data ptd = { 0 };
 	int i, k;
 	fz_matrix local_ctm;
 
@@ -222,10 +218,10 @@ fz_paint_shade(fz_context *ctx, fz_shade *shade, const fz_matrix *ctm, fz_pixmap
 		if (shade->use_function)
 		{
 			fz_color_converter cc;
-			fz_lookup_color_converter(&cc, ctx, dest->colorspace, shade->colorspace);
+			fz_lookup_color_converter(ctx, &cc, dest->colorspace, shade->colorspace);
 			for (i = 0; i < 256; i++)
 			{
-				cc.convert(&cc, color, shade->function[i]);
+				cc.convert(ctx, &cc, color, shade->function[i]);
 				for (k = 0; k < dest->colorspace->n; k++)
 					clut[i][k] = color[k] * 255;
 				clut[i][k] = shade->function[i][shade->colorspace->n] * 255;
@@ -239,12 +235,12 @@ fz_paint_shade(fz_context *ctx, fz_shade *shade, const fz_matrix *ctm, fz_pixmap
 			temp = dest;
 		}
 
-		ptd.ctx = ctx;
 		ptd.dest = temp;
 		ptd.shade = shade;
 		ptd.bbox = bbox;
 
-		fz_process_mesh(ctx, shade, &local_ctm, &do_paint_tri, &ptd);
+		fz_init_cached_color_converter(ctx, &ptd.cc, temp->colorspace, shade->colorspace);
+		fz_process_mesh(ctx, shade, &local_ctm, &prepare_vertex, &do_paint_tri, &ptd);
 
 		if (shade->use_function)
 		{
@@ -263,6 +259,10 @@ fz_paint_shade(fz_context *ctx, fz_shade *shade, const fz_matrix *ctm, fz_pixmap
 			fz_drop_pixmap(ctx, conv);
 			fz_drop_pixmap(ctx, temp);
 		}
+	}
+	fz_always(ctx)
+	{
+		fz_fin_cached_color_converter(ctx, &ptd.cc);
 	}
 	fz_catch(ctx)
 	{

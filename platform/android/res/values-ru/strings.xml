@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Копировать текст в буфер</string>
 	<string name="delete">Удалить</string>
 	<string name="dismiss">Пропустить</string>
-	<string name="document_has_changes_save_them_">Документ был изменен. Сохранить изменения?</string>
+	<string name="document_has_changes_save_them">Документ был изменен. Сохранить изменения?</string>
 	<string name="draw_annotation">Создать аннтоацию</string>
 	<string name="edit_annotations">Редактировать аннотации</string>
 	<string name="enter_password">Введите пароль</string>

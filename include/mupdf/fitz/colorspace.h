@@ -26,7 +26,7 @@ fz_colorspace *fz_lookup_device_colorspace(fz_context *ctx, char *name);
 	fz_colorspace_is_indexed: Return true, iff a given colorspace is
 	indexed.
 */
-int fz_colorspace_is_indexed(fz_colorspace *cs);
+int fz_colorspace_is_indexed(fz_context *ctx, fz_colorspace *cs);
 
 /*
 	fz_device_gray: Get colorspace representing device specific gray.
@@ -74,8 +74,8 @@ struct fz_colorspace_s
 	unsigned int size;
 	char name[16];
 	int n;
-	void (*to_rgb)(fz_context *ctx, fz_colorspace *, float *src, float *rgb);
-	void (*from_rgb)(fz_context *ctx, fz_colorspace *, float *rgb, float *dst);
+	void (*to_rgb)(fz_context *ctx, fz_colorspace *, const float *src, float *rgb);
+	void (*from_rgb)(fz_context *ctx, fz_colorspace *, const float *rgb, float *dst);
 	void (*free_data)(fz_context *Ctx, fz_colorspace *);
 	void *data;
 };
@@ -84,9 +84,9 @@ fz_colorspace *fz_new_colorspace(fz_context *ctx, char *name, int n);
 fz_colorspace *fz_new_indexed_colorspace(fz_context *ctx, fz_colorspace *base, int high, unsigned char *lookup);
 fz_colorspace *fz_keep_colorspace(fz_context *ctx, fz_colorspace *colorspace);
 void fz_drop_colorspace(fz_context *ctx, fz_colorspace *colorspace);
-void fz_free_colorspace_imp(fz_context *ctx, fz_storable *colorspace);
+void fz_drop_colorspace_imp(fz_context *ctx, fz_storable *colorspace);
 
-void fz_convert_color(fz_context *ctx, fz_colorspace *dsts, float *dstv, fz_colorspace *srcs, float *srcv);
+void fz_convert_color(fz_context *ctx, fz_colorspace *dsts, float *dstv, fz_colorspace *srcs, const float *srcv);
 
 void fz_new_colorspace_context(fz_context *ctx);
 fz_colorspace_context *fz_keep_colorspace_context(fz_context *ctx);
@@ -100,12 +100,15 @@ typedef struct fz_color_converter_s fz_color_converter;
  */
 struct fz_color_converter_s
 {
-	void (*convert)(fz_color_converter *, float *, float *);
-	fz_context *ctx;
+	void (*convert)(fz_context *, fz_color_converter *, float *, const float *);
 	fz_colorspace *ds;
 	fz_colorspace *ss;
+	void *opaque;
 };
 
-void fz_lookup_color_converter(fz_color_converter *cc, fz_context *ctx, fz_colorspace *ds, fz_colorspace *ss);
+void fz_lookup_color_converter(fz_context *ctx, fz_color_converter *cc, fz_colorspace *ds, fz_colorspace *ss);
+
+void fz_init_cached_color_converter(fz_context *ctx, fz_color_converter *cc, fz_colorspace *ds, fz_colorspace *ss);
+void fz_fin_cached_color_converter(fz_context *ctx, fz_color_converter *cc);
 
 #endif

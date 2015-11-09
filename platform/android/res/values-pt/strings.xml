@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Copiar o texto para a área de transferência</string>
 	<string name="delete">Eliminar</string>
 	<string name="dismiss">Desistir</string>
-	<string name="document_has_changes_save_them_">Há alterações ao documento. Deseja guardá-las?</string>
+	<string name="document_has_changes_save_them">Há alterações ao documento. Deseja guardá-las?</string>
 	<string name="draw_annotation">Adicionar anotação</string>
 	<string name="edit_annotations">Editar anotações</string>
 	<string name="enter_password">Escrever a palavra-passe</string>

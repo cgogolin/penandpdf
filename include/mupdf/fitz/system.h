@@ -1,6 +1,15 @@
 #ifndef MUPDF_FITZ_SYSTEM_H
 #define MUPDF_FITZ_SYSTEM_H
 
+/* The very first decision we need to make is, are we using the 64bit
+ * file pointers code. This must happen before the stdio.h include. */
+#ifdef FZ_LARGEFILE
+/* Set _LARGEFILE64_SOURCE so that we know fopen64 et al will be declared. */
+#ifndef _LARGEFILE64_SOURCE
+#define _LARGEFILE64_SOURCE
+#endif
+#endif
+
 /*
 	Include the standard libc headers.
 */
@@ -39,7 +48,7 @@
 
 #ifdef __APPLE__
 #define HAVE_SIGSETJMP
-#elif defined(__unix)
+#elif defined(__unix) && !defined(__NACL__)
 #define HAVE_SIGSETJMP
 #endif
 
@@ -63,6 +72,14 @@
 
 #ifdef _MSC_VER /* Microsoft Visual C */
 
+/* MSVC up to VS2012 */
+#if _MSC_VER < 1800
+#define va_copy(a, oa) do { a=oa; } while (0)
+#define va_copy_end(a) do {} while(0)
+#else
+#define va_copy_end(a) va_end(a)
+#endif
+
 typedef signed char int8_t;
 typedef short int int16_t;
 typedef int int32_t;
@@ -74,22 +91,25 @@ typedef unsigned int uint32_t;
 typedef unsigned __int64 uint64_t;
 
 #pragma warning( disable: 4244 ) /* conversion from X to Y, possible loss of data */
-#pragma warning( disable: 4996 ) /* The POSIX name for this item is deprecated */
-#pragma warning( disable: 4996 ) /* This function or variable may be unsafe */
+#pragma warning( disable: 4701 ) /* Potentially uninitialized local variable 'name' used */
+#pragma warning( disable: 4996 ) /* 'function': was declared deprecated */
 
 #include <io.h>
 
+struct timeval;
+struct timezone;
 int gettimeofday(struct timeval *tv, struct timezone *tz);
 
 #define snprintf _snprintf
-#define isnan _isnan
+#if _MSC_VER < 1800
+#define isnan(x) _isnan(x)
+#define isinf(x) (!_finite(x))
+#endif
 #define hypotf _hypotf
-
-#define fopen fz_fopen_utf8
 
 FILE *fz_fopen_utf8(const char *name, const char *mode);
 
-#define fopen fz_fopen_utf8
+#define fz_fopen fz_fopen_utf8
 
 char *fz_utf8_from_wchar(const wchar_t *s);
 wchar_t *fz_wchar_from_utf8(const char *s);
@@ -98,6 +118,10 @@ FILE *fz_fopen_utf8(const char *name, const char *mode);
 char **fz_argv_from_wargv(int argc, wchar_t **wargv);
 void fz_free_argv(int argc, char **argv);
 
+#define fseeko64 _fseeki64
+#define ftello64 _ftelli64
+#define atoll _atoi64
+
 #else /* Unix or close enough */
 
 #include <stdint.h>
@@ -105,10 +129,32 @@ void fz_free_argv(int argc, char **argv);
 
 #ifndef O_BINARY
 #define O_BINARY 0
+#endif
+
+#define va_copy_end(a) va_end(a)
 
 #endif
 
+#ifdef FZ_LARGEFILE
+#ifndef fz_fopen
+#define fz_fopen fopen64
 #endif
+typedef int64_t fz_off_t;
+#define fz_fseek fseeko64
+#define fz_ftell ftello64
+#define fz_atoo_imp atoll
+#define FZ_OFF_MAX 0x7fffffffffffffffLL
+#else
+#ifndef fz_fopen
+#define fz_fopen fopen
+#endif
+#define fz_fseek fseek
+#define fz_ftell ftell
+typedef int fz_off_t;
+#define FZ_OFF_MAX INT_MAX
+#define fz_atoo_imp atoi
+#endif
+
 
 #ifdef __ANDROID__
 #include <android/log.h>
@@ -120,12 +166,7 @@ void fz_free_argv(int argc, char **argv);
 #define LOGE(...) do {} while(0)
 #endif
 
-/*
-	Variadic macros, inline and restrict keywords
-
-	inline is standard in C++, so don't touch the definition in this case.
-	For some compilers we can enable it within C too.
-*/
+/* inline is standard in C++. For some compilers we can enable it within C too. */
 
 #ifndef __cplusplus
 #if __STDC_VERSION__ == 199901L /* C99 */
@@ -138,10 +179,7 @@ void fz_free_argv(int argc, char **argv);
 #endif
 #endif
 
-/*
-	restrict is standard in C99, but not in all C++ compilers. Enable
-	where possible, disable if in doubt.
- */
+/* restrict is standard in C99, but not in all C++ compilers. */
 #if __STDC_VERSION__ == 199901L /* C99 */
 #elif _MSC_VER >= 1500 /* MSVC 9 or newer */
 #define restrict __restrict
@@ -162,10 +200,14 @@ void fz_free_argv(int argc, char **argv);
 #endif
 #endif
 
-/*
-	GCC can do type checking of printf strings
-*/
+/* Flag unused parameters, for use with 'static inline' functions in headers. */
+#if __GNUC__ > 2 || __GNUC__ == 2 && __GNUC_MINOR__ >= 7
+#define FZ_UNUSED __attribute__((__unused__))
+#else
+#define FZ_UNUSED
+#endif
 
+/* GCC can do type checking of printf strings */
 #ifndef __printflike
 #if __GNUC__ > 2 || __GNUC__ == 2 && __GNUC_MINOR__ >= 7
 #define __printflike(fmtarg, firstvararg) \
@@ -350,5 +392,7 @@ static inline float my_atan2f(float o, float a)
 #define cosf(x) my_sinf(((float)(M_PI/2.0f)) + (x))
 #define atan2f(x,y) my_atan2f((x),(y))
 #endif
+
+int fz_strcasecmp(const char *a, const char *b);
 
 #endif

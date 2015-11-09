@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">पाठ को क्लिपबोर्ड में कॉपी करें</string>
 	<string name="delete">हटाएँ</string>
 	<string name="dismiss">खारिज करें</string>
-	<string name="document_has_changes_save_them_">दस्तावेज़ में परिवर्तन हैं। उन्हें सहेजें?</string>
+	<string name="document_has_changes_save_them">दस्तावेज़ में परिवर्तन हैं। उन्हें सहेजें?</string>
 	<string name="draw_annotation">एनोटेशन बनाएँ</string>
 	<string name="edit_annotations">एनोटेशनों को संपादित करें</string>
 	<string name="enter_password">पासवर्ड दर्ज करें</string>

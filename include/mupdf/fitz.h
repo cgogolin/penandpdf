@@ -10,6 +10,7 @@
 #include "mupdf/fitz/hash.h"
 #include "mupdf/fitz/math.h"
 #include "mupdf/fitz/string.h"
+#include "mupdf/fitz/ucdn.h"
 #include "mupdf/fitz/tree.h"
 #include "mupdf/fitz/xml.h"
 
@@ -19,6 +20,7 @@
 #include "mupdf/fitz/compressed-buffer.h"
 #include "mupdf/fitz/filter.h"
 #include "mupdf/fitz/output.h"
+#include "mupdf/fitz/unzip.h"
 
 /* Resources */
 #include "mupdf/fitz/store.h"
@@ -32,6 +34,7 @@
 #include "mupdf/fitz/font.h"
 #include "mupdf/fitz/path.h"
 #include "mupdf/fitz/text.h"
+#include "mupdf/fitz/separation.h"
 
 #include "mupdf/fitz/device.h"
 #include "mupdf/fitz/display-list.h"
@@ -45,9 +48,10 @@
 #include "mupdf/fitz/outline.h"
 #include "mupdf/fitz/document.h"
 #include "mupdf/fitz/annotation.h"
-#include "mupdf/fitz/meta.h"
 
 #include "mupdf/fitz/write-document.h"
+
+#include "mupdf/fitz/util.h"
 
 /* Output formats */
 #include "mupdf/fitz/output-pnm.h"

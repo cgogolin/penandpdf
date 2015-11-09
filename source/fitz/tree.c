@@ -24,15 +24,18 @@ static fz_tree *fz_tree_new_node(fz_context *ctx, const char *key, void *value)
 
 void *fz_tree_lookup(fz_context *ctx, fz_tree *node, const char *key)
 {
-	if (node && node != &sentinel)
+	if (node)
 	{
-		int c = strcmp(key, node->key);
-		if (c == 0)
-			return node->value;
-		else if (c < 0)
-			return fz_tree_lookup(ctx, node->left, key);
-		else
-			return fz_tree_lookup(ctx, node->right, key);
+		while (node != &sentinel)
+		{
+			int c = strcmp(key, node->key);
+			if (c == 0)
+				return node->value;
+			else if (c < 0)
+				node = node->left;
+			else
+				node = node->right;
+		}
 	}
 	return NULL;
 }
@@ -86,17 +89,17 @@ fz_tree *fz_tree_insert(fz_context *ctx, fz_tree *node, const char *key, void *v
 	}
 }
 
-void fz_free_tree(fz_context *ctx, fz_tree *node, void (*freefunc)(fz_context *ctx, void *value))
+void fz_drop_tree(fz_context *ctx, fz_tree *node, void (*dropfunc)(fz_context *ctx, void *value))
 {
 	if (node)
 	{
 		if (node->left != &sentinel)
-			fz_free_tree(ctx, node->left, freefunc);
+			fz_drop_tree(ctx, node->left, dropfunc);
 		if (node->right != &sentinel)
-			fz_free_tree(ctx, node->right, freefunc);
+			fz_drop_tree(ctx, node->right, dropfunc);
 		fz_free(ctx, node->key);
-		if (freefunc)
-			freefunc(ctx, node->value);
+		if (dropfunc)
+			dropfunc(ctx, node->value);
 	}
 }
 

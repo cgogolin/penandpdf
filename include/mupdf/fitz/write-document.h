@@ -15,12 +15,14 @@ struct fz_write_options_s
 	int do_incremental; /* Write just the changed objects */
 	int do_ascii; /* If non-zero then attempt (where possible) to make
 				the output ascii. */
+	int do_deflate; /* If non-zero then attempt to compress streams. */
 	int do_expand; /* Bitflags; each non zero bit indicates an aspect
 				of the file that should be 'expanded' on
 				writing. */
 	int do_garbage; /* If non-zero then attempt (where possible) to
 				garbage collect the file before writing. */
 	int do_linear; /* If non-zero then write linearised. */
+	int do_clean; /* If non-zero then clean contents */
 	int continue_on_error; /* If non-zero, errors are (optionally)
 					counted and writing continues. */
 	int *errors; /* Pointer to a place to store a count of errors */
@@ -52,6 +54,6 @@ enum
 
 	May throw exceptions.
 */
-void fz_write_document(fz_document *doc, char *filename, fz_write_options *opts);
+void fz_write_document(fz_context *ctx, fz_document *doc, char *filename, fz_write_options *opts);
 
 #endif

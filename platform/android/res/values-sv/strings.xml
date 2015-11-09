@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Kopiera text till klippbordet</string>
 	<string name="delete">Ta bort</string>
 	<string name="dismiss">Avfärda</string>
-	<string name="document_has_changes_save_them_">Dokumentet har ändrats. Spara ändringar?</string>
+	<string name="document_has_changes_save_them">Dokumentet har ändrats. Spara ändringar?</string>
 	<string name="draw_annotation">Rita annotation</string>
 	<string name="edit_annotations">Ändra annotation</string>
 	<string name="enter_password">Fyll i lösenord</string>

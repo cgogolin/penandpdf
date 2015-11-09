@@ -3,9 +3,9 @@
 /* Pretend we have a filter that just copies data forever */
 
 fz_stream *
-fz_open_copy(fz_stream *chain)
+fz_open_copy(fz_context *ctx, fz_stream *chain)
 {
-	return fz_keep_stream(chain);
+	return fz_keep_stream(ctx, chain);
 }
 
 /* Null filter copies a specified amount of data */
@@ -14,21 +14,34 @@ struct null_filter
 {
 	fz_stream *chain;
 	int remain;
-	int pos;
+	fz_off_t offset;
+	unsigned char buffer[4096];
 };
 
 static int
-read_null(fz_stream *stm, unsigned char *buf, int len)
+next_null(fz_context *ctx, fz_stream *stm, int max)
 {
 	struct null_filter *state = stm->state;
-	int amount = fz_mini(len, state->remain);
 	int n;
 
-	fz_seek(state->chain, state->pos, 0);
-	n = fz_read(state->chain, buf, amount);
+	if (state->remain == 0)
+		return EOF;
+	fz_seek(ctx, state->chain, state->offset, 0);
+	n = fz_available(ctx, state->chain, max);
+	if (n > state->remain)
+		n = state->remain;
+	if (n > sizeof(state->buffer))
+		n = sizeof(state->buffer);
+	memcpy(state->buffer, state->chain->rp, n);
+	stm->rp = state->buffer;
+	stm->wp = stm->rp + n;
+	if (n == 0)
+		return EOF;
+	state->chain->rp += n;
 	state->remain -= n;
-	state->pos += n;
-	return n;
+	state->offset += n;
+	stm->pos += n;
+	return *stm->rp++;
 }
 
 static void
@@ -37,14 +50,13 @@ close_null(fz_context *ctx, void *state_)
 	struct null_filter *state = (struct null_filter *)state_;
 	fz_stream *chain = state->chain;
 	fz_free(ctx, state);
-	fz_close(chain);
+	fz_drop_stream(ctx, chain);
 }
 
 fz_stream *
-fz_open_null(fz_stream *chain, int len, int offset)
+fz_open_null(fz_context *ctx, fz_stream *chain, int len, fz_off_t offset)
 {
 	struct null_filter *state;
-	fz_context *ctx = chain->ctx;
 
 	if (len < 0)
 		len = 0;
@@ -53,15 +65,15 @@ fz_open_null(fz_stream *chain, int len, int offset)
 		state = fz_malloc_struct(ctx, struct null_filter);
 		state->chain = chain;
 		state->remain = len;
-		state->pos = offset;
+		state->offset = offset;
 	}
 	fz_catch(ctx)
 	{
-		fz_close(chain);
+		fz_drop_stream(ctx, chain);
 		fz_rethrow(ctx);
 	}
 
-	return fz_new_stream(ctx, state, read_null, close_null);
+	return fz_new_stream(ctx, state, next_null, close_null);
 }
 
 /* Concat filter concatenates several streams into one */
@@ -72,48 +84,51 @@ struct concat_filter
 	int count;
 	int current;
 	int pad; /* 1 if we should add whitespace padding between streams */
-	int ws; /* 1 if we should send a whitespace padding byte next */
+	unsigned char ws_buf;
 	fz_stream *chain[1];
 };
 
 static int
-read_concat(fz_stream *stm, unsigned char *buf, int len)
+next_concat(fz_context *ctx, fz_stream *stm, int max)
 {
 	struct concat_filter *state = (struct concat_filter *)stm->state;
 	int n;
-	int read = 0;
 
-	if (len <= 0)
-		return 0;
-
-	while (state->current != state->count && len > 0)
+	while (state->current < state->count)
 	{
-		/* If we need to send a whitespace char, do that */
-		if (state->ws)
+		/* Read the next block of underlying data. */
+		if (stm->wp == state->chain[state->current]->wp)
+			state->chain[state->current]->rp = stm->wp;
+		n = fz_available(ctx, state->chain[state->current], max);
+		if (n)
 		{
-			*buf++ = 32;
-			read++;
-			len--;
-			state->ws = 0;
-			continue;
+			stm->rp = state->chain[state->current]->rp;
+			stm->wp = state->chain[state->current]->wp;
+			stm->pos += n;
+			return *stm->rp++;
 		}
-		/* Otherwise, read as much data as will fit in the buffer */
-		n = fz_read(state->chain[state->current], buf, len);
-		read += n;
-		buf += n;
-		len -= n;
-		/* If we didn't read any, then we must have hit the end of
-		 * our buffer space. Move to the next stream, and remember to
-		 * pad. */
-		if (n == 0)
+		else
 		{
-			fz_close(state->chain[state->current]);
+			if (state->chain[state->current]->error)
+			{
+				stm->error = 1;
+				break;
+			}
 			state->current++;
-			state->ws = state->pad;
+			fz_drop_stream(ctx, state->chain[state->current-1]);
+			if (state->pad)
+			{
+				stm->rp = (&state->ws_buf)+1;
+				stm->wp = stm->rp + 1;
+				stm->pos++;
+				return 32;
+			}
 		}
 	}
 
-	return read;
+	stm->rp = stm->wp;
+
+	return EOF;
 }
 
 static void
@@ -124,7 +139,7 @@ close_concat(fz_context *ctx, void *state_)
 
 	for (i = state->current; i < state->count; i++)
 	{
-		fz_close(state->chain[i]);
+		fz_drop_stream(ctx, state->chain[i]);
 	}
 	fz_free(ctx, state);
 }
@@ -139,18 +154,18 @@ fz_open_concat(fz_context *ctx, int len, int pad)
 	state->count = 0;
 	state->current = 0;
 	state->pad = pad;
-	state->ws = 0; /* We never send padding byte at the start */
+	state->ws_buf = 32;
 
-	return fz_new_stream(ctx, state, read_concat, close_concat);
+	return fz_new_stream(ctx, state, next_concat, close_concat);
 }
 
 void
-fz_concat_push(fz_stream *concat, fz_stream *chain)
+fz_concat_push(fz_context *ctx, fz_stream *concat, fz_stream *chain)
 {
 	struct concat_filter *state = (struct concat_filter *)concat->state;
 
 	if (state->count == state->max)
-		fz_throw(concat->ctx, FZ_ERROR_GENERIC, "Concat filter size exceeded");
+		fz_throw(ctx, FZ_ERROR_GENERIC, "Concat filter size exceeded");
 
 	state->chain[state->count++] = chain;
 }
@@ -163,6 +178,7 @@ struct fz_ahxd_s
 {
 	fz_stream *chain;
 	int eod;
+	unsigned char buffer[256];
 };
 
 static inline int iswhite(int a)
@@ -191,23 +207,27 @@ static inline int unhex(int a)
 }
 
 static int
-read_ahxd(fz_stream *stm, unsigned char *buf, int len)
+next_ahxd(fz_context *ctx, fz_stream *stm, int max)
 {
 	fz_ahxd *state = stm->state;
-	unsigned char *p = buf;
-	unsigned char *ep = buf + len;
+	unsigned char *p = state->buffer;
+	unsigned char *ep;
 	int a, b, c, odd;
+
+	if (max > sizeof(state->buffer))
+		max = sizeof(state->buffer);
+	ep = p + max;
 
 	odd = 0;
 
 	while (p < ep)
 	{
 		if (state->eod)
-			return p - buf;
+			break;
 
-		c = fz_read_byte(state->chain);
+		c = fz_read_byte(ctx, state->chain);
 		if (c < 0)
-			return p - buf;
+			break;
 
 		if (ishex(c))
 		{
@@ -228,14 +248,20 @@ read_ahxd(fz_stream *stm, unsigned char *buf, int len)
 			if (odd)
 				*p++ = (a << 4);
 			state->eod = 1;
+			break;
 		}
 		else if (!iswhite(c))
 		{
-			fz_throw(stm->ctx, FZ_ERROR_GENERIC, "bad data in ahxd: '%c'", c);
+			fz_throw(ctx, FZ_ERROR_GENERIC, "bad data in ahxd: '%c'", c);
 		}
 	}
+	stm->rp = state->buffer;
+	stm->wp = p;
+	stm->pos += p - state->buffer;
 
-	return p - buf;
+	if (stm->rp != p)
+		return *stm->rp++;
+	return EOF;
 }
 
 static void
@@ -244,14 +270,13 @@ close_ahxd(fz_context *ctx, void *state_)
 	fz_ahxd *state = (fz_ahxd *)state_;
 	fz_stream *chain = state->chain;
 	fz_free(ctx, state);
-	fz_close(chain);
+	fz_drop_stream(ctx, chain);
 }
 
 fz_stream *
-fz_open_ahxd(fz_stream *chain)
+fz_open_ahxd(fz_context *ctx, fz_stream *chain)
 {
 	fz_ahxd *state;
-	fz_context *ctx = chain->ctx;
 
 	fz_try(ctx)
 	{
@@ -261,11 +286,11 @@ fz_open_ahxd(fz_stream *chain)
 	}
 	fz_catch(ctx)
 	{
-		fz_close(chain);
+		fz_drop_stream(ctx, chain);
 		fz_rethrow(ctx);
 	}
 
-	return fz_new_stream(ctx, state, read_ahxd, close_ahxd);
+	return fz_new_stream(ctx, state, next_ahxd, close_ahxd);
 }
 
 /* ASCII 85 Decode */
@@ -275,32 +300,32 @@ typedef struct fz_a85d_s fz_a85d;
 struct fz_a85d_s
 {
 	fz_stream *chain;
-	unsigned char bp[4];
-	unsigned char *rp, *wp;
+	unsigned char buffer[256];
 	int eod;
 };
 
 static int
-read_a85d(fz_stream *stm, unsigned char *buf, int len)
+next_a85d(fz_context *ctx, fz_stream *stm, int max)
 {
 	fz_a85d *state = stm->state;
-	unsigned char *p = buf;
-	unsigned char *ep = buf + len;
+	unsigned char *p = state->buffer;
+	unsigned char *ep;
 	int count = 0;
 	int word = 0;
 	int c;
 
-	while (state->rp < state->wp && p < ep)
-		*p++ = *state->rp++;
+	if (state->eod)
+		return EOF;
 
+	if (max > sizeof(state->buffer))
+		max = sizeof(state->buffer);
+
+	ep = p + max;
 	while (p < ep)
 	{
-		if (state->eod)
-			return p - buf;
-
-		c = fz_read_byte(state->chain);
+		c = fz_read_byte(ctx, state->chain);
 		if (c < 0)
-			return p - buf;
+			break;
 
 		if (c >= '!' && c <= 'u')
 		{
@@ -308,12 +333,10 @@ read_a85d(fz_stream *stm, unsigned char *buf, int len)
 			{
 				word = word * 85 + (c - '!');
 
-				state->bp[0] = (word >> 24) & 0xff;
-				state->bp[1] = (word >> 16) & 0xff;
-				state->bp[2] = (word >> 8) & 0xff;
-				state->bp[3] = (word) & 0xff;
-				state->rp = state->bp;
-				state->wp = state->bp + 4;
+				*p++ = (word >> 24) & 0xff;
+				*p++ = (word >> 16) & 0xff;
+				*p++ = (word >> 8) & 0xff;
+				*p++ = (word) & 0xff;
 
 				word = 0;
 				count = 0;
@@ -327,19 +350,17 @@ read_a85d(fz_stream *stm, unsigned char *buf, int len)
 
 		else if (c == 'z' && count == 0)
 		{
-			state->bp[0] = 0;
-			state->bp[1] = 0;
-			state->bp[2] = 0;
-			state->bp[3] = 0;
-			state->rp = state->bp;
-			state->wp = state->bp + 4;
+			*p++ = 0;
+			*p++ = 0;
+			*p++ = 0;
+			*p++ = 0;
 		}
 
 		else if (c == '~')
 		{
-			c = fz_read_byte(state->chain);
+			c = fz_read_byte(ctx, state->chain);
 			if (c != '>')
-				fz_warn(stm->ctx, "bad eod marker in a85d");
+				fz_warn(ctx, "bad eod marker in a85d");
 
 			switch (count) {
 			case 0:
@@ -348,43 +369,42 @@ read_a85d(fz_stream *stm, unsigned char *buf, int len)
 				/* Specifically illegal in the spec, but adobe
 				 * and gs both cope. See normal_87.pdf for a
 				 * case where this matters. */
-				fz_warn(stm->ctx, "partial final byte in a85d");
+				fz_warn(ctx, "partial final byte in a85d");
 				break;
 			case 2:
 				word = word * (85 * 85 * 85) + 0xffffff;
-				state->bp[0] = word >> 24;
-				state->rp = state->bp;
-				state->wp = state->bp + 1;
+				*p++ = word >> 24;
 				break;
 			case 3:
 				word = word * (85 * 85) + 0xffff;
-				state->bp[0] = word >> 24;
-				state->bp[1] = word >> 16;
-				state->rp = state->bp;
-				state->wp = state->bp + 2;
+				*p++ = word >> 24;
+				*p++ = word >> 16;
 				break;
 			case 4:
 				word = word * 85 + 0xff;
-				state->bp[0] = word >> 24;
-				state->bp[1] = word >> 16;
-				state->bp[2] = word >> 8;
-				state->rp = state->bp;
-				state->wp = state->bp + 3;
+				*p++ = word >> 24;
+				*p++ = word >> 16;
+				*p++ = word >> 8;
 				break;
 			}
 			state->eod = 1;
+			break;
 		}
 
 		else if (!iswhite(c))
 		{
-			fz_throw(stm->ctx, FZ_ERROR_GENERIC, "bad data in a85d: '%c'", c);
+			fz_throw(ctx, FZ_ERROR_GENERIC, "bad data in a85d: '%c'", c);
 		}
-
-		while (state->rp < state->wp && p < ep)
-			*p++ = *state->rp++;
 	}
 
-	return p - buf;
+	stm->rp = state->buffer;
+	stm->wp = p;
+	stm->pos += p - state->buffer;
+
+	if (p == stm->rp)
+		return EOF;
+
+	return *stm->rp++;
 }
 
 static void
@@ -394,30 +414,27 @@ close_a85d(fz_context *ctx, void *state_)
 	fz_stream *chain = state->chain;
 
 	fz_free(ctx, state);
-	fz_close(chain);
+	fz_drop_stream(ctx, chain);
 }
 
 fz_stream *
-fz_open_a85d(fz_stream *chain)
+fz_open_a85d(fz_context *ctx, fz_stream *chain)
 {
 	fz_a85d *state;
-	fz_context *ctx = chain->ctx;
 
 	fz_try(ctx)
 	{
 		state = fz_malloc_struct(ctx, fz_a85d);
 		state->chain = chain;
-		state->rp = state->bp;
-		state->wp = state->bp;
 		state->eod = 0;
 	}
 	fz_catch(ctx)
 	{
-		fz_close(chain);
+		fz_drop_stream(ctx, chain);
 		fz_rethrow(ctx);
 	}
 
-	return fz_new_stream(ctx, state, read_a85d, close_a85d);
+	return fz_new_stream(ctx, state, next_a85d, close_a85d);
 }
 
 /* Run Length Decode */
@@ -428,33 +445,44 @@ struct fz_rld_s
 {
 	fz_stream *chain;
 	int run, n, c;
+	unsigned char buffer[256];
 };
 
 static int
-read_rld(fz_stream *stm, unsigned char *buf, int len)
+next_rld(fz_context *ctx, fz_stream *stm, int max)
 {
 	fz_rld *state = stm->state;
-	unsigned char *p = buf;
-	unsigned char *ep = buf + len;
+	unsigned char *p = state->buffer;
+	unsigned char *ep;
+
+	if (state->run == 128)
+		return EOF;
+
+	if (max > sizeof(state->buffer))
+		max = sizeof(state->buffer);
+	ep = p + max;
 
 	while (p < ep)
 	{
 		if (state->run == 128)
-			return p - buf;
+			break;
 
 		if (state->n == 0)
 		{
-			state->run = fz_read_byte(state->chain);
+			state->run = fz_read_byte(ctx, state->chain);
 			if (state->run < 0)
+			{
 				state->run = 128;
+				break;
+			}
 			if (state->run < 128)
 				state->n = state->run + 1;
 			if (state->run > 128)
 			{
 				state->n = 257 - state->run;
-				state->c = fz_read_byte(state->chain);
+				state->c = fz_read_byte(ctx, state->chain);
 				if (state->c < 0)
-					fz_throw(stm->ctx, FZ_ERROR_GENERIC, "premature end of data in run length decode");
+					fz_throw(ctx, FZ_ERROR_GENERIC, "premature end of data in run length decode");
 			}
 		}
 
@@ -462,9 +490,9 @@ read_rld(fz_stream *stm, unsigned char *buf, int len)
 		{
 			while (p < ep && state->n)
 			{
-				int c = fz_read_byte(state->chain);
+				int c = fz_read_byte(ctx, state->chain);
 				if (c < 0)
-					fz_throw(stm->ctx, FZ_ERROR_GENERIC, "premature end of data in run length decode");
+					fz_throw(ctx, FZ_ERROR_GENERIC, "premature end of data in run length decode");
 				*p++ = c;
 				state->n--;
 			}
@@ -480,7 +508,14 @@ read_rld(fz_stream *stm, unsigned char *buf, int len)
 		}
 	}
 
-	return p - buf;
+	stm->rp = state->buffer;
+	stm->wp = p;
+	stm->pos += p - state->buffer;
+
+	if (p == stm->rp)
+		return EOF;
+
+	return *stm->rp++;
 }
 
 static void
@@ -490,14 +525,13 @@ close_rld(fz_context *ctx, void *state_)
 	fz_stream *chain = state->chain;
 
 	fz_free(ctx, state);
-	fz_close(chain);
+	fz_drop_stream(ctx, chain);
 }
 
 fz_stream *
-fz_open_rld(fz_stream *chain)
+fz_open_rld(fz_context *ctx, fz_stream *chain)
 {
 	fz_rld *state;
-	fz_context *ctx = chain->ctx;
 
 	fz_try(ctx)
 	{
@@ -509,11 +543,11 @@ fz_open_rld(fz_stream *chain)
 	}
 	fz_catch(ctx)
 	{
-		fz_close(chain);
+		fz_drop_stream(ctx, chain);
 		fz_rethrow(ctx);
 	}
 
-	return fz_new_stream(ctx, state, read_rld, close_rld);
+	return fz_new_stream(ctx, state, next_rld, close_rld);
 }
 
 /* RC4 Filter */
@@ -524,15 +558,27 @@ struct fz_arc4c_s
 {
 	fz_stream *chain;
 	fz_arc4 arc4;
+	unsigned char buffer[256];
 };
 
 static int
-read_arc4(fz_stream *stm, unsigned char *buf, int len)
+next_arc4(fz_context *ctx, fz_stream *stm, int max)
 {
 	fz_arc4c *state = stm->state;
-	int n = fz_read(state->chain, buf, len);
-	fz_arc4_encrypt(&state->arc4, buf, buf, n);
-	return n;
+	int n = fz_available(ctx, state->chain, max);
+
+	if (n == 0)
+		return EOF;
+	if (n > sizeof(state->buffer))
+		n = sizeof(state->buffer);
+
+	stm->rp = state->buffer;
+	stm->wp = state->buffer + n;
+	fz_arc4_encrypt(&state->arc4, stm->rp, state->chain->rp, n);
+	state->chain->rp += n;
+	stm->pos += n;
+
+	return *stm->rp++;
 }
 
 static void
@@ -542,14 +588,13 @@ close_arc4(fz_context *ctx, void *state_)
 	fz_stream *chain = state->chain;
 
 	fz_free(ctx, state);
-	fz_close(chain);
+	fz_drop_stream(ctx, chain);
 }
 
 fz_stream *
-fz_open_arc4(fz_stream *chain, unsigned char *key, unsigned keylen)
+fz_open_arc4(fz_context *ctx, fz_stream *chain, unsigned char *key, unsigned keylen)
 {
 	fz_arc4c *state;
-	fz_context *ctx = chain->ctx;
 
 	fz_try(ctx)
 	{
@@ -559,11 +604,11 @@ fz_open_arc4(fz_stream *chain, unsigned char *key, unsigned keylen)
 	}
 	fz_catch(ctx)
 	{
-		fz_close(chain);
+		fz_drop_stream(ctx, chain);
 		fz_rethrow(ctx);
 	}
 
-	return fz_new_stream(ctx, state, read_arc4, close_arc4);
+	return fz_new_stream(ctx, state, next_arc4, close_arc4);
 }
 
 /* AES Filter */
@@ -578,20 +623,25 @@ struct fz_aesd_s
 	int ivcount;
 	unsigned char bp[16];
 	unsigned char *rp, *wp;
+	unsigned char buffer[256];
 };
 
 static int
-read_aesd(fz_stream *stm, unsigned char *buf, int len)
+next_aesd(fz_context *ctx, fz_stream *stm, int max)
 {
 	fz_aesd *state = stm->state;
-	unsigned char *p = buf;
-	unsigned char *ep = buf + len;
+	unsigned char *p = state->buffer;
+	unsigned char *ep;
+
+	if (max > sizeof(state->buffer))
+		max = sizeof(state->buffer);
+	ep = p + max;
 
 	while (state->ivcount < 16)
 	{
-		int c = fz_read_byte(state->chain);
+		int c = fz_read_byte(ctx, state->chain);
 		if (c < 0)
-			fz_throw(stm->ctx, FZ_ERROR_GENERIC, "premature end in aes filter");
+			fz_throw(ctx, FZ_ERROR_GENERIC, "premature end in aes filter");
 		state->iv[state->ivcount++] = c;
 	}
 
@@ -600,22 +650,22 @@ read_aesd(fz_stream *stm, unsigned char *buf, int len)
 
 	while (p < ep)
 	{
-		int n = fz_read(state->chain, state->bp, 16);
+		int n = fz_read(ctx, state->chain, state->bp, 16);
 		if (n == 0)
-			return p - buf;
+			break;
 		else if (n < 16)
-			fz_throw(stm->ctx, FZ_ERROR_GENERIC, "partial block in aes filter");
+			fz_throw(ctx, FZ_ERROR_GENERIC, "partial block in aes filter");
 
 		aes_crypt_cbc(&state->aes, AES_DECRYPT, 16, state->iv, state->bp, state->bp);
 		state->rp = state->bp;
 		state->wp = state->bp + 16;
 
 		/* strip padding at end of file */
-		if (fz_is_eof(state->chain))
+		if (fz_is_eof(ctx, state->chain))
 		{
 			int pad = state->bp[15];
 			if (pad < 1 || pad > 16)
-				fz_throw(stm->ctx, FZ_ERROR_GENERIC, "aes padding out of range: %d", pad);
+				fz_throw(ctx, FZ_ERROR_GENERIC, "aes padding out of range: %d", pad);
 			state->wp -= pad;
 		}
 
@@ -623,7 +673,14 @@ read_aesd(fz_stream *stm, unsigned char *buf, int len)
 			*p++ = *state->rp++;
 	}
 
-	return p - buf;
+	stm->rp = state->buffer;
+	stm->wp = p;
+	stm->pos += p - state->buffer;
+
+	if (p == stm->rp)
+		return EOF;
+
+	return *stm->rp++;
 }
 
 static void
@@ -633,14 +690,13 @@ close_aesd(fz_context *ctx, void *state_)
 	fz_stream *chain = state->chain;
 
 	fz_free(ctx, state);
-	fz_close(chain);
+	fz_drop_stream(ctx, chain);
 }
 
 fz_stream *
-fz_open_aesd(fz_stream *chain, unsigned char *key, unsigned keylen)
+fz_open_aesd(fz_context *ctx, fz_stream *chain, unsigned char *key, unsigned keylen)
 {
 	fz_aesd *state = NULL;
-	fz_context *ctx = chain->ctx;
 
 	fz_var(state);
 
@@ -657,9 +713,9 @@ fz_open_aesd(fz_stream *chain, unsigned char *key, unsigned keylen)
 	fz_catch(ctx)
 	{
 		fz_free(ctx, state);
-		fz_close(chain);
+		fz_drop_stream(ctx, chain);
 		fz_rethrow(ctx);
 	}
 
-	return fz_new_stream(ctx, state, read_aesd, close_aesd);
+	return fz_new_stream(ctx, state, next_aesd, close_aesd);
 }

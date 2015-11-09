@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2013 Artifex Software, Inc.
+/* Copyright (C) 2009-2015 Artifex Software, Inc.
    All Rights Reserved.
 
    This software is provided AS-IS with no warranty, either express or
@@ -44,6 +44,10 @@ int atexit(void (*)(void));
 #include <stdlib.h>
 #endif
 
+#ifdef MEMENTO
+
+#ifndef MEMENTO_CPP_EXTRAS_ONLY
+
 #ifdef MEMENTO_ANDROID
 #include <android/log.h>
 
@@ -61,7 +65,7 @@ android_fprintf(FILE *file, const char *fmt, ...)
 #define MEMENTO_STACKTRACE_METHOD 0
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 
 static int
@@ -116,8 +120,6 @@ char *getenv(const char *);
 #ifndef MEMENTO_MAXPATTERN
 #define MEMENTO_MAXPATTERN 0
 #endif
-
-#ifdef MEMENTO
 
 #ifdef MEMENTO_GS_HACKS
 #include "valgrind.h"
@@ -577,6 +579,7 @@ int Memento_listBlocksNested(void)
     count = 0;
     size = 0;
     for (b = globals.used.head; b; b = b->next) {
+        VALGRIND_MAKE_MEM_DEFINED(b, sizeof(*b));
         size += b->rawsize;
         count++;
     }
@@ -631,6 +634,10 @@ int Memento_listBlocksNested(void)
                 if (child->flags & Memento_Flag_HasParent)
                     continue;
 
+                /* Not interested in pointers to ourself! */
+                if (child == b)
+                        continue;
+
                 /* We're also assuming acyclicness here. If this is one of
                  * our parents, ignore it. */
                 parent = b->parent;
@@ -656,6 +663,14 @@ int Memento_listBlocksNested(void)
     fprintf(stderr, " Total size of blocks = %d\n", size);
 
     MEMENTO_UNDERLYING_FREE(blocks);
+
+    /* Now put the blocks back for valgrind */
+    for (b = globals.used.head; b;) {
+      Memento_BlkHeader *next = b->next;
+      VALGRIND_MAKE_MEM_NOACCESS(b, sizeof(*b));
+      b = next;
+    }
+
     return 0;
 }
 
@@ -957,7 +972,9 @@ void *Memento_label(void *ptr, const char *label)
     if (ptr == NULL)
         return NULL;
     block = MEMBLK_FROMBLK(ptr);
+    VALGRIND_MAKE_MEM_DEFINED(&block->label, sizeof(block->label));
     block->label = label;
+    VALGRIND_MAKE_MEM_UNDEFINED(&block->label, sizeof(block->label));
     return ptr;
 }
 
@@ -1055,6 +1072,7 @@ static int checkBlock(Memento_BlkHeader *memblk, const char *action)
         /* Failure! */
         fprintf(stderr, "Attempt to %s block ", action);
         showBlock(memblk, 32);
+        fprintf(stderr, "\n");
         Memento_breakpoint();
         return 1;
     } else if (data.preCorrupt || data.postCorrupt) {
@@ -1093,10 +1111,10 @@ void Memento_free(void *blk)
     if (checkBlock(memblk, "free"))
         return;
 
+    VALGRIND_MAKE_MEM_DEFINED(memblk, sizeof(*memblk));
     if (memblk->flags & Memento_Flag_BreakOnFree)
         Memento_breakpoint();
 
-    VALGRIND_MAKE_MEM_DEFINED(memblk, sizeof(*memblk));
     globals.alloc -= memblk->rawsize;
     globals.numFrees++;
 
@@ -1136,14 +1154,17 @@ void *Memento_realloc(void *blk, size_t newsize)
     if (checkBlock(memblk, "realloc"))
         return NULL;
 
+    VALGRIND_MAKE_MEM_DEFINED(memblk, sizeof(*memblk));
     if (memblk->flags & Memento_Flag_BreakOnRealloc)
         Memento_breakpoint();
 
+    VALGRIND_MAKE_MEM_DEFINED(memblk, sizeof(*memblk));
     if (globals.maxMemory != 0 && globals.alloc - memblk->rawsize + newsize > globals.maxMemory)
         return NULL;
 
     newsizemem = MEMBLK_SIZE(newsize);
     Memento_removeBlock(&globals.used, memblk);
+    VALGRIND_MAKE_MEM_DEFINED(memblk, sizeof(*memblk));
     flags = memblk->flags;
     newmemblk  = MEMENTO_UNDERLYING_REALLOC(memblk, newsizemem);
     if (newmemblk == NULL)
@@ -1160,6 +1181,7 @@ void *Memento_realloc(void *blk, size_t newsize)
     newmemblk->flags = flags;
     if (newmemblk->rawsize < newsize) {
         char *newbytes = ((char *)MEMBLK_TOBLK(newmemblk))+newmemblk->rawsize;
+        VALGRIND_MAKE_MEM_DEFINED(newbytes, newsize - newmemblk->rawsize);
 #ifndef MEMENTO_LEAKONLY
         memset(newbytes, MEMENTO_ALLOCFILL, newsize - newmemblk->rawsize);
 #endif
@@ -1167,8 +1189,12 @@ void *Memento_realloc(void *blk, size_t newsize)
     }
     newmemblk->rawsize = newsize;
 #ifndef MEMENTO_LEAKONLY
+    VALGRIND_MAKE_MEM_DEFINED(newmemblk->preblk, Memento_PreSize);
     memset(newmemblk->preblk, MEMENTO_PREFILL, Memento_PreSize);
+    VALGRIND_MAKE_MEM_UNDEFINED(newmemblk->preblk, Memento_PreSize);
+    VALGRIND_MAKE_MEM_DEFINED(MEMBLK_POSTPTR(newmemblk), Memento_PostSize);
     memset(MEMBLK_POSTPTR(newmemblk), MEMENTO_POSTFILL, Memento_PostSize);
+    VALGRIND_MAKE_MEM_UNDEFINED(MEMBLK_POSTPTR(newmemblk), Memento_PostSize);
 #endif
     Memento_addBlockHead(&globals.used, newmemblk, 2);
     return MEMBLK_TOBLK(newmemblk);
@@ -1449,6 +1475,39 @@ size_t Memento_setMax(size_t max)
     globals.maxMemory = max;
     return max;
 }
+#endif /* MEMENTO_CPP_EXTRAS_ONLY */
+
+#ifdef __cplusplus
+/* Dumb overrides for the new and delete operators */
+
+void *operator new(size_t size)
+{
+	if (size == 0)
+	size = 1;
+	return malloc(size);
+}
+
+void  operator delete(void *pointer)
+{
+	return free(pointer);
+}
+
+/* Some C++ systems (apparently) don't provide new[] or delete[]
+ * operators. Provide a way to cope with this */
+#ifndef MEMENTO_CPP_NO_ARRAY_CONSTRUCTORS
+void *operator new[](size_t size)
+{
+	if (size == 0)
+	size = 1;
+	return malloc(size);
+}
+
+void  operator delete[](void *pointer)
+{
+	return free(pointer);
+}
+#endif /* MEMENTO_CPP_NO_ARRAY_CONSTRUCTORS */
+#endif /* __cplusplus */
 
 #else
 

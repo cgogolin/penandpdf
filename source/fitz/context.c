@@ -9,16 +9,10 @@ struct fz_id_context_s
 static void
 fz_drop_id_context(fz_context *ctx)
 {
-	int refs;
-	fz_id_context *id = ctx->id;
-
-	if (id == NULL)
+	if (!ctx)
 		return;
-	fz_lock(ctx, FZ_LOCK_ALLOC);
-	refs = --id->refs;
-	fz_unlock(ctx, FZ_LOCK_ALLOC);
-	if (refs == 0)
-		fz_free(ctx, id);
+	if (fz_drop_imp(ctx, ctx->id, &ctx->id->refs))
+		fz_free(ctx, ctx->id);
 }
 
 static void
@@ -32,26 +26,68 @@ fz_new_id_context(fz_context *ctx)
 static fz_id_context *
 fz_keep_id_context(fz_context *ctx)
 {
-	fz_id_context *id = ctx->id;
-
-	if (id == NULL)
+	if (!ctx)
 		return NULL;
-	fz_lock(ctx, FZ_LOCK_ALLOC);
-	++id->refs;
-	fz_unlock(ctx, FZ_LOCK_ALLOC);
-	return id;
+	return fz_keep_imp(ctx, ctx->id, &ctx->id->refs);
+}
+
+struct fz_style_context_s
+{
+	int refs;
+	char *user_css;
+};
+
+static void fz_new_style_context(fz_context *ctx)
+{
+	if (ctx)
+	{
+		ctx->style = fz_malloc_struct(ctx, fz_style_context);
+		ctx->style->refs = 1;
+		ctx->style->user_css = NULL;
+	}
+}
+
+static fz_style_context *fz_keep_style_context(fz_context *ctx)
+{
+	if (!ctx)
+		return NULL;
+	return fz_keep_imp(ctx, ctx->style, &ctx->style->refs);
+}
+
+static void fz_drop_style_context(fz_context *ctx)
+{
+	if (!ctx)
+		return;
+	if (fz_drop_imp(ctx, ctx->style, &ctx->style->refs))
+	{
+		fz_free(ctx, ctx->style->user_css);
+		fz_free(ctx, ctx->style);
+	}
+}
+
+void fz_set_user_css(fz_context *ctx, const char *user_css)
+{
+	fz_free(ctx, ctx->style->user_css);
+	ctx->style->user_css = fz_strdup(ctx, user_css);
+}
+
+const char *fz_user_css(fz_context *ctx)
+{
+	return ctx->style->user_css;
 }
 
 void
-fz_free_context(fz_context *ctx)
+fz_drop_context(fz_context *ctx)
 {
 	if (!ctx)
 		return;
 
 	/* Other finalisation calls go here (in reverse order) */
+	fz_drop_document_handler_context(ctx);
 	fz_drop_glyph_cache_context(ctx);
 	fz_drop_store_context(ctx);
-	fz_free_aa_context(ctx);
+	fz_drop_aa_context(ctx);
+	fz_drop_style_context(ctx);
 	fz_drop_colorspace_context(ctx);
 	fz_drop_font_context(ctx);
 	fz_drop_id_context(ctx);
@@ -89,14 +125,14 @@ new_context_phase1(fz_alloc_context *alloc, fz_locks_context *locks)
 
 	ctx->glyph_cache = NULL;
 
-	ctx->error = fz_malloc_no_throw(ctx, sizeof(fz_error_context));
+	ctx->error = Memento_label(fz_malloc_no_throw(ctx, sizeof(fz_error_context)), "fz_error_context");
 	if (!ctx->error)
 		goto cleanup;
 	ctx->error->top = -1;
 	ctx->error->errcode = FZ_ERROR_NONE;
 	ctx->error->message[0] = 0;
 
-	ctx->warn = fz_malloc_no_throw(ctx, sizeof(fz_warn_context));
+	ctx->warn = Memento_label(fz_malloc_no_throw(ctx, sizeof(fz_warn_context)), "fz_warn_context");
 	if (!ctx->warn)
 		goto cleanup;
 	ctx->warn->message[0] = 0;
@@ -106,6 +142,7 @@ new_context_phase1(fz_alloc_context *alloc, fz_locks_context *locks)
 	fz_try(ctx)
 	{
 		fz_new_aa_context(ctx);
+		fz_new_style_context(ctx);
 	}
 	fz_catch(ctx)
 	{
@@ -116,7 +153,7 @@ new_context_phase1(fz_alloc_context *alloc, fz_locks_context *locks)
 
 cleanup:
 	fprintf(stderr, "cannot create context (phase 1)\n");
-	fz_free_context(ctx);
+	fz_drop_context(ctx);
 	return NULL;
 }
 
@@ -127,7 +164,7 @@ fz_new_context_imp(fz_alloc_context *alloc, fz_locks_context *locks, unsigned in
 
 	if (strcmp(version, FZ_VERSION))
 	{
-		fprintf(stderr, "cannot create context: incompatible header (%s) and library (%s) versions", version, FZ_VERSION);
+		fprintf(stderr, "cannot create context: incompatible header (%s) and library (%s) versions\n", version, FZ_VERSION);
 		return NULL;
 	}
 
@@ -149,11 +186,12 @@ fz_new_context_imp(fz_alloc_context *alloc, fz_locks_context *locks, unsigned in
 		fz_new_colorspace_context(ctx);
 		fz_new_font_context(ctx);
 		fz_new_id_context(ctx);
+		fz_new_document_handler_context(ctx);
 	}
 	fz_catch(ctx)
 	{
 		fprintf(stderr, "cannot create context (phase 2)\n");
-		fz_free_context(ctx);
+		fz_drop_context(ctx);
 		return NULL;
 	}
 	return ctx;
@@ -193,8 +231,12 @@ fz_clone_context_internal(fz_context *ctx)
 	new_ctx->colorspace = fz_keep_colorspace_context(new_ctx);
 	new_ctx->font = ctx->font;
 	new_ctx->font = fz_keep_font_context(new_ctx);
+	new_ctx->style = ctx->style;
+	new_ctx->style = fz_keep_style_context(new_ctx);
 	new_ctx->id = ctx->id;
 	new_ctx->id = fz_keep_id_context(new_ctx);
+	new_ctx->handler = ctx->handler;
+	new_ctx->handler = fz_keep_document_handler_context(new_ctx);
 
 	return new_ctx;
 }
@@ -204,12 +246,9 @@ fz_gen_id(fz_context *ctx)
 {
 	int id;
 	fz_lock(ctx, FZ_LOCK_ALLOC);
-	/* We'll never wrap around in normal use, but if we *do*, then avoid
-	 * 0. */
+	/* We'll never wrap around in normal use, but if we do, then avoid 0. */
 	do
-	{
 		id = ++ctx->id->id;
-	}
 	while (id == 0);
 	fz_unlock(ctx, FZ_LOCK_ALLOC);
 	return id;

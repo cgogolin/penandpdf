@@ -33,6 +33,8 @@ float fz_atof(const char *s);
 /* atoi that copes with NULL */
 int fz_atoi(const char *s);
 
+fz_off_t fz_atoo(const char *s);
+
 /*
 	Some standard math functions, done as static inlines for speed.
 	People with compilers that do not adequately implement inlines may
@@ -64,6 +66,11 @@ static inline float fz_max(float a, float b)
 }
 
 static inline int fz_maxi(int a, int b)
+{
+	return (a > b ? a : b);
+}
+
+static inline fz_off_t fz_maxo(fz_off_t a, fz_off_t b)
 {
 	return (a > b ? a : b);
 }
@@ -129,7 +136,7 @@ struct fz_rect_s
 */
 static inline fz_point *fz_rect_min(fz_rect *f)
 {
-	return (fz_point *)(void *)&f->x0;
+	return (fz_point *)&f->x0;
 }
 
 /*
@@ -137,7 +144,7 @@ static inline fz_point *fz_rect_min(fz_rect *f)
 */
 static inline fz_point *fz_rect_max(fz_rect *f)
 {
-	return (fz_point *)(void *)&f->x1;
+	return (fz_point *)&f->x1;
 }
 
 /*
@@ -561,6 +568,7 @@ fz_irect *fz_translate_irect(fz_irect *a, int xoff, int yoff);
 	Does not throw exceptions.
 */
 fz_point *fz_transform_point(fz_point *restrict point, const fz_matrix *restrict transform);
+fz_point *fz_transform_point_xy(fz_point *restrict point, const fz_matrix *restrict transform, float x, float y);
 
 /*
 	fz_transform_vector: Apply a transformation to a vector.
@@ -599,7 +607,7 @@ fz_rect *fz_transform_rect(fz_rect *restrict rect, const fz_matrix *restrict tra
 */
 void fz_normalize_vector(fz_point *p);
 
-void fz_gridfit_matrix(fz_matrix *m);
+void fz_gridfit_matrix(int as_tiled, fz_matrix *m);
 
 float fz_matrix_max_expansion(const fz_matrix *m);
 

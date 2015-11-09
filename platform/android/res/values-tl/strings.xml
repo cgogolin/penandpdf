@@ -14,7 +14,7 @@
 	<string name="copy_text_to_the_clipboard">Kopyahin ang teksto sa clipboard</string>
 	<string name="delete">Alisin</string>
 	<string name="dismiss">Umalis</string>
-	<string name="document_has_changes_save_them_">May mga pagbabago sa dokumento. I-save ang mga ito?</string>
+	<string name="document_has_changes_save_them">May mga pagbabago sa dokumento. I-save ang mga ito?</string>
 	<string name="draw_annotation">Gumuhit ng anotasyon</string>
 	<string name="edit_annotations">I-edit ang mga anotasyon</string>
 	<string name="enter_password">Ilagay ang password</string>
