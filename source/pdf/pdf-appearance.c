@@ -1774,25 +1774,25 @@ void pdf_set_markup_appearance(fz_context *ctx, pdf_document *doc, pdf_annot *an
 /* the value of apha doesn't make it accross properly. I have NO idea what is causing this. */
 
 //void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, float* color, float *alphap, float line_thickness, float line_height)
-void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, float color[3], float *alphap, float line_thickness, float line_height)
+void pdf_set_markup_appearance_highlight(fz_context *ctx, pdf_document *doc, pdf_annot *annot, float color[3], float *alphap, float line_thickness, float line_height)
 {
     float alpha = *alphap;
         
         //Add color
-    pdf_obj *color_obj = pdf_new_array(doc, 3);
+    pdf_obj *color_obj = pdf_new_array(ctx, doc, 3);
     int j;
-    pdf_dict_puts_drop(annot->obj, "C", color_obj);
+    pdf_dict_puts_drop(ctx, annot->obj, "C", color_obj);
     for (j = 0; j < 3; j++)
-        pdf_array_push_drop(color_obj, pdf_new_real(doc, color[j]));
+        pdf_array_push_drop(ctx, color_obj, pdf_new_real(ctx, doc, color[j]));
 
-    fz_context *ctx = doc->ctx;
+//    fz_context *ctx = doc->ctx;
 	const fz_matrix *page_ctm = &annot->page->ctm;
 	fz_path *path = NULL;
 	fz_stroke_state *stroke = NULL;
 	fz_device *dev = NULL;
 	fz_display_list *strike_list = NULL;
 	int i, n;
-        fz_point *qp = quadpoints(doc, annot->obj, &n);
+        fz_point *qp = quadpoints(ctx, doc, annot->obj, &n);
 
 	if (!qp || n <= 0)
 		return;
@@ -1831,7 +1831,7 @@ void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, fl
 				if (stroke)
 				{
 					// assert(path)
-                                    fz_stroke_path(dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
+                                    fz_stroke_path(ctx, dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
                                     fz_drop_stroke_state(ctx, stroke);
                                     stroke = NULL;
                                     fz_free_path(ctx, path);
@@ -1849,11 +1849,11 @@ void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, fl
 
 		if (stroke)
 		{
-                    fz_stroke_path(dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
+                    fz_stroke_path(ctx, dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
 		}
 
 		fz_transform_rect(&rect, page_ctm);
-		pdf_set_annot_appearance(doc, annot, &rect, strike_list);
+		pdf_set_annot_appearance(ctx, doc, annot, &rect, strike_list);
 	}
 	fz_always(ctx)
 	{

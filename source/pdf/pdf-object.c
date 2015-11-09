@@ -2045,7 +2045,7 @@ static void fmt_obj(fz_context *ctx, struct fmt *fmt, pdf_obj *obj)
                     //Disabled this to increase compatibility with
                     //other pdf readers
 		/* if (added < len) */
-                fmt_str(fmt, obj); 
+                fmt_str(ctx, fmt, obj); 
 		/* else */
 		/* 	fmt_hex(fmt, obj); */
 	}

@@ -2035,6 +2035,8 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
 	jmethodID ctor;
 	jobjectArray arr;
 	jobject jannot;
+        jclass pt_cls;
+        jclass ptarr_cls;
 	fz_annot *annot;
 	fz_matrix ctm;
 	float zoom;
@@ -2050,6 +2052,9 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
 	ctor = (*env)->GetMethodID(env, annotClass, "<init>", "(FFFFI)V");
 	if (ctor == NULL) return NULL;
 
+        pt_cls = (*env)->FindClass(env, "android/graphics/PointF");
+        if (pt_cls == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "FindClass");
+        
 	JNI_FN(MuPDFCore_gotoPageInternal)(env, thiz, pageNumber);
 	pc = &glo->pages[glo->current];
 	if (pc->number != pageNumber || pc->page == NULL)
@@ -2087,7 +2092,7 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
 //            pdf_obj * obj = pdf_annot_text((pdf_annot *)annot);
 	        unsigned short *text;
 	        unsigned int length;
-	        pdf_annot_text((pdf_annot *)annot, &text, &length); //does the memory allocation!
+	        pdf_annot_text(ctx, (pdf_annot *)annot, &text, &length); //does the memory allocation!
 
 	        /* int i; */
 	        /* for (i=0; i< length; i++) */
@@ -2202,14 +2207,14 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
 	    jobjectArray arcs = NULL;
 	    if(type == FZ_ANNOT_INK)
 	    {
-	        pdf_obj *inklist = pdf_annot_inklist((pdf_annot *)annot);
-	        int nArcs = pdf_array_len(inklist);
+	        pdf_obj *inklist = pdf_annot_inklist(ctx, (pdf_annot *)annot);
+	        int nArcs = pdf_array_len(ctx,inklist);
 	        int i;
 	        float pageHeight = (&glo->pages[glo->current])->height;
 	        for(i = 0; i < nArcs; i++)
 	        {
-	            pdf_obj *inklisti = pdf_array_get(inklist, i);
-	            int nArc = pdf_array_len(inklisti);
+	            pdf_obj *inklisti = pdf_array_get(ctx, inklist, i);
+	            int nArc = pdf_array_len(ctx, inklisti);
 	            jobjectArray arci = (*env)->NewObjectArray(env, nArc/2, pt_cls, NULL);
 	            
 	            if(i==0) { //Get the class of the array of pointF and create the array of arrays 
@@ -2228,11 +2233,11 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
 	            for(j = 0; j < nArc; j+=2)
 	            {
 	                fz_point point; 
-	                point.x = pdf_to_real(pdf_array_get(inklisti, j));
-	                point.y = pdf_to_real(pdf_array_get(inklisti, j+1));
+	                point.x = pdf_to_real(ctx, pdf_array_get(ctx, inklisti, j));
+	                point.y = pdf_to_real(ctx, pdf_array_get(ctx, inklisti, j+1));
 	                fz_transform_point(&point, &ctm);
 	                point.y = pageHeight - point.y;//Flip y here because pdf coordinate system is upside down
-	                jobject pfobj = (*env)->NewObject(env, pt_cls, PointF, point.x, point.y);
+	                jobject pfobj = (*env)->NewObject(env, pt_cls, pt_cls, point.x, point.y);
 	                (*env)->SetObjectArrayElement(env, arci, j/2, pfobj);
 	                (*env)->DeleteLocalRef(env, pfobj);
 	        }
@@ -2241,15 +2246,16 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
 	        }
 	    }
 
-	        //Get the rect
-	    fz_rect rect;
-	    fz_bound_annot(glo->doc, annot, &rect);
-	    fz_transform_rect(&rect, &ctm);
+/* 	        //Get the rect */
+/* 	    fz_rect rect; */
+/* //	    fz_bound_annot(ctx, glo->doc, annot, &rect); */
+/*             fz_bound_annot(ctx, pc->page, annot, &rect); */
+/* 	    fz_transform_rect(&rect, &ctm); */
 
 	        //Creat the annotation
-	    if(Annotation != NULL)
+	    if(annotClass != NULL)
 	    {
-	        jannot = (*env)->NewObject(env, annotClass, Annotation, (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1, type, arcs, jtext); 
+	        jannot = (*env)->NewObject(env, annotClass, ctor, (float)rect.x0, (float)rect.y0, (float)rect.x1, (float)rect.y1, type, arcs, jtext); 
 	    }
 	        
 	    if (jannot == NULL) return NULL;
@@ -2905,7 +2911,7 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
                     
                     if (!err)
                     {
-                        fz_write_document(glo->doc, tmp, &opts);
+                        fz_write_document(ctx, glo->doc, tmp, &opts);
                         written = 1;
                     }
                 }
@@ -2929,7 +2935,7 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
                     if (fout)
                     {
                         fclose(fout);
-                        fz_write_document(glo->doc, tmp, &opts);
+                        fz_write_document(ctx, glo->doc, tmp, &opts);
                         written = 1;
                     }
                 }
@@ -3101,10 +3107,11 @@ JNI_FN(MuPDFCore_insertBlankPageBeforeInternal)(JNIEnv * env, jobject thiz, int 
     globals *glo = get_globals(env, thiz);
     if (glo == NULL) return 0;
     fz_document *doc = glo->doc;
+    fz_context *ctx = glo->ctx;
     page_cache *pc = &glo->pages[glo->current];
-    pdf_page * page = pdf_create_page((pdf_document *)doc, pc->media_box, 72, 0);
-    pdf_insert_page((pdf_document *)doc, page, position);
-    pdf_finish_edit((pdf_document *)doc);
+    pdf_page * page = pdf_create_page(ctx, (pdf_document *)doc, pc->media_box, 72, 0);
+    pdf_insert_page(ctx, (pdf_document *)doc, page, position);
+    pdf_finish_edit(ctx, (pdf_document *)doc);
     pdf_free_page((pdf_document *)doc, page);
     return 0;
 }

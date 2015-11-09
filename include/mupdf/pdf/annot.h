@@ -44,7 +44,7 @@ fz_annot_type pdf_annot_type(fz_context *ctx, pdf_annot *annot);
 /*
 	pdf_annot_text: Put the text of an annotation in a buffer pointed to by text and write the length to length
 */
-void pdf_annot_text(pdf_annot *annot, unsigned short **text, unsigned int *length);
+void pdf_annot_text(fz_context *ctx, pdf_annot *annot, unsigned short **text, unsigned int *length);
 
 
 /*
@@ -137,11 +137,11 @@ void pdf_set_free_text_details(fz_context *ctx, pdf_document *doc, pdf_annot *an
 /*
 	pdf_set_text_details: set the position and text for a text annotation.
 */
-void pdf_set_text_details(pdf_document *doc, pdf_annot *annot, const fz_rect *rect, const unsigned short *text, unsigned int length);
+void pdf_set_text_details(fz_context *ctx, pdf_document *doc, pdf_annot *annot, const fz_rect *rect, const unsigned short *text, unsigned int length);
 
 fz_annot_type pdf_annot_obj_type(fz_context *ctx, pdf_obj *obj);
 
-pdf_obj * pdf_annot_inklist(pdf_annot *annot);
+pdf_obj * pdf_annot_inklist(fz_context *ctx, pdf_annot *annot);
 
 /*
 	pdf_poll_changed_annot: enumerate the changed annotations recoreded

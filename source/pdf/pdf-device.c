@@ -534,7 +534,7 @@ pdf_dev_alpha(fz_context *ctx, pdf_device *pdev, float alpha, int stroke)
 		{
 			char text[32];
 
-                        if(doBmMultiply) pdf_dict_puts_drop(o, PDF_NAME_BM, pdf_new_name(ctx, doc, PDF_NAME_Multiply));
+                        if(doBmMultiply) pdf_dict_puts_drop(ctx, o, "BM", pdf_new_name(ctx, doc, "Multiply"));
 			pdf_dict_put_drop(ctx, o, (stroke ? PDF_NAME_CA : PDF_NAME_ca), pdf_new_real(ctx, doc, alpha));
 			ref = pdf_new_ref(ctx, doc, o);
 			snprintf(text, sizeof(text), "ExtGState/Alp%d", i);
