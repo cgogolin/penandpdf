@@ -691,42 +691,57 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	}
 
 
+//    @Override
+    private void drawPage(Bitmap bm, int sizeX, int sizeY,
+                            int patchX, int patchY, int patchWidth, int patchHeight, MuPDFCore.Cookie cookie) {
+        mCore.drawPage(bm, mPageNumber, sizeX, sizeY, patchX, patchY, patchWidth, patchHeight, cookie);
+    }
+    
+//    @Override
+    private void updatePage(Bitmap bm, int sizeX, int sizeY,
+                              int patchX, int patchY, int patchWidth, int patchHeight, MuPDFCore.Cookie cookie) {
+        mCore.updatePage(bm, mPageNumber, sizeX, sizeY, patchX, patchY, patchWidth, patchHeight, cookie);
+    }
+	
 	@Override
-	protected CancellableTaskDefinition<Void, Void> getDrawPageTask(final Bitmap bm, final int sizeX, final int sizeY,
-			final int patchX, final int patchY, final int patchWidth, final int patchHeight) {
-		return new MuPDFCancellableTaskDefinition<Void, Void>(mCore) {
-			@Override
-			public Void doInBackground(MuPDFCore.Cookie cookie, Void ... params) {
-				// Workaround bug in Android Honeycomb 3.x, where the bitmap generation count
-				// is not incremented when drawing.
+	protected CancellableTaskDefinition<PatchInfo, PatchInfo>	getRenderTask(PatchInfo patchInfo) {
+		return new MuPDFCancellableTaskDefinition<PatchInfo, PatchInfo>(mCore) {
+			public PatchInfo doInBackground(MuPDFCore.Cookie cookie, PatchInfo... v) {
+				PatchInfo patchInfo = v[0];
+					// Workaround bug in Android Honeycomb 3.x, where the bitmap generation count
+					// is not incremented when drawing.
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB &&
-						Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-					bm.eraseColor(0);
-				mCore.drawPage(bm, mPageNumber, sizeX, sizeY, patchX, patchY, patchWidth, patchHeight, cookie);
-				return null;
-			}
+					Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+					patchInfo.patchBm.eraseColor(0);
+				
+					//Careful: We must not let the native code draw to a bitmap that is alreay set to the view. The view might redraw itself (this can even happen without draw() or onDraw() beeing called) and then immediately appear with the new content of the bitmap. This leads to flicker if the view would have to be moved before showing the new content. This is avoided by the ReaderView providing one of two bitmaps in a smart way such that v[0].patchBm is always set to the one not currently set.		
+				if (patchInfo.completeRedraw) {
+					drawPage(patchInfo.patchBm, patchInfo.viewArea.width(), patchInfo.viewArea.height(),
+							 patchInfo.patchArea.left, patchInfo.patchArea.top,
+							 patchInfo.patchArea.width(), patchInfo.patchArea.height(),
+							 cookie);
+				} else {
+					updatePage(patchInfo.patchBm, patchInfo.viewArea.width(), patchInfo.viewArea.height(),
+							   patchInfo.patchArea.left, patchInfo.patchArea.top,
+							   patchInfo.patchArea.width(), patchInfo.patchArea.height(),
+							   cookie);
+				}
+				return patchInfo;
+			}			
+				// @Override
+				// public Void doInBackground(MuPDFCore.Cookie cookie, Void ... params) {
+				// 	// Workaround bug in Android Honeycomb 3.x, where the bitmap generation count
+				// 	// is not incremented when drawing.
+				// 	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB &&
+				// 			Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+				// 		bm.eraseColor(0);
+				// 	mCore.updatePage(bm, mPageNumber, sizeX, sizeY, patchX, patchY, patchWidth, patchHeight, cookie);
+				// 	return null;
+				// }
 		};
-
 	}
-
-	protected CancellableTaskDefinition<Void, Void> getUpdatePageTask(final Bitmap bm, final int sizeX, final int sizeY,
-			final int patchX, final int patchY, final int patchWidth, final int patchHeight)
-	{
-		return new MuPDFCancellableTaskDefinition<Void, Void>(mCore) {
-
-			@Override
-			public Void doInBackground(MuPDFCore.Cookie cookie, Void ... params) {
-				// Workaround bug in Android Honeycomb 3.x, where the bitmap generation count
-				// is not incremented when drawing.
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB &&
-						Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-					bm.eraseColor(0);
-				mCore.updatePage(bm, mPageNumber, sizeX, sizeY, patchX, patchY, patchWidth, patchHeight, cookie);
-				return null;
-			}
-		};
-	}
-
+	
+    
 	@Override
 	protected LinkInfo[] getLinkInfo() {
 		return mCore.getPageLinks(mPageNumber);

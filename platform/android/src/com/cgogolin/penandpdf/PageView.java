@@ -25,6 +25,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -171,8 +172,13 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private static boolean useSmartTextSelection = false;    
     
         //To be overrwritten by any superclass
-    protected abstract void drawPage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
-    protected abstract void updatePage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
+    // protected abstract void drawPage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
+    // protected abstract void updatePage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
+    // 
+    // protected abstract CancellableTaskDefinition<Void, Void> getDrawPageTask(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
+    // protected abstract CancellableTaskDefinition<Void, Void> getUpdatePageTask(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
+
+    protected abstract CancellableTaskDefinition<PatchInfo,PatchInfo> getRenderTask(PatchInfo patchInfo);
     protected abstract LinkInfo[] getLinkInfo();
     protected abstract TextWord[][] getText();
     protected abstract Annotation[] getAnnotations();
@@ -209,7 +215,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     class PatchView extends ImageView {
         private Rect area;
         private Rect patchArea;
-        private AsyncTask<PatchInfo,Void,PatchInfo> mDrawPatch;
+        private CancellableAsyncTask<PatchInfo,PatchInfo> mDrawPatch;
         private Bitmap bitmap;
         
         public PatchView(Context context) {
@@ -263,29 +269,16 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             
                 // Stop the drawing of previous patch if still going
             if (mDrawPatch != null) {
-                mDrawPatch.cancel(true);
+//                mDrawPatch.cancel(true);
+                mDrawPatch.cancelAndWait();
                 mDrawPatch = null;
             }
             
             setPatchArea(null);
 
-//            Log.e("PenAndPDF", "drawing to "+patchInfo.patchBm);
-            
-            mDrawPatch = new AsyncTask<PatchInfo,Void,PatchInfo>() {
-                    protected PatchInfo doInBackground(PatchInfo... v) {
-                            //Careful: We must not let the native code draw to a bitmap that is alreay set to the view. The view might redraw itself (this can even happen without draw() or onDraw() beeing called) and then immediately appear with the new content of the bitmap. This leads to flicker if the view would have to be moved before showing the new content. This is avoided by the ReaderView providing one of two bitmaps in a smart way such that v[0].patchBm is always set to the one not currently set.
-                        
-                        if (v[0].completeRedraw) {
-                            drawPage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
-                                     v[0].patchArea.left, v[0].patchArea.top,
-                                     v[0].patchArea.width(), v[0].patchArea.height());
-                        } else {
-                            updatePage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
-                                       v[0].patchArea.left, v[0].patchArea.top,
-                                       v[0].patchArea.width(), v[0].patchArea.height());
-                        }
-                        return v[0];
-                    }
+
+            mDrawPatch = new CancellableAsyncTask<PatchInfo, PatchInfo>(getRenderTask(patchInfo)){
+                    @Override
                     protected void onPostExecute(PatchInfo patchInfo) {
                         removeBusyIndicator();
                         setArea(patchInfo.viewArea);
@@ -293,16 +286,53 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                         setImageBitmap(patchInfo.patchBm);
                         requestLayout();
                     }
+                    @Override
                     protected void onCanceled() {
+                        super.onCanceled();
                         removeBusyIndicator(); //Do we really want to do this here?
                     }
                 };
+            // mDrawPatch = new AsyncTask<PatchInfo,Void,PatchInfo>() {
+            //         protected PatchInfo doInBackground(PatchInfo... v) {
+            //                 // Workaround bug in Android Honeycomb 3.x, where the bitmap generation count
+            //                 // is not incremented when drawing.
+            //             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB &&
+            //                 Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+            //                 v[0].patchBm.eraseColor(0);
+                        
+            //                 //Careful: We must not let the native code draw to a bitmap that is alreay set to the view. The view might redraw itself (this can even happen without draw() or onDraw() beeing called) and then immediately appear with the new content of the bitmap. This leads to flicker if the view would have to be moved before showing the new content. This is avoided by the ReaderView providing one of two bitmaps in a smart way such that v[0].patchBm is always set to the one not currently set.
+                        
+            //             if (v[0].completeRedraw) {
+            //                 drawPage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
+            //                          v[0].patchArea.left, v[0].patchArea.top,
+            //                          v[0].patchArea.width(), v[0].patchArea.height());
+            //             } else {
+            //                 updatePage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
+            //                            v[0].patchArea.left, v[0].patchArea.top,
+            //                            v[0].patchArea.width(), v[0].patchArea.height());
+            //             }
+            //             return v[0];
+            //         }
+            //         @Override
+            //         protected void onPostExecute(PatchInfo patchInfo) {
+            //             removeBusyIndicator();
+            //             setArea(patchInfo.viewArea);
+            //             setPatchArea(patchInfo.patchArea);
+            //             setImageBitmap(patchInfo.patchBm);
+            //             requestLayout();
+            //         }
+            //         @Override
+            //         protected void onCanceled() {
+            //             removeBusyIndicator(); //Do we really want to do this here?
+            //         }
+            //     };
             mDrawPatch.execute(patchInfo);
         }
         
         public void cancelRenderInBackground() {
             if (mDrawPatch != null) {
-                mDrawPatch.cancel(true);
+//              mDrawPatch.cancel(true);
+                mDrawPatch.cancelAndWait();
                 mDrawPatch = null;
             }
         }

@@ -45,17 +45,17 @@ public class MuPDFCore
     private native void gotoPageInternal(int localActionPageNum);
     private native float getPageWidth();
     private native float getPageHeight();
-    private native void drawPage(Bitmap bitmap,
-                                 int pageW, int pageH,
-                                 int patchX, int patchY,
-                                 int patchW, int patchH,
-                                 long cookiePtr);
-    private native void updatePageInternal(Bitmap bitmap,
-                                           int page,
-                                           int pageW, int pageH,
-                                           int patchX, int patchY,
-                                           int patchW, int patchH,
-                                           long cookiePtr);
+	private native void drawPage(Bitmap bitmap,
+			int pageW, int pageH,
+			int patchX, int patchY,
+			int patchW, int patchH,
+			long cookiePtr);
+	private native void updatePageInternal(Bitmap bitmap,
+			int page,
+			int pageW, int pageH,
+			int patchX, int patchY,
+			int patchW, int patchH,
+			long cookiePtr);
     private native RectF[] searchPage(String text);
     private native TextChar[][][][] text();
     private native byte[] textAsHtml();
@@ -230,22 +230,22 @@ public class MuPDFCore
         globals = 0;
     }
 
-    public synchronized void drawPage(Bitmap bm, int page,
-                                      int pageW, int pageH,
-                                      int patchX, int patchY,
-                                      int patchW, int patchH,
-                                      Cookie cookie) {
-//        gotoPage(page);
-        drawPage(bm, page, pageW, pageH, patchX, patchY, patchW, patchH, cookie.cookiePtr);
-    }
+	public synchronized void drawPage(Bitmap bm, int page,
+			int pageW, int pageH,
+			int patchX, int patchY,
+			int patchW, int patchH,
+			MuPDFCore.Cookie cookie) {
+		gotoPage(page);
+		drawPage(bm, pageW, pageH, patchX, patchY, patchW, patchH, cookie.cookiePtr);
+	}
 
-    public synchronized void updatePage(Bitmap bm, int page,
-                                        int pageW, int pageH,
-                                        int patchX, int patchY,
-                                        int patchW, int patchH,
-                                        Cookie cookie) {
-        updatePageInternal(bm, page, pageW, pageH, patchX, patchY, patchW, patchH, cookie.cookiePtr);
-    }
+	public synchronized void updatePage(Bitmap bm, int page,
+			int pageW, int pageH,
+			int patchX, int patchY,
+			int patchW, int patchH,
+			MuPDFCore.Cookie cookie) {
+		updatePageInternal(bm, page, pageW, pageH, patchX, patchY, patchW, patchH, cookie.cookiePtr);
+	}
 
     public synchronized PassClickResult passClickEvent(int page, float x, float y) {
         boolean changed = passClickEventInternal(page, x, y) != 0;
