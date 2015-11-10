@@ -108,8 +108,7 @@ pdf_create_annot(fz_context *ctx, pdf_document *doc, pdf_page *page, fz_annot_ty
                         annot_arr = pdf_new_array(ctx, doc, 0);
 			pdf_dict_puts_drop(ctx, page->me, PDF_NAME_Annots, annot_arr);
 		}
-
-                pdf_dict_puts_drop(ctx, annot_obj, "F", pdf_new_int(ctx, doc, 4)); //Make annotations printable
+                
                 if (type == FZ_ANNOT_HIGHLIGHT) {
                         //Say that we want this to be renderd "behind" the text
                     pdf_dict_puts_drop(ctx, annot_obj, "BM", pdf_new_name(ctx, doc, "Multiply"));
@@ -122,7 +121,10 @@ pdf_create_annot(fz_context *ctx, pdf_document *doc, pdf_page *page, fz_annot_ty
 		pdf_dict_puts_drop(ctx, annot_obj, PDF_NAME_Subtype, pdf_new_name(ctx, doc, type_str));
 		pdf_dict_puts_drop(ctx, annot_obj, PDF_NAME_Rect, pdf_new_rect(ctx, doc, &rect));
 
-		annot = fz_malloc_struct(ctx, pdf_annot);
+		/* Make printable as default */
+		pdf_dict_put_drop(ctx, annot_obj, PDF_NAME_F, pdf_new_int(ctx, doc, F_Print));
+
+                annot = fz_malloc_struct(ctx, pdf_annot);
 		annot->page = page;
 		annot->rect = rect;
 		annot->pagerect = rect;

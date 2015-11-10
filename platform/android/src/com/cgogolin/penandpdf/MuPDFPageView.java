@@ -379,11 +379,11 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                         }
                     }
 		}
-                deselectAnnotation();
-                
-                if (!MuPDFCore.javascriptSupported())
-                    return Hit.Nothing;
-
+		deselectAnnotation();
+		
+		if (!mCore.javascriptSupported())
+			return Hit.Nothing;
+		
 		if (mWidgetAreas != null) {
 			for (i = 0; i < mWidgetAreas.length && !hit; i++)
 				if (mWidgetAreas[i].contains(docRelX, docRelY))
@@ -492,8 +492,8 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                     }
 		}
                 
-                if (!MuPDFCore.javascriptSupported())
-                    return Hit.Nothing;
+		if (!mCore.javascriptSupported())
+			return Hit.Nothing;
 		if (mWidgetAreas != null) {
 			for (i = 0; i < mWidgetAreas.length && !hit; i++)
 				if (mWidgetAreas[i].contains(docRelX, docRelY))

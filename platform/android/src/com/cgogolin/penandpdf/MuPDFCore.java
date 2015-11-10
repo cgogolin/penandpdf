@@ -38,14 +38,16 @@ public class MuPDFCore
     private String mFileName = null;
     
 	/* The native functions */
+    private static native boolean gprfSupportedInternal();
     private native long openFile(String filename);
-    private native long openBuffer();
+    private native long openBuffer(String magic);
     private native String fileFormatInternal();
+    private native boolean isUnencryptedPDFInternal();
     private native int countPagesInternal();
     private native void gotoPageInternal(int localActionPageNum);
     private native float getPageWidth();
     private native float getPageHeight();
-	private native void drawPage(Bitmap bitmap,
+    private native void drawPage(Bitmap bitmap,
 			int pageW, int pageH,
 			int patchX, int patchY,
 			int patchW, int patchH,
@@ -99,9 +101,8 @@ public class MuPDFCore
     public native void setStrikeoutColor(float r, float g, float b);
     public native void setTextAnnotIconColor(float r, float g, float b);
     public native int insertBlankPageBeforeInternal(int position);
-
-    
-    public static native boolean javascriptSupported();
+	
+	public native boolean javascriptSupported();
 
     public class Cookie
     {
@@ -162,7 +163,7 @@ public class MuPDFCore
             fileBuffer = buffer;
             mFileName = fileName;
             
-            globals = openBuffer();
+            globals = openBuffer(fileName);
             if (globals == 0)
             {
                 throw new Exception(context.getString(R.string.cannot_open_buffer));
