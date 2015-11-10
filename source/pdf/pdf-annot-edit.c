@@ -102,24 +102,24 @@ pdf_create_annot(fz_context *ctx, pdf_document *doc, pdf_page *page, fz_annot_ty
 		int ind_obj_num;
 		fz_rect rect = {0.0, 0.0, 0.0, 0.0};
 		const char *type_str = annot_type_str(type);
-		pdf_obj *annot_arr = pdf_dict_gets(ctx, page->me, PDF_NAME_Annots);
+		pdf_obj *annot_arr = pdf_dict_get(ctx, page->me, PDF_NAME_Annots);
 		if (annot_arr == NULL)
 		{
                         annot_arr = pdf_new_array(ctx, doc, 0);
-			pdf_dict_puts_drop(ctx, page->me, PDF_NAME_Annots, annot_arr);
+			pdf_dict_put_drop(ctx, page->me, PDF_NAME_Annots, annot_arr);
 		}
                 
                 if (type == FZ_ANNOT_HIGHLIGHT) {
                         //Say that we want this to be renderd "behind" the text
-                    pdf_dict_puts_drop(ctx, annot_obj, "BM", pdf_new_name(ctx, doc, "Multiply"));
+                    pdf_dict_put_drop(ctx, annot_obj, "BM", pdf_new_name(ctx, doc, "Multiply"));
                 }
                 /* const char* creator = "PenAndPDF"; */
                 /* pdf_dict_puts_drop(annot_obj, "NM", pdf_new_string(doc, creator, strlen(creator))); */
 
-                pdf_dict_puts_drop(ctx, annot_obj, PDF_NAME_Type, pdf_new_name(ctx, doc, "Annot"));
+                pdf_dict_put_drop(ctx, annot_obj, PDF_NAME_Type, pdf_new_name(ctx, doc, "Annot"));
 
-		pdf_dict_puts_drop(ctx, annot_obj, PDF_NAME_Subtype, pdf_new_name(ctx, doc, type_str));
-		pdf_dict_puts_drop(ctx, annot_obj, PDF_NAME_Rect, pdf_new_rect(ctx, doc, &rect));
+		pdf_dict_put_drop(ctx, annot_obj, PDF_NAME_Subtype, pdf_new_name(ctx, doc, type_str));
+		pdf_dict_put_drop(ctx, annot_obj, PDF_NAME_Rect, pdf_new_rect(ctx, doc, &rect));
 
 		/* Make printable as default */
 		pdf_dict_put_drop(ctx, annot_obj, PDF_NAME_F, pdf_new_int(ctx, doc, F_Print));
@@ -146,8 +146,8 @@ pdf_create_annot(fz_context *ctx, pdf_document *doc, pdf_page *page, fz_annot_ty
 			Linking must be done after any call that might throw because
 			pdf_free_annot below actually frees a list
 		*/
-		annot->next = page->annots;
-		page->annots = annot;
+                *page->annot_tailp = annot;
+		page->annot_tailp = &annot->next;
 
 		doc->dirty = 1;
 	}

@@ -1578,81 +1578,82 @@ JNI_FN(MuPDFCore_textAsHtml)(JNIEnv * env, jobject thiz)
 JNIEXPORT void JNICALL
 JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjectArray points, fz_annot_type type, jstring jtext)
 {
-	globals *glo = get_globals(env, thiz);
-	if (glo == NULL) return;
-	fz_context *ctx = glo->ctx;
-	fz_document *doc = glo->doc;
-	pdf_document *idoc = pdf_specifics(ctx, doc);
-	page_cache *pc = &glo->pages[glo->current];
-	jclass pt_cls;
-	jfieldID x_fid, y_fid;
-	int i, n;
-	fz_point *pts = NULL;
-	float color[3];
-	float alpha;
-	float line_height;
-	float line_thickness;
-
-	if (idoc == NULL)
-		return;
-
-	switch (type)
-	{
-		case FZ_ANNOT_HIGHLIGHT:
-			color[0] = glo->highlightColor[0];
-			color[1] = glo->highlightColor[1];
-			color[2] = glo->highlightColor[2];
-			alpha = -0.7; //The negative sign encodes that we want BM/Multiply to be set, which makes the highlight appear "behind" the text of a pdf.
-			line_thickness = 1.0;
-			line_height = 0.5;
-			break;
-		case FZ_ANNOT_UNDERLINE:
-			color[0] = glo->underlineColor[0];
-			color[1] = glo->underlineColor[1];
-			color[2] = glo->underlineColor[2];
-			alpha = 1.0;
-			line_thickness = LINE_THICKNESS;
-			line_height = UNDERLINE_HEIGHT;
-			break;
-		case FZ_ANNOT_STRIKEOUT:
-			color[0] = glo->strikeoutColor[0];
-			color[1] = glo->strikeoutColor[1];
-			color[2] = glo->strikeoutColor[2];
-			alpha = 1.0;
-			line_thickness = LINE_THICKNESS;
-			line_height = STRIKE_HEIGHT;
-			break;
-		case FZ_ANNOT_TEXT:
+    globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return;
+    fz_context *ctx = glo->ctx;
+    fz_document *doc = glo->doc;
+    pdf_document *idoc = pdf_specifics(ctx, doc);
+    page_cache *pc = &glo->pages[glo->current];
+    jclass pt_cls;
+    jfieldID x_fid, y_fid;
+    int i, n;
+    fz_point *pts = NULL;
+    float color[3];
+    float alpha;
+    float line_height;
+    float line_thickness;
+    
+    if (idoc == NULL)
+        return;    
+            
+    switch (type)
+    {
+        case FZ_ANNOT_HIGHLIGHT:
+            color[0] = glo->highlightColor[0];
+            color[1] = glo->highlightColor[1];
+            color[2] = glo->highlightColor[2];
+            alpha = -0.7; //The negative sign encodes that we want BM/Multiply to be set, which makes the highlight appear "behind" the text of a pdf.
+            line_thickness = 1.0;
+            line_height = 0.5;
+            break;
+        case FZ_ANNOT_UNDERLINE:
+            color[0] = glo->underlineColor[0];
+            color[1] = glo->underlineColor[1];
+            color[2] = glo->underlineColor[2];
+            alpha = 1.0;
+            line_thickness = LINE_THICKNESS;
+            line_height = UNDERLINE_HEIGHT;
+            break;
+        case FZ_ANNOT_STRIKEOUT:
+            color[0] = glo->strikeoutColor[0];
+            color[1] = glo->strikeoutColor[1];
+            color[2] = glo->strikeoutColor[2];
+            alpha = 1.0;
+            line_thickness = LINE_THICKNESS;
+            line_height = STRIKE_HEIGHT;
+            break;
+        case FZ_ANNOT_TEXT:
             color[0] = glo->textAnnotIconColor[0];
             color[1] = glo->textAnnotIconColor[1];
             color[2] = glo->textAnnotIconColor[2];
             alpha = 1.0;
             break;
-		default:
-			return;
-	}
+        default:
+            return;
+    }
 
-	fz_var(pts);
-	fz_try(ctx)
-	{
-		fz_annot *annot;
-		fz_matrix ctm;
+    fz_var(pts);
+    fz_try(ctx)
+    {
+        fz_annot *annot;
+        fz_matrix ctm;
 
-		float zoom = glo->resolution / 72;
-		zoom = 1.0 / zoom;
-		fz_scale(&ctm, zoom, zoom);
-		pt_cls = (*env)->FindClass(env, "android/graphics/PointF");
-		if (pt_cls == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "FindClass");
-		x_fid = (*env)->GetFieldID(env, pt_cls, "x", "F");
-		if (x_fid == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "GetFieldID(x)");
-		y_fid = (*env)->GetFieldID(env, pt_cls, "y", "F");
-		if (y_fid == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "GetFieldID(y)");
+        float zoom = glo->resolution / 72;
+        zoom = 1.0 / zoom;
+        fz_scale(&ctm, zoom, zoom);
+//        pt_cls = (*env)->FindClass(env, "android.graphics.PointF");
+        pt_cls = (*env)->FindClass(env, "android/graphics/PointF");
+        if (pt_cls == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "FindClass");
+        x_fid = (*env)->GetFieldID(env, pt_cls, "x", "F");
+        if (x_fid == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "GetFieldID(x)");
+        y_fid = (*env)->GetFieldID(env, pt_cls, "y", "F");
+        if (y_fid == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "GetFieldID(y)");
 
-		n = (*env)->GetArrayLength(env, points);
+        n = (*env)->GetArrayLength(env, points);
 
-		pts = fz_malloc_array(ctx, n, sizeof(fz_point));
+        pts = fz_malloc_array(ctx, n, sizeof(fz_point));
 
-for (i = 0; i < n; i++)
+        for (i = 0; i < n; i++)
         {
                 //Fix the order of the points in the quad points of highlight annotations
             jobject opt;
@@ -1673,8 +1674,9 @@ for (i = 0; i < n; i++)
             fz_transform_point(&pts[i], &ctm);
         }
 
-		annot = (fz_annot *)pdf_create_annot(ctx, idoc, (pdf_page *)pc->page, type);
+        annot = (fz_annot *)pdf_create_annot(ctx, idoc, (pdf_page *)pc->page, type); //in pdf-annot-edit.c
 
+            
         if(type == FZ_ANNOT_TEXT)
         {
                 //Ensure order of points
@@ -1708,7 +1710,7 @@ for (i = 0; i < n; i++)
                    //LOGI("mupdf.c: raw chars of new annotation: %x", dstptr[i]);
            
 //            pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, text, length); //in pdf-annot.c
-			   pdf_set_text_details(ctx, idoc, (pdf_annot *)annot, &rect, dstptr, length+1); //in pdf-annot.c
+           pdf_set_text_details(ctx, idoc, (pdf_annot *)annot, &rect, dstptr, length+1); //in pdf-annot.c
            
                //Genreate appearance for annotation (this should only be done once for each document and then the relevant xobject just referenced...)
 
@@ -1779,7 +1781,7 @@ for (i = 0; i < n; i++)
             pdf_set_markup_annot_quadpoints(ctx, idoc, (pdf_annot *)annot, pts, n); //in pdf-annot.c
             
             if(type == FZ_ANNOT_HIGHLIGHT) 
-                pdf_set_markup_appearance_highlight(idoc, (pdf_annot *)annot, color, &alpha, line_thickness, line_height); //in pdf-appearance.c
+                pdf_set_markup_appearance_highlight(ctx, idoc, (pdf_annot *)annot, color, &alpha, line_thickness, line_height); //in pdf-appearance.c
             else
                 pdf_set_markup_appearance(ctx, idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height); //in pdf-appearance.c
         }
@@ -1803,97 +1805,97 @@ for (i = 0; i < n; i++)
 JNIEXPORT void JNICALL
 JNI_FN(MuPDFCore_addInkAnnotationInternal)(JNIEnv * env, jobject thiz, jobjectArray arcs)
 {
-	globals *glo = get_globals(env, thiz);
-	if (glo == NULL) return;
-	fz_context *ctx = glo->ctx;
-	fz_document *doc = glo->doc;
-	pdf_document *idoc = pdf_specifics(ctx, doc);
-	page_cache *pc = &glo->pages[glo->current];
-	jclass pt_cls;
-	jfieldID x_fid, y_fid;
-	int i, j, k, n;
-	fz_point *pts = NULL;
-	int *counts = NULL;
-	int total = 0;
-	float color[3];
+    globals *glo = get_globals(env, thiz);
+    if (glo == NULL) return;
+    fz_context *ctx = glo->ctx;
+    fz_document *doc = glo->doc;
+    pdf_document *idoc = pdf_specifics(ctx, doc);
+    page_cache *pc = &glo->pages[glo->current];
+    jclass pt_cls;
+    jfieldID x_fid, y_fid;
+    int i, j, k, n;
+    fz_point *pts = NULL;
+    int *counts = NULL;
+    int total = 0;
+    float color[3];
 
-	if (idoc == NULL)
-		return;
+    if (idoc == NULL)
+        return;
 
-        color[0] = glo->inkColor[0];
-        color[1] = glo->inkColor[1];
-        color[2] = glo->inkColor[2];
+    color[0] = glo->inkColor[0];
+    color[1] = glo->inkColor[1];
+    color[2] = glo->inkColor[2];
 
-	fz_var(pts);
-	fz_var(counts);
-	fz_try(ctx)
-	{
-		fz_annot *annot;
-		fz_matrix ctm;
+    fz_var(pts);
+    fz_var(counts);
+    fz_try(ctx)
+    {
+        fz_annot *annot;
+        fz_matrix ctm;
 
-		float zoom = glo->resolution / 72;
-		zoom = 1.0 / zoom;
-		fz_scale(&ctm, zoom, zoom);
-		pt_cls = (*env)->FindClass(env, "android/graphics/PointF");
-		if (pt_cls == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "FindClass");
-		x_fid = (*env)->GetFieldID(env, pt_cls, "x", "F");
-		if (x_fid == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "GetFieldID(x)");
-		y_fid = (*env)->GetFieldID(env, pt_cls, "y", "F");
-		if (y_fid == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "GetFieldID(y)");
+        float zoom = glo->resolution / 72;
+        zoom = 1.0 / zoom;
+        fz_scale(&ctm, zoom, zoom);
+        pt_cls = (*env)->FindClass(env, "android/graphics/PointF");
+        if (pt_cls == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "FindClass");
+        x_fid = (*env)->GetFieldID(env, pt_cls, "x", "F");
+        if (x_fid == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "GetFieldID(x)");
+        y_fid = (*env)->GetFieldID(env, pt_cls, "y", "F");
+        if (y_fid == NULL) fz_throw(ctx, FZ_ERROR_GENERIC, "GetFieldID(y)");
 
-		n = (*env)->GetArrayLength(env, arcs);
+        n = (*env)->GetArrayLength(env, arcs);
 
-		counts = fz_malloc_array(ctx, n, sizeof(int));
+        counts = fz_malloc_array(ctx, n, sizeof(int));
 
-		for (i = 0; i < n; i++)
-		{
-			jobjectArray arc = (jobjectArray)(*env)->GetObjectArrayElement(env, arcs, i);
-			int count = (*env)->GetArrayLength(env, arc);
+        for (i = 0; i < n; i++)
+        {
+            jobjectArray arc = (jobjectArray)(*env)->GetObjectArrayElement(env, arcs, i);
+            int count = (*env)->GetArrayLength(env, arc);
 
-			counts[i] = count;
-			total += count;
-		}
+            counts[i] = count;
+            total += count;
+        }
 
-		pts = fz_malloc_array(ctx, total, sizeof(fz_point));
+        pts = fz_malloc_array(ctx, total, sizeof(fz_point));
 
-		k = 0;
-		for (i = 0; i < n; i++)
-		{
-			jobjectArray arc = (jobjectArray)(*env)->GetObjectArrayElement(env, arcs, i);
-			int count = counts[i];
+        k = 0;
+        for (i = 0; i < n; i++)
+        {
+            jobjectArray arc = (jobjectArray)(*env)->GetObjectArrayElement(env, arcs, i);
+            int count = counts[i];
 
-			for (j = 0; j < count; j++)
-			{
-				jobject pt = (*env)->GetObjectArrayElement(env, arc, j);
+            for (j = 0; j < count; j++)
+            {
+                jobject pt = (*env)->GetObjectArrayElement(env, arc, j);
 
-				pts[k].x = pt ? (*env)->GetFloatField(env, pt, x_fid) : 0.0f;
-				pts[k].y = pt ? (*env)->GetFloatField(env, pt, y_fid) : 0.0f;
-				(*env)->DeleteLocalRef(env, pt);
-				fz_transform_point(&pts[k], &ctm);
-				k++;
-			}
-			(*env)->DeleteLocalRef(env, arc);
-		}
+                pts[k].x = pt ? (*env)->GetFloatField(env, pt, x_fid) : 0.0f;
+                pts[k].y = pt ? (*env)->GetFloatField(env, pt, y_fid) : 0.0f;
+                (*env)->DeleteLocalRef(env, pt);
+                fz_transform_point(&pts[k], &ctm);
+                k++;
+            }
+            (*env)->DeleteLocalRef(env, arc);
+        }
 
-		annot = (fz_annot *)pdf_create_annot(ctx, idoc, (pdf_page *)pc->page, FZ_ANNOT_INK);
+        annot = (fz_annot *)pdf_create_annot(ctx, idoc, (pdf_page *)pc->page, FZ_ANNOT_INK);
 
-		pdf_set_ink_annot_list(ctx, idoc, (pdf_annot *)annot, pts, counts, n, color, glo->inkThickness);
+        pdf_set_ink_annot_list(ctx, idoc, (pdf_annot *)annot, pts, counts, n, color, glo->inkThickness);
 
-		dump_annotation_display_lists(glo);
-	}
-	fz_always(ctx)
-	{
-		fz_free(ctx, pts);
-		fz_free(ctx, counts);
-	}
-	fz_catch(ctx)
-	{
-		LOGE("addInkAnnotation: %s failed", ctx->error->message);
-		jclass cls = (*env)->FindClass(env, "java/lang/OutOfMemoryError");
-		if (cls != NULL)
-			(*env)->ThrowNew(env, cls, "Out of memory in MuPDFCore_searchPage");
-		(*env)->DeleteLocalRef(env, cls);
-	}
+        dump_annotation_display_lists(glo);
+    }
+    fz_always(ctx)
+    {
+        fz_free(ctx, pts);
+        fz_free(ctx, counts);
+    }
+    fz_catch(ctx)
+    {
+        LOGE("addInkAnnotation: %s failed", ctx->error->message);
+        jclass cls = (*env)->FindClass(env, "java/lang/OutOfMemoryError");
+        if (cls != NULL)
+            (*env)->ThrowNew(env, cls, "Out of memory in MuPDFCore_searchPage");
+        (*env)->DeleteLocalRef(env, cls);
+    }
 }
 
 JNIEXPORT void JNICALL
