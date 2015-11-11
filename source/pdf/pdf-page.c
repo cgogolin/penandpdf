@@ -660,9 +660,7 @@ pdf_insert_page(fz_context *ctx, pdf_document *doc, pdf_page *page, int at)
 			pdf_dict_put_drop(ctx, parent, PDF_NAME_Count, pdf_new_int(ctx, doc, count + 1));
 			parent = pdf_dict_get(ctx, parent, PDF_NAME_Parent);
 		}
-                    /* Also adjust the page count in the doc object */
-                doc->page_count = count + 1;
-                doc->dirty = 1;
+
 	}
 	fz_always(ctx)
 	{

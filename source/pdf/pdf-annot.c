@@ -545,10 +545,9 @@ pdf_load_annots(fz_context *ctx, pdf_document *doc, pdf_page *page, pdf_obj *ann
 			/* We only collect annotations with an appearance
 			 * stream into this list, so remove any that don't
 			 * (such as links) and continue. */
-
 			keep_annot = pdf_is_dict(ctx, ap);
-                            //NO WE DON'T!!!
-                        keep_annot = 1;
+				//NO WE DON'T!!!
+//			keep_annot = 1;
 
 			if (!keep_annot)
 				break;

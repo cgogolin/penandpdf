@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
+#include <stdlib.h>
 
 #ifdef NDK_PROFILER
 #include "prof.h"
@@ -50,6 +52,8 @@
 
 #define SMALL_FLOAT (0.00001)
 #define PROOF_RESOLUTION (300)
+
+
 
 enum
 {
@@ -327,6 +331,13 @@ static globals *get_globals_any_thread(JNIEnv *env, jobject thiz)
 {
 	return (globals *)(intptr_t)((*env)->GetLongField(env, thiz, global_fid));
 }
+
+jint JNI_OnLoad(JavaVM *vm, void *reserved)
+{
+	srand(time(NULL));
+	return JNI_VERSION_1_1;
+}
+
 
 JNIEXPORT jlong JNICALL
 JNI_FN(MuPDFCore_openFile)(JNIEnv * env, jobject thiz, jstring jfilename)
@@ -2947,38 +2958,56 @@ JNI_FN(MuPDFCore_hasChangesInternal)(JNIEnv * env, jobject thiz)
 	return (idoc && pdf_has_unsaved_changes(ctx, idoc)) ? JNI_TRUE : JNI_FALSE;
 }
 
-static char *tmp_path(char *path)
+static const char * android_tmp_folder(JNIEnv * env) {
+    jclass coreClass = (*env)->FindClass(env, PACKAGENAME "/MuPDFCore");
+   jmethodID getCacheDir = (*env)->GetStaticMethodID(env, coreClass, "getCacheDir", "()Ljava/lang/String;");
+   jstring cache_dir = (jstring)(*env)->CallStaticObjectMethod(env, coreClass, getCacheDir);
+//	jstring cache_dir = (*env)->GetStaticFieldID(env, coreClass, "cachDir", "Ljava/lang/String");
+    const char *path_chars = (*env)->GetStringUTFChars(env, cache_dir, NULL);
+    return path_chars;
+}
+
+static char *tmp_path(JNIEnv * env, char *path)
 {
+	int rnd_length = 6;
+	char *rnd = malloc(sizeof(char) * (rnd_length +1));
+	if (!rnd)
+		return NULL;
+	int i;
+	for (i=0; i<rnd_length; i++)
+		rnd[i] = rand();
+	rnd[rnd_length] = '\0';
+	
 	int f;
-	char *buf = malloc(strlen(path) + 6 + 1);
+	char *buf = malloc(strlen(path) + strlen(rnd) + 4 + 1);
 	if (!buf)
 		return NULL;
-
-	strcpy(buf, path);
-	strcat(buf, "XXXXXX");
-
-	f = mkstemp(buf);
 	
-	if (f >= 0)
-	{
-		close(f);
-		return buf;
-	}
-	else
-	{
-		free(buf);
-		return NULL;
-	}
+	strcpy(buf, path);
+	strcat(buf, rnd);
+	strcat(buf, ".pdf");
+
+	return buf;
+	
+	/* f = mkstemp(buf); //mkstemp() is broke on android */
+	
+	/* if (f >= 0) */
+	/* { */
+	/* 	close(f); */
+	/* 	return buf; */
+	/* } */
+	/* else */
+	/* { */
+	/* 	free(buf); */
+	/* 	return NULL; */
+	/* } */
 }
 
 JNIEXPORT int JNICALL
 JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
 {    
-    int written = 0;
-    
     globals *glo = get_globals(env, thiz);
-    if (glo == NULL) return -1;
-    fz_context *ctx = glo->ctx;
+	fz_context *ctx = glo->ctx;
 
         //Try to get the new path from jpath
         //If jpath was null we leave new_path = NULL
@@ -2987,9 +3016,9 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
     {
         new_path = (*env)->GetStringUTFChars(env, jpath, NULL);
     }
-
     LOGE("Core: current_path=%s new_path=%s", glo->current_path, new_path);
-    
+	
+	int written = 0;
     if (glo->doc != NULL && (glo->current_path != NULL || new_path != NULL) )
     {
         char *tmp;
@@ -2997,27 +3026,26 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
 
             //Generate temporary path in an appropriate location
         if (new_path != NULL)
-            tmp = tmp_path((char *)new_path);
+            tmp = tmp_path(env, (char *)new_path);
         else
-            tmp = tmp_path(glo->current_path);
-        
+            tmp = tmp_path(env, glo->current_path);
         LOGE("Core: tmp=%s", tmp);
-        
         if (tmp)
         {
-            fz_var(written);
             
-                //We save incremental if the current path is set first copying from current path 
-            if (glo->current_path)
-            {
-                opts.do_incremental = 1;
-                opts.do_ascii = 0;
-                opts.do_expand = 0;
-                opts.do_garbage = 0;
-                opts.do_linear = 0;
-
-                fz_try(ctx)
-                {
+                //We save incremental if the current path is set first copying from current path
+			fz_var(written);
+			fz_try(ctx)
+			{
+				if (glo->current_path)
+				{
+					opts.do_incremental = 1;
+					opts.do_ascii = 0;
+					opts.do_expand = 0;
+					opts.do_garbage = 0;
+					opts.do_linear = 0;
+					opts.do_clean = 0; // enabling cleaning leads to a heap corruption during a fz_malloc in pdf_clean_page_contents
+					
                     FILE *fin = fopen(glo->current_path, "rb");
                     FILE *fout = fopen(tmp, "wb");
                     char buf[256];
@@ -3040,50 +3068,46 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
                         fz_write_document(ctx, glo->doc, tmp, &opts);
                         written = 1;
                     }
-                }
-                fz_catch(ctx)
-                {
-                    written = 0;
-                }
-                
-            }
-            else
-            {
-                opts.do_incremental = 0;
-                opts.do_ascii = 1;
-                opts.do_expand = 0;
-                opts.do_garbage = 1;
-                opts.do_linear = 0;
-
-                fz_try(ctx)
-                {
-                    FILE *fout = fopen(tmp, "wb");
-                    if (fout)
-                    {
-                        fclose(fout);
-                        fz_write_document(ctx, glo->doc, tmp, &opts);
-                        written = 1;
-                    }
-                }
-                fz_catch(ctx)
-                {
-                    written = 0;
-                }
-            }
+				}
+				else
+				{
+					opts.do_incremental = 0;
+					opts.do_ascii = 1;
+					opts.do_expand = 0;
+					opts.do_garbage = 1;
+					opts.do_linear = 0;
+					opts.do_clean = 0; // enabling cleaning leads to a heap corruption during a fz_malloc in pdf_clean_page_contents
+										
+					FILE *fout = fopen(tmp, "wb");
+					if (fout)
+					{
+						fclose(fout);
+						fz_write_document(ctx, glo->doc, tmp, &opts);
+						written = 1;
+					}
+				}
+			}
+			fz_catch(ctx)
+			{
+				written = 0;
+			}
+			
             if (written)
             {
                 LOGE("Core: closing");
                 close_doc(glo);
+				int rename_st;
                 if (new_path == NULL)
-                    rename(tmp, glo->current_path);
+                    rename_st = rename(tmp, glo->current_path);
                 else
-                    rename(tmp, new_path);
-                LOGE("Core: renamed %i", written);
+                    rename_st = rename(tmp, new_path);
+                LOGE("Core: written=%i and rename_st=%i", written, rename_st);
             }
             free(tmp);
         }
     }
     if (jpath != NULL && new_path != NULL) (*env)->ReleaseStringUTFChars(env, jpath, new_path);
+	
     return written-1; //return -1 on error and 0 on success 
 }
 
@@ -3103,7 +3127,7 @@ JNI_FN(MuPDFCore_saveInternal)(JNIEnv * env, jobject thiz)
 		opts.do_garbage = 0;
 		opts.do_linear = 0;
 
-		tmp = tmp_path(glo->current_path);
+		tmp = tmp_path(env, glo->current_path);
 		if (tmp)
 		{
 			int written = 0;

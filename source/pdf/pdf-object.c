@@ -2047,7 +2047,7 @@ static void fmt_obj(fz_context *ctx, struct fmt *fmt, pdf_obj *obj)
 		/* if (added < len) */
                 fmt_str(ctx, fmt, obj); 
 		/* else */
-		/* 	fmt_hex(fmt, obj); */
+		/* 	fmt_hex(ctx, fmt, obj); */
 	}
 	else if (pdf_is_name(ctx, obj))
 		fmt_name(ctx, fmt, obj);

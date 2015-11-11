@@ -1774,7 +1774,7 @@ void pdf_set_markup_appearance(fz_context *ctx, pdf_document *doc, pdf_annot *an
 /* the value of apha doesn't make it accross properly. I have NO idea what is causing this. */
 
 //void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, float* color, float *alphap, float line_thickness, float line_height)
-void pdf_set_markup_appearance_highlight(fz_context *ctx, pdf_document *doc, pdf_annot *annot, float color[3], float *alphap, float line_thickness, float line_height)
+void pdf_set_markup_appearance_highlight(fz_context *ctx, pdf_document *doc, pdf_annot *annot, float* color, float *alphap, float line_thickness, float line_height)
 {
     float alpha = *alphap;
         

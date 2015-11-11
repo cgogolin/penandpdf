@@ -21,12 +21,18 @@ public class MuPDFCore
 {
     private static final float INK_THICKNESS=10f;
     
-	/* load our native library */
+		/* load our native library */
     static {
         System.loadLibrary("mupdf");
     }
 
-	/* Readable members */
+	public static String cachDir;
+	
+	public static String getCacheDir() {
+		return cachDir;
+	}
+	
+		/* Readable members */
     private int numPages = -1;
     private boolean numPagesIsUpToDate = false;
     private float pageWidth;
@@ -37,7 +43,7 @@ public class MuPDFCore
     private String mPath = null;
     private String mFileName = null;
     
-	/* The native functions */
+		/* The native functions */
     private static native boolean gprfSupportedInternal();
     private native long openFile(String filename);
     private native long openBuffer(String magic);
@@ -48,16 +54,16 @@ public class MuPDFCore
     private native float getPageWidth();
     private native float getPageHeight();
     private native void drawPage(Bitmap bitmap,
-			int pageW, int pageH,
-			int patchX, int patchY,
-			int patchW, int patchH,
-			long cookiePtr);
+								 int pageW, int pageH,
+								 int patchX, int patchY,
+								 int patchW, int patchH,
+								 long cookiePtr);
 	private native void updatePageInternal(Bitmap bitmap,
-			int page,
-			int pageW, int pageH,
-			int patchX, int patchY,
-			int patchW, int patchH,
-			long cookiePtr);
+										   int page,
+										   int pageW, int pageH,
+										   int patchX, int patchY,
+										   int patchW, int patchH,
+										   long cookiePtr);
     private native RectF[] searchPage(String text);
     private native TextChar[][][][] text();
     private native byte[] textAsHtml();
@@ -125,7 +131,7 @@ public class MuPDFCore
                     // We could do this in finalize, but there's no guarantee that
                     // a finalize will occur before the muPDF context occurs.
                 destroyCookie(cookiePtr);
-		}
+			}
     }
     
     public MuPDFCore() //Hack to work around the fact that Java doesn't allow to call base class constructors later in the constructors of derived classes.
@@ -137,8 +143,10 @@ public class MuPDFCore
         }
     
     protected void init(Context context, String path) throws Exception
-	{
-            if(path == null) throw new Exception(String.format(context.getString(R.string.cannot_open_file_Path), path));
+		{
+			cachDir = context.getCacheDir().getAbsolutePath();
+					
+			if(path == null) throw new Exception(String.format(context.getString(R.string.cannot_open_file_Path), path));
                 
             mPath = path;
             int lastSlashPos = path.lastIndexOf('/');
@@ -151,7 +159,7 @@ public class MuPDFCore
             }
             file_format = fileFormatInternal();
             if(file_format == null) throw new Exception(String.format(context.getString(R.string.cannot_interpret_file), path));
-	}
+		}
 
     public MuPDFCore(Context context, byte buffer[], String fileName) throws Exception
         {
@@ -159,7 +167,9 @@ public class MuPDFCore
         }
     
     protected void init(Context context, byte buffer[], String fileName) throws Exception
-	{
+		{
+			cachDir = context.getCacheDir().getAbsolutePath();
+				
             fileBuffer = buffer;
             mFileName = fileName;
             
@@ -170,30 +180,30 @@ public class MuPDFCore
             }
             file_format = fileFormatInternal();
             if(file_format == null) throw new Exception(String.format(context.getString(R.string.cannot_interpret_file), fileName));
-	}
+		}
 
     public  int countPages()
-	{
+		{
             if (numPages < 0 || !numPagesIsUpToDate )
             {
                 numPages = countPagesSynchronized();
                 numPagesIsUpToDate = true;
             }
             return numPages;
-	}
+		}
 
     public String fileFormat()
-	{
+		{
             return file_format;
-	}
+		}
 
     private synchronized int countPagesSynchronized() {
         return countPagesInternal();
     }
 
-	/* Shim function */
+		/* Shim function */
     private void gotoPage(int page)
-	{
+		{
             if (page > countPages()-1)
                 page = countPages()-1;
             else if (page < 0)
@@ -201,7 +211,7 @@ public class MuPDFCore
             gotoPageInternal(page);
             this.pageWidth = getPageWidth();
             this.pageHeight = getPageHeight();
-	}
+		}
 
     public synchronized PointF getPageSize(int page) {
         gotoPage(page);
@@ -232,19 +242,19 @@ public class MuPDFCore
     }
 
 	public synchronized void drawPage(Bitmap bm, int page,
-			int pageW, int pageH,
-			int patchX, int patchY,
-			int patchW, int patchH,
-			MuPDFCore.Cookie cookie) {
+									  int pageW, int pageH,
+									  int patchX, int patchY,
+									  int patchW, int patchH,
+									  MuPDFCore.Cookie cookie) {
 		gotoPage(page);
 		drawPage(bm, pageW, pageH, patchX, patchY, patchW, patchH, cookie.cookiePtr);
 	}
 
 	public synchronized void updatePage(Bitmap bm, int page,
-			int pageW, int pageH,
-			int patchX, int patchY,
-			int patchW, int patchH,
-			MuPDFCore.Cookie cookie) {
+										int pageW, int pageH,
+										int patchX, int patchY,
+										int patchW, int patchH,
+										MuPDFCore.Cookie cookie) {
 		updatePageInternal(bm, page, pageW, pageH, patchX, patchY, patchW, patchH, cookie.cookiePtr);
 	}
 
@@ -357,8 +367,8 @@ public class MuPDFCore
 //                        {
                             //Add the character
 
-                       // if (Character.isWhitespace(tc.c))
-                       //     Log.v("Core", "tc.c='"+tc.c+"' at "+((RectF)tc));
+							// if (Character.isWhitespace(tc.c))
+							//     Log.v("Core", "tc.c='"+tc.c+"' at "+((RectF)tc));
                         
                         wd.add(tc);
 //                            if (type == Character.END_PUNCTUATION || type == Character.FINAL_QUOTE_PUNCTUATION || type == Character.INITIAL_QUOTE_PUNCTUATION || type == Character.OTHER_PUNCTUATION || type == Character.START_PUNCTUATION)
@@ -411,8 +421,8 @@ public class MuPDFCore
                             }
                     }
                 }
-                // for (TextWord word: wds)
-                //     Log.v("Core", "word='"+word.w+"' at "+word);
+					// for (TextWord word: wds)
+					//     Log.v("Core", "word='"+word.w+"' at "+word);
             }
         }
         
