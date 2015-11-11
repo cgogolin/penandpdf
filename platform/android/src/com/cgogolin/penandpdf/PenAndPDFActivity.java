@@ -409,8 +409,7 @@ public static boolean isMediaDocument(Uri uri) {
             }
             
                 //Initialize the alert builder working arround a bug in the HoloLight.DarkActionBar theme:
-            mAlertBuilder = new AlertDialog.Builder(this, R.style.AlertDialogTheme); 
-//			mAlertBuilder = new AlertDialog.Builder(this); 
+            mAlertBuilder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
             
                 //Get the core saved with onRetainNonConfigurationInstance()
             if (core == null) {
@@ -745,7 +744,8 @@ public static boolean isMediaDocument(Uri uri) {
                                         showInfo(getString(R.string.error_saveing));
                                     else
                                     {
-                                        onResume(); //This is a hack but allows me to not duplicate code. Remeber that save() usually destroyes the core!
+//                                        onResume(); //This is a hack but allows me to not duplicate code. Remeber that save() usually destroyes the core!
+										setTitle();
                                     }
                                 }
                             }
@@ -902,8 +902,23 @@ public static boolean isMediaDocument(Uri uri) {
         
     }
 
+	private void tryToTakePermissions() {
+		if (android.os.Build.VERSION.SDK_INT >= 19)
+		{
+			try
+			{
+				final int takeFlags = (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+				getContentResolver().takePersistableUriPermission(getIntent().getData(), takeFlags);
+			}
+			catch(Exception e)
+			{
+					//Nothing we can do if we don't get the permission
+			}
+		}
+	}
+	
 
-    public void setupCore() {//Called during onResume()
+    public void setupCore() {//Called during onResume()		
         if (core == null) {
             mDocViewNeedsNewAdapter = true;
             Intent intent = getIntent();
@@ -938,20 +953,10 @@ public static boolean isMediaDocument(Uri uri) {
                     alert.show();
                     core = null;
                 }
-
-                if (android.os.Build.VERSION.SDK_INT >= 19)
-                {
-                    try
-                    {
-                        final int takeFlags = (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                        getContentResolver().takePersistableUriPermission(uri, takeFlags);
-                    }
-                    catch(Exception e)
-                    {
-                            //Nothing we can do if we don't get the permission
-                    }
-                }
             }
+			
+			tryToTakePermissions();
+				
             if (core != null && core.needsPassword()) {
                 requestPassword();
             }
@@ -973,7 +978,7 @@ public static boolean isMediaDocument(Uri uri) {
         
     public void setupSearchTaskManager() { //Is called during onResume()
             //Create a new search task (the core might have changed)
-        // if(mSearchTaskManager == null)
+		// if(mSearchTaskManager == null)
         // {
             mSearchTaskManager = new SearchTaskManager(this, core) {
                     @Override
@@ -1220,7 +1225,7 @@ public static boolean isMediaDocument(Uri uri) {
                                     showInfo(getString(R.string.error_saveing));
                                 else
                                 {
-                                        //Should do a start activity for result here
+                                        //Should do a start activity for result here TODO!!!
                                     Intent intent = new Intent(getApplicationContext(), PenAndPDFFileChooser.class);
                                     intent.setAction(Intent.ACTION_MAIN);
                                     startActivity(intent);
@@ -1356,8 +1361,8 @@ public static boolean isMediaDocument(Uri uri) {
                                         if(!saveAs(uri))
                                             showInfo(getString(R.string.error_saveing));
                                         else
-                                            onResume(); //This is a hack but allows me to not duplicate code...
-//                                            invalidateOptionsMenu();
+//                                            onResume(); //This is a hack but allows me to not duplicate code...
+											setTitle();
                                     }
                                     if (which == AlertDialog.BUTTON_NEGATIVE) {
                                     }
@@ -1365,7 +1370,7 @@ public static boolean isMediaDocument(Uri uri) {
                             };
                         AlertDialog alert = mAlertBuilder.create();
                         alert.setTitle("MuPDF");
-                        alert.setMessage(getString(R.string.overwrite)+" "+uri.toString()+"?");
+                        alert.setMessage(getString(R.string.overwrite)+" "+uri.getPath()+"?");
                         alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), listener);
                         alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
                         alert.show();
@@ -1375,8 +1380,8 @@ public static boolean isMediaDocument(Uri uri) {
                         if(!saveAs(uri))
                             showInfo(getString(R.string.error_saveing));
                         else
-                            onResume(); //This is a hack but allows me to not duplicate code...
-//                            invalidateOptionsMenu();
+//                            onResume(); //This is a hack but allows me to not duplicate code...
+							setTitle();
                     }
                 }
                 // else if (resultCode == RESULT_CANCELED)
@@ -1415,7 +1420,7 @@ public static boolean isMediaDocument(Uri uri) {
         }
     }
 
-    private boolean saveAs(Uri uri) { //Attention if succesful destroyes the core
+    private boolean saveAs(Uri uri) {
         if (core == null) return false;
         try
         {
@@ -1430,12 +1435,8 @@ public static boolean isMediaDocument(Uri uri) {
         getIntent().setData(uri);
             //Save the viewport under the new name
         saveViewportAndRecentFiles(core.getUri());
-            //Stop alerts
-        core.stopAlerts();
-        destroyAlertWaiter();
-            //Destroy the core
-        core.onDestroy();
-        core = null;
+			//Try to take permissions
+		tryToTakePermissions();
             //Resetup the ShareActionProvider
         Intent shareIntent = new Intent();
         shareIntent.setAction(Intent.ACTION_SEND);
@@ -1445,9 +1446,8 @@ public static boolean isMediaDocument(Uri uri) {
         if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
         return true;
     }
-
     
-    private boolean save() { //Attention if succesful destroyes the core
+    private boolean save() {
         if (core == null) return false;
         try
         {   
@@ -1460,13 +1460,6 @@ public static boolean isMediaDocument(Uri uri) {
         }
             //Save the viewport
         saveViewportAndRecentFiles(core.getUri());
-            //Stop alerts
-        core.stopAlerts();
-        destroyAlertWaiter();
-            //Destroy the core
-        core.onDestroy();  
-        core = null;
-        mDocView = null;
         return true;
     }
     

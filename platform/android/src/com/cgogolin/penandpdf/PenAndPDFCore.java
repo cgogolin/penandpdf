@@ -34,6 +34,12 @@ public class PenAndPDFCore extends MuPDFCore
 
     public PenAndPDFCore(Context context, Uri uri) throws Exception
 	{
+            init(context, uri);
+        }
+    
+    
+    public void init(Context context, Uri uri) throws Exception
+	{
 //            Log.e("Core", "creating with uri="+uri);
             
             this.uri = uri;
@@ -51,7 +57,6 @@ public class PenAndPDFCore extends MuPDFCore
 
                 if (cursor != null && cursor.moveToFirst())
                 {
-
                         //Try to get the display name/title
                     int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
                     if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
@@ -96,12 +101,12 @@ public class PenAndPDFCore extends MuPDFCore
             }
         }
             
-    public synchronized void save(Context context) throws java.io.IOException, java.io.FileNotFoundException
+    public synchronized void save(Context context) throws java.io.IOException, java.io.FileNotFoundException, Exception
         {
             saveAs(context, this.uri);
         }
 
-    public synchronized void saveAs(Context context, Uri uri) throws java.io.IOException, java.io.FileNotFoundException
+    public synchronized void saveAs(Context context, Uri uri) throws java.io.IOException, java.io.FileNotFoundException, Exception
         {
             ParcelFileDescriptor pfd = null;
             FileOutputStream fileOutputStream = null;
@@ -149,7 +154,8 @@ public class PenAndPDFCore extends MuPDFCore
                 if(fileOutputStream != null) fileOutputStream.close();
                 if(pfd != null) pfd.close();
             }
-            this.uri = uri;
+//            this.uri = uri;
+            init(context, uri); //reinit because the MuPDFCore core gets useless after saveInterl()
         }
 
     
