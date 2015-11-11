@@ -20,8 +20,8 @@
     <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
     <item name="android:windowMinWidthMajor">@android:dimen/dialog_min_width_major</item>
     <item name="android:windowMinWidthMinor">@android:dimen/dialog_min_width_minor</item>
-    <item name="android:maxLines">1</item>
-    <item name="android:scrollHorizontally">true</item>
+<!--    <item name="android:maxLines">1</item>
+    <item name="android:scrollHorizontally">true</item>-->
     <item name="android:textColor">@android:color/holo_blue_light</item>
 </style>
 </resources>

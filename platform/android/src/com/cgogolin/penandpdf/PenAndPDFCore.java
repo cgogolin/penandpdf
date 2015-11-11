@@ -101,47 +101,86 @@ public class PenAndPDFCore extends MuPDFCore
             saveAs(context, this.uri);
         }
 
-    
     public synchronized void saveAs(Context context, Uri uri) throws java.io.IOException, java.io.FileNotFoundException
         {
-            if(canSaveToUriViaContentResolver(context, uri))
+            ParcelFileDescriptor pfd = null;
+            FileOutputStream fileOutputStream = null;
+            FileInputStream fileInputStream = null;
+            try
             {
+                    //Write to a temporyry file
                 if(tmpFile == null) {
                     File cacheDir = context.getCacheDir();
                     tmpFile = File.createTempFile("prefix", "pdf", cacheDir);
                 }
                 if(saveAsInternal(tmpFile.getPath()) != 0)
-                    throw new java.io.IOException("native code failed to save to "+tmpFile.getPath());
-
-                ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "w");
-                FileInputStream fileInputStream = new FileInputStream(tmpFile);
-                FileOutputStream fileOutputStream = new FileOutputStream(pfd.getFileDescriptor());
+                    throw new java.io.IOException("native code failed to save to tmp file: "+tmpFile.getPath());
+                    //Open the result as fileInputStream
+                fileInputStream = new FileInputStream(tmpFile);
+                
+                    //Open FileOutputStream to actual destination
+                pfd = context.getContentResolver().openFileDescriptor(uri, "w");
+                if(pfd != null)
+                    fileOutputStream = new FileOutputStream(pfd.getFileDescriptor());
+                if(fileOutputStream == null){
+                    String path = uri.getPath();
+                    File file = null;
+                    if(path != null)
+                        file = new File(path);
+                    if(file != null)
+                        fileOutputStream = new FileOutputStream(file);
+                }
+                if(fileOutputStream == null)
+                    throw new java.io.IOException("Unable to open output stream to given uri: "+uri.getPath());
+                
                 copyStream(fileInputStream,fileOutputStream);
-                fileInputStream.close();
-                fileOutputStream.close();
-                pfd.close();
-                this.uri = uri;
             }
-            else
+            catch (java.io.FileNotFoundException e) 
             {
-                // File file = new File(Uri.decode(uri.getEncodedPath()));
-                // if(!file.exists()) 
-                // {
-                //     file.createNewFile(); //Try to create the file first so and try to take permissions so that we can then check if we can write to it.
-                //     context.getContentResolver().takePersistableUriPermission(uri, (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION));
-                // }
-                // if(canSaveToUriAsFile(context, uri))//Problem is actually in here!
-                // {
-                    String path = Uri.decode(uri.getEncodedPath());
-                    if(saveAsInternal(path) != 0)
-                        throw new java.io.IOException("native code failed to save to "+uri.toString());
-                    this.uri = uri;
-//                    Log.e("Core", "saving done!");                
-                // }
-                // else
-                //     throw new java.io.IOException("no way to save to "+uri.toString());
+                throw e;
             }
+            catch (java.io.IOException e)
+            {
+                throw e;
+            }
+            finally
+            {
+                if(fileInputStream != null) fileInputStream.close();
+                if(fileOutputStream != null) fileOutputStream.close();
+                if(pfd != null) pfd.close();
+            }
+            this.uri = uri;
         }
+
+    
+    // public synchronized void saveAs(Context context, Uri uri) throws java.io.IOException, java.io.FileNotFoundException
+    //     {
+    //         if(canSaveToUriViaContentResolver(context, uri))
+    //         {
+    //             if(tmpFile == null) {
+    //                 File cacheDir = context.getCacheDir();
+    //                 tmpFile = File.createTempFile("prefix", "pdf", cacheDir);
+    //             }
+    //             if(saveAsInternal(tmpFile.getPath()) != 0)
+    //                 throw new java.io.IOException("native code failed to save to "+tmpFile.getPath());
+                
+    //             ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "w");
+    //             FileInputStream fileInputStream = new FileInputStream(tmpFile);
+    //             FileOutputStream fileOutputStream = new FileOutputStream(pfd.getFileDescriptor());
+    //             copyStream(fileInputStream,fileOutputStream);
+    //             fileInputStream.close();
+    //             fileOutputStream.close();
+    //             pfd.close();
+    //             this.uri = uri;
+    //         }
+    //         else
+    //         {
+    //             String path = Uri.decode(uri.getEncodedPath());
+    //             if(saveAsInternal(path) != 0)
+    //                 throw new java.io.IOException("native code failed to save to "+uri.toString());
+    //             this.uri = uri;
+    //         }
+    //     }
     
     private static void copyStream(InputStream input, OutputStream output)
         throws java.io.IOException
@@ -153,18 +192,16 @@ public class PenAndPDFCore extends MuPDFCore
                 output.write(buffer, 0, bytesRead);
             }
         }
-
+    
     public boolean canSaveToUriViaContentResolver(Context context, Uri uri) {
         try
         {
-//            Log.e("PenAndPDF", "check permissions returns "+context.checkCallingUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)+" where granted="+PackageManager.PERMISSION_GRANTED+" and denied="+PackageManager.PERMISSION_DENIED+" for uri="+uri.toString());
             boolean haveWritePermissionToUri = false;
             if (android.os.Build.VERSION.SDK_INT >= 19)
             {
                 for( UriPermission permission : context.getContentResolver().getPersistedUriPermissions()) {
                     if(permission.isWritePermission() && permission.getUri().equals(uri))
                     {
-//                        Log.e("PenAndPDF", "Have taken permissions");
                         haveWritePermissionToUri = true;
                     }
                 }
@@ -214,30 +251,7 @@ public class PenAndPDFCore extends MuPDFCore
 
     public boolean canSaveToCurrentUri(Context context) {
         return canSaveToUriViaContentResolver(context, getUri()) || canSaveToUriAsFile(context, getUri());
-    }
-    
-//     public boolean canSaveToCurrentLocation(Context context) {
-// //        Log.e("PenAndPDF", "cheching if we can save to "+uri+" canWrite()="+new File(Uri.decode(uri.getEncodedPath())).canWrite());
-//         try
-//         {
-//                 //Try if Uri can be resolved with the content resolver. If not, then try to directly open a file from the Uri
-//             ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "wa");
-//             if(pfd != null) 
-//             {
-//                 pfd.close();
-//                 return true;
-//             }
-//             else
-//                 throw new Exception();
-//         }
-//         catch(Exception e)
-//         {
-//             if(new File(Uri.decode(uri.getEncodedPath())).canWrite() )
-//                 return true;
-//             else
-//                 return false;
-//         }
-//     }
+    }    
 
     public Uri getUri(){
         return uri;

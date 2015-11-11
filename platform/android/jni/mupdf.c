@@ -335,7 +335,7 @@ static globals *get_globals_any_thread(JNIEnv *env, jobject thiz)
 jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
 	srand(time(NULL));
-	return JNI_VERSION_1_1;
+	return JNI_VERSION_1_2; // return this to make dalvik happy: https://groups.google.com/forum/#!topic/android-ndk/ukQBmKJH2eM
 }
 
 
@@ -2975,21 +2975,22 @@ static char *tmp_path(JNIEnv * env, char *path)
 		return NULL;
 	int i;
 	for (i=0; i<rnd_length; i++)
-		rnd[i] = rand();
+		rnd[i] = "0123456789abcdef"[random() % 16];
 	rnd[rnd_length] = '\0';
 	
 	int f;
-	char *buf = malloc(strlen(path) + strlen(rnd) + 4 + 1);
+	char *buf = malloc(strlen(path) + 1 + strlen(rnd) + 4 + 1);
 	if (!buf)
 		return NULL;
 	
 	strcpy(buf, path);
+	strcat(buf, "_");
 	strcat(buf, rnd);
 	strcat(buf, ".pdf");
 
 	return buf;
 	
-	/* f = mkstemp(buf); //mkstemp() is broke on android */
+	/* f = mkstemp(buf); //mkstemp() is broke on android and rename() (which we use below) can fail if we try to rename from the official cach directory, so we have no choice but to generate a tmp path by hand in the given directoy...*/
 	
 	/* if (f >= 0) */
 	/* { */
@@ -3101,7 +3102,8 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
                     rename_st = rename(tmp, glo->current_path);
                 else
                     rename_st = rename(tmp, new_path);
-                LOGE("Core: written=%i and rename_st=%i", written, rename_st);
+                if(rename_st != 0)
+					written = 0;
             }
             free(tmp);
         }

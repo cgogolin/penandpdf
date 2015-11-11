@@ -136,6 +136,7 @@ public static String getActualPath(final Context context, final Uri uri) {
     if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
         // ExternalStorageProvider
         if (isExternalStorageDocument(uri)) {
+			Log.i("mupdf", "Uri from ExternalStorageProvider "+uri);
             final String docId = DocumentsContract.getDocumentId(uri);
             final String[] split = docId.split(":");
             final String type = split[0];
@@ -148,7 +149,7 @@ public static String getActualPath(final Context context, final Uri uri) {
         }
         // DownloadsProvider
         else if (isDownloadsDocument(uri)) {
-
+			Log.i("mupdf", "Uri from DownloadsDocument "+uri);
             final String id = DocumentsContract.getDocumentId(uri);
             final Uri contentUri = ContentUris.withAppendedId(
                     Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
@@ -157,6 +158,7 @@ public static String getActualPath(final Context context, final Uri uri) {
         }
         // MediaProvider
         else if (isMediaDocument(uri)) {
+			Log.i("mupdf", "Uri from MediaDocument "+uri);
             final String docId = DocumentsContract.getDocumentId(uri);
             final String[] split = docId.split(":");
             final String type = split[0];
@@ -180,14 +182,16 @@ public static String getActualPath(final Context context, final Uri uri) {
     }
     // MediaStore (and general)
     else if ("content".equalsIgnoreCase(uri.getScheme())) {
+		Log.i("mupdf", "Uri from MediaStore "+uri);
         return getDataColumn(context, uri, null, null);
     }
     // File
     else if ("file".equalsIgnoreCase(uri.getScheme())) {
+		Log.i("mupdf", "Uri to File "+uri);
         return uri.getPath();
     }
-
-    return null;
+	Log.i("mupdf", "Uri type unknown "+uri);
+    return uri.getPath();
 }
 
 /**
@@ -405,7 +409,8 @@ public static boolean isMediaDocument(Uri uri) {
             }
             
                 //Initialize the alert builder working arround a bug in the HoloLight.DarkActionBar theme:
-            mAlertBuilder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
+            mAlertBuilder = new AlertDialog.Builder(this, R.style.AlertDialogTheme); 
+//			mAlertBuilder = new AlertDialog.Builder(this); 
             
                 //Get the core saved with onRetainNonConfigurationInstance()
             if (core == null) {
@@ -448,23 +453,6 @@ public static boolean isMediaDocument(Uri uri) {
                 SharedPreferences.Editor edit = prefs.edit();
                 saveRecentFiles(prefs, edit, core.getUri());
             }
-            // else if(Intent.ACTION_VIEW.equals(getIntent().getAction()))
-            // {
-            //     AlertDialog alert = mAlertBuilder.create();
-            //     alert.setTitle(R.string.cannot_open_document);
-            //     alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
-            //                     new DialogInterface.OnClickListener() {
-            //                         public void onClick(DialogInterface dialog, int which) {
-            //                             finish();
-            //                         }
-            //                     });
-            //     alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            //             public void onDismiss(DialogInterface dialog) {
-            //                 finish();
-            //             }
-            //         });
-            //     alert.show();
-            // }
             invalidateOptionsMenu();
         }
     
@@ -762,7 +750,7 @@ public static boolean isMediaDocument(Uri uri) {
                                 }
                             }
                             if (which == AlertDialog.BUTTON_NEUTRAL) {
-                                saveAs();
+                                showSaveAsDialog();
                             }
                             if (which == AlertDialog.BUTTON_NEGATIVE) {
                             }
@@ -1355,12 +1343,12 @@ public static boolean isMediaDocument(Uri uri) {
             case SAVEAS_REQUEST:
                 overridePendingTransition(R.animator.stay_still, R.animator.exit_to_left);
                 if (resultCode == RESULT_OK) {
-                    final Uri uri = Uri.parse(getActualPath(this, intent.getData()));
-                    Log.e("mupdf", "got uri="+uri);
-                    
-//                    if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Warn if file already exists
-					File file = new File(uri.getPath());
-					if(file.isFile() && file.length() > 0) //Warn if file already exists
+                    final Uri uri = intent.getData();
+					// final Uri actualUri = Uri.parse(getActualPath(this, intent.getData()));
+                    // Log.i("mupdf", "got uri="+uri+" and interpreted it as actualUri"+actualUri.getPath());
+					// File file = new File(actualUri.getPath());
+					File file = new File(getActualPath(this, uri));
+					if(file != null && file.isFile() && file.length() > 0) //Warn if file already exists
                     {
                         DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
@@ -1399,7 +1387,7 @@ public static boolean isMediaDocument(Uri uri) {
         super.onActivityResult(requestCode, resultCode, intent);
     }
 
-    private void saveAs() {
+    private void showSaveAsDialog() {
         mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //Do not save when we are stopped for the new request
         if (android.os.Build.VERSION.SDK_INT < 19)
         {
@@ -1427,7 +1415,7 @@ public static boolean isMediaDocument(Uri uri) {
         }
     }
 
-    private boolean saveAs(Uri uri) { //Attention! Potentially destroyes the core !!
+    private boolean saveAs(Uri uri) { //Attention if succesful destroyes the core
         if (core == null) return false;
         try
         {
@@ -1459,7 +1447,7 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
     
-    private boolean save() { //Attention! Potentially destroyes the core !!
+    private boolean save() { //Attention if succesful destroyes the core
         if (core == null) return false;
         try
         {   
@@ -1731,7 +1719,7 @@ public static boolean isMediaDocument(Uri uri) {
                                     finish();
                             }
                             else
-                                saveAs();
+                                showSaveAsDialog();
                         }
                         if (which == AlertDialog.BUTTON_NEGATIVE) {
                             mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true;
