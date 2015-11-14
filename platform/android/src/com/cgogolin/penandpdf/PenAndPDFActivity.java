@@ -432,28 +432,37 @@ public static boolean isMediaDocument(Uri uri) {
 
             mNotSaveOnDestroyThisTime = false;
             mNotSaveOnStopThisTime = false;
-            
-                //If the core was not restored during onCreat() set it up now
-            setupCore();
-            
-            if (core != null) //OK, so apparently we have a valid pdf open
-            {   
-                    //Setup the mDocView
-                setupDocView();
 
-                    //Set the action bar title
-                setTitle();
-                
-                    //Setup the mSearchTaskManager
-                setupSearchTaskManager();
-
-                    //Update the recent files list
-                SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-                SharedPreferences.Editor edit = prefs.edit();
-                saveRecentFiles(prefs, edit, core.getUri());
+			Intent intent = getIntent();
+			if (Intent.ACTION_MAIN.equals(intent.getAction()))
+            {
+				setupOpenDocumentSplashScreen();
             }
-            invalidateOptionsMenu();
-        }
+            else if (Intent.ACTION_VIEW.equals(intent.getAction()))
+            {
+					//If the core was not restored during onCreat() set it up now
+				setupCore();
+            
+				if (core != null) //OK, so apparently we have a valid pdf open
+				{   
+						//Setup the mDocView
+					setupDocView();
+					
+						//Set the action bar title
+					setTitle();
+					
+						//Setup the mSearchTaskManager
+					setupSearchTaskManager();
+					
+						//Update the recent files list
+					SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+					SharedPreferences.Editor edit = prefs.edit();
+					saveRecentFiles(prefs, edit, core.getUri());
+				}
+			}
+			
+			invalidateOptionsMenu();
+		}
     
     
     @Override
@@ -471,12 +480,6 @@ public static boolean isMediaDocument(Uri uri) {
             core.stopAlerts();
             destroyAlertWaiter();
         }
-        // else //This can really only happen when we are started without a Uri to open, in which case we show the file 
-        // {
-        //     if (android.os.Build.VERSION.SDK_INT >= 19)
-        //         overridePendingTransition(R.animator.enter_from_left, R.animator.stay_still);
-        // }
-        
     }
     
 
@@ -744,7 +747,6 @@ public static boolean isMediaDocument(Uri uri) {
                                         showInfo(getString(R.string.error_saveing));
                                     else
                                     {
-//                                        onResume(); //This is a hack but allows me to not duplicate code. Remeber that save() usually destroyes the core!
 										setTitle();
                                     }
                                 }
@@ -922,12 +924,7 @@ public static boolean isMediaDocument(Uri uri) {
         if (core == null) {
             mDocViewNeedsNewAdapter = true;
             Intent intent = getIntent();
-            if (Intent.ACTION_MAIN.equals(intent.getAction()))
-            {
-                openDocument();
-            }
-            else if (Intent.ACTION_VIEW.equals(intent.getAction()))
-            {
+			
                 Uri uri = intent.getData();
                 try 
                 {
@@ -953,7 +950,7 @@ public static boolean isMediaDocument(Uri uri) {
                     alert.show();
                     core = null;
                 }
-            }
+            
 			
 			tryToTakePermissions();
 				
@@ -978,9 +975,7 @@ public static boolean isMediaDocument(Uri uri) {
         
     public void setupSearchTaskManager() { //Is called during onResume()
             //Create a new search task (the core might have changed)
-		// if(mSearchTaskManager == null)
-        // {
-            mSearchTaskManager = new SearchTaskManager(this, core) {
+		mSearchTaskManager = new SearchTaskManager(this, core) {
                     @Override
                     protected void onTextFound(SearchResult result) {
                         mDocView.addSearchResult(result);
@@ -1003,10 +998,7 @@ public static boolean isMediaDocument(Uri uri) {
                         }
                     }
                 };
-//        }
     }
-    
-    
     
     public void setupDocView() { //Is called during onResume()
             //If we don't even have a core there is nothing to do
@@ -1020,8 +1012,6 @@ public static boolean isMediaDocument(Uri uri) {
                     public void setMode(Mode m) {
                         super.setMode(m);
 
-//                        Log.e("Pen", "mode="+m);
-                        
                         switch(m)
                         {
                             case Viewing:
@@ -1213,6 +1203,11 @@ public static boolean isMediaDocument(Uri uri) {
         }
     }
 
+	private void setupOpenDocumentSplashScreen() {
+//		setContentView(R.layout.splash);
+		openDocument();
+	}
+	
     public void openDocument() {
         if (android.os.Build.VERSION.SDK_INT < 19)
         {
@@ -1221,15 +1216,14 @@ public static boolean isMediaDocument(Uri uri) {
                         public void onClick(DialogInterface dialog, int which) {
                             if (which == AlertDialog.BUTTON_POSITIVE) {
                                 mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //No need to save twice
-                                if(!save())
-                                    showInfo(getString(R.string.error_saveing));
-                                else
+								if(core.canSaveToCurrentUri(getApplicationContext()))
+								{
+									if(!save())
+										showInfo(getString(R.string.error_saveing));
+								}
+								else
                                 {
-                                        //Should do a start activity for result here TODO!!!
-                                    Intent intent = new Intent(getApplicationContext(), PenAndPDFFileChooser.class);
-                                    intent.setAction(Intent.ACTION_MAIN);
-                                    startActivity(intent);
-                                    finish();
+									showSaveAsDialog();
                                 }
                             }
                             if (which == AlertDialog.BUTTON_NEGATIVE) {
@@ -1247,12 +1241,13 @@ public static boolean isMediaDocument(Uri uri) {
                 AlertDialog alert = mAlertBuilder.create();
                 alert.setTitle(getString(R.string.app_name));
                 alert.setMessage(getString(R.string.document_has_changes_save_them));
-                alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), listener);
+				if (core.canSaveToCurrentUri(this))
+					alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), listener);
+				else
+					alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.saveas), listener);
                 alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
                 alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
-                alert.show();
-                if (core == null || !core.canSaveToCurrentUri(this))
-                    alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false); //Todo!!!
+				alert.show();
             }
             else
             {
@@ -1265,32 +1260,19 @@ public static boolean isMediaDocument(Uri uri) {
         }
         else
         {
-                //Shown only some action providers
-            // Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            // intent.addCategory(Intent.CATEGORY_OPENABLE);
-            // intent.setType("application/pdf");
-            // startActivityForResult(intent, EDIT_REQUEST);
-
-                //Shows hopefully more
             Intent chooser = new Intent(Intent.ACTION_CHOOSER);
             chooser.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             
             Intent getContentIntent = new Intent(Intent.ACTION_GET_CONTENT);
             getContentIntent.addCategory(Intent.CATEGORY_OPENABLE);
             getContentIntent.setType("application/pdf");
-//            chooser.putExtra(Intent.EXTRA_INTENT, getContentIntent);
             
             Intent openDocumentIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             openDocumentIntent.addCategory(Intent.CATEGORY_OPENABLE);
             openDocumentIntent.setType("application/pdf");
-//            chooser.putExtra(Intent.EXTRA_INTENT, openDocumentIntent);
             
             ArrayList<Intent> extraIntents = new ArrayList<Intent>();
-//            extraIntents.add(openDocumentIntent);
             extraIntents.add(getContentIntent);
-
-//            chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents.toArray(new Intent[] { }));
-//            startActivityForResult(chooser, EDIT_REQUEST);
             
             openDocumentIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents.toArray(new Intent[] { }));
             startActivityForResult(openDocumentIntent, EDIT_REQUEST);
@@ -1361,7 +1343,6 @@ public static boolean isMediaDocument(Uri uri) {
                                         if(!saveAs(uri))
                                             showInfo(getString(R.string.error_saveing));
                                         else
-//                                            onResume(); //This is a hack but allows me to not duplicate code...
 											setTitle();
                                     }
                                     if (which == AlertDialog.BUTTON_NEGATIVE) {
@@ -1380,7 +1361,6 @@ public static boolean isMediaDocument(Uri uri) {
                         if(!saveAs(uri))
                             showInfo(getString(R.string.error_saveing));
                         else
-//                            onResume(); //This is a hack but allows me to not duplicate code...
 							setTitle();
                     }
                 }
