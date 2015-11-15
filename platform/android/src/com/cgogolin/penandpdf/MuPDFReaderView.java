@@ -24,7 +24,7 @@ import android.util.Log;
 import java.lang.Math;
 
 abstract public class MuPDFReaderView extends ReaderView {
-    enum Mode {Viewing, Selecting, Drawing, Erasing, AddingTextAnnot}
+    enum Mode {Viewing, Selecting, Drawing, Erasing, AddingTextAnnot, Searching}
     private final Context mContext;
     private boolean mLinksEnabled = true;
     private Mode mMode = Mode.Viewing;
@@ -324,40 +324,7 @@ abstract public class MuPDFReaderView extends ReaderView {
                     }
                 }
                 break;
-        }        
-        
-        //     //Make text selectable by long press
-        // if( (mMode == Mode.Viewing || mMode == Mode.Selecting ) && event.getAction() == MotionEvent.ACTION_DOWN)
-        // {
-        //     longPressStartEvent = event;
-        //     longPressed = new Runnable() { 
-        //             public void run() {
-        //                     //Process the long press event
-        //                 if(mMode == Mode.Viewing || mMode == Mode.Selecting)
-        //                 {
-        //                     MuPDFPageView cv = (MuPDFPageView)getSelectedView();
-        //                     if(cv==null) return;
-        //                     setMode(MuPDFReaderView.Mode.Selecting);
-        //                         //Strangely getY() doesn't return the correct coordinate relative to the view on my device so we have to compute them ourselves from the getRaw methods. I hope this works on multiwindow devices...
-        //                     int[] locationOnScreen = new int[2];
-        //                     getLocationOnScreen(locationOnScreen);
-                            
-        //                     cv.selectText(longPressStartEvent.getX(),longPressStartEvent.getRawY()-locationOnScreen[1],longPressStartEvent.getX()+1,longPressStartEvent.getRawY()+1-locationOnScreen[1]);
-        //                 }
-        //             }   
-        //         };
-        //     longPressHandler.postDelayed(longPressed, android.view.ViewConfiguration.getLongPressTimeout());
-        // }
-        // if(event.getAction() == MotionEvent.ACTION_UP || ( (event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_HOVER_MOVE) && longPressStartEvent != null && (Math.abs(longPressStartEvent.getX() - event.getX()) > 20 || Math.abs(longPressStartEvent.getY() - event.getY()) > 20) ))  //Must not use event.getX() here as this is not necessarially the current position of the pointer but can also be the start point of a swipe!
-        // {
-        //     Log.e("Pen", "startx="+longPressStartEvent.getX()+" curent="+event.getX());
-            
-        //     longPressHandler.removeCallbacks(longPressed);
-        //     longPressStartEvent = null;
-        // }
-
-
-
+        }
         
             // Now we process events to be interpreted as drawing or ereasing or as events that start drawing
             // 

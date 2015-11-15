@@ -644,6 +644,7 @@ public static boolean isMediaDocument(Uri uri) {
         searchView.setQuery("", false);
         mDocView.clearSearchResults();
         mDocView.resetupChildren();
+		mDocView.setMode(MuPDFReaderView.Mode.Viewing);
         mActionBarMode = ActionBarMode.Main;
         invalidateOptionsMenu();
         return false;
@@ -704,6 +705,7 @@ public static boolean isMediaDocument(Uri uri) {
             //     return true;
             case R.id.menu_search:
                 mActionBarMode = ActionBarMode.Search;
+				mDocView.setMode(MuPDFReaderView.Mode.Searching);
                 invalidateOptionsMenu();
                 return true;
             // case R.id.menu_search_box:
@@ -854,6 +856,7 @@ public static boolean isMediaDocument(Uri uri) {
                     case Search:
                         hideKeyboard();
                         if (mSearchTaskManager != null) mSearchTaskManager.stop();
+						mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         mDocView.clearSearchResults();
                         mDocView.resetupChildren();
                         break;
@@ -1264,8 +1267,9 @@ public static boolean isMediaDocument(Uri uri) {
             extraIntents.add(getContentIntent);
             
             openDocumentIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents.toArray(new Intent[] { }));
+
             startActivityForResult(openDocumentIntent, EDIT_REQUEST);
-            overridePendingTransition(R.animator.enter_from_left, R.animator.stay_still);
+			overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
         }
     }
 
@@ -1273,7 +1277,7 @@ public static boolean isMediaDocument(Uri uri) {
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         switch (requestCode) {
             case EDIT_REQUEST:
-                overridePendingTransition(R.animator.stay_still, R.animator.exit_to_left);
+                overridePendingTransition(R.animator.fade_in, R.animator.exit_to_left);
                 if(resultCode == Activity.RESULT_OK)
                 {
                     if (intent != null) {
@@ -1317,7 +1321,7 @@ public static boolean isMediaDocument(Uri uri) {
                 //     showInfo(getString(R.string.print_failed));
                 break;
             case SAVEAS_REQUEST:
-                overridePendingTransition(R.animator.stay_still, R.animator.exit_to_left);
+                overridePendingTransition(R.animator.fade_in, R.animator.exit_to_left);
                 if (resultCode == RESULT_OK) {
                     final Uri uri = intent.getData();
 					// final Uri actualUri = Uri.parse(getActualPath(this, intent.getData()));
@@ -1385,7 +1389,7 @@ public static boolean isMediaDocument(Uri uri) {
             intent.setType("application/pdf");
             intent.putExtra(Intent.EXTRA_TITLE, core.getFileName());
             startActivityForResult(intent, SAVEAS_REQUEST);
-            overridePendingTransition(R.animator.enter_from_left, R.animator.stay_still);
+            overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
         }
     }
 
@@ -1638,6 +1642,7 @@ public static boolean isMediaDocument(Uri uri) {
                 hideKeyboard();
                 textOfLastSearch = "";
                 searchView.setQuery("", false);
+				mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                 mDocView.clearSearchResults();
                 mDocView.resetupChildren();
                 mActionBarMode = ActionBarMode.Main;
