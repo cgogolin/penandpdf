@@ -502,18 +502,7 @@ public static boolean isMediaDocument(Uri uri) {
     protected void onDestroy() {//There is no guarantee that this is ever called!!!
         super.onDestroy();
             
-            getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).unregisterOnSharedPreferenceChangeListener(this);
-
-            //     //Release bitmaps of the page views
-            // if(mDocView != null)
-            // {
-            //     mDocView.applyToChildren(new ReaderView.ViewMapper() {
-            //             void applyToView(View view) {
-            //                 ((MuPDFView)view).releaseBitmaps();
-            //             }
-            //         });
-            // }
-            
+            getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).unregisterOnSharedPreferenceChangeListener(this);            
             if(core != null && !isChangingConfigurations())
             {
                 SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
@@ -1452,7 +1441,6 @@ public static boolean isMediaDocument(Uri uri) {
         edit.putFloat("normalizedxscroll"+path, mDocView.getNormalizedXScroll());
         edit.putFloat("normalizedyscroll"+path, mDocView.getNormalizedYScroll());
         edit.commit();
-//        Toast.makeText(getApplicationContext(), "saving "+mDocView.getNormalizedXScroll()+" "+mDocView.getNormalizedYScroll(), Toast.LENGTH_LONG).show();
     }
 
 

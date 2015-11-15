@@ -124,10 +124,14 @@ public class PenAndPDFCore extends MuPDFCore
                 fileInputStream = new FileInputStream(tmpFile);
                 
                     //Open FileOutputStream to actual destination
-                pfd = context.getContentResolver().openFileDescriptor(uri, "w");
-                if(pfd != null)
-                    fileOutputStream = new FileOutputStream(pfd.getFileDescriptor());
-                if(fileOutputStream == null){
+                try
+                {
+                    pfd = context.getContentResolver().openFileDescriptor(uri, "w");
+                    if(pfd != null)
+                        fileOutputStream = new FileOutputStream(pfd.getFileDescriptor());
+                }
+                catch(Exception e)
+                {
                     String path = uri.getPath();
                     File file = null;
                     if(path != null)
@@ -135,9 +139,11 @@ public class PenAndPDFCore extends MuPDFCore
                     if(file != null)
                         fileOutputStream = new FileOutputStream(file);
                 }
-                if(fileOutputStream == null)
-                    throw new java.io.IOException("Unable to open output stream to given uri: "+uri.getPath());
-                
+                finally
+                {
+                    if(fileOutputStream == null)
+                        throw new java.io.IOException("Unable to open output stream to given uri: "+uri.getPath());
+                }
                 copyStream(fileInputStream,fileOutputStream);
             }
             catch (java.io.FileNotFoundException e) 
