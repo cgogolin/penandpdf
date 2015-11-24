@@ -3287,7 +3287,9 @@ JNI_FN(MuPDFCore_destroyCookie)(JNIEnv * env, jobject thiz, jlong cookiePtr)
 	if (glo == NULL)
 		return;
 	fz_context *ctx = glo->ctx;
-
+	if (ctx == NULL)
+		return;
+	
 	fz_free(ctx, cookie);
 }
 

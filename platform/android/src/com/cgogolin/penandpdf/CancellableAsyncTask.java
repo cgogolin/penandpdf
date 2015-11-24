@@ -23,7 +23,7 @@ public class CancellableAsyncTask<Params, Result>
 	}
 
 	protected void onCanceled()
-        {
+    {
             
 	}
     
@@ -53,13 +53,30 @@ public class CancellableAsyncTask<Params, Result>
 						CancellableAsyncTask.this.onPostExecute(result);
 						task.doCleanup();
 					}
+
+						//We rather do the cleanup here so that we can cancel the task with cancel() from the UI thread 
+					@Override
+					protected void onCancelled(Result result)
+					{
+						cleanUp();
+					}
 				};
 	}
 
-	public void cancelAndWait()
+	public void cancel()
 	{
 		this.asyncTask.cancel(true);
 		ourTask.doCancel();
+	}
+
+	private void cleanUp()
+	{
+		ourTask.doCleanup();
+	}
+	
+	public void cancelAndWait()
+	{
+		cancel();
 
 		try
 		{
@@ -75,7 +92,7 @@ public class CancellableAsyncTask<Params, Result>
 		{
 		}
 
-		ourTask.doCleanup();
+		cleanUp();
 	}
 
 	public void execute(Params ... params)

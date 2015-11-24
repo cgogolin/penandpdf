@@ -507,7 +507,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
     
 
 
-        @TargetApi(11)
+	@TargetApi(11)
 	public boolean copySelection() {
 		final StringBuilder text = new StringBuilder();
 
@@ -528,7 +528,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 				text.append(line);
 			}
 
-                        public void onEndText() {};
+			public void onEndText() {};
 		});
 
 		if (text.length() == 0)

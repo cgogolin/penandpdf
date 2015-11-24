@@ -268,14 +268,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             if(getArea() == patchInfo.viewArea) return;
             
                 // Stop the drawing of previous patch if still going
-            if (mDrawPatch != null) {
-//                mDrawPatch.cancel(true);
-                mDrawPatch.cancelAndWait();
-                mDrawPatch = null;
-            }
+            cancelRenderInBackground();            
             
             setPatchArea(null);
-
 
             mDrawPatch = new CancellableAsyncTask<PatchInfo, PatchInfo>(getRenderTask(patchInfo)){
                     @Override
@@ -292,47 +287,13 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                         removeBusyIndicator(); //Do we really want to do this here?
                     }
                 };
-            // mDrawPatch = new AsyncTask<PatchInfo,Void,PatchInfo>() {
-            //         protected PatchInfo doInBackground(PatchInfo... v) {
-            //                 // Workaround bug in Android Honeycomb 3.x, where the bitmap generation count
-            //                 // is not incremented when drawing.
-            //             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB &&
-            //                 Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-            //                 v[0].patchBm.eraseColor(0);
-                        
-            //                 //Careful: We must not let the native code draw to a bitmap that is alreay set to the view. The view might redraw itself (this can even happen without draw() or onDraw() beeing called) and then immediately appear with the new content of the bitmap. This leads to flicker if the view would have to be moved before showing the new content. This is avoided by the ReaderView providing one of two bitmaps in a smart way such that v[0].patchBm is always set to the one not currently set.
-                        
-            //             if (v[0].completeRedraw) {
-            //                 drawPage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
-            //                          v[0].patchArea.left, v[0].patchArea.top,
-            //                          v[0].patchArea.width(), v[0].patchArea.height());
-            //             } else {
-            //                 updatePage(v[0].patchBm, v[0].viewArea.width(), v[0].viewArea.height(),
-            //                            v[0].patchArea.left, v[0].patchArea.top,
-            //                            v[0].patchArea.width(), v[0].patchArea.height());
-            //             }
-            //             return v[0];
-            //         }
-            //         @Override
-            //         protected void onPostExecute(PatchInfo patchInfo) {
-            //             removeBusyIndicator();
-            //             setArea(patchInfo.viewArea);
-            //             setPatchArea(patchInfo.patchArea);
-            //             setImageBitmap(patchInfo.patchBm);
-            //             requestLayout();
-            //         }
-            //         @Override
-            //         protected void onCanceled() {
-            //             removeBusyIndicator(); //Do we really want to do this here?
-            //         }
-            //     };
             mDrawPatch.execute(patchInfo);
         }
         
         public void cancelRenderInBackground() {
             if (mDrawPatch != null) {
-//              mDrawPatch.cancel(true);
-                mDrawPatch.cancelAndWait();
+                mDrawPatch.cancel();
+//              mDrawPatch.cancelAndWait();
                 mDrawPatch = null;
             }
         }
@@ -417,7 +378,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         class TextSelectionDrawer implements TextProcessor
         {
             RectF rect;
-//            boolean firstLine = true;
             RectF firstLineRect = new RectF();
             RectF lastLineRect = new RectF();
             Path leftMarker = new Path();
@@ -432,8 +392,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             public void reset(Canvas canvas, float scale) {
                 this.canvas = canvas;
                 this.scale = scale;
-                // firstLineRect = new RectF();
-                // lastLineRect = new RectF();
                 firstLineRect = null;
                 lastLineRect = null;
                 docRelXmaxSelection = Float.NEGATIVE_INFINITY;
@@ -451,12 +409,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             public void onEndLine() {
                 if (!rect.isEmpty())
                 {
-                    // if(firstLine)
-                    // {
-                    //     firstLineRect.set(rect);
-                    //     firstLine = false;
-                    // }
-                    // lastLineRect.set(rect);
                     if(firstLineRect == null || firstLineRect.top > rect.top)
                     {
                         if(firstLineRect == null) firstLineRect = new RectF();
@@ -485,10 +437,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
                         leftMarkerRect.set(firstLineRect.left-0.9f*height,firstLineRect.top,firstLineRect.left,firstLineRect.top+1.9f*height);
                         rightMarkerRect.set(lastLineRect.right,lastLineRect.top,lastLineRect.right+0.9f*height,lastLineRect.top+1.9f*height);
-
-                        // canvas.drawRect(leftMarkerRect, selectBoxPaint);
-                        // canvas.drawRect(rightMarkerRect, selectBoxPaint);
-                        //canvas.drawRect(mSelectBox, itemSelectBoxPaint);
                         
                         if(height != oldHeight || true)
                         {
@@ -650,19 +598,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                                     linksPaint);
                 }
             }
-
-                // Draw Text annotations
-            // if (!mIsBlank && mAnnotations != null && mAnnotations != null) {
-            //         //Load the bitmap once
-            //     if(mTextAnnotationBitmap == null)
-            //         mTextAnnotationBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_action_labels_mod);
-                
-            //     for (Annotation annot : mAnnotations)
-            //     {
-            //         if(annot.type == Annotation.Type.TEXT)
-            //             canvas.drawBitmap(mTextAnnotationBitmap, null, new RectF(annot.left*scale, annot.top*scale, annot.right*scale, annot.bottom*scale), null);
-            //     }
-            // }
 
                 // Draw the text selection
             if (!mIsBlank && mSelectBox != null && mText != null) {
@@ -854,6 +789,27 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             return true;
     }
 
+        //This is incredibly wastefull. Should stop going through the resto of the text as soon as it has found some word
+    public boolean hasTextSelected() {
+
+        class Boolean {
+            public boolean value;
+        }
+        
+        final Boolean b = new Boolean();
+        b.value = false;
+        
+        processSelectedText(new TextProcessor() {
+                public void onStartLine() {}                
+                public void onWord(TextWord word) {
+                    b.value = true;
+                }
+                public void onEndLine() {}
+                public void onEndText() {}
+            });
+        return b.value;
+    }
+    
     public void selectText(float x0, float y0, float x1, float y1) {
         float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
         float docRelX0 = (x0 - getLeft())/scale;
@@ -880,6 +836,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         //The following three helper methods use the methods getText(), getLinkInfo(), and getAnnotations()
         //that are to be provided by any super class to asynchronously load the Text, LinkInfo, and Annotations
         //respectively
+        //TODO: fix how tasks are cleared up once done and make sure they are not unnecessarially recreated
     private void loadText() { 
         if (mLoadTextTask == null) {
             mLoadTextTask = new AsyncTask<Void,Void,TextWord[][]>() {
