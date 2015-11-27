@@ -1635,6 +1635,7 @@ public static boolean isMediaDocument(Uri uri) {
 		mAlertDialog.setView(editTextLayout);
 		mAlertDialog.show();
 		input.requestFocus();
+		showKeyboard();
     }
 
     
@@ -1733,11 +1734,19 @@ public static boolean isMediaDocument(Uri uri) {
     }
     
     
-    private void hideKeyboard()
+    private void showKeyboard()
+    {
+        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if(inputMethodManager!=null && getCurrentFocus() != null) inputMethodManager.showSoftInput(getCurrentFocus(), 0);
+    }
+
+	
+	private void hideKeyboard()
     {
         InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         if(inputMethodManager!=null && getCurrentFocus() != null) inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
     }
+	
 
     private void enterFullscreen() {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);

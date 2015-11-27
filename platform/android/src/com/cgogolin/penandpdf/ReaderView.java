@@ -587,7 +587,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     }
 
     @Override
-        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         int x, y;
         x = View.MeasureSpec.getSize(widthMeasureSpec);
@@ -803,12 +803,15 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     private void removeSuperflousChildren() {
         int numChildren = mChildViews.size();
         int childIndices[] = new int[numChildren];
-        for (int i = 0; i < numChildren; i++)
+        for (int i = 0; i < numChildren; i++){
             childIndices[i] = mChildViews.keyAt(i);
-        
+//            Log.e("ReaderView", "index="+i+" key="+childIndices[i]);
+        }
+
+        int maxCount = mAdapter.getCount();
         for (int i = 0; i < numChildren; i++) {
             int ai = childIndices[i];
-            if (ai < mCurrent - 1 || ai > mCurrent + 1) {
+            if (ai < mCurrent - 1 || ai > mCurrent + 1 || ai < 0 || ai >= maxCount) {
                 View v = mChildViews.get(ai);
                 ((MuPDFView) v).releaseResources();
                 mViewCache.add(v);
