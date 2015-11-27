@@ -1,37 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
 <!--  <item android:id="@+id/menu_selecttextprompt"
 	android:title="@string/menu_selecttextprompt" 
-	android:showAsAction="always"
+	app:showAsAction="always"
 	/>-->
   <item android:id="@+id/menu_copytext"
 	android:icon="@drawable/ic_action_copy"
 	android:title="@string/menu_copytext" 
-	android:showAsAction="always"
+	app:showAsAction="always"
 	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_strikeout"
 	android:icon="@drawable/ic_action_strikeout"
 	android:title="@string/menu_strikeout" 
-	android:showAsAction="always"
+	app:showAsAction="always"
 	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_underline"
 	android:icon="@drawable/ic_action_underline"
 	android:title="@string/menu_underline" 
-	android:showAsAction="always"
+	app:showAsAction="always"
 	android:background="?android:selectableItemBackground"
 	/>
   <item android:id="@+id/menu_highlight"
 	android:icon="@drawable/ic_action_highlight"
 	android:title="@string/menu_highlight" 
-	android:showAsAction="always"
+	app:showAsAction="always"
 	android:background="?android:selectableItemBackground"
 	/>
 <!--  <item android:id="@+id/menu_cancel"
 	android:icon="@drawable/ic_action_cancel"
 	android:title="@string/menu_cancel" 
-	android:showAsAction="always"
+	app:showAsAction="always"
 	android:background="?android:selectableItemBackground"
 	/>-->
 </menu>

@@ -1,34 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
   <item android:id="@+id/menu_undo"
 	android:icon="@drawable/ic_action_undo"
 	android:title="@string/menu_undo" 
-	android:showAsAction="always"
-	android:background="?android:selectableItemBackground"
-	/>
+	app:showAsAction="always"/>
   <item android:id="@+id/menu_cancel"
 	android:icon="@drawable/ic_action_cancel"
 	android:title="@string/menu_cancel" 
-	android:showAsAction="always"
-	android:background="?android:selectableItemBackground"
-	/>
+	app:showAsAction="always"/>
   <item android:id="@+id/menu_erase"
 	android:icon="@drawable/ic_action_erase"
 	android:title="@string/menu_erase" 
-	android:showAsAction="always"
-	android:background="?android:selectableItemBackground"
-	/>
+	app:showAsAction="always"/>
   <item
       android:id="@+id/menu_draw"
-      android:actionLayout="@layout/drawing_button"
+      app:actionLayout="@layout/drawing_button"
       android:title="@string/menu_draw" 
-      android:showAsAction="always"
-      >
-  </item>
+      app:showAsAction="always"/>
   <item android:id="@+id/menu_accept"
 	android:icon="@drawable/ic_action_accept"
 	android:title="@string/menu_accept" 
-	android:showAsAction="always"
-	android:background="?android:selectableItemBackground"
-	/>
+	app:showAsAction="always"/>
 </menu>

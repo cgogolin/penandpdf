@@ -30,6 +30,9 @@
 	<string name="enter_new_filename">Select above or enter new fielname</string>
 	<string name="enter_password">Enter password</string>
 	<string name="entering_reflow_mode">Entering reflow mode</string>
+	<string name="entry_screen_open_document">Open document</string>
+	<string name="entry_screen_get_document">Get document</string>
+	<string name="entry_screen_settings">Settings</string>
 	<string name="eraser_thickness">Eraser thickness</string>
 	<string name="eraser_thickness_summ">Set the thickness of the eraser.</string>
 	<string name="error_saveing">Error while saving</string>

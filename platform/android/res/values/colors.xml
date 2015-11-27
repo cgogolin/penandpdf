@@ -1,9 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<color name="canvas">#404040</color>
+	<color name="window_background">#FFF0F0F0</color>
+	<color name="primary">#AAED1C24</color>
+	<color name="primary_dark">#CC0000</color>
+	<color name="primary_light">#B3E5FC</color>
+	<color name="accent">#FF5722</color>
+	<color name="primary_text">#C0ffffff</color>
+	<color name="secondary_text">#0f0f0f</color>
+	<color name="icons">#FFFFFF</color>
+	<color name="divider">#B6B6B6</color>
+	<color name="ripple">#FF0000</color>
+
+	<color name="busy_indicator">#C0202020</color>
+	
+<!--	<color name="canvas">#404040</color>
 	<color name="toolbar">#C0000000</color>
 	<color name="page_indicator">#C0202020</color>
-	<color name="busy_indicator">#C0202020</color>
 	<color name="button_normal">#00000000</color>
 	<color name="button_pressed">#FF2572AC</color>
 	<color name="text_normal">#FFFFFF</color>
@@ -12,6 +24,5 @@
 	<color name="text_border_pressed">#2572AC</color>
 	<color name="text_border_focused">#000000</color>
 	<color name="seek_thumb">#2572AC</color>
-	<color name="seek_progress">#FFFFFF</color>
-	<color name="background">#F0F0F0</color>
+	<color name="seek_progress">#FFFFFF</color>-->
 </resources>

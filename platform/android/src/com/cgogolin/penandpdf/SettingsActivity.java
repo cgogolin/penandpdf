@@ -32,4 +32,10 @@ public class SettingsActivity extends Activity {
                 .replace(android.R.id.content, new SettingsFragment())
                 .commit();
     }
+
+	@Override
+	public void onBackPressed() {
+		super.onBackPressed();
+		overridePendingTransition(R.animator.fade_in, R.animator.exit_to_left);
+	}
 }

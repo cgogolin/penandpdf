@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
   <item android:id="@+id/menu_cancel"
 	android:icon="@drawable/ic_action_cancel"
 	android:title="@string/menu_cancel" 
-	android:showAsAction="always"
+	app:showAsAction="always"
 	android:background="?android:selectableItemBackground"
 	/>
   <item
       android:id="@+id/menu_edit"
       android:icon="@drawable/ic_action_editannot"
       android:title="@string/menu_draw" 
-      android:showAsAction="always"
+      app:showAsAction="always"
       android:background="?android:selectableItemBackground"
       />
   <item android:id="@+id/menu_accept"
 	android:icon="@drawable/ic_action_accept"
 	android:title="@string/menu_accept" 
-	android:showAsAction="always"
+	app:showAsAction="always"
 	android:background="?android:selectableItemBackground"
 	/>
 </menu>
