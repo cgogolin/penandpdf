@@ -21,6 +21,8 @@ public class SettingsActivity extends Activity {
     final static String PREF_SMART_TEXT_SELECTION = "pref_smart_text_selection";
     final static String PREF_KEEP_SCREEN_ON = "keep_screen_on";
 
+	final static String PREF_EXPERIMENTAL_MODE = "experimental_mode";
+	
     final static String SHARED_PREFERENCES_STRING = "PenAndPDF";
     
     @Override

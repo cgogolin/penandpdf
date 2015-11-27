@@ -129,5 +129,13 @@
 	android:key="pref_test_list_preference"
 	android:title="Test"
 	android:summary="Test summary" />-->
-    
+    <PreferenceCategory 
+	android:title="@string/experimental_mode_settings"
+	android:key="pref_experimental_mode_settings">
+      <CheckBoxPreference
+	  android:key="pref_experimental_mode"
+	  android:title="@string/experimental_mode"
+	  android:summary="@string/experimental_mode_summ"
+	  android:defaultValue="false" />
+    </PreferenceCategory>    
 </PreferenceScreen>

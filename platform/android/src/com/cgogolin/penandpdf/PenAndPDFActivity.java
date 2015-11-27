@@ -10,7 +10,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.ActionBar;
 import android.app.Activity;
-import android.app.AlertDialog;
+//import android.app.AlertDialog;
 import android.app.SearchManager;
 import android.content.ContentUris;
 import android.content.Context;
@@ -35,6 +35,7 @@ import android.provider.MediaStore;
 import android.support.v7.widget.Toolbar;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.SearchView;
 import android.text.Editable;
@@ -419,8 +420,8 @@ public static boolean isMediaDocument(Uri uri) {
                 latestTextInSearchBox = savedInstanceState.getString("latestTextInSearchBox", latestTextInSearchBox);
             }
             
-                //Initialize the alert builder working arround a bug in the HoloLight.DarkActionBar theme:
-				//mAlertBuilder = new AlertDialog.Builder(this, R.style.AlertDialogTheme);
+                //Initialize the alert builder working arround a bug in varoious themes
+//			mAlertBuilder = new AlertDialog.Builder(this, R.style.PenAndPDFAlertDialogTheme);
 			mAlertBuilder = new AlertDialog.Builder(this);
             
                 //Get the core saved with onRetainNonConfigurationInstance()
@@ -758,18 +759,18 @@ public static boolean isMediaDocument(Uri uri) {
                                 }
                             }
                             if (which == AlertDialog.BUTTON_NEUTRAL) {
-                                showSaveAsDialog();
                             }
                             if (which == AlertDialog.BUTTON_NEGATIVE) {
+								showSaveAsActivity();
                             }
                         }
                     };
                 AlertDialog alert = mAlertBuilder.create();
-                alert.setTitle(getString(R.string.app_name));
+				alert.setTitle(getString(R.string.save));
                 alert.setMessage(getString(R.string.how_do_you_want_to_save));
                 alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);
-                alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.saveas), listener);
-                alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel), listener);
+                alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.saveas), listener);
+                alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
                 alert.show();
                 if (core == null || !core.canSaveToCurrentUri(this))
                     alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
@@ -1063,18 +1064,18 @@ public static boolean isMediaDocument(Uri uri) {
 
                     @Override
                     protected void addTextAnnotFromUserInput(final Annotation annot) {
-                        
-                        final LinearLayout editTextLayout = new LinearLayout(getContext());
+
+						mAlertDialog = mAlertBuilder.create();
+                        final LinearLayout editTextLayout = new LinearLayout(mAlertDialog.getContext());
                         editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
                         editTextLayout.setOrientation(1);
-                        editTextLayout.setPadding(16, 16, 16, 0);
-                        final EditText input = new EditText(getContext());
+                        editTextLayout.setPadding(16, 16, 16, 0);//should not be hard coded
+                        final EditText input = new EditText(editTextLayout.getContext());
                         input.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_NORMAL|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
                         input.setHint(getString(R.string.add_a_note));
                         input.setBackgroundDrawable(null);
                         if(annot != null && annot.text != null) input.setText(annot.text);
                         editTextLayout.addView(input);
-                        mAlertDialog = mAlertBuilder.create();
                         mAlertDialog.setView(editTextLayout);
                         mAlertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), new DialogInterface.OnClickListener() 
                                 {
@@ -1152,11 +1153,13 @@ public static boolean isMediaDocument(Uri uri) {
                     }
                 
                 };
-//            setContentView(mDocView);
-			FrameLayout layout = (FrameLayout)findViewById(R.id.main_layout);
-			layout.addView(mDocView, 1, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 			
             mDocViewNeedsNewAdapter = true;
+
+				//Make the doc view visible
+			FrameLayout layout = (FrameLayout)findViewById(R.id.main_layout);
+			layout.addView(mDocView, 1, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+			findViewById(R.id.entry_screen_layout).setVisibility(View.GONE);
         }
         if(mDocView!=null)
         {
@@ -1171,7 +1174,7 @@ public static boolean isMediaDocument(Uri uri) {
                 mDocView.setAdapter(new MuPDFPageAdapter(this, this, core));
                 mDocViewNeedsNewAdapter = false;
             }
-            
+			
                 //Reinstate last viewport if it was recorded
             restoreVieport();
 
@@ -1186,8 +1189,7 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
 	private void setupEntryScreen() {
-		// LinearLayout layout = (LinearLayout) findViewById(R.id.main_layout);
-		// getLayoutInflater().inflate(R.layout.entry_screen, layout);
+		findViewById(R.id.entry_screen_layout).setVisibility(View.VISIBLE);
 		
 		findViewById(R.id.entry_screen_open_document_card_view).setOnClickListener(new OnClickListener() {
 				@Override
@@ -1220,7 +1222,7 @@ public static boolean isMediaDocument(Uri uri) {
 								}
 								else
                                 {
-									showSaveAsDialog();
+									showSaveAsActivity();
                                 }
                             }
                             if (which == AlertDialog.BUTTON_NEGATIVE) {
@@ -1236,7 +1238,7 @@ public static boolean isMediaDocument(Uri uri) {
                         }
                     };
                 AlertDialog alert = mAlertBuilder.create();
-                alert.setTitle(getString(R.string.app_name));
+                alert.setTitle(getString(R.string.save_question));
                 alert.setMessage(getString(R.string.document_has_changes_save_them));
 				if (core.canSaveToCurrentUri(this))
 					alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), listener);
@@ -1348,8 +1350,8 @@ public static boolean isMediaDocument(Uri uri) {
                                 }
                             };
                         AlertDialog alert = mAlertBuilder.create();
-                        alert.setTitle("MuPDF");
-                        alert.setMessage(getString(R.string.overwrite)+" "+uri.getPath()+"?");
+                        alert.setTitle(R.string.overwrite_question);
+                        alert.setMessage(getString(R.string.overwrite)+" "+uri.getPath()+" ?");
                         alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), listener);
                         alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
                         alert.show();
@@ -1370,14 +1372,12 @@ public static boolean isMediaDocument(Uri uri) {
         super.onActivityResult(requestCode, resultCode, intent);
     }
 
-    private void showSaveAsDialog() {
+    private void showSaveAsActivity() {
         mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //Do not save when we are stopped for the new request
         if (android.os.Build.VERSION.SDK_INT < 19)
         {
             Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
-//                                    if (core.getPath() != null && Uri.parse(core.getPath()) != null) intent.setData(Uri.parse(core.getPath()));
             if (core.getUri() != null) intent.setData(core.getUri());
-//                                    else if (core.getFileName() != null && Uri.parse(core.getFileName()) != null) intent.setData(Uri.parse(core.getFileName()));
             intent.putExtra(Intent.EXTRA_TITLE, core.getFileName());
             intent.setAction(Intent.ACTION_PICK);
             startActivityForResult(intent, SAVEAS_REQUEST);
@@ -1599,27 +1599,42 @@ public static boolean isMediaDocument(Uri uri) {
 
 
     private void showGoToPageDialoge() {
-        final EditText input = new EditText(this);
+
+		mAlertDialog = mAlertBuilder.create();
+
+		final LinearLayout editTextLayout = new LinearLayout(mAlertDialog.getContext());
+		editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+		editTextLayout.setOrientation(1);
+		editTextLayout.setPadding(16, 16, 16, 0);//should not be hard coded
+		
+        final EditText input = new EditText(editTextLayout.getContext());
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
         input.setSingleLine();
-        new AlertDialog.Builder(this)
-            .setTitle(R.string.dialog_gotopage_title)
-            .setPositiveButton(R.string.dialog_gotopage_ok, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                            // User clicked OK button
-                        int pageNumber = Integer.parseInt(input.getText().toString());
-                        mDocView.setDisplayedViewIndex(pageNumber == 0 ? 0 : pageNumber -1 );
-                        mDocView.setScale(1.0f);
-                        mDocView.setNormalizedScroll(0.0f,0.0f);
-                    }
-                })
-            .setNegativeButton(R.string.dialog_gotopage_cancel, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                            // User cancelled the dialog
-                    }
-                })
-            .setView(input)
-            .show();
+		input.setBackgroundDrawable(null);
+		input.setHint(getString(R.string.dialog_gotopage_hint));
+
+		mAlertDialog.setTitle(R.string.dialog_gotopage_title);
+		DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener()
+			{
+				public void onClick(DialogInterface dialog, int which) {
+					if (which == AlertDialog.BUTTON_POSITIVE) {
+							// User clicked OK button
+						int pageNumber = Integer.parseInt(input.getText().toString());
+						mDocView.setDisplayedViewIndex(pageNumber == 0 ? 0 : pageNumber -1 );
+						mDocView.setScale(1.0f);
+						mDocView.setNormalizedScroll(0.0f,0.0f);
+					}
+					else if (which == AlertDialog.BUTTON_NEGATIVE) {
+						
+					}
+				}
+			};
+		mAlertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dialog_gotopage_ok), listener);
+		mAlertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dialog_gotopage_cancel), listener);
+		editTextLayout.addView(input);
+		mAlertDialog.setView(editTextLayout);
+		mAlertDialog.show();
+		input.requestFocus();
     }
 
     
@@ -1662,21 +1677,6 @@ public static boolean isMediaDocument(Uri uri) {
                 return;
         }
         
-        // if (mActionBarMode == ActionBarMode.Annot) return;
-        // if (mActionBarMode == ActionBarMode.Search) {
-        //     hideKeyboard();
-        //     mDocView.clearSearchResults();
-        //     mDocView.resetupChildren();
-        //     mActionBarMode = ActionBarMode.Main;
-        //     invalidateOptionsMenu();
-        //     return;
-        // }
-        // if (mActionBarMode == ActionBarMode.Selection) {
-        //     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-        //     pageView.deselectText();
-        //     return;
-        // }
-        
         if (core != null && core.hasChanges()) {
             DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
@@ -1690,7 +1690,7 @@ public static boolean isMediaDocument(Uri uri) {
                                     finish();
                             }
                             else
-                                showSaveAsDialog();
+                                showSaveAsActivity();
                         }
                         if (which == AlertDialog.BUTTON_NEGATIVE) {
                             mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true;
@@ -1701,7 +1701,7 @@ public static boolean isMediaDocument(Uri uri) {
                     }
                 };
             AlertDialog alert = mAlertBuilder.create();
-            alert.setTitle(getString(R.string.app_name));
+            alert.setTitle(getString(R.string.save_question));
             alert.setMessage(getString(R.string.document_has_changes_save_them));
             if(core.canSaveToCurrentUri(this))
                 alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), listener);

@@ -34,6 +34,10 @@
 	<string name="eraser_thickness_summ">Dicke des Radierers einstellen.</string>
 	<string name="error_saveing">Fehler beim Speichern</string>
 	<string name="exit_fullscreen">Zurück drücken um Vollbildmodus zu verlassen</string>
+	<string name="experimental_mode_settings">Experimenteller Modus</string>
+	<string name="experimental_mode">Experimenteller Modus</string>
+	<string name="experimental_mode_summ">Experimentellen Modus aktivieren.</string>
+	<string name="file">Datei</string>
 	<string name="fill_out_text_field">Textfeld ausfüllen</string>
 	<string name="fit_width">Auf Seitenbreite zoomen</string>
 	<string name="fit_width_summ">Zoom automatisch auf Seitenbreite einrasten.</string>
@@ -85,7 +89,8 @@
 	<string name="nothing_to_save">Nichts zum Speichern</string>
 	<string name="okay">OK</string>
 	<string name="outline_title">Inhaltsverzeichnis</string>
-	<string name="overwrite">Überschreiben</string>
+	<string name="overwrite_question">Überschreiben?</string>
+	<string name="overwrite">Überschreibe</string>
 	<string name="parent_directory">..</string>
 	<string name="picker_title_App_Ver_Dir">%1$s %2$s: %3$s</string>
 	<string name="print">Drucken</string>
@@ -99,6 +104,7 @@
 	<string name="save_on_destroy_summ">Automatisch speichern wenn die App endgültig geschlossen wird.</string>
 	<string name="save_on_stop">Automatisch speichern wenn gestoppt</string>
 	<string name="save_on_stop_summ">Automatisch speichern wenn die App vorübergehend gestoppt wird und in den Hintergrund tritt. Ist dies deaktiviert können Änderungen im Prinzip verloren gehen wenn die App von Android ohne Vorwarnung geschlossen wird, es wird jedoch trotzdem geraten diese Funktion deaktiviert zu lassen.</string>
+	<string name="save_question">Speichern?</string>
 	<string name="saveas">Speichern als</string>
 	<string name="scroll_continuous">Kontinuierliches Scrollen</string>
 	<string name="scroll_continuous_summ">Kontinuierliches Scrollen aktivieren.</string>

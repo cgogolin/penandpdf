@@ -20,7 +20,8 @@
 	<string name="delete">Delete</string>
 	<string name="dialog_gotopage_cancel">Cancel</string>
 	<string name="dialog_gotopage_ok">Go</string>
-	<string name="dialog_gotopage_title">Jump to page</string>
+	<string name="dialog_gotopage_title">Go to page</string>
+	<string name="dialog_gotopage_hint">number...</string>
 	<string name="dismiss">Dismiss</string>
 	<string name="display_settings">Display settings</string>
 	<string name="document_has_changes_save_them">Document has changes. Do you want to save them?</string>
@@ -37,6 +38,10 @@
 	<string name="eraser_thickness_summ">Set the thickness of the eraser.</string>
 	<string name="error_saveing">Error while saving</string>
 	<string name="exit_fullscreen">Press back to exit fullscreen</string>
+	<string name="experimental_mode_settings">Experimental mode</string>
+	<string name="experimental_mode">Experimental mode</string>
+	<string name="experimental_mode_summ">Enable experimental mode.</string>
+	<string name="file">File</string>
 	<string name="fill_out_text_field">Fill out text field</string>
 	<string name="fit_width">Auto fit width</string>
 	<string name="fit_width_summ">Automatically snaps the zoom level to fit the width of the page.</string>
@@ -102,6 +107,7 @@
 	<string name="save_on_destroy_summ">Automatically save current file when the app is finally destroyed.</string>
 	<string name="save_on_stop">Auto save when stopped</string>
 	<string name="save_on_stop_summ">Automatically save current file when the app is stopped and sent to the background. If this is disabled, changes can in principle get lost if Android kills this app while in the background, however, it is recommender to  leave this off.</string>
+	<string name="save_question">Save?</string>
 	<string name="saveas">Save as</string>
 	<string name="scroll_continuous">Scroll continuous</string>
 	<string name="scroll_continuous_summ">Enable continuous scrolling.</string>
