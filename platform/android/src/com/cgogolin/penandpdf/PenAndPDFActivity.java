@@ -93,8 +93,8 @@ public class PenAndPDFActivity extends android.support.v7.app.AppCompatActivity 
     private String latestTextInSearchBox = "";
     private String textOfLastSearch = "";
     private android.support.v7.widget.ShareActionProvider mShareActionProvider = null;
-    private boolean mNotSaveOnDestroyThisTime = false;
-    private boolean mNotSaveOnStopThisTime = false;
+//    private boolean mNotSaveOnDestroyThisTime = false;
+//    private boolean mNotSaveOnStopThisTime = false;
     private boolean mSaveOnStop = false;
     private boolean mSaveOnDestroy = false;
     private boolean mDocViewNeedsNewAdapter = false;
@@ -443,8 +443,8 @@ public static boolean isMediaDocument(Uri uri) {
         {
             super.onResume();
 
-            mNotSaveOnDestroyThisTime = false;
-            mNotSaveOnStopThisTime = false;
+            // mNotSaveOnDestroyThisTime = false;
+            // mNotSaveOnStopThisTime = false;
 
 			Intent intent = getIntent();
 			if (Intent.ACTION_MAIN.equals(intent.getAction()))
@@ -502,7 +502,8 @@ public static boolean isMediaDocument(Uri uri) {
             //Save only during onStop() as this can take some time
         if(core != null && !isChangingConfigurations())
         {
-            if(!mNotSaveOnStopThisTime && core.canSaveToCurrentUri(this) && mSaveOnStop)
+//            if(!mNotSaveOnStopThisTime && core.canSaveToCurrentUri(this) && mSaveOnStop)
+			if(core.canSaveToCurrentUri(this) && mSaveOnStop)
             {
                 if(!save())
                     showInfo(getString(R.string.error_saveing));
@@ -519,7 +520,8 @@ public static boolean isMediaDocument(Uri uri) {
 		if(core != null && !isChangingConfigurations())
 		{
 			SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
-			if(!mNotSaveOnDestroyThisTime && core.canSaveToCurrentUri(this) && mSaveOnDestroy)
+//			if(!mNotSaveOnDestroyThisTime && core.canSaveToCurrentUri(this) && mSaveOnDestroy)
+			if(core.canSaveToCurrentUri(this) && mSaveOnDestroy)
 			{
 				if(!save())
 					showInfo(getString(R.string.error_saveing));
@@ -1197,6 +1199,32 @@ public static boolean isMediaDocument(Uri uri) {
 					openDocument();
 				}
 			});
+		findViewById(R.id.entry_screen_new_document_card_view).setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View view) {
+					try
+					{
+						openNewDocument();
+					}
+					catch(java.io.IOException e){
+					AlertDialog alert = mAlertBuilder.create();
+                    alert.setTitle(R.string.cannot_open_document);
+                    alert.setMessage(getResources().getString(R.string.reason)+": "+e.toString());
+                    alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            finish();
+                                        }
+                                    });
+                    alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                            public void onDismiss(DialogInterface dialog) {
+                                finish();
+                            }
+                        });
+                    alert.show();	
+					}
+				}
+			});
 		findViewById(R.id.entry_screen_settings_card_view).setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View view) {
@@ -1207,64 +1235,17 @@ public static boolean isMediaDocument(Uri uri) {
 			});
 	}
 	
-    public void openDocument() {
-        if (android.os.Build.VERSION.SDK_INT < 19)
+    public void showOpenDocumentDialog() {
+		Intent intent = null;
+		if (android.os.Build.VERSION.SDK_INT < 19)
         {
-            if (core!=null && core.hasChanges()) {
-                DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            if (which == AlertDialog.BUTTON_POSITIVE) {
-                                mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //No need to save twice
-								if(core.canSaveToCurrentUri(getApplicationContext()))
-								{
-									if(!save())
-										showInfo(getString(R.string.error_saveing));
-								}
-								else
-                                {
-									showSaveAsActivity();
-                                }
-                            }
-                            if (which == AlertDialog.BUTTON_NEGATIVE) {
-                                mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true;
-                                    //Should do a start activity for result here
-                                Intent intent = new Intent(getApplicationContext(), PenAndPDFFileChooser.class);
-                                intent.setAction(Intent.ACTION_MAIN);
-								startActivityForResult(intent, EDIT_REQUEST);
-                                // startActivity(intent);
-                                // finish();
-								overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
-                            }
-                            if (which == AlertDialog.BUTTON_NEUTRAL) {
-                            }
-                        }
-                    };
-                AlertDialog alert = mAlertBuilder.create();
-                alert.setTitle(getString(R.string.save_question));
-                alert.setMessage(getString(R.string.document_has_changes_save_them));
-				if (core.canSaveToCurrentUri(this))
-					alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), listener);
-				else
-					alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.saveas), listener);
-                alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
-                alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
-				alert.show();
-            }
-            else
-            {
-                    //Should do a start activity for result here
-                Intent intent = new Intent(this, PenAndPDFFileChooser.class);
-                intent.setAction(Intent.ACTION_MAIN);
-				startActivityForResult(intent, EDIT_REQUEST);
-                // startActivity(intent);
-                // finish();
-				overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
-            }
-        }
-        else
-        {
-            Intent chooser = new Intent(Intent.ACTION_CHOOSER);
-            chooser.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+			intent = new Intent(this, PenAndPDFFileChooser.class);
+			intent.setAction(Intent.ACTION_MAIN);	
+		}
+		else
+		{
+            // Intent chooser = new Intent(Intent.ACTION_CHOOSER);
+            // chooser.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             
             Intent getContentIntent = new Intent(Intent.ACTION_GET_CONTENT);
             getContentIntent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -1273,15 +1254,73 @@ public static boolean isMediaDocument(Uri uri) {
             Intent openDocumentIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             openDocumentIntent.addCategory(Intent.CATEGORY_OPENABLE);
             openDocumentIntent.setType("application/pdf");
-            
             ArrayList<Intent> extraIntents = new ArrayList<Intent>();
             extraIntents.add(getContentIntent);
-            
             openDocumentIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents.toArray(new Intent[] { }));
 
-            startActivityForResult(openDocumentIntent, EDIT_REQUEST);
-			overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
-        }
+			intent = openDocumentIntent;
+		}
+		
+		startActivityForResult(intent, EDIT_REQUEST);
+		overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
+	}
+
+    public void openNewDocument() throws java.io.IOException {
+		
+		File cacheDir = getCacheDir();
+		File tmpFile = File.createTempFile("", ".pdf", cacheDir);
+		Uri uri = Uri.fromFile(tmpFile);
+		
+		PenAndPDFCore.createEmptyDocument(this, uri);
+		
+		getIntent().setAction(Intent.ACTION_VIEW);
+		getIntent().setData(uri);
+		if (core != null) {
+			core.onDestroy();
+			core = null;
+		}
+		onResume();//New core and new docview are setup here	
+	}
+	
+    public void openDocument() {		
+		if (core!=null && core.hasChanges()) {
+			DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						if (which == AlertDialog.BUTTON_POSITIVE) {
+//							mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //No need to save twice
+							if(core.canSaveToCurrentUri(getApplicationContext()))
+							{
+								if(!save())
+									showInfo(getString(R.string.error_saveing));
+							}
+							else
+							{
+								showSaveAsActivity();
+							}
+						}
+						if (which == AlertDialog.BUTTON_NEGATIVE) {
+//							mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true;
+							showOpenDocumentDialog();
+						}
+						if (which == AlertDialog.BUTTON_NEUTRAL) {
+						}
+					}
+                    };
+			AlertDialog alert = mAlertBuilder.create();
+			alert.setTitle(getString(R.string.save_question));
+			alert.setMessage(getString(R.string.document_has_changes_save_them));
+			if (core.canSaveToCurrentUri(this))
+				alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), listener);
+			else
+				alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.saveas), listener);
+			alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
+			alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), listener);
+			alert.show();
+		}
+		else
+		{
+			showOpenDocumentDialog();
+		}
     }
 
     @Override
@@ -1314,13 +1353,8 @@ public static boolean isMediaDocument(Uri uri) {
                             core.onDestroy();
                             core = null;
                         }
-                        onResume();
+                        onResume();//New core and new docview are setup here
                     }
-                }
-                else
-                {
-                    // if (core == null) 
-                    //     finish();
                 }
                 break;
             case OUTLINE_REQUEST:
@@ -1377,7 +1411,7 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
     private void showSaveAsActivity() {
-        mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //Do not save when we are stopped for the new request
+//        mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //Do not save when we are stopped for the new request
         if (android.os.Build.VERSION.SDK_INT < 19)
         {
             Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
@@ -1686,7 +1720,7 @@ public static boolean isMediaDocument(Uri uri) {
             DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         if (which == AlertDialog.BUTTON_POSITIVE) {
-                            mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //No need to save twice
+//                            mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //No need to save twice
                             if(core.canSaveToCurrentUri(PenAndPDFActivity.this))
                             {
                                 if(!save())
@@ -1698,7 +1732,7 @@ public static boolean isMediaDocument(Uri uri) {
                                 showSaveAsActivity();
                         }
                         if (which == AlertDialog.BUTTON_NEGATIVE) {
-                            mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true;
+//                            mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true;
                             finish();
                         }
                         if (which == AlertDialog.BUTTON_NEUTRAL) {

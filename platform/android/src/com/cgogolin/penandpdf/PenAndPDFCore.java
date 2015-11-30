@@ -274,4 +274,89 @@ public class PenAndPDFCore extends MuPDFCore
         super.onDestroy();
         if(tmpFile != null) tmpFile.delete();
     }
+
+    public static void createEmptyDocument(Context context, Uri uri) throws java.io.IOException, java.io.FileNotFoundException {
+        FileOutputStream fileOutputStream = null;
+        try
+        {
+            String path = uri.getPath();
+            File file = null;
+            if(path != null)
+                file = new File(path);
+            if(file != null)
+                fileOutputStream = new FileOutputStream(file);        
+
+            if(fileOutputStream == null)
+                throw new java.io.IOException("Unable to open output stream to given uri: "+uri.getPath());
+
+            String newline = System.getProperty ("line.separator");
+            String minimalPDF =
+                "%PDF-1.1"+newline+
+//                "%¥±ë"+newline+
+//                "%\342\343\317\323"+newline+
+//                "Â¥Â±Ã«"+newline+
+                "\u00a5\u00b1\u00eb"+newline+
+                "1 0 obj "+newline+
+                "<<"+newline+
+                "/Type /Catalog"+newline+
+                "/Pages 2 0 R"+newline+
+                ">>"+newline+
+                "endobj "+newline+
+                "2 0 obj "+newline+
+                "<<"+newline+
+                "/Kids [3 0 R]"+newline+
+                "/Type /Pages"+newline+
+                "/MediaBox [0 0 595 842]"+newline+
+                "/Count 1"+newline+
+                ">>"+newline+
+                "endobj "+newline+
+                "3 0 obj "+newline+
+                "<<"+newline+
+                "/Resources "+newline+
+                "<<"+newline+
+                "/Font "+newline+
+                "<<"+newline+
+                "/F1 "+newline+
+                "<<"+newline+
+                "/Subtype /Type1"+newline+
+                "/Type /Font"+newline+
+                "/BaseFont /Times-Roman"+newline+
+                ">>"+newline+
+                ">>"+newline+
+                ">>"+newline+
+                "/Parent 2 0 R"+newline+
+                "/Type /Page"+newline+
+                "/MediaBox [0 0 210 297]"+newline+
+                ">>"+newline+
+                "endobj xref"+newline+
+                "0 4"+newline+
+                "0000000000 65535 f "+newline+
+                "0000000015 00000 n "+newline+
+                "0000000066 00000 n "+newline+
+                "0000000149 00000 n "+newline+
+                "trailer"+newline+
+                ""+newline+
+                "<<"+newline+
+                "/Root 1 0 R"+newline+
+                "/Size 4"+newline+
+                ">>"+newline+
+                "startxref"+newline+
+                "314"+newline+
+                "%%EOF"+newline;
+            byte[] buffer = minimalPDF.getBytes();
+            fileOutputStream.write(buffer, 0, buffer.length);
+        }
+        catch (java.io.FileNotFoundException e) 
+        {
+            throw e;
+        }
+        catch (java.io.IOException e)
+        {
+            throw e;
+        }
+        finally
+        {
+            if(fileOutputStream != null) fileOutputStream.close();
+        }
+    }
 }

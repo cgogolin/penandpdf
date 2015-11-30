@@ -30,6 +30,14 @@
 	<string name="enter_new_filename">Oben auswählen oder neuen Dateinamen eingeben</string>
 	<string name="enter_password">Passwort eingeben</string>
 	<string name="entering_reflow_mode">Anpassungsmodus wird gestartet</string>
+	<string name="entry_screen_open_document">Document öffnen</string>
+	<string name="entry_screen_open_document_summ">Öffne ein Dokument durch Auswählen einer Datei.</string>
+	<string name="entry_screen_get_document">Document importieren</string>
+	<string name="entry_screen_get_document_summ">Importiere ein Dokumnt aus einer anderen App.</string>
+	<string name="entry_screen_settings">Einstellungen</string>
+	<string name="entry_screen_settings_summ">Ändere die Einstellungen.</string>
+	<string name="entry_screen_new_document">Neues Dokument</string>
+	<string name="entry_screen_new_document_summ">Öffne ein blankes Dokument zum aufzeichnen von Notizen.</string>
 	<string name="eraser_thickness">Dicke des Radierers</string>
 	<string name="eraser_thickness_summ">Dicke des Radierers einstellen.</string>
 	<string name="error_saveing">Fehler beim Speichern</string>

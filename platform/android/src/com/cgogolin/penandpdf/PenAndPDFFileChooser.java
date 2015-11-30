@@ -51,7 +51,7 @@ public class PenAndPDFFileChooser extends android.support.v7.app.AppCompatActivi
         tabLayout.setTabGravity(android.support.design.widget.TabLayout.GRAVITY_FILL);
 
             //Setup the view pager
-        final ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager = (ViewPager) findViewById(R.id.pager);
         mFragmentPagerAdapter = new android.support.v4.app.FragmentPagerAdapter(getSupportFragmentManager()) {
 
                 FileBrowserFragment fileBrowserFragment;
@@ -77,8 +77,8 @@ public class PenAndPDFFileChooser extends android.support.v7.app.AppCompatActivi
                     }
                 }
             };
-        viewPager.setAdapter(mFragmentPagerAdapter);
-        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout)
+        mViewPager.setAdapter(mFragmentPagerAdapter);
+        mViewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout)
             {
                 @Override
                 public void onPageSelected(int position) {
@@ -90,7 +90,7 @@ public class PenAndPDFFileChooser extends android.support.v7.app.AppCompatActivi
         tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                viewPager.setCurrentItem(tab.getPosition());
+                mViewPager.setCurrentItem(tab.getPosition());
             }
  
             @Override

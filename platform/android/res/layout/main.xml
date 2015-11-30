@@ -1,63 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:app="http://schemas.android.com/apk/res-auto"
-	android:id="@+id/main_layout"
-	android:orientation="vertical"
-	android:layout_width="match_parent"
-	android:layout_height="match_parent" >
-  
-<!-- content will be added here -->
+	     xmlns:app="http://schemas.android.com/apk/res-auto"
+	     android:id="@+id/main_layout"
+	     android:orientation="vertical"
+	     android:layout_width="match_parent"
+	     android:layout_height="match_parent" >
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:tools="http://schemas.android.com/tools"
-	xmlns:card_view="http://schemas.android.com/apk/res-auto"
-	xmlns:app="http://schemas.android.com/apk/res-auto"
-	android:id="@+id/entry_screen_layout"
-	android:visibility="gone"
-	android:orientation="vertical"
-	android:layout_width="match_parent"
-	android:layout_height="wrap_content"
-	android:paddingTop="?attr/actionBarSize">
+  <!-- content will be added here -->
+
+  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		xmlns:tools="http://schemas.android.com/tools"
+		xmlns:card_view="http://schemas.android.com/apk/res-auto"
+		xmlns:app="http://schemas.android.com/apk/res-auto"
+		android:id="@+id/entry_screen_layout"
+		android:visibility="gone"
+		android:orientation="vertical"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginLeft="6dp"
+		android:layout_marginRight="6dp"
+		android:paddingTop="?attr/actionBarSize">
     <android.support.v7.widget.CardView
-        xmlns:card_view="http://schemas.android.com/apk/res-auto"
-	android:id="@+id/entry_screen_open_document_card_view"
-	android:layout_width="match_parent"
-	android:layout_height="wrap_content"
-	card_view:contentPadding="16dp"
-	card_view:cardElevation="2dp"
-	card_view:cardCornerRadius="5dp"
-	android:foreground="?android:attr/selectableItemBackground"
-	android:clickable="true"
-	android:focusable="true">
-        <TextView style="@style/Base.TextAppearance.AppCompat.Title"
-	    android:id="@+id/info_text"
-	    android:text="@string/entry_screen_open_document"
-	    android:layout_width="wrap_content"    
-	    android:layout_height="wrap_content" />
+       xmlns:card_view="http://schemas.android.com/apk/res-auto"
+       android:id="@+id/entry_screen_open_document_card_view"
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       card_view:contentPadding="16dp"
+       android:layout_marginTop="20dp"
+       card_view:cardElevation="2dp"
+       card_view:cardCornerRadius="5dp"
+       android:foreground="?android:attr/selectableItemBackground"
+       android:clickable="true"
+       android:focusable="true">
+      <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		      android:layout_width="match_parent"
+		      android:layout_height="match_parent">
+	<TextView style="@style/Base.TextAppearance.AppCompat.Title"
+		  android:id="@+id/title"
+		  android:text="@string/entry_screen_open_document"
+		  android:layout_width="wrap_content"    
+		  android:layout_height="wrap_content" />
+	<TextView style="@style/Base.TextAppearance.AppCompat.Subhead"
+		  android:id="@+id/subtitle"
+		  android:text="@string/entry_screen_open_document_summ"
+		  android:layout_width="wrap_content"    
+		  android:layout_height="wrap_content"
+		  android:layout_below="@id/title" />
+      </RelativeLayout>
     </android.support.v7.widget.CardView>
     <android.support.v7.widget.CardView
-        xmlns:card_view="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/entry_screen_settings_card_view"
-	android:layout_width="match_parent"
-	android:layout_height="wrap_content"
-	card_view:contentPadding="16dp"
-	card_view:cardElevation="2dp"
-	card_view:cardCornerRadius="5dp"
-	android:foreground="?android:attr/selectableItemBackground">
-        <TextView style="@style/Base.TextAppearance.AppCompat.Title"
-		android:id="@+id/info_text"
-		android:text="@string/entry_screen_settings"
-		android:layout_width="match_parent"
-		android:layout_height="match_parent" />
-    </android.support.v7.widget.CardView>    
-</LinearLayout>
+       xmlns:card_view="http://schemas.android.com/apk/res-auto"
+       android:id="@+id/entry_screen_new_document_card_view"
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       card_view:contentPadding="16dp"
+       android:layout_marginTop="20dp"
+       card_view:cardElevation="2dp"
+       card_view:cardCornerRadius="5dp"
+       android:foreground="?android:attr/selectableItemBackground">
+      <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		      android:layout_width="match_parent"
+		      android:layout_height="match_parent">
+	<TextView style="@style/Base.TextAppearance.AppCompat.Title"
+		  android:id="@+id/title"
+		  android:text="@string/entry_screen_new_document"
+		  android:layout_width="wrap_content"    
+		  android:layout_height="wrap_content" />
+	<TextView style="@style/Base.TextAppearance.AppCompat.Subhead"
+		  android:id="@+id/subtitle"
+		  android:text="@string/entry_screen_new_document_summ"
+		  android:layout_width="wrap_content"    
+		  android:layout_height="wrap_content"
+		  android:layout_below="@id/title" />
+      </RelativeLayout>
+    </android.support.v7.widget.CardView>
+    <android.support.v7.widget.CardView
+       xmlns:card_view="http://schemas.android.com/apk/res-auto"
+       android:id="@+id/entry_screen_settings_card_view"
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       card_view:contentPadding="16dp"
+       android:layout_marginTop="20dp"
+       card_view:cardElevation="2dp"
+       card_view:cardCornerRadius="5dp"
+       android:foreground="?android:attr/selectableItemBackground">
+            <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		      android:layout_width="match_parent"
+		      android:layout_height="match_parent">
+	<TextView style="@style/Base.TextAppearance.AppCompat.Title"
+		  android:id="@+id/title"
+		  android:text="@string/entry_screen_settings"
+		  android:layout_width="wrap_content"    
+		  android:layout_height="wrap_content" />
+	<TextView style="@style/Base.TextAppearance.AppCompat.Subhead"
+		  android:id="@+id/subtitle"
+		  android:text="@string/entry_screen_settings_summ"
+		  android:layout_width="wrap_content"    
+		  android:layout_height="wrap_content"
+		  android:layout_below="@id/title" />
+      </RelativeLayout>
+    </android.support.v7.widget.CardView>
+  </LinearLayout>
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-	android:background="?attr/colorPrimary"
-	android:elevation="4dp"
-	android:theme="@style/PenAndPDFToolbarTheme"
-	android:layout_gravity="center_horizontal|top"/>
+  <android.support.v7.widget.Toolbar
+     android:id="@+id/toolbar"
+     android:layout_width="match_parent"
+     android:layout_height="?attr/actionBarSize"
+     android:background="?attr/colorPrimary"
+     android:elevation="4dp"
+     android:theme="@style/PenAndPDFToolbarTheme"
+     android:layout_gravity="center_horizontal|top"/>
 </FrameLayout>
