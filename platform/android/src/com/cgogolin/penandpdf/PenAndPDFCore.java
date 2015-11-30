@@ -306,7 +306,7 @@ public class PenAndPDFCore extends MuPDFCore
                 "<<"+newline+
                 "/Kids [3 0 R]"+newline+
                 "/Type /Pages"+newline+
-                "/MediaBox [0 0 595 842]"+newline+
+                "/MediaBox [0 0 595 841]"+newline+
                 "/Count 1"+newline+
                 ">>"+newline+
                 "endobj "+newline+
@@ -326,7 +326,7 @@ public class PenAndPDFCore extends MuPDFCore
                 ">>"+newline+
                 "/Parent 2 0 R"+newline+
                 "/Type /Page"+newline+
-                "/MediaBox [0 0 210 297]"+newline+
+                "/MediaBox [0 0 595 841]"+newline+
                 ">>"+newline+
                 "endobj xref"+newline+
                 "0 4"+newline+

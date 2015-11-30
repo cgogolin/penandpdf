@@ -143,6 +143,7 @@
 	<string name="underline">Underline</string>
 	<string name="underline_color">Underline color</string>
 	<string name="underline_color_summ">Set color for underlining text.</string>
+	<string name="unnamed">Unnamed</string>
 	<string name="use_smart_text_selection">Use advanced text selection</string>
 	<string name="use_smart_text_selection_summ">If selected, text selection is constrained to the area between leftmost and rightmost cursor position that was reached.</string>
 	<string name="use_stylus">Use active stylus</string>

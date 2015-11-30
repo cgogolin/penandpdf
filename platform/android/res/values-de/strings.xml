@@ -142,6 +142,7 @@
 	<string name="underline">Unterstreichen</string>
 	<string name="underline_color">Farbe fürs Unterstreichen</string>
 	<string name="underline_color_summ">Farbe für das Unterstreichen von Text wählen.</string>
+	<string name="unnamed">Unbenannt</string>
 	<string name="use_smart_text_selection">Erweiterte Textauswahl verwenden</string>
 	<string name="use_smart_text_selection_summ">Wenn aktiviert ist die Textauswahl auf einen Bereich zwischen den maximal erreichten linken und rechten Zeigerpositionen beschränkt.</string>
 	<string name="use_stylus">Aktiven Zeichenstift verwenden</string>

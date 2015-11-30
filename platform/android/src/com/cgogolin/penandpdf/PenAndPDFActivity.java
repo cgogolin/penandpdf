@@ -573,7 +573,6 @@ public static boolean isMediaDocument(Uri uri) {
                             shareIntent.setAction(Intent.ACTION_SEND);
                             shareIntent.setType("plain/text");
                             shareIntent.setType("*/*");
-//                            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(core.getPath())));
                             shareIntent.putExtra(Intent.EXTRA_STREAM, core.getUri());
                             if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
                         }   
@@ -1268,7 +1267,7 @@ public static boolean isMediaDocument(Uri uri) {
     public void openNewDocument() throws java.io.IOException {
 		
 		File cacheDir = getCacheDir();
-		File tmpFile = File.createTempFile("", ".pdf", cacheDir);
+		File tmpFile = File.createTempFile(getString(R.string.unnamed)+"_", ".pdf", cacheDir);
 		Uri uri = Uri.fromFile(tmpFile);
 		
 		PenAndPDFCore.createEmptyDocument(this, uri);
