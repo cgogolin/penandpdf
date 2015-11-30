@@ -3,8 +3,8 @@ package com.cgogolin.penandpdf;
 import java.io.File;
 
 import android.graphics.Color;
-import android.app.Fragment;
-import android.app.ListFragment;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.ListFragment;
 import android.view.View;
 import android.view.ViewGroup;
 import android.os.Bundle;
@@ -25,7 +25,6 @@ import android.content.Intent;
 import java.util.Collections;
 import java.util.ListIterator;
 
-//public static class SettingsFragment extends PreferenceFragment {
 public class RecentFilesFragment extends ListFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     public interface goToDirInterface {
@@ -152,8 +151,8 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
         intent.setData(uri);
         switch (mPurpose) {
             case ChoosePDF:
-                    // Start an activity to display the PDF file
-                startActivity(intent);
+//                startActivity(intent);
+				getActivity().setResult(Activity.RESULT_OK, intent);
                 getActivity().finish();
                 break;
             case PickFile:

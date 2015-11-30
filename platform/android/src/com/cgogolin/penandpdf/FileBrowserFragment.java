@@ -2,8 +2,8 @@ package com.cgogolin.penandpdf;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Fragment;
-import android.app.ListFragment;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.ListFragment;
 import android.content.Context;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface;
@@ -294,8 +294,8 @@ public class FileBrowserFragment extends ListFragment {
         intent.setData(uri);
         switch (mPurpose) {
             case ChoosePDF:
-                    // Start an activity to display the PDF file
-                startActivity(intent);
+//                startActivity(intent);
+				getActivity().setResult(Activity.RESULT_OK, intent);
                 getActivity().finish();
                 break;
             case PickFile:

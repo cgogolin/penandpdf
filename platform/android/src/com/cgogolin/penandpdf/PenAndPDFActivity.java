@@ -1230,8 +1230,10 @@ public static boolean isMediaDocument(Uri uri) {
                                     //Should do a start activity for result here
                                 Intent intent = new Intent(getApplicationContext(), PenAndPDFFileChooser.class);
                                 intent.setAction(Intent.ACTION_MAIN);
-                                startActivity(intent);
-                                finish();
+								startActivityForResult(intent, EDIT_REQUEST);
+                                // startActivity(intent);
+                                // finish();
+								overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
                             }
                             if (which == AlertDialog.BUTTON_NEUTRAL) {
                             }
@@ -1253,8 +1255,10 @@ public static boolean isMediaDocument(Uri uri) {
                     //Should do a start activity for result here
                 Intent intent = new Intent(this, PenAndPDFFileChooser.class);
                 intent.setAction(Intent.ACTION_MAIN);
-                startActivity(intent);
-                finish();
+				startActivityForResult(intent, EDIT_REQUEST);
+                // startActivity(intent);
+                // finish();
+				overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
             }
         }
         else
@@ -1737,7 +1741,7 @@ public static boolean isMediaDocument(Uri uri) {
     private void showKeyboard()
     {
         InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-        if(inputMethodManager!=null && getCurrentFocus() != null) inputMethodManager.showSoftInput(getCurrentFocus(), 0);
+        if(inputMethodManager!=null && getCurrentFocus() != null) inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
     }
 
 	

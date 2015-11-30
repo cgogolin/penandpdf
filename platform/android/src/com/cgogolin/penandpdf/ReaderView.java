@@ -803,10 +803,9 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     private void removeSuperflousChildren() {
         int numChildren = mChildViews.size();
         int childIndices[] = new int[numChildren];
-        for (int i = 0; i < numChildren; i++){
+        for (int i = 0; i < numChildren; i++)
             childIndices[i] = mChildViews.keyAt(i);
-//            Log.e("ReaderView", "index="+i+" key="+childIndices[i]);
-        }
+        
 
         int maxCount = mAdapter.getCount();
         for (int i = 0; i < numChildren; i++) {
