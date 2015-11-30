@@ -4,7 +4,8 @@ import android.content.Context;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-//import android.preference.Preference;
+import android.preference.PreferenceScreen;
+import android.preference.Preference;
 
 import android.preference.ListPreference;
 
@@ -39,4 +40,48 @@ public class SettingsFragment extends PreferenceFragment {
         prefTextAnnotIconColor.setEntries(ColorPalette.getColorNames());
         prefTextAnnotIconColor.setEntryValues(ColorPalette.getColorNumbers());
     }
+
+
+	// 	//Hack to work around a bug in how theme are apllied in PreferenceFragement, also see:
+	// 	//http://stackoverflow.com/questions/2615528/preferenceactivity-and-theme-not-applying
+	// @Override
+	// public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen,
+	// 									 Preference preference) {
+	// 	super.onPreferenceTreeClick(preferenceScreen, preference);
+	// 	if (preference != null) {
+	// 		if (preference instanceof PreferenceScreen) {
+	// 			if (((PreferenceScreen) preference).getDialog() != null) {
+	// 				((PreferenceScreen) preference)
+    //                     .getDialog()
+    //                     .getWindow()
+    //                     .getDecorView()
+    //                     .setBackgroundDrawable(
+	// 						getActivity()
+	// 						.getWindow()
+	// 						.getDecorView()
+	// 						.getBackground()
+	// 						.getConstantState()
+	// 						.newDrawable()
+	// 										   );
+	// 			}
+	// 		}
+	// 		if (preference instanceof ListPreference) {
+	// 			if (((ListPreference) preference).getDialog() != null) {
+	// 				((ListPreference) preference)
+    //                     .getDialog()
+    //                     .getWindow()
+    //                     .getDecorView()
+    //                     .setBackgroundDrawable(
+	// 						getActivity()
+	// 						.getWindow()
+	// 						.getDecorView()
+	// 						.getBackground()
+	// 						.getConstantState()
+	// 						.newDrawable()
+	// 										   );
+	// 			}
+	// 		}
+	// 	}
+	// 	return false;
+	// }
 }

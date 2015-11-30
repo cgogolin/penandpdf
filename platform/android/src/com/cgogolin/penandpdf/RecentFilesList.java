@@ -1,10 +1,12 @@
 package com.cgogolin.penandpdf;
 
+import android.content.SharedPreferences;
+import android.net.Uri;
+import android.util.Log;
+import java.io.File;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ArrayList;
-import android.content.SharedPreferences;
-import java.io.File;
 
 public class RecentFilesList extends LinkedList<String> implements List<String> { //Probably not the most appropriate list type...
 
@@ -18,12 +20,19 @@ public class RecentFilesList extends LinkedList<String> implements List<String> 
         for (int i = MAX_RECENT_FILES-1; i>=0; i--) //Read in revers order because we use push
         {
             String recentFileString = prefs.getString("recentfile"+i,null);
+			Uri recentFileUri = Uri.parse(recentFileString);
             if(recentFileString != null)
-            {
+            {				
                     //Make sure we add only readable files
-                File recentFile = new File(recentFileString);
-                if(recentFile != null && recentFile.isFile() && recentFile.canRead())
+//                File recentFile = new File(recentFileString);
+				File recentFile = new File(Uri.decode(recentFileUri.getEncodedPath()));
+                if(recentFile != null && recentFile.isFile() && recentFile.canRead()) {
+					
                     push(recentFileString);
+//					Log.e("RecentFilesList","File "+recentFileString+" added");
+				}
+//				else
+//					Log.e("RecentFilesList","File "+recentFileString+" not added because ");
             }
         }
     }

@@ -112,7 +112,21 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
                 } else {
                     view = convertView;
                 }
-                ((TextView)view.findViewById(R.id.name)).setText(getItem(position));
+//                ((TextView)view.findViewById(R.id.name)).setText(getItem(position));
+				String recentFileString = null;
+				Uri recentFileUri = Uri.parse(getItem(position));
+				if(recentFileUri != null)
+				{
+					File recentFile = new File(Uri.decode(recentFileUri.getEncodedPath()));
+					if(recentFile != null)
+						recentFileString = recentFile.getAbsolutePath();
+					else
+						recentFileString = recentFileString;
+				}
+				else
+					recentFileString = recentFileString;
+				((TextView)view.findViewById(R.id.name)).setText(recentFileString);
+					
                 if(position < numDirectories)
                     ((ImageView)view.findViewById(R.id.icon)).setImageResource(R.drawable.ic_dir);  
                 else
@@ -183,12 +197,19 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
 
             //Add the directories of the most recent files to the list if we were asked to pick a file
         RecentFilesList recentDirectoriesList = new RecentFilesList();
-            ListIterator<String> iterartor = recentFilesList.listIterator(0);
-            while (iterartor.hasNext()) {
-                String file = iterartor.next();
-                recentDirectoriesList.push(file.substring(0,file.lastIndexOf("/")));
-            }
-            recentFilesList.addAll(0,recentDirectoriesList);
+		ListIterator<String> iterartor = recentFilesList.listIterator(0);
+		while (iterartor.hasNext()) {
+			String recentFileString = iterartor.next();
+//			recentDirectoriesList.push(recentFileString.substring(0,recentFileString.lastIndexOf("/")));
+			Uri recentFileUri = Uri.parse(recentFileString);
+			File recentFile = new File(Uri.decode(recentFileUri.getEncodedPath()));
+			if(recentFile != null){
+				String absolutePath = recentFile.getAbsolutePath();
+				if(absolutePath != null)
+					recentDirectoriesList.push(absolutePath.substring(0,absolutePath.lastIndexOf("/")));
+			}
+		}
+		recentFilesList.addAll(0,recentDirectoriesList);
         numDirectories = recentDirectoriesList.size();
 
             //Update the data in the adapter
