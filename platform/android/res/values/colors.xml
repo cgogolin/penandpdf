@@ -3,8 +3,8 @@
 	<color name="window_background">#FFF0F0F0</color>
 	<color name="primary">#AA000000</color>
 	<color name="primary_dark">#000000</color>
-	<color name="primary_light">#00FF00</color>
-	<color name="accent">#DD0000</color>
+<!--	<color name="primary_light">#00FF00</color>-->
+	<color name="accent">#CC0000</color>
 	<color name="primary_text">#0f0f0f</color>
 	<color name="primary_text_toolbar">#C0ffffff</color>
 	<color name="hint_text_toolbar">#A0ffffff</color>

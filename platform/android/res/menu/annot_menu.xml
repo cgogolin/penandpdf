@@ -2,15 +2,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
   <item android:id="@+id/menu_undo"
-	android:icon="@drawable/ic_action_undo"
+	android:icon="@drawable/ic_undo_white_24dp"
 	android:title="@string/menu_undo" 
 	app:showAsAction="always"/>
   <item android:id="@+id/menu_cancel"
-	android:icon="@drawable/ic_action_cancel"
+	android:icon="@drawable/ic_clear_white_24dp"
 	android:title="@string/menu_cancel" 
 	app:showAsAction="always"/>
   <item android:id="@+id/menu_erase"
-	android:icon="@drawable/ic_action_erase"
+	android:icon="@drawable/ic_action_erase_white_24dp"
 	android:title="@string/menu_erase" 
 	app:showAsAction="always"/>
   <item
@@ -19,7 +19,7 @@
       android:title="@string/menu_draw" 
       app:showAsAction="always"/>
   <item android:id="@+id/menu_accept"
-	android:icon="@drawable/ic_action_accept"
+	android:icon="@drawable/ic_done_white_24dp"
 	android:title="@string/menu_accept" 
 	app:showAsAction="always"/>
 </menu>

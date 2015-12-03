@@ -1130,10 +1130,12 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         if (mHqView != null && mHqView.getArea() != null && mHqView.getPatchArea() != null) {
             if(mHqView.getArea().width() != w || mHqView.getArea().height() != h) {
                     // Remove Hq if zoomed since patch was created
+                mHqView.setVisibility(View.GONE);
                 mHqView.reset();
             } else
             {
                 mHqView.layout(mHqView.getPatchArea().left, mHqView.getPatchArea().top, mHqView.getPatchArea().right, mHqView.getPatchArea().bottom);
+                mHqView.setVisibility(View.VISIBLE);
 //                Log.e("PenAndPDF", "layout() for "+mHqView.getPatchArea());
             }
         }

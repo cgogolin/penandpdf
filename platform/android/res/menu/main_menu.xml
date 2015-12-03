@@ -29,15 +29,15 @@
 	android:title="@string/menu_settings"
 	app:showAsAction="never"/>
   <item android:id="@+id/menu_linkback"
-	android:icon="@drawable/ic_action_back"
+	android:icon="@drawable/ic_arrow_back_white_24dp"
 	android:title="@string/menu_linkback" 
 	app:showAsAction="always"/>
   <item android:id="@+id/menu_add_text_annot"
-	android:icon="@drawable/ic_action_new_label"
+	android:icon="@drawable/ic_mode_comment_white_24dp"
 	android:title="@string/menu_add_text_annot" 
 	app:showAsAction="always"/>
   <item android:id="@+id/menu_draw"
-	android:icon="@drawable/ic_action_edit"
+	android:icon="@drawable/ic_mode_edit_white_24dp"
 	android:title="@string/menu_draw"
 	app:showAsAction="always"/>
 </menu>

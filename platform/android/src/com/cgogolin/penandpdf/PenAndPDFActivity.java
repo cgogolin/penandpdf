@@ -1764,10 +1764,15 @@ public static boolean isMediaDocument(Uri uri) {
     private void setTitle() {
         if (core == null || mDocView == null)  return;
         int pageNumber = mDocView.getSelectedItemPosition();
-        String title = Integer.toString(pageNumber+1)+"/"+Integer.toString(core.countPages());
-        if(core.getFileName() != null) title+=" "+core.getFileName();
+        String title = getString(R.string.app_name)+" ("+Integer.toString(pageNumber+1)+"/"+Integer.toString(core.countPages())+")";
+//        if(core.getFileName() != null) title+=" "+core.getFileName();
+		String subtitle = "";
+		if(core.getFileName() != null) subtitle+=core.getFileName();
         android.support.v7.app.ActionBar actionBar = getSupportActionBar();
-		if(actionBar != null) actionBar.setTitle(title);
+		if(actionBar != null){
+			actionBar.setTitle(title);
+			actionBar.setSubtitle(subtitle);
+		}
     }
     
     
