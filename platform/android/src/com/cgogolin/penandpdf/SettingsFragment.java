@@ -1,15 +1,20 @@
 package com.cgogolin.penandpdf;
 
+import android.util.TypedValue;
 import android.content.Context;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.preference.Preference;
-
+import android.widget.ListView;
+import android.view.View;
+import android.view.ViewGroup;
 import android.preference.ListPreference;
+import android.os.Bundle;
+import android.view.LayoutInflater;
 
-//public static class SettingsFragment extends PreferenceFragment {
+
 public class SettingsFragment extends PreferenceFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -41,6 +46,24 @@ public class SettingsFragment extends PreferenceFragment {
         prefTextAnnotIconColor.setEntryValues(ColorPalette.getColorNumbers());
     }
 
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
+        View view = super.onCreateView(inflater, container, savedInstanceState);
+        if(view != null) {
+            ListView listView = (ListView) view.findViewById(android.R.id.list);
+            if(listView != null){
+                TypedValue tv = new TypedValue();
+                if(getActivity().getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+                    int actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data,getResources().getDisplayMetrics());
+                    listView.setPadding(0, actionBarHeight, 0, 0);
+                    listView.setClipToPadding(false);   
+                }
+            }
+        }
+        return view;
+      // android:paddingTop="?attr/actionBarSize"
+      //       android:clipToPadding="false"
+    }
+    
 
 	// 	//Hack to work around a bug in how theme are apllied in PreferenceFragement, also see:
 	// 	//http://stackoverflow.com/questions/2615528/preferenceactivity-and-theme-not-applying

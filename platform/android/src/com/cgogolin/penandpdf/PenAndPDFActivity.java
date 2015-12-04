@@ -44,6 +44,7 @@ import android.text.InputType;
 import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -1158,6 +1159,13 @@ public static boolean isMediaDocument(Uri uri) {
             mDocViewNeedsNewAdapter = true;
 
 				//Make the doc view visible
+            TypedValue tv = new TypedValue();
+            if(getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+                int actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data,getResources().getDisplayMetrics());
+                mDocView.setPadding(0, actionBarHeight, 0, 0);
+                mDocView.setClipToPadding(false);
+            }
+            
 			FrameLayout layout = (FrameLayout)findViewById(R.id.main_layout);
 			layout.addView(mDocView, 1, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 			findViewById(R.id.entry_screen_layout).setVisibility(View.GONE);

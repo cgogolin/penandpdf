@@ -45,7 +45,7 @@ public class SettingsActivity extends android.support.v7.app.AppCompatActivity {
         // Display the fragment as the main content.
         getFragmentManager().beginTransaction()
 //                .replace(android.R.id.content, new SettingsFragment())
-            .add(R.id.scroll_view, new SettingsFragment())
+            .add(R.id.sub_layout, new SettingsFragment())
             .commit();
     }
 

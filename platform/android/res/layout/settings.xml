@@ -4,26 +4,31 @@
 	     android:id="@+id/main_layout"
 	     android:orientation="vertical"
 	     android:layout_width="match_parent"
-	     android:layout_height="match_parent" >
-  <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	     android:layout_height="match_parent">
+  <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	     xmlns:app="http://schemas.android.com/apk/res-auto"
+	     android:id="@+id/sub_layout"
+	     android:layout_width="match_parent"
+	     android:layout_height="match_parent" />
+<!--  <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
 	      android:id="@+id/scroll_view"
 	      android:layout_width="match_parent"
 	      android:layout_height="match_parent"
 	      android:fillViewport="true"
-	      android:paddingTop="?attr/actionBarSize"
-	      android:clipToPadding="false"
 	      >
-<!--    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 		  android:id="@+id/linear_layout"
 		  android:layout_width="match_parent"
-		  android:layout_height="wrap_content"
-		  android:orientation="vertical">
+		  android:layout_height="200dp"
+		  android:orientation="vertical"
+		  android:paddingTop="?attr/actionBarSize"
+		  android:clipToPadding="false">
       <ImageView android:id="@+id/image"
 		 android:layout_width="wrap_content"
-		 android:layout_height="wrap_content"	
+		 android:layout_height="match_parent"	
 		 android:src="@drawable/ic_open" />
-      </LinearLayout>-->
-  </ScrollView>
+    </LinearLayout>
+  </ScrollView>-->
   <android.support.v7.widget.Toolbar
      android:id="@+id/toolbar"
      android:layout_width="match_parent"
