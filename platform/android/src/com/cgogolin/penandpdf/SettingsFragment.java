@@ -52,7 +52,7 @@ public class SettingsFragment extends PreferenceFragment {
             ListView listView = (ListView) view.findViewById(android.R.id.list);
             if(listView != null){
                 TypedValue tv = new TypedValue();
-                if(getActivity().getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+                if(getActivity().getTheme().resolveAttribute(android.support.v7.appcompat.R.attr.actionBarSize, tv, true)) {
                     int actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data,getResources().getDisplayMetrics());
                     listView.setPadding(0, actionBarHeight, 0, 0);
                     listView.setClipToPadding(false);   

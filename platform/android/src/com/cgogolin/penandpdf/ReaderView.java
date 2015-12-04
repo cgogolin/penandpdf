@@ -169,17 +169,17 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             // At some point we may refactor this to fit better with the rest of the
             // code.
 
-            // screenWidth/Height are the actual width/height of the screen. e.g. 480/800
-        int screenWidth  = getWidth();
-        int screenHeight = getHeight();
+            // screenWidth/Height are the actual visible part of this view
+        int screenWidth  = getWidth()-getPaddingLeft()-getPaddingRight();
+        int screenHeight = getHeight()-getPaddingTop()-getPaddingBottom();
             // We might be mid scroll; we want to calculate where we scroll to based on
             // where this scroll would end, not where we are now (to allow for people
             // bashing 'forwards' very fast.
         int remainingX = mScroller.getFinalX() - mScroller.getCurrX();
         int remainingY = mScroller.getFinalY() - mScroller.getCurrY();
             // right/bottom is in terms of pixels within the scaled document; e.g. 1000
-        int left = -(v.getLeft() + mXScroll + remainingX);
-        int top  = -(v.getTop()  + mYScroll + remainingY);
+        int left = -(v.getLeft() + mXScroll + remainingX) + getPaddingLeft();
+        int top  = -(v.getTop()  + mYScroll + remainingY) + getPaddingTop();
         int right  = screenWidth  + left;
         int bottom = screenHeight + top;
             // docWidth/Height are the width/height of the scaled document e.g. 2000x3000
@@ -259,17 +259,17 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             // At some point we may refactor this to fit better with the rest of the
             // code.
 
-            // screenWidth/Height are the actual width/height of the screen. e.g. 480/800
-        int screenWidth  = getWidth();
-        int screenHeight = getHeight();
+            // screenWidth/Height are the actual fully visible part of this view
+        int screenWidth  = getWidth()-getPaddingLeft()-getPaddingRight();
+        int screenHeight = getHeight()-getPaddingTop()-getPaddingBottom();
             // We might be mid scroll; we want to calculate where we scroll to based on
             // where this scroll would end, not where we are now (to allow for people
             // bashing 'forwards' very fast.
         int remainingX = mScroller.getFinalX() - mScroller.getCurrX();
         int remainingY = mScroller.getFinalY() - mScroller.getCurrY();
             // left/top is in terms of pixels within the scaled document; e.g. 1000
-        int left  = -(v.getLeft() + mXScroll + remainingX);
-        int top   = -(v.getTop()  + mYScroll + remainingY);
+        int left  = -(v.getLeft() + mXScroll + remainingX) + getPaddingLeft();
+        int top   = -(v.getTop()  + mYScroll + remainingY) + getPaddingTop();
         // int right  = screenWidth  + left;
         // int bottom = screenHeight + top;
             // docWidth/Height are the width/height of the scaled document e.g. 2000x3000
@@ -748,13 +748,13 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         cvBottom = cvTop  + cv.getMeasuredHeight();
 
             //If the user is not interacting and the scroller is finished move the view so that no gaps are left
-        if (!mUserInteracting && mScroller.isFinished() && !changed) {            
-            Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
-            cvRight  += corr.x;
-            cvLeft   += corr.x;
-            cvTop    += corr.y;
-            cvBottom += corr.y;
-        }        
+        // if (!mUserInteracting && mScroller.isFinished() && !changed) {            
+        //     Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
+        //     cvRight  += corr.x;
+        //     cvLeft   += corr.x;
+        //     cvTop    += corr.y;
+        //     cvBottom += corr.y;
+        // }        
 
             //Finally layout the child view with the calculated values
         cv.layout(cvLeft, cvTop, cvRight, cvBottom);
@@ -885,7 +885,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         if (!mReflow) {
                 // Work out a scale that will fit it to this view
             float scale;
-            scale = Math.min((float)getWidth()/(float)v.getMeasuredWidth(),(float)getHeight()/(float)v.getMeasuredHeight()); //This makes scale=1.0 correspond to fit to screen
+            scale = Math.min((float)(getWidth()-getPaddingLeft()-getPaddingRight())/(float)v.getMeasuredWidth(),(float)(getHeight()-getPaddingTop()-getPaddingBottom())/(float)v.getMeasuredHeight()); //This makes scale=1.0 correspond to fit to screen
                 // Use the fitting values scaled by our current scale factor
             v.measure(View.MeasureSpec.EXACTLY | (int)(v.getMeasuredWidth()*scale*mScale),
                       View.MeasureSpec.EXACTLY | (int)(v.getMeasuredHeight()*scale*mScale));
@@ -913,10 +913,10 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             // There can be scroll amounts not yet accounted for in
             // onLayout, so add mXScroll and mYScroll to the current
             // positions when calculating the bounds.
-        return getScrollBounds(v.getLeft() + mXScroll,
-                               v.getTop() + mYScroll,
-                               v.getLeft() + v.getMeasuredWidth() + mXScroll,
-                               v.getTop() + v.getMeasuredHeight() + mYScroll);
+        return getScrollBounds(v.getLeft() + mXScroll - getPaddingLeft(),
+                               v.getTop() + mYScroll - getPaddingTop(),
+                               v.getLeft() + v.getMeasuredWidth() + mXScroll + getPaddingRight(),
+                               v.getTop() + v.getMeasuredHeight() + mYScroll + getPaddingBottom());
     }
 
     private Point getCorrection(Rect bounds) {
