@@ -4,7 +4,5 @@
   <item android:id="@+id/menu_cancel"
 	android:icon="@drawable/ic_clear_white_24dp"
 	android:title="@string/menu_cancel"
-	app:showAsAction="always"
-	android:background="?android:selectableItemBackground"
-	/>
+	app:showAsAction="always" />
 </menu>

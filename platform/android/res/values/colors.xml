@@ -3,12 +3,11 @@
 	<color name="window_background">#FFF0F0F0</color>
 	<color name="primary">#AA000000</color>
 	<color name="primary_dark">#000000</color>
-<!--	<color name="primary_light">#00FF00</color>-->
 	<color name="accent">#CC0000</color>
-	<color name="primary_text">#0f0f0f</color>
-	<color name="primary_text_toolbar">#C0ffffff</color>
-	<color name="hint_text_toolbar">#A0ffffff</color>
-	<color name="secondary_text">#0f0f0f</color>
+	<color name="primary_text">#0F0F0F</color>
+	<color name="primary_text_toolbar">#FFFFFFFF</color>
+	<color name="hint_text_toolbar">#FFEFEFEF</color>
+	<color name="secondary_text">#0F0F0F</color>
 	<color name="icons">#FFFFFF</color>
 	<color name="divider">#B6B6B6</color>
 	<color name="ripple">#FF0000</color>

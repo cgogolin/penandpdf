@@ -4,15 +4,14 @@
   <item android:id="@+id/menu_previous"
 	android:icon="@drawable/ic_action_previous_item"
 	android:title="@string/menu_previous" 
-	app:showAsAction="always"/>
+	app:showAsAction="always" />
   <item android:id="@+id/menu_next"
 	android:icon="@drawable/ic_action_next_item"
 	android:title="@string/menu_next" 
-	app:showAsAction="always"/>
+	app:showAsAction="always" />
   <item android:id="@+id/menu_search_box"
 	android:title="@string/menu_search"
 	app:showAsAction="always"
 	app:actionViewClass="android.support.v7.widget.SearchView"
-	android:inputType="textFilter"
-	/>
+	android:inputType="textFilter" />
 </menu>

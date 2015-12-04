@@ -6,18 +6,17 @@
 	android:title="@string/menu_undo" 
 	app:showAsAction="always"/>
   <item android:id="@+id/menu_cancel"
-	android:icon="@drawable/ic_clear_white_24dp"
+	android:icon="@drawable/ic_delete_white_24dp"
 	android:title="@string/menu_cancel" 
 	app:showAsAction="always"/>
   <item android:id="@+id/menu_erase"
 	android:icon="@drawable/ic_action_erase_white_24dp"
 	android:title="@string/menu_erase" 
 	app:showAsAction="always"/>
-  <item
-      android:id="@+id/menu_draw"
-      app:actionLayout="@layout/drawing_button"
-      android:title="@string/menu_draw" 
-      app:showAsAction="always"/>
+  <item android:id="@+id/menu_draw"
+	app:actionLayout="@layout/drawing_button"
+	android:title="@string/menu_draw" 
+	app:showAsAction="always"/>
   <item android:id="@+id/menu_accept"
 	android:icon="@drawable/ic_done_white_24dp"
 	android:title="@string/menu_accept" 
