@@ -203,7 +203,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
 //                yOffset = (nextDocHeight < screenHeight ? ((nextDocHeight - screenHeight)>>1) : 0);
                 if(nextDocHeight < screenHeight)
                 {
-                    yOffset = ((nextDocHeight - screenHeight)>>1) - getPaddingTop();
+                    yOffset = ((nextDocHeight - screenHeight)>>1);
                 } else if(screenHeight >= 0.8*docHeight)
                 {
                     yOffset = top;
@@ -225,8 +225,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                         // Adjust in case the previous page is less wide
                     if (xOffset + screenWidth > nextDocWidth)
                         xOffset = nextDocWidth - screenWidth;
-
-                    
                 }
                 xOffset -= nextLeft;
                 yOffset -= nextTop;
@@ -290,10 +288,9 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 int prevDocHeight = pv.getMeasuredHeight();
 
                     // Allow for the next page maybe being shorter than the screen is high
-//                yOffset = (prevDocHeight < screenHeight ? ((prevDocHeight - screenHeight)>>1) : 0);
                 if(prevDocHeight < screenHeight)
                 {
-                    yOffset = ((prevDocHeight - screenHeight)>>1) - getPaddingTop();
+                    yOffset = ((prevDocHeight - screenHeight)>>1);
                 } else if(screenHeight >= 0.8*docHeight)
                 {
                     yOffset = top - prevDocHeight+screenHeight;

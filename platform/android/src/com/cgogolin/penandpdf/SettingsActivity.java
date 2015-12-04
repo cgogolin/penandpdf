@@ -42,12 +42,17 @@ public class SettingsActivity extends android.support.v7.app.AppCompatActivity {
 //			actionBar.setSubtitle(subtitle);
 		}
         
-        // Display the fragment as the main content.
-        getFragmentManager().beginTransaction()
+        // Add the fragment to the layout
+        // if the savedInstanceState != null this is apprantly not necessary...
+        if(savedInstanceState == null)
+        {
+            getFragmentManager().beginTransaction()
 //                .replace(android.R.id.content, new SettingsFragment())
-            .add(R.id.sub_layout, new SettingsFragment())
-            .commit();
+                .add(R.id.sub_layout, new SettingsFragment())
+                .commit();
+        }
     }
+    
 
 	@Override
 	public void onBackPressed() {

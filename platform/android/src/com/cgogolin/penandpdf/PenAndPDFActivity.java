@@ -1160,7 +1160,7 @@ public static boolean isMediaDocument(Uri uri) {
 
 				//Make appear below the toolbar if completely zoomed out
             TypedValue tv = new TypedValue();
-            if(getTheme().resolveAttribute(android.support.v7.appcompat.R.attr.actionBarSize, tv, true)) {
+            if(getSupportActionBar().isShowing() && getTheme().resolveAttribute(android.support.v7.appcompat.R.attr.actionBarSize, tv, true)) {
                 int actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data,getResources().getDisplayMetrics());
                 mDocView.setPadding(0, actionBarHeight, 0, 0);
                 mDocView.setClipToPadding(false);
