@@ -17,8 +17,8 @@
 		android:orientation="vertical"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:layout_marginLeft="10dp"
-		android:layout_marginRight="10dp"
+		android:layout_marginLeft="6dp"
+		android:layout_marginRight="6dp"
 		android:paddingTop="?attr/actionBarSize"
 		android:animateLayoutChanges="true">
     <android.support.v7.widget.CardView
@@ -26,8 +26,8 @@
        android:id="@+id/entry_screen_open_document_card_view"
        android:layout_width="match_parent"
        android:layout_height="wrap_content"
-       card_view:contentPadding="16dp"
-       android:layout_marginTop="20dp"
+       card_view:contentPadding="10dp"
+       android:layout_marginTop="10dp"
        card_view:cardElevation="2dp"
        card_view:cardCornerRadius="5dp"
        android:foreground="?android:attr/selectableItemBackground"
@@ -54,8 +54,8 @@
        android:id="@+id/entry_screen_new_document_card_view"
        android:layout_width="match_parent"
        android:layout_height="wrap_content"
-       card_view:contentPadding="16dp"
-       android:layout_marginTop="20dp"
+       card_view:contentPadding="10dp"
+       android:layout_marginTop="10dp"
        card_view:cardElevation="2dp"
        card_view:cardCornerRadius="5dp"
        android:foreground="?android:attr/selectableItemBackground">
@@ -80,8 +80,8 @@
        android:id="@+id/entry_screen_settings_card_view"
        android:layout_width="match_parent"
        android:layout_height="wrap_content"
-       card_view:contentPadding="16dp"
-       android:layout_marginTop="20dp"
+       card_view:contentPadding="10dp"
+       android:layout_marginTop="10dp"
        card_view:cardElevation="2dp"
        card_view:cardCornerRadius="5dp"
        android:foreground="?android:attr/selectableItemBackground">
