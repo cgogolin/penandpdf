@@ -194,8 +194,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 View nv = mChildViews.get(mCurrent+1);
                 if (nv == null) // No page to advance to
                     return;
-                int nextTop  = -(nv.getTop() + mYScroll + remainingY);
-                int nextLeft = -(nv.getLeft() + mXScroll + remainingX);
+                int nextTop  = -(nv.getTop() + mYScroll + remainingY) + getPaddingTop();
+                int nextLeft = -(nv.getLeft() + mXScroll + remainingX) + getPaddingLeft();
                 int nextDocWidth = nv.getMeasuredWidth();
                 int nextDocHeight = nv.getMeasuredHeight();
 
@@ -203,7 +203,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
 //                yOffset = (nextDocHeight < screenHeight ? ((nextDocHeight - screenHeight)>>1) : 0);
                 if(nextDocHeight < screenHeight)
                 {
-                    yOffset = ((nextDocHeight - screenHeight)>>1);
+                    yOffset = ((nextDocHeight - screenHeight)>>1) - getPaddingTop();
                 } else if(screenHeight >= 0.8*docHeight)
                 {
                     yOffset = top;
@@ -284,8 +284,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 View pv = mChildViews.get(mCurrent-1);
                 if (pv == null) /* No page to advance to */
                     return;
-                int prevLeft  = -(pv.getLeft() + mXScroll);
-                int prevTop  = -(pv.getTop() + mYScroll);
+                int prevLeft  = -(pv.getLeft() + mXScroll) + getPaddingLeft();
+                int prevTop  = -(pv.getTop() + mYScroll) + getPaddingTop();
                 int prevDocWidth = pv.getMeasuredWidth();
                 int prevDocHeight = pv.getMeasuredHeight();
 
@@ -293,10 +293,10 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
 //                yOffset = (prevDocHeight < screenHeight ? ((prevDocHeight - screenHeight)>>1) : 0);
                 if(prevDocHeight < screenHeight)
                 {
-                    yOffset = ((prevDocHeight - screenHeight)>>1);
+                    yOffset = ((prevDocHeight - screenHeight)>>1) - getPaddingTop();
                 } else if(screenHeight >= 0.8*docHeight)
                 {
-                    yOffset = top - prevDocHeight+screenHeight ;
+                    yOffset = top - prevDocHeight+screenHeight;
                 }
                 else
                 {
@@ -748,13 +748,13 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         cvBottom = cvTop  + cv.getMeasuredHeight();
 
             //If the user is not interacting and the scroller is finished move the view so that no gaps are left
-        // if (!mUserInteracting && mScroller.isFinished() && !changed) {            
-        //     Point corr = getCorrection(getScrollBounds(cvLeft, cvTop, cvRight, cvBottom));
-        //     cvRight  += corr.x;
-        //     cvLeft   += corr.x;
-        //     cvTop    += corr.y;
-        //     cvBottom += corr.y;
-        // }        
+        if (!mUserInteracting && mScroller.isFinished() && !changed) {            
+            Point corr = getCorrection(getScrollBounds(cvLeft-getPaddingLeft(), cvTop-getPaddingTop(), cvRight-getPaddingRight(), cvBottom-getPaddingBottom()));
+            cvRight  += corr.x;
+            cvLeft   += corr.x;
+            cvTop    += corr.y;
+            cvBottom += corr.y;
+        }        
 
             //Finally layout the child view with the calculated values
         cv.layout(cvLeft, cvTop, cvRight, cvBottom);
