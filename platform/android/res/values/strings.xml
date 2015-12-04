@@ -38,7 +38,7 @@
 	<string name="entry_screen_settings">Settings</string>
 	<string name="entry_screen_settings_summ">Fine tune the settings.</string>
 	<string name="entry_screen_new_document">New Document</string>
-	<string name="entry_screen_new_document_summ">Open a blank document for making notes.</string>
+	<string name="entry_screen_new_document_summ">Open a blank document for notes.</string>
 	<string name="eraser_thickness">Eraser thickness</string>
 	<string name="eraser_thickness_summ">Set the thickness of the eraser.</string>
 	<string name="error_saveing">Error while saving</string>

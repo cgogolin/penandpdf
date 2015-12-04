@@ -36,17 +36,23 @@
       <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 		      android:layout_width="match_parent"
 		      android:layout_height="match_parent">
+	<ImageView android:id="@+id/image"
+		   android:layout_width="wrap_content"
+		   android:layout_height="wrap_content"	
+		   android:src="@drawable/ic_open" />
 	<TextView style="@style/Base.TextAppearance.AppCompat.Title"
 		  android:id="@+id/title"
 		  android:text="@string/entry_screen_open_document"
 		  android:layout_width="wrap_content"    
-		  android:layout_height="wrap_content" />
+		  android:layout_height="wrap_content"
+		  android:layout_toRightOf="@id/image"/>
 	<TextView style="@style/Base.TextAppearance.AppCompat.Subhead"
 		  android:id="@+id/subtitle"
 		  android:text="@string/entry_screen_open_document_summ"
 		  android:layout_width="wrap_content"    
 		  android:layout_height="wrap_content"
-		  android:layout_below="@id/title" />
+		  android:layout_below="@id/title"
+		  android:layout_alignLeft="@id/title"/>
       </RelativeLayout>
     </android.support.v7.widget.CardView>
     <android.support.v7.widget.CardView
@@ -62,17 +68,23 @@
       <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 		      android:layout_width="match_parent"
 		      android:layout_height="match_parent">
+	<ImageView android:id="@+id/image"
+		   android:layout_width="wrap_content"
+		   android:layout_height="wrap_content"	
+		   android:src="@drawable/ic_new" />
 	<TextView style="@style/Base.TextAppearance.AppCompat.Title"
 		  android:id="@+id/title"
 		  android:text="@string/entry_screen_new_document"
 		  android:layout_width="wrap_content"    
-		  android:layout_height="wrap_content" />
+		  android:layout_height="wrap_content"
+		  android:layout_toRightOf="@id/image" />
 	<TextView style="@style/Base.TextAppearance.AppCompat.Subhead"
 		  android:id="@+id/subtitle"
 		  android:text="@string/entry_screen_new_document_summ"
 		  android:layout_width="wrap_content"    
 		  android:layout_height="wrap_content"
-		  android:layout_below="@id/title" />
+		  android:layout_below="@id/title"
+		  android:layout_alignLeft="@id/title"/>
       </RelativeLayout>
     </android.support.v7.widget.CardView>
     <android.support.v7.widget.CardView
@@ -85,20 +97,26 @@
        card_view:cardElevation="2dp"
        card_view:cardCornerRadius="5dp"
        android:foreground="?android:attr/selectableItemBackground">
-            <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-		      android:layout_width="match_parent"
-		      android:layout_height="match_parent">
+      <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+			    android:layout_width="match_parent"
+			    android:layout_height="match_parent">
+	<ImageView android:id="@+id/image"
+		   android:layout_width="wrap_content"
+		   android:layout_height="wrap_content"	
+		   android:src="@drawable/ic_settings" />
 	<TextView style="@style/Base.TextAppearance.AppCompat.Title"
 		  android:id="@+id/title"
 		  android:text="@string/entry_screen_settings"
 		  android:layout_width="wrap_content"    
-		  android:layout_height="wrap_content" />
+		  android:layout_height="wrap_content"
+		  android:layout_toRightOf="@id/image" />
 	<TextView style="@style/Base.TextAppearance.AppCompat.Subhead"
 		  android:id="@+id/subtitle"
 		  android:text="@string/entry_screen_settings_summ"
 		  android:layout_width="wrap_content"    
 		  android:layout_height="wrap_content"
-		  android:layout_below="@id/title" />
+		  android:layout_below="@id/title"
+		  android:layout_alignLeft="@id/title"/>
       </RelativeLayout>
     </android.support.v7.widget.CardView>
   </LinearLayout>

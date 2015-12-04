@@ -2,8 +2,10 @@ package com.cgogolin.penandpdf;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 
-public class SettingsActivity extends Activity {
+public class SettingsActivity extends android.support.v7.app.AppCompatActivity {
     final static String PREF_USE_STYLUS = "pref_use_stylus";
     final static String PREF_SCROLL_VERTICAL = "pref_scroll_vertical";
     final static String PREF_SCROLL_CONTINUOUS = "pref_scroll_continuous";
@@ -28,11 +30,23 @@ public class SettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.settings);
+        Toolbar myToolbar = (Toolbar)findViewById(R.id.toolbar);
+        setSupportActionBar(myToolbar);
+
+        String title = getString(R.string.app_name);
+        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+		if(actionBar != null){
+			actionBar.setTitle(title);
+//			actionBar.setSubtitle(subtitle);
+		}
         
         // Display the fragment as the main content.
         getFragmentManager().beginTransaction()
-                .replace(android.R.id.content, new SettingsFragment())
-                .commit();
+//                .replace(android.R.id.content, new SettingsFragment())
+            .add(R.id.scroll_view, new SettingsFragment())
+            .commit();
     }
 
 	@Override

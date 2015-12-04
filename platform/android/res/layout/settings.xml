@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	     xmlns:app="http://schemas.android.com/apk/res-auto"
+	     android:id="@+id/main_layout"
+	     android:orientation="vertical"
+	     android:layout_width="match_parent"
+	     android:layout_height="match_parent" >
+  <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	      android:id="@+id/scroll_view"
+	      android:layout_width="match_parent"
+	      android:layout_height="match_parent"
+	      android:fillViewport="true"
+	      android:paddingTop="?attr/actionBarSize"
+	      android:clipToPadding="false"
+	      >
+<!--    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		  android:id="@+id/linear_layout"
+		  android:layout_width="match_parent"
+		  android:layout_height="wrap_content"
+		  android:orientation="vertical">
+      <ImageView android:id="@+id/image"
+		 android:layout_width="wrap_content"
+		 android:layout_height="wrap_content"	
+		 android:src="@drawable/ic_open" />
+      </LinearLayout>-->
+  </ScrollView>
+  <android.support.v7.widget.Toolbar
+     android:id="@+id/toolbar"
+     android:layout_width="match_parent"
+     android:layout_height="?attr/actionBarSize"
+     android:background="?attr/colorPrimary"
+     android:elevation="4dp"
+     android:theme="@style/PenAndPDFToolbarTheme"
+     android:layout_gravity="center_horizontal|top"/>
+</FrameLayout>
