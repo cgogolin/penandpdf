@@ -31,7 +31,8 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
         public void goToDir(File dir);
     }
     
-    private enum Purpose { ChoosePDF, PickKeyFile, PickFile }
+    private enum Purpose { ChooseFileForOpening, PickKeyFile, ChooseFileForSaving, ChooseFileForOpeningAndLaunch }
+//    private enum Purpose { ChoosePDF, PickKeyFile, PickFile }
     
     private ArrayAdapter<String> mRecentFilesAdapter;
     private Purpose mPurpose;
@@ -45,12 +46,20 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
     public static final RecentFilesFragment newInstance(Intent intent) {
             //Collect data from intent
         Purpose purpose;
-        if (Intent.ACTION_MAIN.equals(intent.getAction())) 
-            purpose = Purpose.ChoosePDF;
-        else if (Intent.ACTION_PICK.equals(intent.getAction()))
-            purpose = Purpose.PickFile;
+        if(intent.ACTION_MAIN.equals(intent.getAction()))
+            purpose = Purpose.ChooseFileForOpeningAndLaunch;
+        else if(intent.ACTION_CHOOSER.equals(intent.getAction()))
+            purpose = Purpose.ChooseFileForOpening;
+        else if((intent.ACTION_PICK.equals(intent.getAction())))
+            purpose = Purpose.ChooseFileForSaving;
         else
             purpose = Purpose.PickKeyFile;
+        // if (Intent.ACTION_MAIN.equals(intent.getAction())) 
+        //     purpose = Purpose.ChoosePDF;
+        // else if (Intent.ACTION_PICK.equals(intent.getAction()))
+        //     purpose = Purpose.PickFile;
+        // else
+        //     purpose = Purpose.PickKeyFile;
         
             //Put the collected data in a Bundle
         Bundle bundle = new Bundle(3);
@@ -164,18 +173,15 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
         intent.setAction(Intent.ACTION_VIEW);
         intent.setData(uri);
         switch (mPurpose) {
-            case ChoosePDF:
-//                startActivity(intent);
-				getActivity().setResult(Activity.RESULT_OK, intent);
+            case ChooseFileForOpeningAndLaunch:
+                intent.setAction(Intent.ACTION_VIEW);
+                startActivity(intent);
                 getActivity().finish();
                 break;
-            case PickFile:
-                getActivity().setResult(Activity.RESULT_OK, intent);
-                getActivity().finish();
-                break;
+            case ChooseFileForOpening:
+            case ChooseFileForSaving:
             case PickKeyFile:
-                    // Return the uri to the caller
-                getActivity().setResult(Activity.RESULT_OK, intent);
+				getActivity().setResult(Activity.RESULT_OK, intent);
                 getActivity().finish();
                 break;
         }

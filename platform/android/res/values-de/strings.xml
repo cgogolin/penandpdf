@@ -21,6 +21,10 @@
 	<string name="dialog_gotopage_cancel">Abbrechen</string>
 	<string name="dialog_gotopage_ok">Los</string>
 	<string name="dialog_gotopage_title">Springe zu Seite</string>
+	<string name="dialog_newdoc_cancel">Abbrechen</string>
+	<string name="dialog_newdoc_ok">Erstellen</string>
+	<string name="dialog_newdoc_title">Blankes PDF erstellen</string>
+	<string name="dialog_newdoc_hint">Dateiname...</string>
 	<string name="dismiss">Verwerfen</string>
 	<string name="display_settings">Anzeige</string>
 	<string name="document_has_changes_save_them">Das Dokument wurde verändert. Sollen die Änderungen gespeichert werden?</string>
@@ -95,6 +99,10 @@
 	<string name="no_text_selected">Kein Text ausgewählt</string>
 	<string name="not_supported">Nicht unterstützt</string>
 	<string name="nothing_to_save">Nichts zum Speichern</string>
+
+	<string name="notes_provider_summary">Mit Pen&amp;PDF erstellte Notizen</string>
+	<string name="notes_provider_title">Pen&amp;PDF Notizen</string>
+	
 	<string name="okay">OK</string>
 	<string name="outline_title">Inhaltsverzeichnis</string>
 	<string name="overwrite_question">Überschreiben?</string>

@@ -5,7 +5,7 @@ import android.app.AlertDialog;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.support.v7.app.AppCompatActivity;
-import android.content.Context;
+//import android.content.Context;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -34,7 +34,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FileBrowserFragment extends ListFragment {
+public class NoteBrowserFragment extends ListFragment {
 
     private enum Purpose { ChooseFileForOpening, PickKeyFile, ChooseFileForSaving, ChooseFileForOpeningAndLaunch }
     
@@ -53,7 +53,7 @@ public class FileBrowserFragment extends ListFragment {
     static final String FILENAME = "filename";
     static final String DIRECTORY = "directory";
     
-    public static final FileBrowserFragment newInstance(Intent intent) {
+    public static final NoteBrowserFragment newInstance(Intent intent) {
         
             //Collect data from intent
         Purpose purpose;
@@ -107,9 +107,9 @@ public class FileBrowserFragment extends ListFragment {
         if(directory != null) bundle.putString(DIRECTORY,directory.getAbsolutePath());
         
             //Pass it to the Fragment and return 
-        FileBrowserFragment fileBrowserFragment = new FileBrowserFragment();
-        fileBrowserFragment.setArguments(bundle);
-        return fileBrowserFragment;
+        NoteBrowserFragment noteBrowserFragment = new NoteBrowserFragment();
+        noteBrowserFragment.setArguments(bundle);
+        return noteBrowserFragment;
     }
     
 
@@ -141,7 +141,8 @@ public class FileBrowserFragment extends ListFragment {
         }
             //If we didn't get a directory we default to downloads
         if(mDirectory == null)
-            mDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            mDirectory = PenAndPDFContentProvider.getNotesDir(getActivity());
+//            mDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         
             // Create a new handler that is updated dynamically when files are scanned
         mHandler = new Handler();
@@ -157,14 +158,14 @@ public class FileBrowserFragment extends ListFragment {
                     getActivity().setTitle(mDirectory.getPath());
 
                         //Get the parent directory and the directories and files
-                    mParent = mDirectory.getParentFile();
-                    mDirs = mDirectory.listFiles(new FileFilter() {
-                            public boolean accept(File file) {
-                                return file.isDirectory();
-                            }
-                        });
-                    if (mDirs == null)
-                        mDirs = new File[0];
+//                    mParent = mDirectory.getParentFile();
+                    // mDirs = mDirectory.listFiles(new FileFilter() {
+                    //         public boolean accept(File file) {
+                    //             return file.isDirectory();
+                    //         }
+                    //     });
+                    // if (mDirs == null)
+                    //     mDirs = new File[0];
                     mFiles = mDirectory.listFiles(new FileFilter() {
                             public boolean accept(File file) {
                                 if (file.isDirectory())
@@ -197,18 +198,18 @@ public class FileBrowserFragment extends ListFragment {
                                 return arg0.getName().compareToIgnoreCase(arg1.getName());
                             }
                         });
-                    Arrays.sort(mDirs, new Comparator<File>() {
-                            public int compare(File arg0, File arg1) {
-                                return arg0.getName().compareToIgnoreCase(arg1.getName());
-                            }
-                        });
+                    // Arrays.sort(mDirs, new Comparator<File>() {
+                    //         public int compare(File arg0, File arg1) {
+                    //             return arg0.getName().compareToIgnoreCase(arg1.getName());
+                    //         }
+                    //     });
 
                         //Add them to the adapter
                     mAdapter.clear();
-                    if (mParent != null)
-                        mAdapter.add(new ChoosePDFItem(ChoosePDFItem.Type.PARENT, getString(R.string.parent_directory)));
-                    for (File f : mDirs)
-                        mAdapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DIR, f.getName()));
+                    // if (mParent != null)
+                    //     mAdapter.add(new ChoosePDFItem(ChoosePDFItem.Type.PARENT, getString(R.string.parent_directory)));
+                    // for (File f : mDirs)
+                    //     mAdapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DIR, f.getName()));
                     for (File f : mFiles)
                         mAdapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DOC, f.getName()));
                     mAdapter.notifyDataSetChanged();
@@ -237,7 +238,7 @@ public class FileBrowserFragment extends ListFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        View rootView = inflater.inflate(R.layout.filebrowser, container, false);
+        View rootView = inflater.inflate(R.layout.notebrowser, container, false);
 
         mAdapter = new ChoosePDFAdapter(inflater);
         
@@ -315,13 +316,7 @@ public class FileBrowserFragment extends ListFragment {
                 getActivity().finish();
                 break;
             case ChooseFileForOpening:
-				getActivity().setResult(AppCompatActivity.RESULT_OK, intent);
-                getActivity().finish();
-                break;
             case ChooseFileForSaving:
-                getActivity().setResult(AppCompatActivity.RESULT_OK, intent);
-                getActivity().finish();
-                break;
             case PickKeyFile:
                 getActivity().setResult(AppCompatActivity.RESULT_OK, intent);
                 getActivity().finish();
