@@ -906,35 +906,35 @@ public static boolean isMediaDocument(Uri uri) {
             mDocViewNeedsNewAdapter = true;
             Intent intent = getIntent();
 			
-                Uri uri = intent.getData();
-                try 
-                {
-                    core = new PenAndPDFCore(this, uri);
-                    if(core == null) throw new Exception(getResources().getString(R.string.unable_to_interpret_uri)+" "+uri);
-                }
-                catch (Exception e)
-                {
-                    AlertDialog alert = mAlertBuilder.create();
-                    alert.setTitle(R.string.cannot_open_document);
-                    alert.setMessage(getResources().getString(R.string.reason)+": "+e.toString());
-                    alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
-                                    new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int which) {
+            Uri uri = intent.getData();
+            try 
+            {
+                core = new PenAndPDFCore(this, uri);
+                if(core == null) throw new Exception(getResources().getString(R.string.unable_to_interpret_uri)+" "+uri);
+            }
+            catch (Exception e)
+            {
+                AlertDialog alert = mAlertBuilder.create();
+                alert.setTitle(R.string.cannot_open_document);
+                alert.setMessage(getResources().getString(R.string.reason)+": "+e.toString());
+                alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
                                             finish();
-                                        }
-                                    });
-                    alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                            public void onDismiss(DialogInterface dialog) {
-                                finish();
-                            }
-                        });
-                    alert.show();
-                    core = null;
-                }
+                                    }
+                                });
+                alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        public void onDismiss(DialogInterface dialog) {
+                            finish();
+                        }
+                    });
+                alert.show();
+                core = null;
+            }
             
 			
 			tryToTakePermissions();
-				
+			
             if (core != null && core.needsPassword()) {
                 requestPassword();
             }
@@ -1429,7 +1429,7 @@ public static boolean isMediaDocument(Uri uri) {
         }
         catch(Exception e)
         {
-            Log.e("Core", "Exception="+e);
+            Log.e("PenAndPDF", "Exception during saveAs(): "+e);
             return false;
         }
             //Set the uri of this intent to the new file path
@@ -1445,6 +1445,11 @@ public static boolean isMediaDocument(Uri uri) {
         shareIntent.setType("*/*");
         shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(uri.getPath())));
         if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
+
+            //TODO: this can be done more efficiently...
+        mDocView = null;
+        setupDocView();
+        
         return true;
     }
     
@@ -1456,7 +1461,7 @@ public static boolean isMediaDocument(Uri uri) {
         }
         catch(Exception e)
         {
-            Log.e("Core", "Exception="+e);
+            Log.e("PenAndPDF", "Exception during save(): "+e);
             return false;
         }
             //Save the viewport

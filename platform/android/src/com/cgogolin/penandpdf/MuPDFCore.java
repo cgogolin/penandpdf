@@ -149,6 +149,7 @@ public class MuPDFCore
 			if(path == null) throw new Exception(String.format(context.getString(R.string.cannot_open_file_Path), path));
                 
             mPath = path;
+            fileBuffer = null;
             int lastSlashPos = path.lastIndexOf('/');
             mFileName = new String(lastSlashPos == -1 ? path : path.substring(lastSlashPos+1));
             
@@ -169,7 +170,8 @@ public class MuPDFCore
     protected void init(Context context, byte buffer[], String fileName) throws Exception
 		{
 			cachDir = context.getCacheDir().getAbsolutePath();
-				
+
+            mPath = null;
             fileBuffer = buffer;
             mFileName = fileName;
             

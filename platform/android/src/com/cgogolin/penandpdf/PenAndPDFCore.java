@@ -46,12 +46,12 @@ public class PenAndPDFCore extends MuPDFCore
 
             if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
             {
-//                Log.e("Core", "uri points to file");
+                Log.e("Core", "uri points to file");
                 super.init(context, Uri.decode(uri.getEncodedPath()));
             }
             else if (uri.toString().startsWith("content://")) //Uri points to a content provider
             {
-//                Log.e("Core", "uri points to content");
+                Log.e("Core", "uri points to content");
                 String displayName = null;
                 Cursor cursor = context.getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null); //This should be done asynchonously!
 
@@ -88,16 +88,28 @@ public class PenAndPDFCore extends MuPDFCore
                     }
                 }
                 
-                byte buffer[] = null;    
-                InputStream is = context.getContentResolver().openInputStream(uri);
-                if(is != null)
+                byte buffer[] = null;
+                InputStream is = null;
+                ParcelFileDescriptor pfd = null;
+                is = context.getContentResolver().openInputStream(uri);
+                if(is == null || is.available() == 0)
+                {
+                    pfd = context.getContentResolver().openFileDescriptor(uri, "r");
+                    if(pfd != null)
+                        is = new FileInputStream(pfd.getFileDescriptor());
+                }
+                if(is != null && is.available() > 0)
                 {
                     int len = is.available();
                     buffer = new byte[len];
                     is.read(buffer, 0, len);
                     is.close();
+                    if(pfd != null) pfd.close();
+                    Log.e("Core", "read "+len+" bytes into buffer "+buffer);
+                    super.init(context, buffer, displayName);
                 }
-                super.init(context, buffer, displayName);
+                else
+                    throw new Exception("unable to open input stream to uri "+uri.toString());
             }
         }
             
@@ -160,7 +172,6 @@ public class PenAndPDFCore extends MuPDFCore
                 if(fileOutputStream != null) fileOutputStream.close();
                 if(pfd != null) pfd.close();
             }
-//            this.uri = uri;
             init(context, uri); //reinit because the MuPDFCore core gets useless after saveInterl()
         }
 
