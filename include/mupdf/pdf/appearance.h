@@ -38,6 +38,7 @@ void pdf_set_annot_appearance(fz_context *ctx, pdf_document *doc, pdf_annot *ann
 	its QuadPoints array
 */
 void pdf_set_markup_appearance(fz_context *ctx, pdf_document *doc, pdf_annot *annot, float color[3], float alpha, float line_thickness, float line_height);
+void pdf_set_markup_appearance_highlight(fz_context *ctx, pdf_document *doc, pdf_annot *annot, float* color, float alpha, float line_thickness, float line_height);
 
 void pdf_set_signature_appearance(fz_context *ctx, pdf_document *doc, pdf_annot *annot, char *name, char *dn, char *date);
 

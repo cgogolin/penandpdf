@@ -108,11 +108,13 @@ pdf_create_annot(fz_context *ctx, pdf_document *doc, pdf_page *page, fz_annot_ty
                         annot_arr = pdf_new_array(ctx, doc, 0);
 			pdf_dict_put_drop(ctx, page->me, PDF_NAME_Annots, annot_arr);
 		}
-                
-                if (type == FZ_ANNOT_HIGHLIGHT) {
-                        //Renderd "behind" the text
-                    pdf_dict_put_drop(ctx, annot_obj, PDF_NAME_BM, pdf_new_name(ctx, doc, "Multiply"));
-                }
+        
+        if (type == FZ_ANNOT_HIGHLIGHT) {
+                //Renderd "behind" the text
+            pdf_dict_put_drop(ctx, annot_obj, PDF_NAME_BM, pdf_new_name(ctx, doc, "Multiply"));
+        }
+            /* const char* creator = "PenAndPDF"; */
+            /* pdf_dict_puts_drop(annot_obj, "NM", pdf_new_string(doc, creator, strlen(creator))); */
 
 		pdf_dict_put_drop(ctx, annot_obj, PDF_NAME_Type, PDF_NAME_Annot);
 

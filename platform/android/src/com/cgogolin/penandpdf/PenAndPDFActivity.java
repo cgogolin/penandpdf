@@ -90,10 +90,10 @@ public class PenAndPDFActivity extends AppCompatActivity implements SharedPrefer
 {       
     enum ActionBarMode {Main, Annot, Edit, Search, Selection, Hidden, AddingTextAnnot, Empty};
     
-    private android.support.v7.widget.SearchView searchView = null;
+    private SearchView searchView = null;
     private String latestTextInSearchBox = "";
     private String textOfLastSearch = "";
-    private android.support.v7.widget.ShareActionProvider mShareActionProvider = null;
+    private ShareActionProvider mShareActionProvider = null;
 //    private boolean mNotSaveOnDestroyThisTime = false;
 //    private boolean mNotSaveOnStopThisTime = false;
     private boolean mSaveOnStop = false;
@@ -567,7 +567,6 @@ public static boolean isMediaDocument(Uri uri) {
                     {
                         if (mShareActionProvider == null)
                         {
-//							mShareActionProvider = (ShareActionProvider)MenuItemCompat.getActionProvider(shareItem);
 							mShareActionProvider = (android.support.v7.widget.ShareActionProvider)MenuItemCompat.getActionProvider(shareItem);
 							
                             Intent shareIntent = new Intent();
@@ -715,9 +714,9 @@ public static boolean isMediaDocument(Uri uri) {
             case R.id.menu_draw:
                 mDocView.setMode(MuPDFReaderView.Mode.Drawing);
                 return true;
-            // case R.id.menu_print:
-            //     printDoc();
-            //     return true;
+            case R.id.menu_print:
+                printDoc();
+                return true;
             case R.id.menu_search:
                 mActionBarMode = ActionBarMode.Search;
 				mDocView.setMode(MuPDFReaderView.Mode.Searching);
@@ -1445,11 +1444,6 @@ public static boolean isMediaDocument(Uri uri) {
         shareIntent.setType("*/*");
         shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(uri.getPath())));
         if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
-
-            //TODO: this can be done more efficiently...
-        mDocView = null;
-        setupDocView();
-        
         return true;
     }
     
@@ -1573,19 +1567,7 @@ public static boolean isMediaDocument(Uri uri) {
             showInfo(getString(R.string.format_currently_not_supported));
             return;
         }
-
-        // Intent intent = getIntent();
-        // Uri docUri = intent != null ? intent.getData() : null;
-
-        // if (docUri == null) {
-        //     showInfo(getString(R.string.print_failed));
-        // }
-
-        // if (docUri.getScheme() == null)
-        //     docUri = Uri.parse("file://"+docUri.toString());
-
         Intent printIntent = new Intent(this, PrintDialogActivity.class);
-//        printIntent.setDataAndType(docUri, "aplication/pdf");
         printIntent.setDataAndType(core.getUri(), "aplication/pdf");
         printIntent.putExtra("title", core.getFileName());
         startActivityForResult(printIntent, PRINT_REQUEST);

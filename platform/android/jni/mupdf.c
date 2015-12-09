@@ -1613,7 +1613,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
             color[0] = glo->highlightColor[0];
             color[1] = glo->highlightColor[1];
             color[2] = glo->highlightColor[2];
-            alpha = -0.7; //The negative sign encodes that we want BM/Multiply to be set, which makes the highlight appear "behind" the text of a pdf.
+            alpha = 0.69f; //HACK: Alphas smaller than 0.7 also get /BM Multiply in pdf_dev_alpha and so are displayed "behind" the text!
             line_thickness = 1.0;
             line_height = 0.5;
             break;
@@ -1621,7 +1621,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
             color[0] = glo->underlineColor[0];
             color[1] = glo->underlineColor[1];
             color[2] = glo->underlineColor[2];
-            alpha = 1.0;
+            alpha = 1.0f;
             line_thickness = LINE_THICKNESS;
             line_height = UNDERLINE_HEIGHT;
             break;
@@ -1629,7 +1629,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
             color[0] = glo->strikeoutColor[0];
             color[1] = glo->strikeoutColor[1];
             color[2] = glo->strikeoutColor[2];
-            alpha = 1.0;
+            alpha = 1.0f;
             line_thickness = LINE_THICKNESS;
             line_height = STRIKE_HEIGHT;
             break;
@@ -1637,7 +1637,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
             color[0] = glo->textAnnotIconColor[0];
             color[1] = glo->textAnnotIconColor[1];
             color[2] = glo->textAnnotIconColor[2];
-            alpha = 1.0;
+            alpha = 1.0f;
             break;
         default:
             return;
@@ -1685,9 +1685,9 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
             fz_transform_point(&pts[i], &ctm);
         }
 
-        annot = (fz_annot *)pdf_create_annot(ctx, idoc, (pdf_page *)pc->page, type); //in pdf-annot-edit.c
+        annot = (fz_annot *)pdf_create_annot(ctx, idoc, (pdf_page *)pc->page, type); //in pdf-annot-edit.c creates a simle annot without AP (alpha is not honored here for example!)
 
-            
+            //Now we generate the AP:
         if(type == FZ_ANNOT_TEXT)
         {
                 //Ensure order of points
@@ -1723,14 +1723,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
 //            pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, text, length); //in pdf-annot.c
            pdf_set_text_details(ctx, idoc, (pdf_annot *)annot, &rect, dstptr, length+1); //in pdf-annot.c
            
-               //Genreate appearance for annotation (this should only be done once for each document and then the relevant xobject just referenced...)
-
-           /* float color[3]; */
-           /*     // color should not be hard coded!! */
-           /* color[0] = 0.8; */
-           /* color[1] = 0.8; */
-           /* color[2] = 0.0; */
-           /* const float alpha = 1.0; */
+               //Generate an appearance stream (AP) for the annotation (this should only be done once for each document and then the relevant xobject just referenced...)
            const float linewidth = (pts[1].x - pts[0].x)*0.06;
            const fz_matrix *page_ctm = &((pdf_annot *)annot)->page->ctm;
            fz_display_list *dlist = NULL;
@@ -1791,8 +1784,9 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
         {
             pdf_set_markup_annot_quadpoints(ctx, idoc, (pdf_annot *)annot, pts, n); //in pdf-annot.c
             
-            if(type == FZ_ANNOT_HIGHLIGHT) 
-                pdf_set_markup_appearance_highlight(ctx, idoc, (pdf_annot *)annot, color, &alpha, line_thickness, line_height); //in pdf-appearance.c
+            if(type == FZ_ANNOT_HIGHLIGHT) {
+                pdf_set_markup_appearance_highlight(ctx, idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height); //in pdf-appearance.c
+            }
             else
                 pdf_set_markup_appearance(ctx, idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height); //in pdf-appearance.c
         }

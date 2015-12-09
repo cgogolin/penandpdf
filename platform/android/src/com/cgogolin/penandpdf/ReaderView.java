@@ -828,7 +828,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     }
 
     @Override
-        public void setAdapter(Adapter adapter) {
+    public void setAdapter(Adapter adapter) {
         mAdapter = adapter;
         removeAllChildren();
         removeAllViewsInLayout();

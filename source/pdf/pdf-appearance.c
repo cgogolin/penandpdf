@@ -1677,7 +1677,6 @@ quadpoints(fz_context *ctx, pdf_document *doc, pdf_obj *annot, int *nout)
 	return qp;
 }
 
-//void pdf_set_markup_appearance(fz_context *ctx, pdf_document *doc, pdf_annot *annot, float* color, float alpha, float line_thickness, float line_height)
 void pdf_set_markup_appearance(fz_context *ctx, pdf_document *doc, pdf_annot *annot, float color[3], float alpha, float line_thickness, float line_height)
 {
 	const fz_matrix *page_ctm = &annot->page->ctm;
@@ -1769,15 +1768,8 @@ void pdf_set_markup_appearance(fz_context *ctx, pdf_document *doc, pdf_annot *an
 }
 
 
-/* This is the wiredest bug I have ever come across. If I changed the 'float* alpha' to 'float alpha' and try to call this function as follows */
-/* pdf_set_markup_appearance_highlight(idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height); */
-/* the value of apha doesn't make it accross properly. I have NO idea what is causing this. */
-
-//void pdf_set_markup_appearance_highlight(pdf_document *doc, pdf_annot *annot, float* color, float *alphap, float line_thickness, float line_height)
-void pdf_set_markup_appearance_highlight(fz_context *ctx, pdf_document *doc, pdf_annot *annot, float* color, float *alphap, float line_thickness, float line_height)
-{
-    float alpha = *alphap;
-        
+void pdf_set_markup_appearance_highlight(fz_context *ctx, pdf_document *doc, pdf_annot *annot, float* color, float alpha, float line_thickness, float line_height)
+{    
         //Add color
     pdf_obj *color_obj = pdf_new_array(ctx, doc, 3);
     int j;
@@ -1785,7 +1777,6 @@ void pdf_set_markup_appearance_highlight(fz_context *ctx, pdf_document *doc, pdf
     for (j = 0; j < 3; j++)
         pdf_array_push_drop(ctx, color_obj, pdf_new_real(ctx, doc, color[j]));
 
-//    fz_context *ctx = doc->ctx;
 	const fz_matrix *page_ctm = &annot->page->ctm;
 	fz_path *path = NULL;
 	fz_stroke_state *stroke = NULL;
@@ -1830,14 +1821,14 @@ void pdf_set_markup_appearance_highlight(fz_context *ctx, pdf_document *doc, pdf
 			{
 				if (stroke)
 				{
-					// assert(path)
-                                    fz_stroke_path(ctx, dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
-                                    fz_drop_stroke_state(ctx, stroke);
-                                    stroke = NULL;
-                                    fz_drop_path(ctx, path);
-                                    path = NULL;
+                        // assert(path)
+                    fz_stroke_path(ctx, dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
+                    fz_drop_stroke_state(ctx, stroke);
+                    stroke = NULL;
+                    fz_drop_path(ctx, path);
+                    path = NULL;
 				}
-
+                
 				stroke = fz_new_stroke_state(ctx);
 				stroke->linewidth = thickness;
 				path = fz_new_path(ctx);
@@ -1849,7 +1840,7 @@ void pdf_set_markup_appearance_highlight(fz_context *ctx, pdf_document *doc, pdf
 
 		if (stroke)
 		{
-                    fz_stroke_path(ctx, dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
+            fz_stroke_path(ctx, dev, path, stroke, page_ctm, fz_device_rgb(ctx), color, alpha);
 		}
 
 		fz_transform_rect(&rect, page_ctm);
