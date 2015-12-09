@@ -493,7 +493,8 @@ pdf_dev_color(fz_context *ctx, pdf_device *pdev, fz_colorspace *colorspace, floa
 
 static void
 pdf_dev_alpha(fz_context *ctx, pdf_device *pdev, float alpha, int stroke)
-{   
+{
+
 	int i;
 	pdf_document *doc = pdev->doc;
 	gstate *gs = CURRENT_GSTATE(pdev);
@@ -532,7 +533,7 @@ pdf_dev_alpha(fz_context *ctx, pdf_device *pdev, float alpha, int stroke)
             char text[32];
             pdf_dict_put_drop(ctx, o, (stroke ? PDF_NAME_CA : PDF_NAME_ca), pdf_new_real(ctx, doc, alpha));
             if(alpha < 0.7)//HORRIBLE HACK: As mupdf doesn't support setting the blend mode we just set blend mode to multiply whenever alpha is small enough to get the right visual effect for highlight annotiation.
-                pdf_dict_put_drop(ctx, o, PDF_NAME_BM, pdf_new_name(ctx, doc, "Multiply")); 
+                pdf_dict_put_drop(ctx, o, PDF_NAME_BM, pdf_new_name(ctx, doc, fz_blendmode_name(FZ_BLEND_MULTIPLY))); 
 			ref = pdf_new_ref(ctx, doc, o);
 			snprintf(text, sizeof(text), "ExtGState/Alp%d", i);
 			pdf_dict_putp(ctx, pdev->resources, text, ref);

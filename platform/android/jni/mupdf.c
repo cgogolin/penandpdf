@@ -1685,7 +1685,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
             fz_transform_point(&pts[i], &ctm);
         }
 
-        annot = (fz_annot *)pdf_create_annot(ctx, idoc, (pdf_page *)pc->page, type); //in pdf-annot-edit.c creates a simle annot without AP (alpha is not honored here for example!)
+        annot = (fz_annot *)pdf_create_annot(ctx, idoc, (pdf_page *)pc->page, type); //in pdf-annot-edit.c creates a simple annot without AP (alpha is not honored here for example but /BM is set for highlihgt annotations)
 
             //Now we generate the AP:
         if(type == FZ_ANNOT_TEXT)
@@ -1788,7 +1788,7 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
                 pdf_set_markup_appearance_highlight(ctx, idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height); //in pdf-appearance.c
             }
             else
-                pdf_set_markup_appearance(ctx, idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height); //in pdf-appearance.c
+            pdf_set_markup_appearance(ctx, idoc, (pdf_annot *)annot, color, alpha, line_thickness, line_height); //in pdf-appearance.c
         }
         
         dump_annotation_display_lists(glo);

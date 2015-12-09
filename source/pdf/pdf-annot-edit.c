@@ -105,12 +105,12 @@ pdf_create_annot(fz_context *ctx, pdf_document *doc, pdf_page *page, fz_annot_ty
 		pdf_obj *annot_arr = pdf_dict_get(ctx, page->me, PDF_NAME_Annots);
 		if (annot_arr == NULL)
 		{
-                        annot_arr = pdf_new_array(ctx, doc, 0);
+			annot_arr = pdf_new_array(ctx, doc, 0);
 			pdf_dict_put_drop(ctx, page->me, PDF_NAME_Annots, annot_arr);
 		}
         
         if (type == FZ_ANNOT_HIGHLIGHT) {
-                //Renderd "behind" the text
+                //Render this "behind" the text
             pdf_dict_put_drop(ctx, annot_obj, PDF_NAME_BM, pdf_new_name(ctx, doc, "Multiply"));
         }
             /* const char* creator = "PenAndPDF"; */
@@ -131,7 +131,7 @@ pdf_create_annot(fz_context *ctx, pdf_document *doc, pdf_page *page, fz_annot_ty
 		annot->ap = NULL;
 		annot->widget_type = PDF_WIDGET_TYPE_NOT_WIDGET;
 		annot->annot_type = type;
-                
+
 		/*
 			Both annotation object and annotation structure are now created.
 			Insert the object in the hierarchy and the structure in the

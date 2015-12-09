@@ -1713,18 +1713,17 @@ void pdf_set_markup_appearance(fz_context *ctx, pdf_document *doc, pdf_annot *an
 			fz_point up;
 			float thickness;
 
-			up.x = qp[i+2].x - qp[i+1].x; //width
-			up.y = qp[i+2].y - qp[i+1].y; //height
+			up.x = qp[i+2].x - qp[i+1].x;
+			up.y = qp[i+2].y - qp[i+1].y;
 
 			pt0.x += line_height * up.x;
 			pt0.y += line_height * up.y;
 			pt1.x += line_height * up.x;
 			pt1.y += line_height * up.y;
-                        
+
 			thickness = sqrtf(up.x * up.x + up.y * up.y) * line_thickness;
 
-//			if (!stroke || fz_abs(stroke->linewidth - thickness) < SMALL_FLOAT)
-                        if (!stroke || stroke->linewidth != thickness)
+			if (!stroke || stroke->linewidth != thickness)
 			{
 				if (stroke)
 				{
@@ -1930,9 +1929,9 @@ void pdf_update_ink_appearance(fz_context *ctx, pdf_document *doc, pdf_annot *an
 		stroke->linejoin = FZ_LINEJOIN_ROUND;
 
                     //Added to improve rendering of ink annotations
-                stroke->start_cap = FZ_LINECAP_ROUND;
-                stroke->end_cap = FZ_LINECAP_ROUND;
-                stroke->linejoin = FZ_LINEJOIN_ROUND;
+		stroke->start_cap = FZ_LINECAP_ROUND;
+		stroke->end_cap = FZ_LINECAP_ROUND;
+		stroke->linejoin = FZ_LINEJOIN_ROUND;
                 
 		for (i = 0; i < n; i ++)
 		{
