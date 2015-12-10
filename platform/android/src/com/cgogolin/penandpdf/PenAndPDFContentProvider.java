@@ -91,7 +91,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
     }
 
 
-    public static File getNotesDir(Context contex) {
+	public static File getNotesDir(Context contex) {
         return contex.getDir("notes", Context.MODE_WORLD_READABLE);
     }
 
