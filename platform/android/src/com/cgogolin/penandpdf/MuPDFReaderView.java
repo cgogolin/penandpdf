@@ -255,6 +255,7 @@ abstract public class MuPDFReaderView extends ReaderView {
         
         switch (mMode) {
             case Viewing:
+            case Searching:
                 if (!tapDisabled) onDocMotion();
                 return super.onScroll(e1, e2, distanceX, distanceY);
             case Selecting:

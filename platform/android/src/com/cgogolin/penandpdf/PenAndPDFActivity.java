@@ -1,10 +1,3 @@
-// compile-command:
-// cd ~/src/android/mupdf/platform/android && ant clean && ~/src/android/android-ndk-r9/ndk-build && ant debug && /home/cgogolin/bin/adb install -r ~/src/android/mupdf/platform/android/bin/PenAndPDF-debug.apk
-// or
-// cd ~/src/android/mupdf/platform/android && ant clean && ~/src/android/android-ndk-r9/ndk-build && ant debug && cp bin/PenAndPDF-debug.apk /home/cgogolin/Dropbox/galaxynote8/
-// or
-// cd ~/src/android/mupdf/platform/android && ant debug && /home/cgogolin/bin/adb install -r ~/src/android/mupdf/platform/android/bin/PenAndPDF-debug.apk
-
 package com.cgogolin.penandpdf;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -94,8 +87,6 @@ public class PenAndPDFActivity extends AppCompatActivity implements SharedPrefer
     private String latestTextInSearchBox = "";
     private String textOfLastSearch = "";
     private ShareActionProvider mShareActionProvider = null;
-//    private boolean mNotSaveOnDestroyThisTime = false;
-//    private boolean mNotSaveOnStopThisTime = false;
     private boolean mSaveOnStop = false;
     private boolean mSaveOnDestroy = false;
     private boolean mDocViewNeedsNewAdapter = false;
@@ -144,7 +135,6 @@ public static String getActualPath(final Context context, final Uri uri) {
     if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
         // ExternalStorageProvider
         if (isExternalStorageDocument(uri)) {
-			Log.i("mupdf", "Uri from ExternalStorageProvider "+uri);
             final String docId = DocumentsContract.getDocumentId(uri);
             final String[] split = docId.split(":");
             final String type = split[0];
@@ -157,7 +147,6 @@ public static String getActualPath(final Context context, final Uri uri) {
         }
         // DownloadsProvider
         else if (isDownloadsDocument(uri)) {
-			Log.i("mupdf", "Uri from DownloadsDocument "+uri);
             final String id = DocumentsContract.getDocumentId(uri);
             final Uri contentUri = ContentUris.withAppendedId(
                     Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
@@ -166,7 +155,6 @@ public static String getActualPath(final Context context, final Uri uri) {
         }
         // MediaProvider
         else if (isMediaDocument(uri)) {
-			Log.i("mupdf", "Uri from MediaDocument "+uri);
             final String docId = DocumentsContract.getDocumentId(uri);
             final String[] split = docId.split(":");
             final String type = split[0];
@@ -190,15 +178,12 @@ public static String getActualPath(final Context context, final Uri uri) {
     }
     // MediaStore (and general)
     else if ("content".equalsIgnoreCase(uri.getScheme())) {
-		Log.i("mupdf", "Uri from MediaStore "+uri);
         return getDataColumn(context, uri, null, null);
     }
     // File
     else if ("file".equalsIgnoreCase(uri.getScheme())) {
-		Log.i("mupdf", "Uri to File "+uri);
         return uri.getPath();
     }
-	Log.i("mupdf", "Uri type unknown "+uri);
     return uri.getPath();
 }
 
@@ -387,14 +372,7 @@ public static boolean isMediaDocument(Uri uri) {
     
     @Override
     public void onCreate(Bundle savedInstanceState)
-        {
-            //     //For debuggin only!!!
-            // try{
-            //     Runtime.getRuntime().exec("logcat -d -v time -r 100 -f "+"/storage/emulated/0/PenAndPDF_"+(new Time()).format("%Y-%m-%d_HH:mm:ss")+".txt"+"*:E");
-            // }catch(java.io.IOException e){
-            //     Log.e("PenAndPDF", "unable to write log to file!");
-            // }
-            
+        {   
             super.onCreate(savedInstanceState);
 
 				//Initialize the layout
@@ -443,10 +421,8 @@ public static boolean isMediaDocument(Uri uri) {
     protected void onResume()
         {
             super.onResume();
-
-            // mNotSaveOnDestroyThisTime = false;
-            // mNotSaveOnStopThisTime = false;
-
+            Log.i(getString(R.string.app_name), "onResume()");
+            
 			Intent intent = getIntent();
 			if (Intent.ACTION_MAIN.equals(intent.getAction()))
             {
@@ -458,7 +434,10 @@ public static boolean isMediaDocument(Uri uri) {
 				setupCore();
             
 				if (core != null) //OK, so apparently we have a valid pdf open
-				{   
+				{
+                        // Try to take permissions
+                    tryToTakePermissions(intent.getData());
+                        
 						//Setup the mDocView
 					setupDocView();
 					
@@ -503,7 +482,6 @@ public static boolean isMediaDocument(Uri uri) {
             //Save only during onStop() as this can take some time
         if(core != null && !isChangingConfigurations())
         {
-//            if(!mNotSaveOnStopThisTime && core.canSaveToCurrentUri(this) && mSaveOnStop)
 			if(core.canSaveToCurrentUri(this) && mSaveOnStop)
             {
                 if(!save())
@@ -521,7 +499,6 @@ public static boolean isMediaDocument(Uri uri) {
 		if(core != null && !isChangingConfigurations())
 		{
 			SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
-//			if(!mNotSaveOnDestroyThisTime && core.canSaveToCurrentUri(this) && mSaveOnDestroy)
 			if(core.canSaveToCurrentUri(this) && mSaveOnDestroy)
 			{
 				if(!save())
@@ -884,18 +861,32 @@ public static boolean isMediaDocument(Uri uri) {
         
     }
 
-	private void tryToTakePermissions() {
+	private void tryToTakePermissions(Uri uri) {
 		if (android.os.Build.VERSION.SDK_INT >= 19)
 		{
 			try
 			{
-				final int takeFlags = (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-				getContentResolver().takePersistableUriPermission(getIntent().getData(), takeFlags);
+                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                Log.i(getString(R.string.app_name), "Succesfully took persistable read uri permissions for "+uri);
 			}
 			catch(Exception e)
 			{
 					//Nothing we can do if we don't get the permission
+                Log.i(getString(R.string.app_name), "Failed to take persistable read uri permissions for "+uri+" Exception: "+e);
 			}
+            finally
+            {
+                try
+                {
+                    getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    Log.i(getString(R.string.app_name), "Succesfully took persistable write uri permissions for "+uri);
+                }
+                catch(Exception e)
+                {
+                        //Nothing we can do if we don't get the permission
+                    Log.i(getString(R.string.app_name), "Failed to take persistable write uri permissions for "+uri+" Exception: "+e);
+                }
+            }
 		}
 	}
 	
@@ -930,9 +921,6 @@ public static boolean isMediaDocument(Uri uri) {
                 alert.show();
                 core = null;
             }
-            
-			
-			tryToTakePermissions();
 			
             if (core != null && core.needsPassword()) {
                 requestPassword();
@@ -1223,23 +1211,23 @@ public static boolean isMediaDocument(Uri uri) {
 		if (android.os.Build.VERSION.SDK_INT < 19)
         {
 			intent = new Intent(this, PenAndPDFFileChooser.class);
+            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
 			intent.setAction(Intent.ACTION_CHOOSER);
 		}
 		else
 		{
-            // Intent chooser = new Intent(Intent.ACTION_CHOOSER);
-            // chooser.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            
-            Intent getContentIntent = new Intent(Intent.ACTION_GET_CONTENT);
-            getContentIntent.addCategory(Intent.CATEGORY_OPENABLE);
-            getContentIntent.setType("application/pdf");
-            
             Intent openDocumentIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             openDocumentIntent.addCategory(Intent.CATEGORY_OPENABLE);
             openDocumentIntent.setType("application/pdf");
-            ArrayList<Intent> extraIntents = new ArrayList<Intent>();
-            extraIntents.add(getContentIntent);
-            openDocumentIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents.toArray(new Intent[] { }));
+            openDocumentIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+            
+            // ArrayList<Intent> extraIntents = new ArrayList<Intent>();
+            // Intent getContentIntent = new Intent(Intent.ACTION_GET_CONTENT);
+            // getContentIntent.addCategory(Intent.CATEGORY_OPENABLE);
+            // getContentIntent.setType("application/pdf");
+            // getContentIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+            // extraIntents.add(getContentIntent);
+            // openDocumentIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents.toArray(new Intent[] { }));
 
 			intent = openDocumentIntent;
 		}
@@ -1248,10 +1236,8 @@ public static boolean isMediaDocument(Uri uri) {
 		overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
 	}
 
-    public void openNewDocument(String filename) throws java.io.IOException {
-		
-//		File dir = getDir("notes",Context.MODE_WORLD_READABLE); //Should be done via the provider once implemented
-        File dir = PenAndPDFContentProvider.getNotesDir(this);
+    public void openNewDocument(String filename) throws java.io.IOException {		
+        File dir = PenAndPDFContentProvider.getNotesDir(this); //Should be done via the provider once implemented
 		File file = new File(dir, filename);
 		Uri uri = Uri.fromFile(file);
 		
@@ -1271,7 +1257,6 @@ public static boolean isMediaDocument(Uri uri) {
 			DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						if (which == AlertDialog.BUTTON_POSITIVE) {
-//							mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //No need to save twice
 							if(core.canSaveToCurrentUri(getApplicationContext()))
 							{
 								if(!save())
@@ -1283,7 +1268,6 @@ public static boolean isMediaDocument(Uri uri) {
 							}
 						}
 						if (which == AlertDialog.BUTTON_NEGATIVE) {
-//							mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true;
 							showOpenDocumentDialog();
 						}
 						if (which == AlertDialog.BUTTON_NEUTRAL) {
@@ -1317,27 +1301,14 @@ public static boolean isMediaDocument(Uri uri) {
                     if (intent != null) {
                         Uri uri = intent.getData();
                         
-                            // Try to take permissions
-                        if (android.os.Build.VERSION.SDK_INT >= 19)
-                        {
-                            try
-                            {
-                                final int takeFlags = intent.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                                getContentResolver().takePersistableUriPermission(uri, takeFlags);
-                            }
-                            catch(Exception e)
-                            {
-                                    //noting we can do if we don't get the permission
-                            }
-                        }
-                        
                         getIntent().setAction(Intent.ACTION_VIEW);
                         getIntent().setData(uri);
+                        
                         if (core != null) {
                             core.onDestroy();
                             core = null;
                         }
-                        onResume();//New core and new docview are setup here
+                        onResume();//New core and new docview are setup here	
                     }
                 }
                 break;
@@ -1353,9 +1324,6 @@ public static boolean isMediaDocument(Uri uri) {
                 overridePendingTransition(R.animator.fade_in, R.animator.exit_to_left);
                 if (resultCode == RESULT_OK) {
                     final Uri uri = intent.getData();
-					// final Uri actualUri = Uri.parse(getActualPath(this, intent.getData()));
-                    // Log.i("mupdf", "got uri="+uri+" and interpreted it as actualUri"+actualUri.getPath());
-					// File file = new File(actualUri.getPath());
 					File file = new File(getActualPath(this, uri));
 					if(file != null && file.isFile() && file.length() > 0) //Warn if file already exists
                     {
@@ -1395,7 +1363,6 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
     private void showSaveAsActivity() {
-//        mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //Do not save when we are stopped for the new request
         if (android.os.Build.VERSION.SDK_INT < 19)
         {
             Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
@@ -1428,7 +1395,7 @@ public static boolean isMediaDocument(Uri uri) {
         }
         catch(Exception e)
         {
-            Log.e("PenAndPDF", "Exception during saveAs(): "+e);
+            Log.e(getString(R.string.app_name), "Exception during saveAs(): "+e);
             return false;
         }
             //Set the uri of this intent to the new file path
@@ -1436,7 +1403,7 @@ public static boolean isMediaDocument(Uri uri) {
             //Save the viewport under the new name
         saveViewportAndRecentFiles(core.getUri());
 			//Try to take permissions
-		tryToTakePermissions();
+		tryToTakePermissions(getIntent().getData());
             //Resetup the ShareActionProvider
         Intent shareIntent = new Intent();
         shareIntent.setAction(Intent.ACTION_SEND);
@@ -1455,7 +1422,7 @@ public static boolean isMediaDocument(Uri uri) {
         }
         catch(Exception e)
         {
-            Log.e("PenAndPDF", "Exception during save(): "+e);
+            Log.e(getString(R.string.app_name), "Exception during save(): "+e);
             return false;
         }
             //Save the viewport
@@ -1754,7 +1721,6 @@ public static boolean isMediaDocument(Uri uri) {
             DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         if (which == AlertDialog.BUTTON_POSITIVE) {
-//                            mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true; //No need to save twice
                             if(core.canSaveToCurrentUri(PenAndPDFActivity.this))
                             {
                                 if(!save())
@@ -1766,7 +1732,6 @@ public static boolean isMediaDocument(Uri uri) {
                                 showSaveAsActivity();
                         }
                         if (which == AlertDialog.BUTTON_NEGATIVE) {
-//                            mNotSaveOnDestroyThisTime = mNotSaveOnStopThisTime = true;
                             finish();
                         }
                         if (which == AlertDialog.BUTTON_NEUTRAL) {
@@ -1800,7 +1765,6 @@ public static boolean isMediaDocument(Uri uri) {
         if (core == null || mDocView == null)  return;
         int pageNumber = mDocView.getSelectedItemPosition();
         String title = getString(R.string.app_name)+" ("+Integer.toString(pageNumber+1)+"/"+Integer.toString(core.countPages())+")";
-//        if(core.getFileName() != null) title+=" "+core.getFileName();
 		String subtitle = "";
 		if(core.getFileName() != null) subtitle+=core.getFileName();
         android.support.v7.app.ActionBar actionBar = getSupportActionBar();

@@ -20,6 +20,8 @@ package com.cgogolin.penandpdf;
 import android.content.SharedPreferences;
 import android.content.Context;
 import android.content.ContentProvider;
+import android.content.SharedPreferences;
+import android.net.Uri;
 
 //import android.os.Bundle;
 import android.content.ContentResolver;
@@ -44,14 +46,11 @@ import java.io.IOException;
 // import java.util.ArrayList;
 // import java.util.HashMap;
 import java.util.LinkedList;
+import android.util.Log;
 // import java.util.Map;
 
 public class PenAndPDFContentProvider extends DocumentsProvider {
     
-        //     //Read the recent files list from preferences
-        // SharedPreferences prefs = getActivity().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-        // RecentFilesList recentFilesList = new RecentFilesList(prefs);
-
     private final String ROOT_NOTES = "PenAndPDFNotesProvider";
     private File mNotesDir;
 
@@ -105,11 +104,17 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
     
     
     private String getDocIdForFile(File file) {
-        return file.getName();
+//        return file.getName();
+        return file.getAbsolutePath();
     }
 
     private File getFileForDocId(String documentId) {
-        return new File(mNotesDir.getPath(), documentId);
+        Log.i("PenAndPDFContentProvider", "getFileForDocId for id "+documentId+" and mNotesDir.getName()="+mNotesDir.getName());
+        if(documentId.equals(mNotesDir.getName())) 
+            return mNotesDir;
+        else
+//            return new File(mNotesDir.getPath(), documentId);
+            return new File(documentId);
     }
     
     private String getChildMimeTypes(File file) {
@@ -127,15 +132,20 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
         // if (file.isDirectory()) {
         //     flags |= Document.FLAG_SUPPORTS_SEARCH;
         // }
-        // if (file.isDirectory() && file.canWrite()) {
-        //     flags |= Document.FLAG_DIR_SUPPORTS_CREATE;
-        // }
+        if (file.isDirectory() && file.canWrite()) {
+            flags |= Document.FLAG_DIR_SUPPORTS_CREATE;
+        }
         if (file.canWrite()) {
             flags |= Document.FLAG_SUPPORTS_WRITE;
             flags |= Document.FLAG_SUPPORTS_DELETE;
+            flags |= Document.FLAG_SUPPORTS_RENAME;
+            flags |= Document.FLAG_SUPPORTS_DELETE;
         }
+        flags |= Document.FLAG_DIR_PREFERS_LAST_MODIFIED;
+            
         final String displayName = file.getName();
         final String mimeType = getTypeForFile(file);
+        if(!mimeType.endsWith("pdf")) return;
         // if (mimeType.startsWith("image/")) {
         //     flags |= Document.FLAG_SUPPORTS_THUMBNAIL;
         // }
@@ -146,6 +156,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
         row.add(Document.COLUMN_MIME_TYPE, mimeType);
         row.add(Document.COLUMN_LAST_MODIFIED, file.lastModified());
         row.add(Document.COLUMN_FLAGS, flags);
+        Log.i("PenAndPDFContentProvider", "includeFile() for id="+documentId+" with displayName="+displayName+" and flags="+flags+" so that FLAG_SUPPORTS_WRITE="+((flags & Document.FLAG_SUPPORTS_WRITE) == Document.FLAG_SUPPORTS_WRITE));
     }
     
     @Override
@@ -166,8 +177,9 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
             // shares.
         notesRoot.add(Root.COLUMN_FLAGS,
 //                      Root.FLAG_SUPPORTS_CREATE |
-                      Root.FLAG_SUPPORTS_RECENTS |
-                      Root.FLAG_SUPPORTS_SEARCH
+                      Root.FLAG_SUPPORTS_RECENTS | //must implement queryRecentDocuments()
+//                      Root.FLAG_SUPPORTS_SEARCH | //must implememt querySearchDocuments()
+                      Root.FLAG_LOCAL_ONLY
                       );
 
             // COLUMN_TITLE is the root title (e.g. Gallery, Drive).
@@ -190,17 +202,41 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
         final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
         final File parent = getFileForDocId(parentDocumentId);
         if(parent == null) return null;
-        
+        Log.i("PenAndPDFContentProvider", "queryChildDocuments for parent "+parent.getPath()+" with id "+parentDocumentId);
         for (File file : parent.listFiles()) {
             includeFile(result, null, file);
         }
         return result;
     }
 
+    @Override
+    public Cursor queryRecentDocuments(String rootId, String[] projection) {
+        final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
+            //Return recently modified documents under the requested root.
+        if(ROOT_NOTES.equals(rootId))
+        {   
+                //Read the recent files list from preferences
+            SharedPreferences prefs = getContext().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+            RecentFilesList recentFilesList = new RecentFilesList(prefs);
+            
+            for(String path : recentFilesList)
+            {
+                includeFile(result, null, new File(Uri.parse(path).getPath()));
+            }
+        }
+        
+        return result;
+    }
 
+    // @Override
+    // public Cursor querySearchDocuments(String rootId, String query, String[] projection) {
+    //         //Return documents that match the given query under the requested root.
+    // }
+    
+    
     @Override
     public Cursor queryDocument(String documentId, String[] projection) throws FileNotFoundException {
-        
+        Log.i("PenAndPDFContentProvider", "queryDocument with id "+documentId);
             // Create a cursor with the requested projection, or the default projection.
         final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
         includeFile(result, documentId, null);
@@ -209,13 +245,19 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
 
     @Override
     public ParcelFileDescriptor openDocument(final String documentId, final String accessMode, CancellationSignal signal) throws FileNotFoundException {
-//        Log.v(TAG, "openDocument, mode: " + accessMode);
             // It's OK to do long operatos in this method as long as you periodically
             // check the CancellationSignal.
         
         final File file = getFileForDocId(documentId);
 
-            // final boolean isWrite = (mode.indexOf('w') != -1);
+        Log.i("PenAndPDFContentProvider", " openDocument() with accessMode="+accessMode+" parsed="+ParcelFileDescriptor.parseMode(accessMode)+" MODE_READ_WRITE="+ParcelFileDescriptor.MODE_READ_WRITE+" for file "+file+" with uri");
+
+        
+        // final boolean isWrite = (accessMode.indexOf('w') != -1);
+        // if(isWrite) {
+            
+        // }
+        
             // if(isWrite) {
             //         // Attach a close listener if the document is opened in write mode.
             //     try {
@@ -238,25 +280,25 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
 
 
 
-    @Override
-    public Cursor querySearchDocuments(String parentDocumentId, String query, String[] projection) throws FileNotFoundException {
-        final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
-        final File parent = getFileForDocId(parentDocumentId);
-        final LinkedList<File> pending = new LinkedList<File>();
-        pending.add(parent);
-        while (!pending.isEmpty() && result.getCount() < 24) {
-            final File file = pending.removeFirst();
-            if (file.isDirectory()) {
-                for (File child : file.listFiles()) {
-                    pending.add(child);
-                }
-            }
-            if (file.getName().toLowerCase().contains(query)) {
-                includeFile(result, null, file);
-            }
-        }
-        return result;
-    }
+    // @Override
+    // public Cursor querySearchDocuments(String parentDocumentId, String query, String[] projection) throws FileNotFoundException {
+    //     final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
+    //     final File parent = getFileForDocId(parentDocumentId);
+    //     final LinkedList<File> pending = new LinkedList<File>();
+    //     pending.add(parent);
+    //     while (!pending.isEmpty() && result.getCount() < 24) {
+    //         final File file = pending.removeFirst();
+    //         if (file.isDirectory()) {
+    //             for (File child : file.listFiles()) {
+    //                 pending.add(child);
+    //             }
+    //         }
+    //         if (file.getName().toLowerCase().contains(query)) {
+    //             includeFile(result, null, file);
+    //         }
+    //     }
+    //     return result;
+    // }
 
     @Override
     public String getDocumentType(String documentId) throws FileNotFoundException {
