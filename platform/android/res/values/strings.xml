@@ -103,7 +103,7 @@
 
   <string name="notes_provider_summary">Notes created with Pen&amp;PDF</string>
   <string name="notes_provider_title">Pen&amp;PDF notes</string>
-  
+  <string name="notes">Notes</string>
   <string name="okay">Okay</string>
   <string name="outline_title">Table of Contents</string>
   <string name="overwrite">Overwrite</string>

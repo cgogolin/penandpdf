@@ -21,6 +21,7 @@ import android.content.SharedPreferences;
 import android.content.Context;
 import android.content.ContentProvider;
 import android.content.SharedPreferences;
+import android.content.UriPermission;
 import android.net.Uri;
 
 //import android.os.Bundle;
@@ -85,14 +86,20 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
     
     @Override
     public boolean onCreate() {
-        mNotesDir = getNotesDir(getContext());
+        mNotesDir = PenAndPDFActivity.getNotesDir(getContext());
+
+        Log.i("PenAndPDFContentProvider", "onCreate()");
+        
+        for( UriPermission permission : getContext().getContentResolver().getOutgoingPersistedUriPermissions()) {
+            Log.i("PenAndPDFContentProvider", "has given persission "+permission.toString());
+        }
+        
         return true;
     }
-
-
-	public static File getNotesDir(Context contex) {
-        return contex.getDir("notes", Context.MODE_WORLD_READABLE);
-    }
+    
+	// public static File getNotesDir(Context contex) {
+    //     return contex.getDir("notes", Context.MODE_WORLD_READABLE);
+    // }
 
     private static String[] resolveRootProjection(String[] projection) {
         return projection != null ? projection : DEFAULT_ROOT_PROJECTION;
@@ -129,9 +136,6 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
             file = getFileForDocId(documentId);
         }
         int flags = 0;
-        // if (file.isDirectory()) {
-        //     flags |= Document.FLAG_SUPPORTS_SEARCH;
-        // }
         if (file.isDirectory() && file.canWrite()) {
             flags |= Document.FLAG_DIR_SUPPORTS_CREATE;
         }
@@ -145,7 +149,8 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
             
         final String displayName = file.getName();
         final String mimeType = getTypeForFile(file);
-        if(!mimeType.endsWith("pdf")) return;
+        if(!Document.MIME_TYPE_DIR.equals(mimeType) && !mimeType.endsWith("pdf"))
+            return;
         // if (mimeType.startsWith("image/")) {
         //     flags |= Document.FLAG_SUPPORTS_THUMBNAIL;
         // }
@@ -202,7 +207,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
         final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
         final File parent = getFileForDocId(parentDocumentId);
         if(parent == null) return null;
-        Log.i("PenAndPDFContentProvider", "queryChildDocuments for parent "+parent.getPath()+" with id "+parentDocumentId);
+        Log.i("PenAndPDFContentProvider", "queryChildDocuments() for parent "+parent.getPath()+" with id "+parentDocumentId);
         for (File file : parent.listFiles()) {
             includeFile(result, null, file);
         }
@@ -211,6 +216,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
 
     @Override
     public Cursor queryRecentDocuments(String rootId, String[] projection) {
+        Log.i("PenAndPDFContentProvider", "queryRecentDocuments() for rootId "+rootId);
         final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
             //Return recently modified documents under the requested root.
         if(ROOT_NOTES.equals(rootId))
@@ -236,7 +242,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
     
     @Override
     public Cursor queryDocument(String documentId, String[] projection) throws FileNotFoundException {
-        Log.i("PenAndPDFContentProvider", "queryDocument with id "+documentId);
+        Log.i("PenAndPDFContentProvider", "queryDocument() with id "+documentId);
             // Create a cursor with the requested projection, or the default projection.
         final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
         includeFile(result, documentId, null);
@@ -278,27 +284,40 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
             //    }
     }
 
-
-
-    // @Override
-    // public Cursor querySearchDocuments(String parentDocumentId, String query, String[] projection) throws FileNotFoundException {
-    //     final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
-    //     final File parent = getFileForDocId(parentDocumentId);
-    //     final LinkedList<File> pending = new LinkedList<File>();
-    //     pending.add(parent);
-    //     while (!pending.isEmpty() && result.getCount() < 24) {
-    //         final File file = pending.removeFirst();
-    //         if (file.isDirectory()) {
-    //             for (File child : file.listFiles()) {
-    //                 pending.add(child);
-    //             }
-    //         }
-    //         if (file.getName().toLowerCase().contains(query)) {
-    //             includeFile(result, null, file);
-    //         }
-    //     }
-    //     return result;
-    // }
+    @Override
+    public void deleteDocument (String documentId) {
+        final File file = getFileForDocId(documentId);
+        file.delete();
+    }
+        
+    @Override
+    public String renameDocument(String documentId, String displayName) {
+        final File file = getFileForDocId(documentId);
+        file.delete();
+        File newFile = new File(file.getParent(), displayName);
+        file.renameTo(newFile);
+        return getDocIdForFile(newFile);
+    }
+    
+    @Override
+    public Cursor querySearchDocuments(String parentDocumentId, String query, String[] projection) throws FileNotFoundException {
+        final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
+        final File parent = getFileForDocId(parentDocumentId);
+        final LinkedList<File> pending = new LinkedList<File>();
+        pending.add(parent);
+        while (!pending.isEmpty() && result.getCount() < 24) {
+            final File file = pending.removeFirst();
+            if (file.isDirectory()) {
+                for (File child : file.listFiles()) {
+                    pending.add(child);
+                }
+            }
+            if (file.getName().toLowerCase().contains(query)) {
+                includeFile(result, null, file);
+            }
+        }
+        return result;
+    }
 
     @Override
     public String getDocumentType(String documentId) throws FileNotFoundException {

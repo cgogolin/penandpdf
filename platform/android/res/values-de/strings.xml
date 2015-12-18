@@ -102,7 +102,7 @@
 
 	<string name="notes_provider_summary">Mit Pen&amp;PDF erstellte Notizen</string>
 	<string name="notes_provider_title">Pen&amp;PDF Notizen</string>
-	
+	<string name="notes">Notizen</string>
 	<string name="okay">OK</string>
 	<string name="outline_title">Inhaltsverzeichnis</string>
 	<string name="overwrite_question">Überschreiben?</string>

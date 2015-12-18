@@ -70,7 +70,7 @@ import java.lang.Runtime;
 import java.util.ArrayList;
 import java.util.concurrent.Executor;
 import java.util.Set;
-
+import android.view.Gravity;
 
 
 class ThreadPerTaskExecutor implements Executor {
@@ -872,19 +872,19 @@ public static boolean isMediaDocument(Uri uri) {
 			catch(Exception e)
 			{
 					//Nothing we can do if we don't get the permission
-                Log.i(getString(R.string.app_name), "Failed to take persistable read uri permissions for "+uri+" Exception: "+e);
+                Log.i(getString(R.string.app_name), "Failed to take persistable read uri permissions for "+uri.getPath()+" Exception: "+e);
 			}
             finally
             {
                 try
                 {
                     getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                    Log.i(getString(R.string.app_name), "Succesfully took persistable write uri permissions for "+uri);
+                    Log.i(getString(R.string.app_name), "Succesfully took persistable write uri permissions for "+uri.getPath());
                 }
                 catch(Exception e)
                 {
                         //Nothing we can do if we don't get the permission
-                    Log.i(getString(R.string.app_name), "Failed to take persistable write uri permissions for "+uri+" Exception: "+e);
+                    Log.i(getString(R.string.app_name), "Failed to take persistable write uri permissions for "+uri.getPath()+" Exception: "+e);
                 }
             }
 		}
@@ -1237,7 +1237,7 @@ public static boolean isMediaDocument(Uri uri) {
 	}
 
     public void openNewDocument(String filename) throws java.io.IOException {		
-        File dir = PenAndPDFContentProvider.getNotesDir(this); //Should be done via the provider once implemented
+        File dir = getNotesDir(this); //Should be done via the provider once implemented
 		File file = new File(dir, filename);
 		Uri uri = Uri.fromFile(file);
 		
@@ -1624,14 +1624,16 @@ public static boolean isMediaDocument(Uri uri) {
 		editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 		editTextLayout.setOrientation(1);
 		editTextLayout.setPadding(16, 16, 16, 0);//should not be hard coded
-		
         final EditText input = new EditText(editTextLayout.getContext());
         input.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
         input.setSingleLine();
 		input.setBackgroundDrawable(null);
-		input.setHint(getString(R.string.dialog_newdoc_hint));
-        input.setText(".pdf");
+//		input.setHint(getString(R.string.dialog_newdoc_hint));
+//        input.setText();
+        TextDrawable textDrawable = new TextDrawable(".pdf", input.getTextSize(), input.getCurrentTextColor());
+        input.setCompoundDrawablesWithIntrinsicBounds(null , null, textDrawable, null);
         input.setFocusable(true);
+        input.setGravity(Gravity.RIGHT);
 		mAlertDialog.setTitle(R.string.dialog_newdoc_title);
 		DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener()
 			{
@@ -1642,7 +1644,7 @@ public static boolean isMediaDocument(Uri uri) {
                         try
                         {
                             if(filename != "")
-                                openNewDocument(input.getText().toString());
+                                openNewDocument(filename+".pdf");
                         }
                         catch(java.io.IOException e){
                             AlertDialog alert = mAlertBuilder.create();
@@ -1832,4 +1834,9 @@ public static boolean isMediaDocument(Uri uri) {
         // Nothing to do
         }
     }
+
+    public static File getNotesDir(Context contex) {
+        return contex.getDir("notes", Context.MODE_WORLD_READABLE);
+    }
+
 }

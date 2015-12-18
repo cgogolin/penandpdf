@@ -139,9 +139,9 @@ public class NoteBrowserFragment extends ListFragment {
             mPurpose = Purpose.valueOf(savedInstanceState.getString(PURPOSE));
             if(savedInstanceState.getString(DIRECTORY) != null) mDirectory = new File(savedInstanceState.getString(DIRECTORY));
         }
-            //If we didn't get a directory we default to downloads
+            //We default to the notes directory
         if(mDirectory == null)
-            mDirectory = PenAndPDFContentProvider.getNotesDir(getActivity());
+            mDirectory = PenAndPDFActivity.getNotesDir(getActivity());
 //            mDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         
             // Create a new handler that is updated dynamically when files are scanned
@@ -159,13 +159,13 @@ public class NoteBrowserFragment extends ListFragment {
 
                         //Get the parent directory and the directories and files
 //                    mParent = mDirectory.getParentFile();
-                    // mDirs = mDirectory.listFiles(new FileFilter() {
-                    //         public boolean accept(File file) {
-                    //             return file.isDirectory();
-                    //         }
-                    //     });
-                    // if (mDirs == null)
-                    //     mDirs = new File[0];
+                    mDirs = mDirectory.listFiles(new FileFilter() {
+                            public boolean accept(File file) {
+                                return file.isDirectory();
+                            }
+                        });
+                    if (mDirs == null)
+                        mDirs = new File[0];
                     mFiles = mDirectory.listFiles(new FileFilter() {
                             public boolean accept(File file) {
                                 if (file.isDirectory())

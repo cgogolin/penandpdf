@@ -49,6 +49,7 @@ public class PenAndPDFFileChooser extends AppCompatActivity implements RecentFil
         final TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         tabLayout.addTab(tabLayout.newTab().setText(R.string.browse));
         tabLayout.addTab(tabLayout.newTab().setText(R.string.recent));
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.notes));
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 
             //Setup the view pager
