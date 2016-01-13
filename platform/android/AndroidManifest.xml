@@ -6,7 +6,7 @@
 	  android:installLocation="auto">
   <permission android:name="com.cgogolin.penandpdf.LAUNCH_PEN_AND_PDF_FILE_CHOOSER" />
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-  <uses-permission android:name="android.permission.MANAGE_DOCUMENTS" />
+<!--  <uses-permission android:name="android.permission.MANAGE_DOCUMENTS" />-->
   <uses-permission android:name="com.cgogolin.penandpdf.LAUNCH_PEN_AND_PDF_FILE_CHOOSER" />
   <uses-sdk android:minSdkVersion="11" android:targetSdkVersion="23" />
   <supports-screens
@@ -83,7 +83,34 @@
       <intent-filter>
         <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
       </intent-filter>
+<!--      <meta-data
+         android:name="android.content.DOCUMENT_PROVIDER"
+         android:value="true" />-->
     </provider>
+<!--
+    The drive provider:
+    <provider
+       android:name=".ExternalStorageProvider"
+       android:authorities="com.android.externalstorage.documents"
+       android:grantUriPermissions="true"
+       android:exported="true"
+       android:permission="android.permission.MANAGE_DOCUMENTS">
+      <meta-data
+         android:name="android.content.DOCUMENT_PROVIDER"
+         android:value="true" />
+    </provider>-->
+<!--    <provider
+       android:name="com.cgogolin.penandpdf.MyContentProvider"
+       android:authorities="com.cgogolin.penandpdf.MyContentProvider"
+       android:grantUriPermissions="true"
+       android:exported="true"
+       android:permission="android.permission.MANAGE_DOCUMENTS"
+       android:enabled="@bool/atLeastKitKat">
+      <intent-filter>
+        <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+      </intent-filter>
+    </provider>-->
+    
     <!-- This activity alias is added so that GET_CONTENT intent-filter
 	 can be disabled for builds on API level 19 and higher. -->
     <!-- <activity-alias android:name="com.android.example.app.MyPicker" -->

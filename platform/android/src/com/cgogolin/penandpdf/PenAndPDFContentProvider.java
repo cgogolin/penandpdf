@@ -112,7 +112,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
     
     private String getDocIdForFile(File file) {
 //        return file.getName();
-        return file.getAbsolutePath();
+        return file.getAbsolutePath().substring(1);//remove the leading '/'
     }
 
     private File getFileForDocId(String documentId) {
@@ -121,7 +121,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
             return mNotesDir;
         else
 //            return new File(mNotesDir.getPath(), documentId);
-            return new File(documentId);
+            return new File("/"+documentId);
     }
     
     private String getChildMimeTypes(File file) {

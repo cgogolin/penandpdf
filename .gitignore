@@ -39,3 +39,15 @@ platform/android/.settings
 docs/browse
 include/mupdf/pdf/name-table.h
 source/pdf/pdf-name-table.h
+platform/android/appcompat/bin
+platform/android/appcompat/gen
+platform/android/cardview/bin
+platform/android/cardview/gen
+platform/android/design/bin
+platform/android/design/gen
+platform/android/recyclerview/bin
+platform/android/recyclerview/gen
+down vote
+accepted
+.gradle
+local.properties

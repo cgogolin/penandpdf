@@ -79,7 +79,7 @@ class ThreadPerTaskExecutor implements Executor {
     }
 }
 
-public class PenAndPDFActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener, android.support.v7.widget.SearchView.OnQueryTextListener, android.support.v7.widget.SearchView.OnCloseListener, FilePicker.FilePickerSupport
+public class PenAndPDFActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener, android.support.v7.widget.SearchView.OnQueryTextListener, android.support.v7.widget.SearchView.OnCloseListener, FilePicker.FilePickerSupport, TemporaryUriPermission.TemporaryUriPermissionProvider
 {       
     enum ActionBarMode {Main, Annot, Edit, Search, Selection, Hidden, AddingTextAnnot, Empty};
     
@@ -117,6 +117,8 @@ public class PenAndPDFActivity extends AppCompatActivity implements SharedPrefer
     private AlertDialog mAlertDialog;
     private FilePicker mFilePicker;
 
+    private ArrayList<TemporaryUriPermission> temporaryUriPermissions = new ArrayList<TemporaryUriPermission>();
+    
 		//Code from http://stackoverflow.com/questions/13209494/how-to-get-the-full-file-path-from-uri
 /**
  * Get a file path from a Uri. This will get the the path for Storage Access
@@ -421,7 +423,7 @@ public static boolean isMediaDocument(Uri uri) {
     protected void onResume()
         {
             super.onResume();
-            Log.i(getString(R.string.app_name), "onResume()");
+//            Log.i(getString(R.string.app_name), "onResume()");
             
 			Intent intent = getIntent();
 			if (Intent.ACTION_MAIN.equals(intent.getAction()))
@@ -436,7 +438,8 @@ public static boolean isMediaDocument(Uri uri) {
 				if (core != null) //OK, so apparently we have a valid pdf open
 				{
                         // Try to take permissions
-                    tryToTakePermissions(intent.getData());
+                    tryToTakePersistablePermissions(intent);
+                    rememberTemporaryUriPermission(intent);
                         
 						//Setup the mDocView
 					setupDocView();
@@ -861,13 +864,14 @@ public static boolean isMediaDocument(Uri uri) {
         
     }
 
-	private void tryToTakePermissions(Uri uri) {
+	private void tryToTakePersistablePermissions(Intent intent) {
+        Uri uri = intent.getData();
 		if (android.os.Build.VERSION.SDK_INT >= 19)
 		{
 			try
 			{
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                Log.i(getString(R.string.app_name), "Succesfully took persistable read uri permissions for "+uri);
+                Log.i(getString(R.string.app_name), "Succesfully took persistable read uri permissions for "+uri.getPath());
 			}
 			catch(Exception e)
 			{
@@ -910,12 +914,12 @@ public static boolean isMediaDocument(Uri uri) {
                 alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
                                 new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int which) {
-                                            finish();
+//                                        finish();
                                     }
                                 });
                 alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         public void onDismiss(DialogInterface dialog) {
-                            finish();
+//                            finish();
                         }
                     });
                 alert.show();
@@ -1254,10 +1258,12 @@ public static boolean isMediaDocument(Uri uri) {
 	
     public void openDocument() {		
 		if (core!=null && core.hasChanges()) {
+            final PenAndPDFActivity activity = this;//Not sure if this is good style...
+            
 			DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						if (which == AlertDialog.BUTTON_POSITIVE) {
-							if(core.canSaveToCurrentUri(getApplicationContext()))
+							if(core.canSaveToCurrentUri(activity))
 							{
 								if(!save())
 									showInfo(getString(R.string.error_saveing));
@@ -1299,16 +1305,19 @@ public static boolean isMediaDocument(Uri uri) {
                 if(resultCode == AppCompatActivity.RESULT_OK)
                 {
                     if (intent != null) {
-                        Uri uri = intent.getData();
-                        
                         getIntent().setAction(Intent.ACTION_VIEW);
-                        getIntent().setData(uri);
+                        getIntent().setData(intent.getData());
+                        getIntent().setFlags((getIntent().getFlags() & ~Intent.FLAG_GRANT_WRITE_URI_PERMISSION & ~Intent.FLAG_GRANT_READ_URI_PERMISSION) | (intent.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) | (intent.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION));//Set the read and writ flags to what they are in the received intent
+
+                        Log.i(getString(R.string.app_name), "onActivityResult() flags="+intent.getFlags()+" and write flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == Intent.FLAG_GRANT_WRITE_URI_PERMISSION)+" and read flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION) == Intent.FLAG_GRANT_READ_URI_PERMISSION));
                         
                         if (core != null) {
                             core.onDestroy();
                             core = null;
                         }
-                        onResume();//New core and new docview are setup here	
+//                        tryToTakePersistablePermissions(intent);//No need to do this, is done during onResume()
+//                        rememberTemporaryUriPermission(intent);//No need to do this, is done during onResume()
+//                        onResume();//New core and new docview are setup during onResume(), which is automatically called after onActivityResult()
                     }
                 }
                 break;
@@ -1403,7 +1412,8 @@ public static boolean isMediaDocument(Uri uri) {
             //Save the viewport under the new name
         saveViewportAndRecentFiles(core.getUri());
 			//Try to take permissions
-		tryToTakePermissions(getIntent().getData());
+		tryToTakePersistablePermissions(getIntent());
+        rememberTemporaryUriPermission(getIntent());
             //Resetup the ShareActionProvider
         Intent shareIntent = new Intent();
         shareIntent.setAction(Intent.ACTION_SEND);
@@ -1444,12 +1454,7 @@ public static boolean isMediaDocument(Uri uri) {
 
     private void restoreVieport() {
         if (core != null && mDocView != null) {
-//            String path = core.getPath(); //Can be null
             SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-        //     if(path != null)
-        //         setViewport(prefs, path);
-        //     else
-        //         setViewport(prefs, core.getFileName());
             setViewport(prefs, core.getUri());
         }
     }
@@ -1839,4 +1844,12 @@ public static boolean isMediaDocument(Uri uri) {
         return contex.getDir("notes", Context.MODE_WORLD_READABLE);
     }
 
+    public ArrayList<TemporaryUriPermission> getTemporaryUriPermissions() {
+        return temporaryUriPermissions;
+    }
+
+    public void rememberTemporaryUriPermission(Intent intent) {
+        Log.i(getString(R.string.app_name), "remembering temporary permission for "+intent.getData()+" with flags="+intent.getFlags());
+        temporaryUriPermissions.add(new TemporaryUriPermission(intent));
+    }
 }

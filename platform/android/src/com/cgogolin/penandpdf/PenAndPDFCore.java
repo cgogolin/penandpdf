@@ -1,6 +1,7 @@
 package com.cgogolin.penandpdf;
 import java.util.ArrayList;
 
+import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.content.pm.PackageManager;
 import android.content.UriPermission;
@@ -40,18 +41,18 @@ public class PenAndPDFCore extends MuPDFCore
     
     public void init(Context context, Uri uri) throws Exception
 	{
-//            Log.e("Core", "creating with uri="+uri);
+//            Log.i("Core", "creating with uri="+uri);
             
             this.uri = uri;
 
             if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
             {
-                Log.e("Core", "uri points to file");
+                Log.i("Core", "uri points to file");
                 super.init(context, Uri.decode(uri.getEncodedPath()));
             }
             else if (uri.toString().startsWith("content://")) //Uri points to a content provider
             {
-                Log.e("Core", "uri points to content");
+                Log.i("Core", "uri points to content");
                 String displayName = null;
                 Cursor cursor = context.getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null); //This should be done asynchonously!
 
@@ -105,7 +106,7 @@ public class PenAndPDFCore extends MuPDFCore
                     is.read(buffer, 0, len);
                     is.close();
                     if(pfd != null) pfd.close();
-                    Log.e("Core", "read "+len+" bytes into buffer "+buffer);
+                    Log.i("Core", "read "+len+" bytes into buffer "+buffer);
                     super.init(context, buffer, displayName);
                 }
                 else
@@ -216,23 +217,36 @@ public class PenAndPDFCore extends MuPDFCore
             }
         }
     
-    public boolean canSaveToUriViaContentResolver(Context context, Uri uri) {
+    public <T extends Context & TemporaryUriPermission.TemporaryUriPermissionProvider> boolean canSaveToUriViaContentResolver(T context, Uri uri) {
         try
         {
             boolean haveWritePermissionToUri = false;
-            if (android.os.Build.VERSION.SDK_INT >= 19)
+            for(TemporaryUriPermission permission : (context).getTemporaryUriPermissions()) {
+                if(permission.isWritePermission() && permission.getUri().equals(uri))
+                {
+                    haveWritePermissionToUri = true;
+                    break;
+                }
+            }
+            if(haveWritePermissionToUri == false)
             {
-                for( UriPermission permission : context.getContentResolver().getPersistedUriPermissions()) {
-                    if(permission.isWritePermission() && permission.getUri().equals(uri))
+                if (android.os.Build.VERSION.SDK_INT >= 19)
+                {
+                    for(UriPermission permission : (context).getContentResolver().getPersistedUriPermissions()) {
+                        if(permission.isWritePermission() && permission.getUri().equals(uri))
+                        {
+                            haveWritePermissionToUri = true;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    if(context.checkCallingUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED)
                     {
                         haveWritePermissionToUri = true;
                     }
                 }
-            }
-            else
-            {
-                if(context.checkCallingUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED)
-                    haveWritePermissionToUri = true;
             }
             
             if(haveWritePermissionToUri)
@@ -272,7 +286,7 @@ public class PenAndPDFCore extends MuPDFCore
         }
     }
 
-    public boolean canSaveToCurrentUri(Context context) {
+    public <T extends Context & TemporaryUriPermission.TemporaryUriPermissionProvider> boolean canSaveToCurrentUri(T context) {
         return canSaveToUriViaContentResolver(context, getUri()) || canSaveToUriAsFile(context, getUri());
     }    
 
