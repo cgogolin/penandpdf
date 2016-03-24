@@ -41,18 +41,18 @@ public class PenAndPDFCore extends MuPDFCore
     
     public void init(Context context, Uri uri) throws Exception
 	{
-//            Log.i("Core", "creating with uri="+uri);
+//            Log.i("context.getString(R.string.app_name)", "creating with uri="+uri);
             
             this.uri = uri;
 
             if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
             {
-                Log.i("Core", "uri points to file");
+                Log.i(context.getString(R.string.app_name), "uri points to file");
                 super.init(context, Uri.decode(uri.getEncodedPath()));
             }
             else if (uri.toString().startsWith("content://")) //Uri points to a content provider
             {
-                Log.i("Core", "uri points to content");
+                Log.i(context.getString(R.string.app_name), "uri points to content");
                 String displayName = null;
                 Cursor cursor = context.getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null); //This should be done asynchonously!
 
@@ -106,7 +106,7 @@ public class PenAndPDFCore extends MuPDFCore
                     is.read(buffer, 0, len);
                     is.close();
                     if(pfd != null) pfd.close();
-                    Log.i("Core", "read "+len+" bytes into buffer "+buffer);
+                    Log.i(context.getString(R.string.app_name), "read "+len+" bytes into buffer "+buffer);
                     super.init(context, buffer, displayName);
                 }
                 else
@@ -155,9 +155,10 @@ public class PenAndPDFCore extends MuPDFCore
                 finally
                 {
                     if(fileOutputStream == null)
-                        throw new java.io.IOException("Unable to open output stream to given uri: "+uri.getPath());
+                        throw new java.io.IOException("Unable to open output stream to given uri: "+uri);
                 }
                 copyStream(fileInputStream,fileOutputStream);
+                Log.i(context.getString(R.string.app_name), "copyStream() succesfull");
             }
             catch (java.io.FileNotFoundException e) 
             {
@@ -173,7 +174,7 @@ public class PenAndPDFCore extends MuPDFCore
                 if(fileOutputStream != null) fileOutputStream.close();
                 if(pfd != null) pfd.close();
             }
-            init(context, uri); //reinit because the MuPDFCore core gets useless after saveInterl()
+            init(context, uri); //reinit because the MuPDFCore core gets useless after saveIntenal()
         }
 
     
@@ -218,17 +219,21 @@ public class PenAndPDFCore extends MuPDFCore
         }
     
     public <T extends Context & TemporaryUriPermission.TemporaryUriPermissionProvider> boolean canSaveToUriViaContentResolver(T context, Uri uri) {
+        
+        boolean haveWritePermissionToUri = false;
         try
         {
-            boolean haveWritePermissionToUri = false;
+            // if( ((AppCompatActivity) context).getIntent().getData().equals(uri) && (((AppCompatActivity) context).getIntent().getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            //     haveWritePermissionToUri = true;
             for(TemporaryUriPermission permission : (context).getTemporaryUriPermissions()) {
+                Log.i(context.getString(R.string.app_name), "checking saved temporary permission for "+permission.getUri()+" while uri="+uri+" write permission is "+permission.isWritePermission()+" and uris are equal "+permission.getUri().equals(uri));
                 if(permission.isWritePermission() && permission.getUri().equals(uri))
                 {
                     haveWritePermissionToUri = true;
                     break;
                 }
             }
-            if(haveWritePermissionToUri == false)
+            if(!haveWritePermissionToUri)
             {
                 if (android.os.Build.VERSION.SDK_INT >= 19)
                 {
@@ -248,26 +253,110 @@ public class PenAndPDFCore extends MuPDFCore
                     }
                 }
             }
-            
-            if(haveWritePermissionToUri)
-            {
-                ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "wa");
-                if(pfd != null) {
-                    pfd.close();
-                    return true;
-                }
-                else
-                    return false;
-            }
-            else
-                return false;
         }
         catch(Exception e)
         {
-                return false;
+            Log.i(context.getString(R.string.app_name), "exception while trying to figure out permissions: "+e);
+            return false;
         }
+        if(!haveWritePermissionToUri)
+            return false;
+            
+        boolean canWrite = false;
+        OutputStream os = null;
+        Log.i(context.getString(R.string.app_name), "we have write permissions, so checking if we can somehow open an output stream");
+        try{
+            os = context.getContentResolver().openOutputStream(uri, "wa");
+            if(os != null)
+            {
+                Log.i(context.getString(R.string.app_name), "opened os succesfully");
+                os.close();
+                canWrite = true;
+            }
+        }
+        catch(Exception e)
+        {
+            Log.i(context.getString(R.string.app_name), "exception while opening os: "+e);
+            if(os != null)
+                try
+                {
+                    os.close();
+                }
+                catch(Exception e2)
+                {
+                    os = null;
+                }
+        }
+        if(!canWrite){
+            os = null;
+            ParcelFileDescriptor pfd = null;
+            Log.i(context.getString(R.string.app_name), "checking if we can open a pfd");
+            try{
+                pfd = context.getContentResolver().openFileDescriptor(uri, "wa");
+                if(pfd != null) {
+                    Log.i(context.getString(R.string.app_name), "opened pfd succesfully so trying to open os via pfd");
+                    os = new FileOutputStream(pfd.getFileDescriptor());
+                    if(os != null)
+                    {
+                        os.close();
+                        pfd.close();
+                        canWrite = true;
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                Log.i(context.getString(R.string.app_name), "exception while opening pfd or os via pfd: "+e);
+                if(e.getMessage().contains("Unsupported mode: wa"))
+                {
+                    Log.i(context.getString(R.string.app_name), "assuming that the only problem was the mode 'wa' and setting canWrite = true");
+                    canWrite = true; //We assume that writing with "w" would work to make google dirve work!
+                }
+                if(os != null)
+                    try
+                    {
+                        os.close();
+                    }
+                    catch(Exception e2)
+                    {
+                        os = null;
+                    }
+                if(pfd != null)
+                    try
+                    {
+                        pfd.close();
+                    }
+                    catch(Exception e2)
+                    {
+                        pfd = null;
+                    }
+            }
+        }
+        
+        return canWrite;
+        
+        //     if(haveWritePermissionToUri)
+        //     {
+        //         Log.i(context.getString(R.string.app_name), "we have write permissions, so checking if we can open a pfd.");
+        //         ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "wa");
+        //         if(pfd != null) {
+        //             Log.i(context.getString(R.string.app_name), "opened pfd succesfully, hence closing and returning true");
+        //             pfd.close();
+        //             return true;
+        //         }
+        //         else
+        //         {
+        //             Log.i(context.getString(R.string.app_name), "unable to open stream, hence returning false");
+        //             return false;
+        //         }
+        //     }
+        //     else
+        //     {
+        //         Log.i(context.getString(R.string.app_name), "no write permissions so returing false.");
+        //         return false;
+        //     }
     }
-
+    
     public boolean canSaveToUriAsFile(Context context, Uri uri) {
         try
         {
