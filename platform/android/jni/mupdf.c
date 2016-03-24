@@ -3011,7 +3011,7 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
     {
         new_path = (*env)->GetStringUTFChars(env, jpath, NULL);
     }
-    LOGE("Core: current_path=%s new_path=%s", glo->current_path, new_path);
+    LOGI("Core: current_path=%s new_path=%s", glo->current_path, new_path);
 	
 	int written = 0;
     if (glo->doc != NULL && (glo->current_path != NULL || new_path != NULL) )
@@ -3024,7 +3024,7 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
             tmp = tmp_path(env, (char *)new_path);
         else
             tmp = tmp_path(env, glo->current_path);
-        LOGE("Core: tmp=%s", tmp);
+        LOGI("Core: tmp=%s", tmp);
         if (tmp)
         {
             
@@ -3089,7 +3089,7 @@ JNI_FN(MuPDFCore_saveAsInternal)(JNIEnv *env, jobject thiz, jstring jpath)
 			
             if (written)
             {
-                LOGE("Core: closing");
+                LOGI("Core: closing");
                 close_doc(glo);
 				int rename_st;
                 if (new_path == NULL)
@@ -3307,7 +3307,7 @@ static char *tmp_gproof_path(char *path)
 	{
 		sprintf(buf, "%s.%d.gproof", path, i);
 
-		LOGE("Trying for %s\n", buf);
+		LOGI("Trying for %s\n", buf);
 		f = fopen(buf, "r");
 		if (f != NULL)
 		{
@@ -3329,7 +3329,7 @@ static char *tmp_gproof_path(char *path)
 		return NULL;
 	}
 
-	LOGE("Rewritten to %s\n", buf);
+	LOGI("Rewritten to %s\n", buf);
 	return buf;
 }
 
@@ -3357,7 +3357,7 @@ JNI_FN(MuPDFCore_startProofInternal)(JNIEnv * env, jobject thiz, int inResolutio
 	{
 		fz_write_gproof_file(ctx, glo->current_path, glo->doc, tmp, theResolution, "", "");
 
-		LOGE("Creating %s\n", tmp);
+		LOGI("Creating %s\n", tmp);
 		ret = (*env)->NewStringUTF(env, tmp);
 	}
 	fz_always(ctx)
@@ -3388,7 +3388,7 @@ JNI_FN(MuPDFCore_endProofInternal)(JNIEnv * env, jobject thiz, jstring jfilename
 	tmp = (*env)->GetStringUTFChars(env, jfilename, NULL);
 	if (tmp)
 	{
-		LOGE("Deleting %s\n", tmp);
+		LOGI("Deleting %s\n", tmp);
 
 		unlink(tmp);
 		(*env)->ReleaseStringUTFChars(env, jfilename, tmp);
@@ -3421,7 +3421,7 @@ JNI_FN(MuPDFCore_getNumSepsOnPageInternal)(JNIEnv *env, jobject thiz, int page)
 	if (i == NUM_CACHE)
 		return 0;
 
-	LOGE("Counting seps on page %d", page);
+	LOGI("Counting seps on page %d", page);
 
 	return fz_count_separations_on_page(ctx, glo->pages[i].page);
 }
