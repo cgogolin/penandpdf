@@ -871,24 +871,24 @@ public static boolean isMediaDocument(Uri uri) {
 			try
 			{
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                Log.i(getString(R.string.app_name), "Succesfully took persistable read uri permissions for "+uri.getPath());
+                Log.i(getString(R.string.app_name), "Succesfully took persistable read uri permissions for "+uri);
 			}
 			catch(Exception e)
 			{
 					//Nothing we can do if we don't get the permission
-                Log.i(getString(R.string.app_name), "Failed to take persistable read uri permissions for "+uri.getPath()+" Exception: "+e);
+                Log.i(getString(R.string.app_name), "Failed to take persistable read uri permissions for "+uri+" Exception: "+e);
 			}
             finally
             {
                 try
                 {
                     getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                    Log.i(getString(R.string.app_name), "Succesfully took persistable write uri permissions for "+uri.getPath());
+                    Log.i(getString(R.string.app_name), "Succesfully took persistable write uri permissions for "+uri);
                 }
                 catch(Exception e)
                 {
                         //Nothing we can do if we don't get the permission
-                    Log.i(getString(R.string.app_name), "Failed to take persistable write uri permissions for "+uri.getPath()+" Exception: "+e);
+                    Log.i(getString(R.string.app_name), "Failed to take persistable write uri permissions for "+uri+" Exception: "+e);
                 }
             }
 		}
