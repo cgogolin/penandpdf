@@ -505,4 +505,9 @@ public class MuPDFCore
         numPagesIsUpToDate = false;
         return insertBlankPageBeforeInternal(position) == 0 ? true : false;
     }
+
+    public void relocate(String path, String fileName) {
+        mPath = path;
+        mFileName = fileName;
+    }
 }

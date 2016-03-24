@@ -33,6 +33,17 @@ public class PenAndPDFCore extends MuPDFCore
     private Uri uri = null;
     private File tmpFile = null;
 
+
+        /* File IO is terribly inconsistent and badly documented on Android
+         * to make matters worse the native part of the Core stops beeing
+         * useful once the method saveInternal() is call by MuPDFCore.
+         * Here we try to abstract away the complexity this brings with it
+         * by implementing three methods export() save() and saveAs() that
+         * try to do what one would expect such methods to do.
+         * Unoftunately this leads to terribly messy code that is really
+         * hard to maintain...
+         */
+    
     public PenAndPDFCore(Context context, Uri uri) throws Exception
 	{
             init(context, uri);
@@ -113,7 +124,29 @@ public class PenAndPDFCore extends MuPDFCore
                     throw new Exception("unable to open input stream to uri "+uri.toString());
             }
         }
+
+    public synchronized File export(Context context) throws java.io.IOException, java.io.FileNotFoundException, Exception
+        {
+            Uri oldUri = this.uri;
+            String oldPath = getPath();
+            String oldFileName = getFileName();
+                //Write to tmpFile
+            if(tmpFile == null) {
+                File cacheDir = context.getCacheDir();
+                tmpFile = File.createTempFile("prefix", "pdf", cacheDir);
+            }
+            if(saveAsInternal(tmpFile.getPath()) != 0)
+                throw new java.io.IOException("native code failed to save to tmp file: "+tmpFile.getPath());
             
+                //reinit because the MuPDFCore core gets useless after saveIntenal()
+            init(context, Uri.fromFile(tmpFile)); 
+                //But now the Uri, as well as mFilenName and mPath in the superclass are wrong, so we repair this
+            uri = oldUri;
+            relocate(oldPath, oldFileName);
+            
+            return tmpFile;
+        }
+    
     public synchronized void save(Context context) throws java.io.IOException, java.io.FileNotFoundException, Exception
         {
             saveAs(context, this.uri);
@@ -126,13 +159,9 @@ public class PenAndPDFCore extends MuPDFCore
             FileInputStream fileInputStream = null;
             try
             {
-                    //Write to a temporyry file
-                if(tmpFile == null) {
-                    File cacheDir = context.getCacheDir();
-                    tmpFile = File.createTempFile("prefix", "pdf", cacheDir);
-                }
-                if(saveAsInternal(tmpFile.getPath()) != 0)
-                    throw new java.io.IOException("native code failed to save to tmp file: "+tmpFile.getPath());
+                    //Write to tmpFile
+                export(context);
+                
                     //Open the result as fileInputStream
                 fileInputStream = new FileInputStream(tmpFile);
                 
@@ -174,7 +203,7 @@ public class PenAndPDFCore extends MuPDFCore
                 if(fileOutputStream != null) fileOutputStream.close();
                 if(pfd != null) pfd.close();
             }
-            init(context, uri); //reinit because the MuPDFCore core gets useless after saveIntenal()
+//            init(context, uri); //reinit because the MuPDFCore core gets useless after saveIntenal()
         }
 
     
