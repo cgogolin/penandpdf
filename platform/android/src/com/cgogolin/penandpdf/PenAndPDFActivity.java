@@ -29,7 +29,7 @@ import android.support.v7.widget.Toolbar;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.ShareActionProvider;
+//import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.SearchView;
 import android.text.Editable;
 import android.text.format.Time;
@@ -86,7 +86,7 @@ public class PenAndPDFActivity extends AppCompatActivity implements SharedPrefer
     private SearchView searchView = null;
     private String latestTextInSearchBox = "";
     private String textOfLastSearch = "";
-    private ShareActionProvider mShareActionProvider = null;
+//    private ShareActionProvider mShareActionProvider = null;
     private boolean mSaveOnStop = false;
     private boolean mSaveOnDestroy = false;
     private boolean mDocViewNeedsNewAdapter = false;
@@ -519,7 +519,7 @@ public static boolean isMediaDocument(Uri uri) {
 			mAlertTask = null;
 		}
 		searchView = null;
-		mShareActionProvider = null;
+//		mShareActionProvider = null;
 	}
     
     @Override
@@ -536,27 +536,35 @@ public static boolean isMediaDocument(Uri uri) {
                         // Set up the back before link clicked icon
                     MenuItem linkBackItem = menu.findItem(R.id.menu_linkback);
                     if (mPageBeforeInternalLinkHit == -1) linkBackItem.setEnabled(false).setVisible(false);
+
+                        // Set up the print action
+                    MenuItem printItem = menu.findItem(R.id.menu_print);
+                    if (core == null)
+                        printItem.setEnabled(false).setVisible(false);
+                    else
+                        printItem.setEnabled(true).setVisible(true);
                     
                         // Set up the share action
                     MenuItem shareItem = menu.findItem(R.id.menu_share);
-                    if (core == null || core.getUri() == null)
-                    {
+                    if (core == null)
                         shareItem.setEnabled(false).setVisible(false);
-                    }
                     else
-                    {
-                        if (mShareActionProvider == null)
-                        {
-							mShareActionProvider = (android.support.v7.widget.ShareActionProvider)MenuItemCompat.getActionProvider(shareItem);
+                        shareItem.setEnabled(true).setVisible(true);
+                        
+                    // else
+                    // {
+                    //     if (mShareActionProvider == null)
+                    //     {
+					// 		mShareActionProvider = (android.support.v7.widget.ShareActionProvider)MenuItemCompat.getActionProvider(shareItem);
 							
-                            Intent shareIntent = new Intent();
-                            shareIntent.setAction(Intent.ACTION_SEND);
-                            shareIntent.setType("plain/text");
-                            shareIntent.setType("*/*");
-                            shareIntent.putExtra(Intent.EXTRA_STREAM, core.getUri());
-                            if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
-                        }   
-                    }
+                    //         Intent shareIntent = new Intent();
+                    //         shareIntent.setAction(Intent.ACTION_SEND);
+                    //         shareIntent.setType("plain/text");
+                    //         shareIntent.setType("*/*");
+                    //         shareIntent.putExtra(Intent.EXTRA_STREAM, core.getUri());
+                    //         if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
+                    //     }   
+                    // }
                     break;
                 case Selection:
                     inflater.inflate(R.menu.selection_menu, menu);
@@ -696,6 +704,9 @@ public static boolean isMediaDocument(Uri uri) {
                 return true;
             case R.id.menu_print:
                 printDoc();
+                return true;
+            case R.id.menu_share:
+                shareDoc();
                 return true;
             case R.id.menu_search:
                 mActionBarMode = ActionBarMode.Search;
@@ -1414,13 +1425,13 @@ public static boolean isMediaDocument(Uri uri) {
 			//Try to take permissions
 		tryToTakePersistablePermissions(getIntent());
         rememberTemporaryUriPermission(getIntent());
-            //Resetup the ShareActionProvider
-        Intent shareIntent = new Intent();
-        shareIntent.setAction(Intent.ACTION_SEND);
-        shareIntent.setType("plain/text");
-        shareIntent.setType("*/*");
-        shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(uri.getPath())));
-        if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
+        //     //Resetup the ShareActionProvider
+        // Intent shareIntent = new Intent();
+        // shareIntent.setAction(Intent.ACTION_SEND);
+        // shareIntent.setType("plain/text");
+        // shareIntent.setType("*/*");
+        // shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(uri.getPath())));
+        // if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
         return true;
     }
     
@@ -1540,11 +1551,39 @@ public static boolean isMediaDocument(Uri uri) {
             return;
         }
         Intent printIntent = new Intent(this, PrintDialogActivity.class);
-        printIntent.setDataAndType(core.getUri(), "aplication/pdf");
+        try
+        {
+            printIntent.setDataAndType(core.export(this), "aplication/pdf");
+        }
+        catch(Exception e)
+        {
+            showInfo(getString(R.string.error_exporting)+" "+e.toString());
+        }
         printIntent.putExtra("title", core.getFileName());
         startActivityForResult(printIntent, PRINT_REQUEST);
     }
 
+    private void shareDoc() {
+        Uri exportedUri = null;
+        try
+        {
+            exportedUri = core.export(this);            
+        }
+        catch(Exception e)
+        {
+            showInfo(getString(R.string.error_exporting)+" "+e.toString());
+        }
+        if(exportedUri != null) 
+        {
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            shareIntent.setDataAndType(exportedUri, getContentResolver().getType(exportedUri));
+            shareIntent.putExtra(Intent.EXTRA_STREAM, exportedUri);
+            startActivity(Intent.createChooser(shareIntent, getString(R.string.share_with)));
+        }
+    }
+    
     
     private void showInfo(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();

@@ -1,6 +1,7 @@
 package com.cgogolin.penandpdf;
 import java.util.ArrayList;
 
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.content.pm.PackageManager;
@@ -133,8 +134,9 @@ public class PenAndPDFCore extends MuPDFCore
             boolean oldHasChanges = hasChanges();
                 //Write to tmpFile
             if(tmpFile == null) {
-                File cacheDir = context.getCacheDir();
-                tmpFile = File.createTempFile("prefix", "pdf", cacheDir);
+                File cacheDir = new File(context.getCacheDir(), "tmpfiles");
+                cacheDir.mkdirs();
+                tmpFile = new File(cacheDir, oldFileName);
             }
             if(super.saveAs(tmpFile.getPath()) != 0)
                 throw new java.io.IOException("native code failed to save to tmp file: "+tmpFile.getPath());
@@ -145,7 +147,7 @@ public class PenAndPDFCore extends MuPDFCore
             uri = oldUri;
             relocate(oldPath, oldFileName, oldHasChanges);
             
-            return Uri.fromFile(tmpFile);
+            return FileProvider.getUriForFile(context, "com.cgogolin.penandpdf.fileprovider", tmpFile);
         }
     
     public synchronized void save(Context context) throws java.io.IOException, java.io.FileNotFoundException, Exception

@@ -74,6 +74,15 @@
        >
     </activity>
     <provider
+       android:name="android.support.v4.content.FileProvider"
+       android:authorities="com.cgogolin.penandpdf.fileprovider"
+       android:grantUriPermissions="true"
+       android:exported="false">
+      <meta-data
+         android:name="android.support.FILE_PROVIDER_PATHS"
+         android:resource="@xml/fileproviderpaths" />
+    </provider>
+    <provider
        android:name="com.cgogolin.penandpdf.PenAndPDFContentProvider"
        android:authorities="com.cgogolin.penandpdf.PenAndPDFContentProvider"
        android:grantUriPermissions="true"

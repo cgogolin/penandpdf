@@ -94,7 +94,7 @@ public class MuPDFCore
     private native void stopAlertsInternal();
     private native void destroying();
     private native boolean hasChangesInternal();
-    protected native int saveAsInternal(String path);
+    private native int saveAsInternal(String path);
     private native int insertPageBeforeInternal(int position);
     private native long createCookie();
     private native void destroyCookie(long cookie);

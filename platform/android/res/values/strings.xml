@@ -158,4 +158,6 @@
   <string name="use_stylus_summ">(Only for devices that have an active stylus) Only the stylus draws in free hand drawing mode and touching the screen with it automatically activates this mode.</string>
   <string name="version">1.8 (git build)</string>
   <string name="yes">Yes</string>
+  <string name="share_with">Share with</string>
+  <string name="error_exporting">Error exporting to a temporary file</string>
 </resources>
