@@ -1227,7 +1227,7 @@ public static boolean isMediaDocument(Uri uri) {
         {
 			intent = new Intent(this, PenAndPDFFileChooser.class);
             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-			intent.setAction(Intent.ACTION_CHOOSER);
+			intent.setAction(Intent.ACTION_EDIT);
 		}
 		else
 		{

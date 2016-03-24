@@ -60,7 +60,7 @@ public class FileBrowserFragment extends ListFragment {
 
         if(intent.ACTION_MAIN.equals(intent.getAction()))
             purpose = Purpose.ChooseFileForOpeningAndLaunch;
-        else if(intent.ACTION_CHOOSER.equals(intent.getAction()))
+        else if(intent.ACTION_EDIT.equals(intent.getAction()))
             purpose = Purpose.ChooseFileForOpening;
         else if((intent.ACTION_PICK.equals(intent.getAction())))
             purpose = Purpose.ChooseFileForSaving;
@@ -70,7 +70,7 @@ public class FileBrowserFragment extends ListFragment {
         // {
         //     case ACTION_MAIN:
         //         purpose = Purpose.ChooseFileForOpeningAndLaunch;
-        //     case ACTION_CHOOSER:
+        //     case ACTION_EDIT:
         //         purpose = Purpose.ChooseFileForOpening;
         //     case ACTION_PICK:
         //         purpose = Purpose.ChooseFileForSaving;
