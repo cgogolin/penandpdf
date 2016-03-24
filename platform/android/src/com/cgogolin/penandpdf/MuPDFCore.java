@@ -20,6 +20,7 @@ import android.os.ParcelFileDescriptor;
 public class MuPDFCore
 {
     private static final float INK_THICKNESS=10f;
+    private boolean mHasAdditionalChanges = false;
     
 		/* load our native library */
     static {
@@ -468,7 +469,7 @@ public class MuPDFCore
     }
 
     public synchronized boolean hasChanges() {
-        return hasChangesInternal();
+        return mHasAdditionalChanges || hasChangesInternal();
     }
     
     public String getPath() {
@@ -506,8 +507,14 @@ public class MuPDFCore
         return insertBlankPageBeforeInternal(position) == 0 ? true : false;
     }
 
-    public void relocate(String path, String fileName) {
+    public void relocate(String path, String fileName, boolean hasAdditionalChanges) {
         mPath = path;
         mFileName = fileName;
+        mHasAdditionalChanges = hasAdditionalChanges;
+    }
+
+    public int saveAs(String path) {
+        mHasAdditionalChanges = false;
+        return saveAsInternal(path);
     }
 }

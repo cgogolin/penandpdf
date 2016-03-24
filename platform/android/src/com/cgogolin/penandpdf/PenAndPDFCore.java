@@ -125,26 +125,27 @@ public class PenAndPDFCore extends MuPDFCore
             }
         }
 
-    public synchronized File export(Context context) throws java.io.IOException, java.io.FileNotFoundException, Exception
+    public synchronized Uri export(Context context) throws java.io.IOException, java.io.FileNotFoundException, Exception
         {
             Uri oldUri = this.uri;
             String oldPath = getPath();
             String oldFileName = getFileName();
+            boolean oldHasChanges = hasChanges();
                 //Write to tmpFile
             if(tmpFile == null) {
                 File cacheDir = context.getCacheDir();
                 tmpFile = File.createTempFile("prefix", "pdf", cacheDir);
             }
-            if(saveAsInternal(tmpFile.getPath()) != 0)
+            if(super.saveAs(tmpFile.getPath()) != 0)
                 throw new java.io.IOException("native code failed to save to tmp file: "+tmpFile.getPath());
             
                 //reinit because the MuPDFCore core gets useless after saveIntenal()
             init(context, Uri.fromFile(tmpFile)); 
                 //But now the Uri, as well as mFilenName and mPath in the superclass are wrong, so we repair this
             uri = oldUri;
-            relocate(oldPath, oldFileName);
+            relocate(oldPath, oldFileName, oldHasChanges);
             
-            return tmpFile;
+            return Uri.fromFile(tmpFile);
         }
     
     public synchronized void save(Context context) throws java.io.IOException, java.io.FileNotFoundException, Exception
@@ -503,3 +504,5 @@ public class PenAndPDFCore extends MuPDFCore
         }
     }
 }
+
+
