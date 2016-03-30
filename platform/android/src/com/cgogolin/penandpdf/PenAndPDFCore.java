@@ -162,7 +162,7 @@ public class PenAndPDFCore extends MuPDFCore
             FileInputStream fileInputStream = null;
             try
             {
-                    //Write to tmpFile
+                    //Export to tmpFile
                 export(context);
                 
                     //Open the result as fileInputStream
@@ -206,38 +206,9 @@ public class PenAndPDFCore extends MuPDFCore
                 if(fileOutputStream != null) fileOutputStream.close();
                 if(pfd != null) pfd.close();
             }
-//            init(context, uri); //reinit because the MuPDFCore core gets useless after saveIntenal()
+                //remeber the new uri
+            this.uri = uri;
         }
-
-    
-    // public synchronized void saveAs(Context context, Uri uri) throws java.io.IOException, java.io.FileNotFoundException
-    //     {
-    //         if(canSaveToUriViaContentResolver(context, uri))
-    //         {
-    //             if(tmpFile == null) {
-    //                 File cacheDir = context.getCacheDir();
-    //                 tmpFile = File.createTempFile("prefix", "pdf", cacheDir);
-    //             }
-    //             if(saveAsInternal(tmpFile.getPath()) != 0)
-    //                 throw new java.io.IOException("native code failed to save to "+tmpFile.getPath());
-                
-    //             ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "w");
-    //             FileInputStream fileInputStream = new FileInputStream(tmpFile);
-    //             FileOutputStream fileOutputStream = new FileOutputStream(pfd.getFileDescriptor());
-    //             copyStream(fileInputStream,fileOutputStream);
-    //             fileInputStream.close();
-    //             fileOutputStream.close();
-    //             pfd.close();
-    //             this.uri = uri;
-    //         }
-    //         else
-    //         {
-    //             String path = Uri.decode(uri.getEncodedPath());
-    //             if(saveAsInternal(path) != 0)
-    //                 throw new java.io.IOException("native code failed to save to "+uri.toString());
-    //             this.uri = uri;
-    //         }
-    //     }
     
     private static void copyStream(InputStream input, OutputStream output)
         throws java.io.IOException
@@ -255,7 +226,6 @@ public class PenAndPDFCore extends MuPDFCore
         boolean haveWritePermissionToUri = false;
         try
         {
-            // if( ((AppCompatActivity) context).getIntent().getData().equals(uri) && (((AppCompatActivity) context).getIntent().getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             //     haveWritePermissionToUri = true;
             for(TemporaryUriPermission permission : (context).getTemporaryUriPermissions()) {
                 Log.i(context.getString(R.string.app_name), "checking saved temporary permission for "+permission.getUri()+" while uri="+uri+" write permission is "+permission.isWritePermission()+" and uris are equal "+permission.getUri().equals(uri));
@@ -366,27 +336,6 @@ public class PenAndPDFCore extends MuPDFCore
         }
         
         return canWrite;
-        
-        //     if(haveWritePermissionToUri)
-        //     {
-        //         Log.i(context.getString(R.string.app_name), "we have write permissions, so checking if we can open a pfd.");
-        //         ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "wa");
-        //         if(pfd != null) {
-        //             Log.i(context.getString(R.string.app_name), "opened pfd succesfully, hence closing and returning true");
-        //             pfd.close();
-        //             return true;
-        //         }
-        //         else
-        //         {
-        //             Log.i(context.getString(R.string.app_name), "unable to open stream, hence returning false");
-        //             return false;
-        //         }
-        //     }
-        //     else
-        //     {
-        //         Log.i(context.getString(R.string.app_name), "no write permissions so returing false.");
-        //         return false;
-        //     }
     }
     
     public boolean canSaveToUriAsFile(Context context, Uri uri) {
@@ -438,9 +387,6 @@ public class PenAndPDFCore extends MuPDFCore
             String newline = System.getProperty ("line.separator");
             String minimalPDF =
                 "%PDF-1.1"+newline+
-//                "%¥±ë"+newline+
-//                "%\342\343\317\323"+newline+
-//                "Â¥Â±Ã«"+newline+
                 "\u00a5\u00b1\u00eb"+newline+
                 "1 0 obj "+newline+
                 "<<"+newline+

@@ -410,7 +410,10 @@ public static boolean isMediaDocument(Uri uri) {
             super.onResume();
             
 			Intent intent = getIntent();
-			if (Intent.ACTION_MAIN.equals(intent.getAction()))
+
+            Log.i(getString(R.string.app_name), "onResume() with intent="+intent+" core="+core);
+                        
+			if (Intent.ACTION_MAIN.equals(intent.getAction()) && core == null)
             {
 				setupEntryScreen();
             }
@@ -1263,6 +1266,9 @@ public static boolean isMediaDocument(Uri uri) {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if(intent!=null)
+            Log.i(getString(R.string.app_name), "onActivityResult() flags="+intent.getFlags()+" and write flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == Intent.FLAG_GRANT_WRITE_URI_PERMISSION)+" and read flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION) == Intent.FLAG_GRANT_READ_URI_PERMISSION));
+        
         switch (requestCode) {
             case EDIT_REQUEST:
                 overridePendingTransition(R.animator.fade_in, R.animator.exit_to_left);
@@ -1272,8 +1278,6 @@ public static boolean isMediaDocument(Uri uri) {
                         getIntent().setAction(Intent.ACTION_VIEW);
                         getIntent().setData(intent.getData());
                         getIntent().setFlags((getIntent().getFlags() & ~Intent.FLAG_GRANT_WRITE_URI_PERMISSION & ~Intent.FLAG_GRANT_READ_URI_PERMISSION) | (intent.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) | (intent.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION));//Set the read and writ flags to what they are in the received intent
-
-                        Log.i(getString(R.string.app_name), "onActivityResult() flags="+intent.getFlags()+" and write flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == Intent.FLAG_GRANT_WRITE_URI_PERMISSION)+" and read flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION) == Intent.FLAG_GRANT_READ_URI_PERMISSION));
                         
                         if (core != null) {
                             core.onDestroy();
@@ -1430,6 +1434,9 @@ public static boolean isMediaDocument(Uri uri) {
 
 
     private void saveRecentFiles(SharedPreferences prefs, SharedPreferences.Editor edit, Uri uri) {
+
+        Log.i(getString(R.string.app_name), "saveRecentFiles() with uri="+uri);
+
             //Read the recent files list from preferences
         RecentFilesList recentFilesList = new RecentFilesList(prefs);                    
             //Add the current file
