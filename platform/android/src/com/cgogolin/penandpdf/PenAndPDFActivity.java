@@ -441,6 +441,7 @@ public static boolean isMediaDocument(Uri uri) {
 					SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
 					SharedPreferences.Editor edit = prefs.edit();
 					saveRecentFiles(prefs, edit, core.getUri());
+                    edit.apply();
 				}
 			}
 			
@@ -1456,6 +1457,7 @@ public static boolean isMediaDocument(Uri uri) {
         }
         else
             saveViewport(edit, uri.toString());
+        edit.apply();
     }
     
         @Override

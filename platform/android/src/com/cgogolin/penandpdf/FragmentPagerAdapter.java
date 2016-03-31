@@ -17,6 +17,8 @@
 package com.cgogolin.penandpdf;
 //package android.support.v13.app; //Taken from there but slightly modified
 
+//TODO: Should switch to the support versions of the following:
+
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
