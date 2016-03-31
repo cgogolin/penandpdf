@@ -145,7 +145,8 @@ public class PenAndPDFCore extends MuPDFCore
             init(context, Uri.fromFile(tmpFile)); 
                 //But now the Uri, as well as mFilenName and mPath in the superclass are wrong, so we repair this
             uri = oldUri;
-            relocate(oldPath, oldFileName, oldHasChanges);
+            relocate(oldPath, oldFileName);
+            setHasAdditionalChanges(oldHasChanges);
             
             return FileProvider.getUriForFile(context, "com.cgogolin.penandpdf.fileprovider", tmpFile);
         }
@@ -206,8 +207,9 @@ public class PenAndPDFCore extends MuPDFCore
                 if(fileOutputStream != null) fileOutputStream.close();
                 if(pfd != null) pfd.close();
             }
-                //remeber the new uri
+                //remeber the new uri and tell the core that all changes were saved
             this.uri = uri;
+            setHasAdditionalChanges(false);
         }
     
     private static void copyStream(InputStream input, OutputStream output)

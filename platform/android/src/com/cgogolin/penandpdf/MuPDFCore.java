@@ -507,12 +507,15 @@ public class MuPDFCore
         return insertBlankPageBeforeInternal(position) == 0 ? true : false;
     }
 
-    public void relocate(String path, String fileName, boolean hasAdditionalChanges) {
+    public void relocate(String path, String fileName) {
         mPath = path;
         mFileName = fileName;
-        mHasAdditionalChanges = hasAdditionalChanges;
     }
 
+    public void setHasAdditionalChanges(boolean hasAdditionalChanges) {
+        mHasAdditionalChanges = hasAdditionalChanges;
+    }
+    
     public int saveAs(String path) {
         mHasAdditionalChanges = false;
         return saveAsInternal(path);
