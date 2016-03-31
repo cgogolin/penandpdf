@@ -70,16 +70,29 @@ public class PenAndPDFCore extends MuPDFCore
 
                 if (cursor != null && cursor.moveToFirst())
                 {
+                    Log.i(context.getString(R.string.app_name), "got the cursor "+cursor);
+                    
                         //Try to get the display name/title
                     int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
                     if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
                     if(displayName==null)
                     {
-                        int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+                        int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.TITLE);
                         if(titleIndex >= 0) displayName = cursor.getString(titleIndex);
                         if(displayName==null)
                         {
-                            displayName="NoName.pdf";
+                            // try
+                            // {
+                            //     String path = PenAndPDFActivity.getActualPath(context, uri);
+                            //     int lastSlashPos = path.lastIndexOf('/');
+                            //     displayName = new String(lastSlashPos == -1 ? path : path.substring(lastSlashPos+1));
+                            // }
+                            // catch(Exception e)
+                            // {
+                            //     displayName = null;
+                            // }
+                            // if(displayName==null || displayName.equals(""))
+                            displayName=context.getString(R.string.unknown_file_name);
                         }
                     }       
                     cursor.close();

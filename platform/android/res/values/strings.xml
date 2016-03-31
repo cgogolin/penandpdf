@@ -160,4 +160,5 @@
   <string name="yes">Yes</string>
   <string name="share_with">Share with</string>
   <string name="error_exporting">Error exporting to a temporary file</string>
+  <string name="unknown_file_name">Unknown.pdf</string>
 </resources>
