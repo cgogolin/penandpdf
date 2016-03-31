@@ -5,22 +5,21 @@
 	     android:orientation="vertical"
 	     android:layout_width="match_parent"
 	     android:layout_height="match_parent" >
-
+  
   <!-- content will be added here -->
-
-  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-		xmlns:tools="http://schemas.android.com/tools"
-		xmlns:card_view="http://schemas.android.com/apk/res-auto"
-		xmlns:app="http://schemas.android.com/apk/res-auto"
-		android:id="@+id/entry_screen_layout"
-		android:visibility="gone"
-		android:orientation="vertical"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:layout_marginLeft="6dp"
-		android:layout_marginRight="6dp"
-		android:paddingTop="?attr/actionBarSize"
-		android:animateLayoutChanges="true">
+  
+  <LinearLayout
+     xmlns:card_view="http://schemas.android.com/apk/res-auto"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:id="@+id/entry_screen_layout"
+     android:visibility="gone"
+     android:orientation="vertical"
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+     android:layout_marginLeft="6dp"
+     android:layout_marginRight="6dp"
+     android:paddingTop="?attr/actionBarSize"
+     android:animateLayoutChanges="true">
     <android.support.v7.widget.CardView
        xmlns:card_view="http://schemas.android.com/apk/res-auto"
        android:id="@+id/entry_screen_open_document_card_view"
@@ -41,18 +40,18 @@
 		   android:layout_height="wrap_content"	
 		   android:src="@drawable/ic_open" />
 	<TextView style="@style/Base.TextAppearance.AppCompat.Title"
-		  android:id="@+id/title"
+		  android:id="@+id/title_open_document"
 		  android:text="@string/entry_screen_open_document"
 		  android:layout_width="wrap_content"    
 		  android:layout_height="wrap_content"
 		  android:layout_toRightOf="@id/image"/>
 	<TextView style="@style/Base.TextAppearance.AppCompat.Subhead"
-		  android:id="@+id/subtitle"
+		  android:id="@+id/subtitle_open_document"
 		  android:text="@string/entry_screen_open_document_summ"
 		  android:layout_width="wrap_content"    
 		  android:layout_height="wrap_content"
-		  android:layout_below="@id/title"
-		  android:layout_alignLeft="@id/title"/>
+		  android:layout_below="@id/title_open_document"
+		  android:layout_alignLeft="@id/title_open_document"/>
       </RelativeLayout>
     </android.support.v7.widget.CardView>
     <android.support.v7.widget.CardView
@@ -73,18 +72,18 @@
 		   android:layout_height="wrap_content"	
 		   android:src="@drawable/ic_new" />
 	<TextView style="@style/Base.TextAppearance.AppCompat.Title"
-		  android:id="@+id/title"
+		  android:id="@+id/title_new_document"
 		  android:text="@string/entry_screen_new_document"
 		  android:layout_width="wrap_content"    
 		  android:layout_height="wrap_content"
 		  android:layout_toRightOf="@id/image" />
 	<TextView style="@style/Base.TextAppearance.AppCompat.Subhead"
-		  android:id="@+id/subtitle"
+		  android:id="@+id/subtitle_new_document"
 		  android:text="@string/entry_screen_new_document_summ"
 		  android:layout_width="wrap_content"    
 		  android:layout_height="wrap_content"
-		  android:layout_below="@id/title"
-		  android:layout_alignLeft="@id/title"/>
+		  android:layout_below="@id/title_new_document"
+		  android:layout_alignLeft="@id/title_new_document"/>
       </RelativeLayout>
     </android.support.v7.widget.CardView>
     <android.support.v7.widget.CardView
@@ -105,18 +104,18 @@
 		   android:layout_height="wrap_content"	
 		   android:src="@drawable/ic_settings" />
 	<TextView style="@style/Base.TextAppearance.AppCompat.Title"
-		  android:id="@+id/title"
+		  android:id="@+id/title_settings"
 		  android:text="@string/entry_screen_settings"
 		  android:layout_width="wrap_content"    
 		  android:layout_height="wrap_content"
 		  android:layout_toRightOf="@id/image" />
 	<TextView style="@style/Base.TextAppearance.AppCompat.Subhead"
-		  android:id="@+id/subtitle"
+		  android:id="@+id/subtitle_settings"
 		  android:text="@string/entry_screen_settings_summ"
 		  android:layout_width="wrap_content"    
 		  android:layout_height="wrap_content"
-		  android:layout_below="@id/title"
-		  android:layout_alignLeft="@id/title"/>
+		  android:layout_below="@id/title_settings"
+		  android:layout_alignLeft="@id/title_settings"/>
       </RelativeLayout>
     </android.support.v7.widget.CardView>
   </LinearLayout>
