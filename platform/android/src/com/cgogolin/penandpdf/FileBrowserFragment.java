@@ -147,15 +147,12 @@ public class FileBrowserFragment extends ListFragment {
         mHandler = new Handler();
         mUpdateFiles = new Runnable() {
                 public void run() {
-                    if(!isAdded()) return;
+                    if(!isAdded() || isDetached() || isRemoving()) return;
                     if(mDirectory==null) return;
 
                         //Set the title from the current direcory
-                    Resources res = getResources();
-                    String appName = res.getString(R.string.app_name);
-                    String title = res.getString(R.string.picker_title_App_Ver_Dir);
-                    getActivity().setTitle(mDirectory.getPath());
-
+                    setTitle();
+                    
                         //Get the parent directory and the directories and files
                     mParent = mDirectory.getParentFile();
                     mDirs = mDirectory.listFiles(new FileFilter() {
@@ -345,5 +342,14 @@ public class FileBrowserFragment extends ListFragment {
     void goToDir(File dir) {
             mDirectory = dir;
             mHandler.post(mUpdateFiles);
+    }
+
+    private void setTitle() {
+        if(mDirectory != null)
+            getActivity().setTitle(mDirectory.getPath());
+    }
+
+    public void inForground() {
+        setTitle();
     }
 }

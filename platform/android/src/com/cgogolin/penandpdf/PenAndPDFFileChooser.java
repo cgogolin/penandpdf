@@ -91,6 +91,23 @@ public class PenAndPDFFileChooser extends AppCompatActivity implements RecentFil
                 public void onPageSelected(int position) {
                         //When swiping between pages, select the corresponding tab.
                     tabLayout.getTabAt(position).select();
+                        //...and give the fragments a chance to react to them becoming visible
+                    FragmentPagerAdapter fragmentPagerAdapter = (FragmentPagerAdapter)mViewPager.getAdapter();
+                    android.support.v4.app.Fragment fragment = fragmentPagerAdapter.getItem(position);
+                    
+                    
+                    switch(position)
+                    {   
+                        case 0:
+                            ((FileBrowserFragment)fragment).inForground();
+                            break;
+                        case 1:
+                            ((RecentFilesFragment)fragment).inForground();
+                            break;
+                        case 2:
+                            ((NoteBrowserFragment)fragment).inForground();
+                            break;
+                    }
                 }
             }                              
             );
