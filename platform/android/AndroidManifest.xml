@@ -9,7 +9,7 @@
   <!--  <uses-permission android:name="android.permission.MANAGE_DOCUMENTS" />-->
   <uses-permission android:name="com.cgogolin.penandpdf.LAUNCH_PEN_AND_PDF_FILE_CHOOSER" />
   <uses-permission android:name="android.permission.INTERNET" /><!--For printing with clound print-->
-  <uses-sdk android:minSdkVersion="11" android:targetSdkVersion="23" />
+  <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="23" />
   <supports-screens
      android:smallScreens="true"
      android:normalScreens="true"
