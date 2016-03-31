@@ -641,7 +641,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             post(this);
         }
             //... else check if we should be switching to a new view and do it
-        else if (cv != null) {
+        else if (cv != null && maySwitchView()) {
             Point cvOffset = subScreenSizeOffset(cv);
                 // Move to next if current is sufficiently off center
                 // cv.getRight() may be out of date with the current scale
@@ -1059,6 +1059,11 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
         mUseStylus = sharedPref.getBoolean(SettingsActivity.PREF_USE_STYLUS, false);
         mFitWidth = sharedPref.getBoolean(SettingsActivity.PREF_FIT_WIDTH, false);
+    }
+
+        //This method can be overwritten in super classes to prevent view switching while, for example, we are in drawing mode
+    public boolean maySwitchView() {
+        return true;
     }
 }
 

@@ -558,4 +558,9 @@ abstract public class MuPDFReaderView extends ReaderView {
         }
         super.onRestoreInstanceState(state);
     }
+
+    @Override
+    public boolean maySwitchView() {
+        return mMode.equals(Mode.Viewing) || mMode.equals(Mode.Searching);
+    }
 }
