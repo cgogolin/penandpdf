@@ -54,7 +54,7 @@ public class ChoosePDFAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         View v;
         if (convertView == null) {
-            v = mInflater.inflate(R.layout.picker_entry, parent);
+            v = mInflater.inflate(R.layout.picker_entry, null);
         } else {
             v = convertView;
         }

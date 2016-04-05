@@ -9,6 +9,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.SparseArray;
@@ -1064,6 +1065,44 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         //This method can be overwritten in super classes to prevent view switching while, for example, we are in drawing mode
     public boolean maySwitchView() {
         return true;
+    }
+
+
+    @Override
+    public Parcelable onSaveInstanceState() {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("superInstanceState", super.onSaveInstanceState());
+            //Save
+        bundle.putInt("mCurrent", mCurrent);
+        bundle.putInt("mXScroll", mXScroll);
+        bundle.putInt("mYScroll", mYScroll);
+        bundle.putInt("mScrollerLastX", mScrollerLastX);
+        bundle.putInt("mScrollerLastY", mScrollerLastY);
+        bundle.putInt("previousFocusX", previousFocusX);
+        bundle.putInt("previousFocusY", previousFocusY);
+        bundle.putBoolean("mReflow", mReflow);
+        bundle.putBoolean("mScrollDisabled", mScrollDisabled);
+        return bundle;
+    }
+    
+    @Override
+    public void onRestoreInstanceState(Parcelable state) {
+        if (state instanceof Bundle) {
+            Bundle bundle = (Bundle) state;
+                //Load
+            mCurrent = bundle.getInt("mCurrent", mCurrent);
+            mXScroll = bundle.getInt("mXScroll", mXScroll);
+            mYScroll = bundle.getInt("mYScroll", mYScroll);
+            mScrollerLastX = bundle.getInt("mScrollerLastX", mScrollerLastX);
+            mScrollerLastY = bundle.getInt("mScrollerLastY", mScrollerLastY);
+            previousFocusX = bundle.getInt("previousFocusX", previousFocusX);
+            previousFocusY = bundle.getInt("previousFocusY", previousFocusY);
+            mReflow = bundle.getBoolean("mReflow", mReflow);
+            mScrollDisabled = bundle.getBoolean("mScrollDisabled", mScrollDisabled);
+        
+            state = bundle.getParcelable("superInstanceState");
+        }
+        super.onRestoreInstanceState(state);
     }
 }
 

@@ -951,7 +951,7 @@ public static boolean isMediaDocument(Uri uri) {
     
     public void setupDocView() { //Is called during onResume()
             //If we don't even have a core there is nothing to do
-        if (core == null) return;            
+        if(core == null) return;            
             //If the doc view is not present create it
         if(mDocView == null)
         {
@@ -1122,7 +1122,7 @@ public static boolean isMediaDocument(Uri uri) {
 			
             mDocViewNeedsNewAdapter = true;
 
-				//Make appear below the toolbar if completely zoomed out
+				//Make content appear below the toolbar if completely zoomed out
             TypedValue tv = new TypedValue();
             if(getSupportActionBar().isShowing() && getTheme().resolveAttribute(android.support.v7.appcompat.R.attr.actionBarSize, tv, true)) {
                 int actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data,getResources().getDisplayMetrics());
