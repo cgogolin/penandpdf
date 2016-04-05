@@ -8,6 +8,7 @@
      android:layout_height="wrap_content"
      android:id="@+id/draw_image_button"
      android:src="@drawable/ic_action_erase_white_24dp"
+     android:contentDescription="@string/menu_erase"
      />
 </FrameLayout>
 

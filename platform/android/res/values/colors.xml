@@ -8,8 +8,8 @@
 	<color name="primary_text_toolbar">#FFFFFFFF</color>
 	<color name="hint_text_toolbar">#FFEFEFEF</color>
 	<color name="secondary_text">#0F0F0F</color>
-	<color name="icons">#FFFFFF</color>
-	<color name="divider">#B6B6B6</color>
-	<color name="ripple">#FF0000</color>
+<!--	<color name="icons">#FFFFFF</color>-->
+<!--	<color name="divider">#B6B6B6</color>-->
+<!--	<color name="ripple">#FF0000</color>-->
 	<color name="busy_indicator">#C0202020</color>
 </resources>

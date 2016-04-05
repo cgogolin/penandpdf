@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="accept">Akzeptieren</string>
-  	<string name="add_a_note">Notiz hinzufügen...</string>
+  	<string name="add_a_note">Notiz hinzufügen&#8230;</string>
 	<string name="annotation_settings">Kommentieren</string>
 
 	<string name="autosave_settings">Automatisch Speichern</string>
@@ -24,7 +24,7 @@
 	<string name="dialog_newdoc_cancel">Abbrechen</string>
 	<string name="dialog_newdoc_ok">Erstellen</string>
 	<string name="dialog_newdoc_title">Blankes PDF erstellen</string>
-	<string name="dialog_newdoc_hint">Dateiname...</string>
+	<string name="dialog_newdoc_hint">Dateiname&#8230;</string>
 	<string name="dismiss">Verwerfen</string>
 	<string name="display_settings">Anzeige</string>
 	<string name="document_has_changes_save_them">Das Dokument wurde verändert. Sollen die Änderungen gespeichert werden?</string>
@@ -83,11 +83,11 @@
 	<string name="menu_open">Öffnen</string>
 	<string name="menu_previous">Zurück</string>
 	<string name="menu_print">Drucken</string>
-	<string name="menu_save">Speichern...</string>
+	<string name="menu_save">Speichern&#8230;</string>
 	<string name="menu_search">Suchen</string>
 	<string name="menu_selection">Text auswählen</string>
 	<string name="menu_settings">Einstellungen</string>
-	<string name="menu_share">Teilen...</string>
+	<string name="menu_share">Teilen&#8230;</string>
 	<string name="menu_strikeout">Durchstreichen</string>
 	<string name="menu_underline">Unterstreichen</string>
 	<string name="menu_undo">Rückgängig</string>

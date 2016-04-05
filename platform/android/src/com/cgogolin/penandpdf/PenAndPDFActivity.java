@@ -1033,7 +1033,7 @@ public static boolean isMediaDocument(Uri uri) {
 						mAlertDialog = mAlertBuilder.create();
                         final LinearLayout editTextLayout = new LinearLayout(mAlertDialog.getContext());
                         editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-                        editTextLayout.setOrientation(1);
+                        editTextLayout.setOrientation(LinearLayout.VERTICAL);
                         editTextLayout.setPadding(16, 16, 16, 0);//should not be hard coded
                         final EditText input = new EditText(editTextLayout.getContext());
                         input.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_NORMAL|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
@@ -1579,7 +1579,7 @@ public static boolean isMediaDocument(Uri uri) {
 
 		final LinearLayout editTextLayout = new LinearLayout(mAlertDialog.getContext());
 		editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-		editTextLayout.setOrientation(1);
+		editTextLayout.setOrientation(LinearLayout.VERTICAL);
 		editTextLayout.setPadding(16, 16, 16, 0);//should not be hard coded
 		
         final EditText input = new EditText(editTextLayout.getContext());
@@ -1620,7 +1620,7 @@ public static boolean isMediaDocument(Uri uri) {
 
 		final LinearLayout editTextLayout = new LinearLayout(mAlertDialog.getContext());
 		editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-		editTextLayout.setOrientation(1);
+		editTextLayout.setOrientation(LinearLayout.VERTICAL);
 		editTextLayout.setPadding(16, 16, 16, 0);//should not be hard coded
         final EditText input = new EditText(editTextLayout.getContext());
         input.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
@@ -1631,7 +1631,7 @@ public static boolean isMediaDocument(Uri uri) {
         TextDrawable textDrawable = new TextDrawable(".pdf", input.getTextSize(), input.getCurrentTextColor());
         input.setCompoundDrawablesWithIntrinsicBounds(null , null, textDrawable, null);
         input.setFocusable(true);
-        input.setGravity(Gravity.RIGHT);
+        input.setGravity(Gravity.END);
 		mAlertDialog.setTitle(R.string.dialog_newdoc_title);
 		DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener()
 			{
