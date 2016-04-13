@@ -1235,10 +1235,13 @@ public static boolean isMediaDocument(Uri uri) {
 							{
 								if(!save())
 									showInfo(getString(R.string.error_saveing));
+                                else
+                                    showOpenDocumentDialog();
 							}
 							else
 							{
 								showSaveAsActivity();
+                                    //We should show the open dialog after save as has compltete...
 							}
 						}
 						if (which == AlertDialog.BUTTON_NEGATIVE) {
