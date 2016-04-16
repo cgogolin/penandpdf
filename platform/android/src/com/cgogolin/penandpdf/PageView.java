@@ -1126,25 +1126,25 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         int w  = right-left;
         int h = bottom-top;
 
+
             //Layout the Hq patch
-        if (mHqView != null && mHqView.getArea() != null && mHqView.getPatchArea() != null) {
-            if(mHqView.getArea().width() != w || mHqView.getArea().height() != h) {
-                    // Remove Hq if zoomed since patch was created
+        if(mHqView != null)
+        {
+                // Remove Hq if zoomed since patch was created
+            if(mHqView.getArea() == null || mHqView.getPatchArea() == null || mHqView.getArea().width() != w || mHqView.getArea().height() != h) {
                 mHqView.setVisibility(View.GONE);
                 mHqView.reset();
-            } else
-            {
+            }
+            else if(mHqView.getPatchArea() != null && mHqView.getArea() != null && mHqView.getArea().width() == w && mHqView.getArea().height() == h) {
                 mHqView.layout(mHqView.getPatchArea().left, mHqView.getPatchArea().top, mHqView.getPatchArea().right, mHqView.getPatchArea().bottom);
                 mHqView.setVisibility(View.VISIBLE);
-//                Log.e("PenAndPDF", "layout() for "+mHqView.getPatchArea());
             }
         }
 
             //Layout the entire page view
-        if (mEntireView != null)
-        {
+        if (mEntireView != null) {
                 //Draw mEntireView only if it is not completely covered by a Hq patch
-            if(mHqView != null && mHqView.getDrawable() != null && mHqView.getLeft() == left &&  mHqView.getTop() == top && mHqView.getRight() == right && mHqView.getBottom() == bottom ) 
+            if(mHqView != null && mHqView.getDrawable() != null && mHqView.getLeft() == left &&  mHqView.getTop() == top && mHqView.getRight() == right && mHqView.getBottom() == bottom )
             {
                 mEntireView.setVisibility(View.GONE);
             }
@@ -1154,7 +1154,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 mEntireView.setImageMatrix(mEntireMat);
                 mEntireView.layout(0, 0, w, h);
                 mEntireView.setVisibility(View.VISIBLE);
-//                mEntireView.invalidate();
             }
         }
 
