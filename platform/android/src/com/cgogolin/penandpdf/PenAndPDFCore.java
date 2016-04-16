@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.File;
+import java.io.ByteArrayOutputStream;
 import android.os.ParcelFileDescriptor;
 import android.content.pm.PackageManager;
 import android.content.Intent;
@@ -114,7 +115,6 @@ public class PenAndPDFCore extends MuPDFCore
                     }
                 }
                 
-                byte buffer[] = null;
                 InputStream is = null;
                 ParcelFileDescriptor pfd = null;
                 is = context.getContentResolver().openInputStream(uri);
@@ -126,11 +126,23 @@ public class PenAndPDFCore extends MuPDFCore
                 }
                 if(is != null && is.available() > 0)
                 {
-                    int len = is.available();
-                    buffer = new byte[len];
-                    is.read(buffer, 0, len);
-                    is.close();
-                    if(pfd != null) pfd.close();
+                    int len = 0;
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream(8192);
+                    try {
+                        byte buffer[] = new byte[8192];
+                        int num = 0;
+                        while((num = is.read(buffer)) != -1) {
+                            len+=num;
+                            baos.write(buffer, 0, num);
+                        }
+                        Log.i(context.getString(R.string.app_name), "reached end of stream");
+                    }
+                    finally
+                    {
+                        is.close();
+                        if(pfd != null) pfd.close();
+                    }
+                    byte buffer[] = baos.toByteArray();
                     Log.i(context.getString(R.string.app_name), "read "+len+" bytes into buffer "+buffer);
                     super.init(context, buffer, displayName);
                 }
