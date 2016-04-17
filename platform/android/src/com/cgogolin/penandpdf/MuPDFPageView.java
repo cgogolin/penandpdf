@@ -586,7 +586,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 			@Override
 			protected void onPostExecute(Void result) {
-				loadAnnotations();
+				loadAnnotations(null);
 			}
 		};
 
@@ -612,7 +612,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 				@Override
 				protected void onPostExecute(Void result) {
-					loadAnnotations();
+					loadAnnotations(null);
 				}
 			};
 
@@ -673,7 +673,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		if (path == null)
             return false;
         
-        cancelDraw();
+//        cancelDraw();
         
 		if (mAddInkAnnotation != null) {
 			mAddInkAnnotation.cancel(true);
@@ -683,7 +683,12 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			@Override
 			protected Void doInBackground(PointF[][]... params) {
 				mCore.addInkAnnotation(mPageNumber, params[0]);
-                loadAnnotations();
+                loadAnnotations(new Runnable() {
+                            //We only want to stop drawing the the ink annotation on the OveralyView once the page has rendered completely
+                    @Override
+                    public void run(){
+                        cancelDraw();
+                    }});
 				return null;
 			}
             };
@@ -771,7 +776,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                 @Override
                 protected Void doInBackground(PointF[]... params) {
                     mCore.addTextAnnotation(mPageNumber, params[0], annot.text);
-                    loadAnnotations();
+                    loadAnnotations(null);
                     return null;
                 }
                 
@@ -801,7 +806,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		mLoadWidgetAreas.execute();
 
 		super.setPage(page, size);
-                loadAnnotations();//Must be done after super.setPage() otherwise page number is wrong!
+                loadAnnotations(null);//Must be done after super.setPage() otherwise page number is wrong!
 	}
 
 	public void setScale(float scale) {
