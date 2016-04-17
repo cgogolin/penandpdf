@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.ArrayDeque;
 import java.util.LinkedList;
 import java.lang.Thread;
-import java.lang.Runnable;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -162,8 +161,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
 
     private       ProgressBar mBusyIndicator;
     private final Handler   mHandler = new Handler();
-
-    private Runnable mPostRedrawRunnable;
     
         //Set in onSharedPreferenceChanged()
     private static float inkThickness = 10;
@@ -220,7 +217,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         private Rect patchArea;
         private CancellableAsyncTask<PatchInfo,PatchInfo> mDrawPatch;
         private Bitmap bitmap;
-        private Runnable mPostRedrawRunnable;
         
         public PatchView(Context context) {
             super(context);
@@ -266,15 +262,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         public Bitmap getImageBitmap() {
             return bitmap;
         }
-
-        public void setPostRenderRunnable(Runnable postRedrawRunnable) {
-            mPostRedrawRunnable = postRedrawRunnable;
-        }
         
-        public void renderInBackground(PatchInfo patchInfo, Runnable postRedrawRunnable) {
-            if(postRedrawRunnable != null)
-                mPostRedrawRunnable = postRedrawRunnable;
-            
+        public void renderInBackground(PatchInfo patchInfo) {
                 //If we are already rendering / have rendered the area there is nothing to do
             if(getArea() == patchInfo.viewArea) return;
             
@@ -286,11 +275,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             mDrawPatch = new CancellableAsyncTask<PatchInfo, PatchInfo>(getRenderTask(patchInfo)){
                     @Override
                     protected void onPostExecute(PatchInfo patchInfo) {
-                        if(mPostRedrawRunnable!=null)
-                        {
-                            mPostRedrawRunnable.run();
-                            mPostRedrawRunnable = null;
-                        }
                         removeBusyIndicator();
                         setArea(patchInfo.viewArea);
                         setPatchArea(patchInfo.patchArea);
@@ -735,7 +719,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         mEntireBm = null;
     }
 
-    @Override
     public void setPage(int page, PointF size) {
         reset();
         mPageNumber = page;
@@ -885,10 +868,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         mLoadLinkInfoTask.execute();
     }
 
-    protected void loadAnnotations(final Runnable postRedrawRunnable) {
-        if(postRedrawRunnable!=null)
-            mPostRedrawRunnable = postRedrawRunnable;
-        
+    protected void loadAnnotations() {
         mAnnotations = null;
         if (mLoadAnnotationsTask != null) mLoadAnnotationsTask.cancel(true);
         mLoadAnnotationsTask = new AsyncTask<Void,Void,Annotation[]> () {
@@ -900,8 +880,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             @Override
             protected void onPostExecute(Annotation[] result) {
                 mAnnotations = result;
-                redraw(true, mPostRedrawRunnable);
-                mPostRedrawRunnable = null;
+                redraw(true);
             }
         };
         mLoadAnnotationsTask.execute();
@@ -1071,7 +1050,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     public void cancelDraw() {
         mDrawing = null;
         mDrawingHistory.clear();
-        if (mOverlayView != null) mOverlayView.invalidate();
     }
     
     public int getDrawingSize() {
@@ -1219,11 +1197,11 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             if(mOverlayView != null) mOverlayView.bringToFront();
         }
         
-        mEntireView.renderInBackground(patchInfo, null);
+        mEntireView.renderInBackground(patchInfo);
     }
     
     
-    public void addHq(boolean update, final Runnable postRedrawRunnable) {//If update is true a more efficient method is used to redraw the patch but it is redrawn even if the area hasn't changed!
+    public void addHq(boolean update) {//If update is true a more efficient method is used to redraw the patch but it is redrawn even if the area hasn't changed!
         Rect viewArea = new Rect(getLeft(),getTop(),getRight(),getBottom());
 //        Log.v("PageView", "addHq() page="+mPageNumber+", update="+update);
         
@@ -1249,16 +1227,18 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             addView(mHqView);
             if(mOverlayView != null) mOverlayView.bringToFront();
         }
-        mHqView.renderInBackground(patchInfo, postRedrawRunnable);
+
+//        Log.v("PageView", "addHq() rendering now");
+        mHqView.renderInBackground(patchInfo);
     }
 
     public void removeHq() {
         if (mHqView != null) mHqView.reset();
     }
 
-    public void redraw(boolean update, final Runnable postRedrawRunnable) {
-        addHq(update, postRedrawRunnable);
+    public void redraw(boolean update) {
         addEntire(update);
+        addHq(update);
         mOverlayView.invalidate();
     }
 

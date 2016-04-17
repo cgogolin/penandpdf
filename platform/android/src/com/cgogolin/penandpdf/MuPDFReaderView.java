@@ -489,7 +489,7 @@ abstract public class MuPDFReaderView extends ReaderView {
                     applyToChildren(new ReaderView.ViewMapper() {
                             @Override
                             void applyToView(View view) {
-                                ((MuPDFView) view).redraw(true, null);
+                                ((MuPDFView) view).redraw(true);
                             }
                         });
                 }
@@ -507,7 +507,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     protected void onSettle(View v) {
 //        Log.v("MuPDFReaderView", "onSettle("+v+")");
             // When the layout has settled ask the page to render in HQ
-        ((MuPDFView) v).addHq(false, null);
+        ((MuPDFView) v).addHq(false);
     }
 
     @Override
