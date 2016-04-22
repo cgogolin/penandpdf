@@ -331,8 +331,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         float docRelX = (e.getX() - getLeft())/scale;
         float docRelY = (e.getY() - getTop())/scale;
 
-        Log.e("Pen", "old mSelectBox="+mSelectBox);
-
         // if(docRelX < mSelectBox.right)
         mSelectBox.left=docRelX;
         // else {
