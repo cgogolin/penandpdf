@@ -547,18 +547,41 @@ public static boolean isMediaDocument(Uri uri) {
                         MenuItem undoButton = menu.findItem(R.id.menu_undo);
                         undoButton.setEnabled(false).setVisible(false);
                     }
-                    if(mDocView.getMode() == MuPDFReaderView.Mode.Erasing)
+
                     {
-                        MenuItem eraseButton = menu.findItem(R.id.menu_erase);
-                        eraseButton.setEnabled(false).setVisible(false);
+                        MenuItem cancelButton = menu.findItem(R.id.menu_cancel);
+                        View cancelButtonActionView = MenuItemCompat.getActionView(cancelButton);
+                        ImageButton cancelImageButton = (ImageButton)cancelButtonActionView.findViewById(R.id.cancel_image_button);
+                        final MuPDFView pageView = (MuPDFView) mDocView.getSelectedView();
+                        cancelImageButton.setOnClickListener(new OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    showInfo(getString(R.string.long_press_to_delete));
+                                }
+                            });
+                        cancelImageButton.setOnLongClickListener(new OnLongClickListener() {
+                                @Override
+                                public boolean onLongClick(View v) {
+                                    if (pageView != null) {
+                                        pageView.deselectText();
+                                        pageView.cancelDraw();
+                                    }
+                                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                                    return true;
+                                }
+                            });
                     }
+                    
                     if(mDocView.getMode() == MuPDFReaderView.Mode.Drawing)
                     {
                         MenuItem drawButton = menu.findItem(R.id.menu_draw);
                         drawButton.setEnabled(false).setVisible(false);
                     }
-                    else
+                    else if(mDocView.getMode() == MuPDFReaderView.Mode.Erasing)
                     {
+                        MenuItem eraseButton = menu.findItem(R.id.menu_erase);
+                        eraseButton.setEnabled(false).setVisible(false);
+
                         MenuItem drawButton = menu.findItem(R.id.menu_draw);
 						View drawButtonActionView = MenuItemCompat.getActionView(drawButton);
                         ImageButton drawImageButton = (ImageButton)drawButtonActionView.findViewById(R.id.draw_image_button);
@@ -582,6 +605,27 @@ public static boolean isMediaDocument(Uri uri) {
                     if(!selectedAnnotationIsEditable){
                         MenuItem editButton = menu.findItem(R.id.menu_edit);
                         editButton.setEnabled(false).setVisible(false);
+                    }
+                    {
+                        MenuItem cancelButton = menu.findItem(R.id.menu_cancel);
+                        View cancelButtonActionView = MenuItemCompat.getActionView(cancelButton);
+                        ImageButton cancelImageButton = (ImageButton)cancelButtonActionView.findViewById(R.id.cancel_image_button);
+                        final MuPDFView pageView = (MuPDFView) mDocView.getSelectedView();
+                        cancelImageButton.setOnClickListener(new OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    showInfo(getString(R.string.long_press_to_delete));
+                                }
+                            });
+                        cancelImageButton.setOnLongClickListener(new OnLongClickListener() {
+                                @Override
+                                public boolean onLongClick(View v) {
+                                    if (pageView != null)
+                                        pageView.deleteSelectedAnnotation();
+                                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                                return true;
+                                }
+                            });
                     }
                     break;
                 case Search:
@@ -793,18 +837,18 @@ public static boolean isMediaDocument(Uri uri) {
                 return true;
             case R.id.menu_cancel:
                 switch (mActionBarMode) {
-                    case Annot:
-                        if (pageView != null) {
-                                pageView.deselectText();
-                                pageView.cancelDraw();
-                        }
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                        break;
-                    case Edit:
-                        if (pageView != null)
-                            pageView.deleteSelectedAnnotation();
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                        break;
+                    // case Annot:
+                    //     if (pageView != null) {
+                    //             pageView.deselectText();
+                    //             pageView.cancelDraw();
+                    //     }
+                    //     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                    //     break;
+                    // case Edit:
+                    //     if (pageView != null)
+                    //         pageView.deleteSelectedAnnotation();
+                    //     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                    //     break;
                     case Search:
                         hideKeyboard();
                         if (mSearchTaskManager != null) mSearchTaskManager.stop();
@@ -812,10 +856,10 @@ public static boolean isMediaDocument(Uri uri) {
                         mDocView.clearSearchResults();
                         mDocView.resetupChildren();
                         break;
-                    case Selection:
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                        pageView.deselectText();
-                        break;
+                    // case Selection:
+                    //     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                    //     pageView.deselectText();
+                    //     break;
                     case AddingTextAnnot:
                         mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         break;
