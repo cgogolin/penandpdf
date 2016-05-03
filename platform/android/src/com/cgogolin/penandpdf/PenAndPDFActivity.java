@@ -1194,7 +1194,7 @@ public static boolean isMediaDocument(Uri uri) {
             }
 			
                 //Reinstate last viewport if it was recorded
-            restoreVieport();
+            restoreViewport();
 
                 //Restore the state of mDocView from its saved state in case there is one
             if(mDocViewParcelable != null) mDocView.onRestoreInstanceState(mDocViewParcelable);
@@ -1461,7 +1461,7 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
 
-    private void restoreVieport() {
+    private void restoreViewport() {
         if (core != null && mDocView != null) {
             SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
             setViewport(prefs, core.getUri());

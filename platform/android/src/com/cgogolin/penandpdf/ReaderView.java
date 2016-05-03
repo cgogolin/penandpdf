@@ -529,7 +529,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 float scale_factor = mReflow ? REFLOW_SCALE_FACTOR : 1.0f;
                 float min_scale = MIN_SCALE * scale_factor;
                 float max_scale = MAX_SCALE * scale_factor;
-                float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
+                float scale = getFillScreenScale(cv);
                 float fitWidthScale = (float)getWidth()/(cv.getMeasuredWidth()*scale);
                 if ( Math.abs(mScale - fitWidthScale) <= 0.15 && fitWidthScale >= 1.15) 
                 {
@@ -683,8 +683,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 float scale_factor = mReflow ? REFLOW_SCALE_FACTOR : 1.0f;
                 float min_scale = MIN_SCALE * scale_factor;
                 float max_scale = MAX_SCALE * scale_factor;
-                float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
-                float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
+                float scale = getFillScreenScale(cv);
+                float scaleCorrection = getScaleCorrection(cv);
                 
                 if(mHasNewNormalizedScale)
                 {
@@ -876,14 +876,23 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         mChildViews.append(i, v); // Record the view against it's adapter index
     }
 
+    private float getFillScreenScale(View v) {
+        return Math.min((float)(getWidth()-getPaddingLeft()-getPaddingRight())/(float)v.getMeasuredWidth(),(float)(getHeight()-getPaddingTop()-getPaddingBottom())/(float)v.getMeasuredHeight());
+    }
+
+
+    private float getScaleCorrection(View v) {
+        return (float)(getWidth()-getPaddingLeft()-getPaddingRight())/(v.getMeasuredWidth()*getFillScreenScale(v));
+    }
+
+    
     private void measureView(View v) {
             // See what size the view wants to be
         v.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
 
         if (!mReflow) {
                 // Work out a scale that will fit it to this view
-            float scale;
-            scale = Math.min((float)(getWidth()-getPaddingLeft()-getPaddingRight())/(float)v.getMeasuredWidth(),(float)(getHeight()-getPaddingTop()-getPaddingBottom())/(float)v.getMeasuredHeight()); //This makes scale=1.0 correspond to fit to screen
+            float scale = getFillScreenScale(v); //This makes scale=1.0 correspond to fit to screen
                 // Use the fitting values scaled by our current scale factor
             v.measure(View.MeasureSpec.EXACTLY | (int)(v.getMeasuredWidth()*scale*mScale),
                       View.MeasureSpec.EXACTLY | (int)(v.getMeasuredHeight()*scale*mScale));
@@ -979,8 +988,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     {
         View cv = getSelectedView();
         if (cv != null) {
-            float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
-            float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
+            float scale = Math.min((float)(getWidth()-getPaddingLeft()-getPaddingRight())/(float)cv.getMeasuredWidth(),(float)(getHeight()-getPaddingTop()-getPaddingBottom())/(float)cv.getMeasuredHeight());
+            float scaleCorrection = getScaleCorrection(cv);
             return mScale/scaleCorrection;
         }
         else
