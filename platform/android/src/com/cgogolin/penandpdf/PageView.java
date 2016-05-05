@@ -162,7 +162,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private       ProgressBar mBusyIndicator;
     private final Handler   mHandler = new Handler();
     
-        //Set in onSharedPreferenceChanged()
+        //Just dummy values, reall values are set in onSharedPreferenceChanged()
     private static float inkThickness = 10;
     private static float eraserThickness = 20;
     private static int inkColor = 0x80AC7225;
@@ -1283,7 +1283,13 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             //Save
         bundle.putSerializable("mDrawing", mDrawing);
         bundle.putSerializable("mDrawingHistory", mDrawingHistory);
-
+        bundle.putFloat("inkThickness",inkThickness);
+        bundle.putFloat("eraserThickness",eraserThickness);
+        bundle.putInt("inkColor",inkColor);
+        bundle.putInt("highlightColor",highlightColor);
+        bundle.putInt("underlineColor",underlineColor);
+        bundle.putInt("strikeoutColor",strikeoutColor);
+        bundle.putBoolean("useSmartTextSelection",useSmartTextSelection);
         return bundle;
     }
 
@@ -1294,7 +1300,13 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 //Load 
             mDrawing = (ArrayList<ArrayList<PointF>>)bundle.getSerializable("mDrawing");
             mDrawingHistory = (ArrayDeque<ArrayList<ArrayList<PointF>>>)bundle.getSerializable("mDrawingHistory");
-
+            inkThickness = bundle.getFloat("inkThickness");
+            eraserThickness = bundle.getFloat("eraserThickness");
+            inkColor = bundle.getInt("inkColor");
+            highlightColor = bundle.getInt("highlightColor");
+            underlineColor = bundle.getInt("underlineColor");
+            strikeoutColor = bundle.getInt("strikeoutColor");
+            useSmartTextSelection = bundle.getBoolean("useSmartTextSelection");
             state = bundle.getParcelable("superInstanceState");
         }
         super.onRestoreInstanceState(state);
