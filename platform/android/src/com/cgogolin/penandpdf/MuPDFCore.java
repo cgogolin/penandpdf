@@ -101,15 +101,15 @@ public class MuPDFCore
     private native void abortCookie(long cookie);
 
     
-    public native void setInkThickness(float inkThickness);
-    public native void setInkColor(float r, float g, float b);
-    public native void setHighlightColor(float r, float g, float b);
-    public native void setUnderlineColor(float r, float g, float b);
-    public native void setStrikeoutColor(float r, float g, float b);
-    public native void setTextAnnotIconColor(float r, float g, float b);
-    public native int insertBlankPageBeforeInternal(int position);
+    public synchronized native void setInkThickness(float inkThickness);
+    public synchronized native void setInkColor(float r, float g, float b);
+    public synchronized native void setHighlightColor(float r, float g, float b);
+    public synchronized native void setUnderlineColor(float r, float g, float b);
+    public synchronized native void setStrikeoutColor(float r, float g, float b);
+    public synchronized native void setTextAnnotIconColor(float r, float g, float b);
+    public synchronized native int insertBlankPageBeforeInternal(int position);
 	
-	public native boolean javascriptSupported();
+	public synchronized native boolean javascriptSupported();
 
     public class Cookie
     {
@@ -143,7 +143,7 @@ public class MuPDFCore
             init(context, path);
         }
     
-    protected void init(Context context, String path) throws Exception
+    protected synchronized void init(Context context, String path) throws Exception
 		{
 			cachDir = context.getCacheDir().getAbsolutePath();
 					
@@ -168,7 +168,7 @@ public class MuPDFCore
             init(context, buffer, fileName);
         }
     
-    protected void init(Context context, byte buffer[], String fileName) throws Exception
+    protected synchronized void init(Context context, byte buffer[], String fileName) throws Exception
 		{
 			cachDir = context.getCacheDir().getAbsolutePath();
 
@@ -185,7 +185,7 @@ public class MuPDFCore
             if(file_format == null) throw new Exception(String.format(context.getString(R.string.cannot_interpret_file), fileName));
 		}
 
-    public  int countPages()
+    public synchronized int countPages()
 		{
             if (numPages < 0 || !numPagesIsUpToDate )
             {
@@ -195,7 +195,7 @@ public class MuPDFCore
             return numPages;
 		}
 
-    public String fileFormat()
+    public synchronized String fileFormat()
 		{
             return file_format;
 		}
@@ -205,7 +205,7 @@ public class MuPDFCore
     }
 
 		/* Shim function */
-    private void gotoPage(int page)
+    private synchronized void gotoPage(int page)
 		{
             if (page > countPages()-1)
                 page = countPages()-1;
@@ -472,15 +472,15 @@ public class MuPDFCore
         return mHasAdditionalChanges || hasChangesInternal();
     }
     
-    public String getPath() {
+    public synchronized String getPath() {
         return mPath;
     }
 
-    public String getFileName() {
+    public synchronized String getFileName() {
         return mFileName;
     }
     
-    public void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
+    public synchronized void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
             //Set ink thickness
         float inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(INK_THICKNESS)));
         setInkThickness(inkThickness*0.5f);
@@ -498,25 +498,25 @@ public class MuPDFCore
         setTextAnnotIconColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
     }
 
-    public boolean insertBlankPageAtEnd() {
+    public synchronized boolean insertBlankPageAtEnd() {
         return insertBlankPageBefore(countPages());
     }
     
-    public boolean insertBlankPageBefore(int position) {
+    public synchronized boolean insertBlankPageBefore(int position) {
         numPagesIsUpToDate = false;
         return insertBlankPageBeforeInternal(position) == 0 ? true : false;
     }
 
-    public void relocate(String path, String fileName) {
+    public synchronized void relocate(String path, String fileName) {
         mPath = path;
         mFileName = fileName;
     }
 
-    public void setHasAdditionalChanges(boolean hasAdditionalChanges) {
+    public synchronized void setHasAdditionalChanges(boolean hasAdditionalChanges) {
         mHasAdditionalChanges = hasAdditionalChanges;
     }
     
-    public int saveAs(String path) {
+    public synchronized int saveAs(String path) {
         mHasAdditionalChanges = false;
         return saveAsInternal(path);
     }

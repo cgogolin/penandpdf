@@ -35,7 +35,6 @@ public class PenAndPDFCore extends MuPDFCore
     private Uri uri = null;
     private File tmpFile = null;
 
-
         /* File IO is terribly inconsistent and badly documented on Android
          * to make matters worse the native part of the Core stops beeing
          * useful once the method saveInternal() is call by MuPDFCore.
@@ -52,7 +51,7 @@ public class PenAndPDFCore extends MuPDFCore
         }
     
     
-    public void init(Context context, Uri uri) throws Exception
+    public synchronized void init(Context context, Uri uri) throws Exception
 	{
 //            Log.i("context.getString(R.string.app_name)", "creating with uri="+uri);
             
@@ -237,7 +236,7 @@ public class PenAndPDFCore extends MuPDFCore
             setHasAdditionalChanges(false);
         }
     
-    private static void copyStream(InputStream input, OutputStream output)
+    private synchronized static void copyStream(InputStream input, OutputStream output)
         throws java.io.IOException
         {
             byte[] buffer = new byte[1024];
@@ -248,7 +247,7 @@ public class PenAndPDFCore extends MuPDFCore
             }
         }
     
-    public <T extends Context & TemporaryUriPermission.TemporaryUriPermissionProvider> boolean canSaveToUriViaContentResolver(T context, Uri uri) {
+    public synchronized <T extends Context & TemporaryUriPermission.TemporaryUriPermissionProvider> boolean canSaveToUriViaContentResolver(T context, Uri uri) {
         
         boolean haveWritePermissionToUri = false;
         try
@@ -365,7 +364,7 @@ public class PenAndPDFCore extends MuPDFCore
         return canWrite;
     }
     
-    public boolean canSaveToUriAsFile(Context context, Uri uri) {
+    public synchronized boolean canSaveToUriAsFile(Context context, Uri uri) {
         try
         {
                 //The way we use here to determine whether we can write to a file is error prone but I have so far not found a better way
@@ -383,11 +382,11 @@ public class PenAndPDFCore extends MuPDFCore
         }
     }
 
-    public <T extends Context & TemporaryUriPermission.TemporaryUriPermissionProvider> boolean canSaveToCurrentUri(T context) {
+    public synchronized <T extends Context & TemporaryUriPermission.TemporaryUriPermissionProvider> boolean canSaveToCurrentUri(T context) {
         return canSaveToUriViaContentResolver(context, getUri()) || canSaveToUriAsFile(context, getUri());
     }    
 
-    public Uri getUri(){
+    public synchronized Uri getUri(){
         return uri;
     }
     
@@ -397,7 +396,7 @@ public class PenAndPDFCore extends MuPDFCore
         if(tmpFile != null) tmpFile.delete();
     }
 
-    public static void createEmptyDocument(Context context, Uri uri) throws java.io.IOException, java.io.FileNotFoundException {
+    public synchronized static void createEmptyDocument(Context context, Uri uri) throws java.io.IOException, java.io.FileNotFoundException {
         FileOutputStream fileOutputStream = null;
         try
         {
@@ -480,7 +479,7 @@ public class PenAndPDFCore extends MuPDFCore
     }
 
     @Override
-    public boolean insertBlankPageBefore(int position) {
+    public synchronized boolean insertBlankPageBefore(int position) {
         setHasAdditionalChanges(true);
         return super.insertBlankPageBefore(position);
     }
