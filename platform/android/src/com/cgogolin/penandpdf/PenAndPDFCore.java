@@ -478,6 +478,11 @@ public class PenAndPDFCore extends MuPDFCore
             if(fileOutputStream != null) fileOutputStream.close();
         }
     }
-}
 
+    @Override
+    public boolean insertBlankPageBefore(int position) {
+        setHasAdditionalChanges(true);
+        return super.insertBlankPageBefore(position);
+    }
+}
 
