@@ -411,7 +411,7 @@ public static boolean isMediaDocument(Uri uri) {
             
 			Intent intent = getIntent();
 
-            Log.i(getString(R.string.app_name), "onResume() with intent="+intent+" core="+core);
+//            Log.i(getString(R.string.app_name), "onResume() with intent="+intent+" core="+core);
                         
 			if (Intent.ACTION_MAIN.equals(intent.getAction()) && core == null)
             {
@@ -519,6 +519,16 @@ public static boolean isMediaDocument(Uri uri) {
             {
                 case Main:
                     inflater.inflate(R.menu.main_menu, menu);
+
+                        //Enable the delte note item if we have a note open
+                    File recentFile = new File(Uri.decode(getIntent().getData().getEncodedPath()));
+                    Log.e("ARG", "paths: "+recentFile.getAbsolutePath()+" "+getNotesDir(this).getAbsolutePath());
+                    
+					if(recentFile != null && recentFile.getAbsolutePath().startsWith(getNotesDir(this).getAbsolutePath()))
+                    {
+                        MenuItem deleteNoteItem = menu.findItem(R.id.menu_delete_note);
+                        deleteNoteItem.setVisible(true);
+                    }
                     
                         // Set up the back before link clicked icon
                     MenuItem linkBackItem = menu.findItem(R.id.menu_linkback);
@@ -743,7 +753,15 @@ public static boolean isMediaDocument(Uri uri) {
                 return true;
             case R.id.menu_open:
                 openDocument();
-                return true;                
+                return true;
+            case R.id.menu_delete_note:
+                core.deleteDocument(this);
+                Intent restartIntent = new Intent(this, PenAndPDFActivity.class);
+                restartIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                restartIntent.setAction(Intent.ACTION_MAIN);
+                startActivity(restartIntent);
+                finish();
+                return true;
             case R.id.menu_save:
                 DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {

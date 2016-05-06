@@ -73,6 +73,7 @@
   <string name="menu_addpage">Add page</string>
   <!--<string name="menu_bookmarks">Bookmarks</string>-->
   <string name="menu_cancel">Cancel</string>
+  <string name="menu_delete_note">Delete this note</string>
   <string name="long_press_to_delete">Long press to delete.</string>	
   <string name="menu_copytext">Copy text</string>
   <string name="menu_draw">Draw</string>

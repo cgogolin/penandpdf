@@ -396,6 +396,27 @@ public class PenAndPDFCore extends MuPDFCore
         if(tmpFile != null) tmpFile.delete();
     }
 
+    public synchronized boolean deleteDocument(Context context) {
+        try
+        {
+            context.getContentResolver().delete(uri, null, null);
+        }
+        catch(Exception e)
+        {
+            try
+            {
+                File file = new File(Uri.decode(uri.getEncodedPath()));
+                file.delete();
+            }
+            catch(Exception e2)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+        
+    
     public synchronized static void createEmptyDocument(Context context, Uri uri) throws java.io.IOException, java.io.FileNotFoundException {
         FileOutputStream fileOutputStream = null;
         try
