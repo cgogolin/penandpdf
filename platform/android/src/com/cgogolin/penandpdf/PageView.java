@@ -149,7 +149,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     protected     Annotation mAnnotations[];
     private       AsyncTask<Void,Void,Annotation[]> mLoadAnnotationsTask;
 
-    private       View      mOverlayView;
+    private       OverlayView mOverlayView;
     private       SearchResult mSearchResult = null;
     private       RectF     mSelectBox;
     private       RectF     mItemSelectBox;
@@ -609,47 +609,53 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
 
                 // Draw the current hand drawing
-            if (!mIsBlank && mDrawing != null) {
-                // PointF mP; //These are defined as member variables for performance 
-                // Iterator<ArrayList<PointF>> it;
-                // ArrayList<PointF> arc;
-                // Iterator<PointF> iit;
-                // float mX1, mY1, mX2, mY2;
-                drawingPaint.setStrokeWidth(inkThickness * scale);
-                drawingPaint.setColor(inkColor);  //Should be done only on settings change
-                it = mDrawing.iterator();
-                while (it.hasNext()) {
-                    arc = it.next();
-                    if (arc.size() >= 2) {
-                        iit = arc.iterator();
-                        if(iit.hasNext())
-                        {
-                            mP = iit.next();
-                            mX1 = mP.x * scale;
-                            mY1 = mP.y * scale;
-                            mDrawingPath.moveTo(mX1, mY1);
-                            while (iit.hasNext()) {
-                                mP = iit.next();
-                                mX2 = mP.x * scale;
-                                mY2 = mP.y * scale;
-                                mDrawingPath.lineTo(mX2, mY2);
-                            }
-                        }
-                        if(!canvas.quickReject(mDrawingPath, Canvas.EdgeType.AA))
-                        {
-                            canvas.drawPath(mDrawingPath, drawingPaint);
-                        }
-                        mDrawingPath.reset();
-                    }
-                }
-            }
-
+            if(!mIsBlank)
+                drawDrawing(canvas, scale);
+            
                 // Draw the eraser
             if (!mIsBlank && eraser != null) {
                 canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, eraserInnerPaint);
                 canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, eraserOuterPaint);
             }
         }
+
+        private void drawDrawing(Canvas canvas, float scale)
+            {
+                if (mDrawing != null) {
+                        // PointF mP; //These are defined as member variables for performance 
+                        // Iterator<ArrayList<PointF>> it;
+                        // ArrayList<PointF> arc;
+                        // Iterator<PointF> iit;
+                        // float mX1, mY1, mX2, mY2;
+                    drawingPaint.setStrokeWidth(inkThickness * scale);
+                    drawingPaint.setColor(inkColor);  //Should be done only on settings change
+                    it = mDrawing.iterator();
+                    while (it.hasNext()) {
+                        arc = it.next();
+                        if (arc.size() >= 2) {
+                            iit = arc.iterator();
+                            if(iit.hasNext())
+                            {
+                                mP = iit.next();
+                                mX1 = mP.x * scale;
+                                mY1 = mP.y * scale;
+                                mDrawingPath.moveTo(mX1, mY1);
+                                while (iit.hasNext()) {
+                                    mP = iit.next();
+                                    mX2 = mP.x * scale;
+                                    mY2 = mP.y * scale;
+                                    mDrawingPath.lineTo(mX2, mY2);
+                                }
+                            }
+                            if(!canvas.quickReject(mDrawingPath, Canvas.EdgeType.AA))
+                            {
+                                canvas.drawPath(mDrawingPath, drawingPaint);
+                            }
+                            mDrawingPath.reset();
+                        }
+                    }
+                }
+            }
     }
 
     
@@ -1315,5 +1321,20 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     public Bitmap getHqImageBitmap() {
         if(mHqView == null) return null;
         return mHqView.getImageBitmap();
+    }
+
+    public boolean saveDraw() {
+        if(mOverlayView != null && mHqView != null){
+            Bitmap bitmap = mHqView.getImageBitmap();
+            if(bitmap!=null)
+            {
+                Canvas canvas = new Canvas(bitmap);
+                float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+                canvas.translate(getLeft(), getTop());
+                mOverlayView.drawDrawing(canvas, scale);
+                mHqView.setImageBitmap(bitmap);
+            }
+        }
+        return true;
     }
 }

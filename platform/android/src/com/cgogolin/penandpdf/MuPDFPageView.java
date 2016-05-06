@@ -668,11 +668,16 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		setItemSelectBox(null);
 	}
 
+    @Override
     public boolean saveDraw() { 
 		PointF[][] path = getDraw();
 		if (path == null)
             return false;
-        
+
+            //Copy the overlay to the Hq view to prevent flickering,
+            //the Hq view is then anyway rendered again...
+        super.saveDraw();
+
         cancelDraw();
         
 		if (mAddInkAnnotation != null) {
