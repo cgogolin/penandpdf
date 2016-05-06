@@ -1330,7 +1330,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             {
                 Canvas canvas = new Canvas(bitmap);
                 float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
-                canvas.translate(getLeft(), getTop());
+                canvas.translate(Math.min(getLeft(),0), Math.min(getTop(),0));
                 mOverlayView.drawDrawing(canvas, scale);
                 mHqView.setImageBitmap(bitmap);
             }
