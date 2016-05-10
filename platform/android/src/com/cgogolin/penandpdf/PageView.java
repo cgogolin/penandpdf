@@ -1205,10 +1205,12 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
     
     
-    public void addHq(boolean update) {//If update is true a more efficient method is used to redraw the patch but it is redrawn even if the area hasn't changed!
+    public void addHq(boolean update) {//If update is true a more efficient method is used to redraw the patch but it is redrawn even if the area hasn't changed
         Rect viewArea = new Rect(getLeft(),getTop(),getRight(),getBottom());
-//        Log.v("PageView", "addHq() page="+mPageNumber+", update="+update);
         
+        if(viewArea == null || mSize == null)
+            return;
+            
             // If the viewArea's size matches the unzoomed size, there is no need for a hq patch
         if (viewArea.width() == mSize.x && viewArea.height() == mSize.y) return;
 

@@ -1151,7 +1151,7 @@ public static boolean isMediaDocument(Uri uri) {
                             case TextAnnotation:
                                 break;
                             case Nothing:
-                                if(mActionBarMode != ActionBarMode.Search)
+                                if(mActionBarMode != ActionBarMode.Search && mActionBarMode != ActionBarMode.Hidden)
                                 {
                                     mActionBarMode = ActionBarMode.Main;
                                     invalidateOptionsMenu();
@@ -1857,15 +1857,30 @@ public static boolean isMediaDocument(Uri uri) {
         getSupportActionBar().hide();
         mActionBarMode = ActionBarMode.Hidden;
         invalidateOptionsMenu();
-        resetupDocViewAfterActionBarAnimation(false);
+//        mDocView.setNormalizedScroll(0f,0f);
+        mDocView.setScale(1.0f);
+        mDocView.setLinksEnabled(false);
+//        resetupDocViewAfterActionBarAnimation(false);
+        mDocView.setPadding(0, 0, 0, 0);
     }
             
     private void exitFullScreen() {
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getSupportActionBar().show();
-        mActionBarMode = ActionBarMode.Main;
+        if(mActionBarMode == ActionBarMode.Hidden)
+            mActionBarMode = ActionBarMode.Main;
         invalidateOptionsMenu();
-        resetupDocViewAfterActionBarAnimation(true);
+        mDocView.setScale(1.0f);
+//        mDocView.setNormalizedScroll(0f,0f);
+        mDocView.setLinksEnabled(true);
+//        resetupDocViewAfterActionBarAnimation(true);
+            //Make content appear below the toolbar if completely zoomed out
+        TypedValue tv = new TypedValue();
+        if(getSupportActionBar().isShowing() && getTheme().resolveAttribute(android.support.v7.appcompat.R.attr.actionBarSize, tv, true)) {
+            int actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data,getResources().getDisplayMetrics());
+            mDocView.setPadding(0, actionBarHeight, 0, 0);
+            mDocView.setClipToPadding(false);
+        }
     }
 
     private void resetupDocViewAfterActionBarAnimation(final boolean linksEnabled) {

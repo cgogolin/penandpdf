@@ -375,7 +375,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             if (v != null) postSettle(v);
         }
     }
-
+    
     @Override
         public boolean onDown(MotionEvent arg0) {
         mScroller.forceFinished(true);
