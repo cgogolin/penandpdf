@@ -20,9 +20,9 @@ public class RecentFilesList extends LinkedList<String> implements List<String> 
         for (int i = MAX_RECENT_FILES-1; i>=0; i--) //Read in revers order because we use push
         {
             String recentFileString = prefs.getString("recentfile"+i,null);
-			Uri recentFileUri = Uri.parse(recentFileString);
             if(recentFileString != null)
-            {				
+            {
+                Uri recentFileUri = Uri.parse(recentFileString);
                     //Make sure we add only readable files
 //                File recentFile = new File(recentFileString);
 				File recentFile = new File(Uri.decode(recentFileUri.getEncodedPath()));
