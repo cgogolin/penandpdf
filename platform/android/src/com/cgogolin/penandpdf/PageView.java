@@ -427,42 +427,42 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
                                     
             public void onEndText() {
-                if (useSmartTextSelection)
+                if(firstLineRect != null && lastLineRect != null)
                 {
-                    if(firstLineRect != null && lastLineRect != null)
+                    height = Math.min(Math.max(Math.max(firstLineRect.bottom - firstLineRect.top, lastLineRect.bottom - lastLineRect.top), getResources().getDisplayMetrics().xdpi*0.07f/scale), 4*getResources().getDisplayMetrics().xdpi*0.07f/scale);
+                    
+                    leftMarkerRect.set(firstLineRect.left-0.9f*height,firstLineRect.top,firstLineRect.left,firstLineRect.top+1.9f*height);
+                    rightMarkerRect.set(lastLineRect.right,lastLineRect.top,lastLineRect.right+0.9f*height,lastLineRect.top+1.9f*height);
+                    
+                    if(height != oldHeight || true)
                     {
-                        height = Math.max(Math.max(firstLineRect.bottom - firstLineRect.top, lastLineRect.bottom - lastLineRect.top), getResources().getDisplayMetrics().xdpi*0.07f/scale);
-
-                        leftMarkerRect.set(firstLineRect.left-0.9f*height,firstLineRect.top,firstLineRect.left,firstLineRect.top+1.9f*height);
-                        rightMarkerRect.set(lastLineRect.right,lastLineRect.top,lastLineRect.right+0.9f*height,lastLineRect.top+1.9f*height);
+                        leftMarker.rewind();
+                        leftMarker.moveTo(0f,0f);
+                        leftMarker.rLineTo(0f,1.9f*height*scale);
+                        leftMarker.rLineTo(-0.9f*height*scale,0f);
+                        leftMarker.rLineTo(0f,-0.9f*height*scale);
+                        leftMarker.close();
                         
-                        if(height != oldHeight || true)
-                        {
-                            leftMarker.rewind();
-                            leftMarker.moveTo(0f,0f);
-                            leftMarker.rLineTo(0f,1.9f*height*scale);
-                            leftMarker.rLineTo(-0.9f*height*scale,0f);
-                            leftMarker.rLineTo(0f,-0.9f*height*scale);
-                            leftMarker.close();
-                            
-                            rightMarker.rewind();
-                            rightMarker.moveTo(0f,0f);
-                            rightMarker.rLineTo(0f,1.9f*height*scale);
-                            rightMarker.rLineTo(0.9f*height*scale,0f);
-                            rightMarker.rLineTo(0f,-0.9f*height*scale);
-                            rightMarker.close();
-                            oldHeight = height;
-                        }
-                        
-                        leftMarker.offset(firstLineRect.left*scale, firstLineRect.top*scale);
-                        rightMarker.offset(lastLineRect.right*scale, lastLineRect.top*scale);
-                        canvas.drawPath(leftMarker, selectMarkerPaint);
-                        canvas.drawPath(rightMarker, selectMarkerPaint);
-                            //Undo the offset so that we can reuse the path
-                        leftMarker.offset(-firstLineRect.left*scale, -firstLineRect.top*scale);
-                        rightMarker.offset(-lastLineRect.right*scale, -lastLineRect.top*scale);                        
+                        rightMarker.rewind();
+                        rightMarker.moveTo(0f,0f);
+                        rightMarker.rLineTo(0f,1.9f*height*scale);
+                        rightMarker.rLineTo(0.9f*height*scale,0f);
+                        rightMarker.rLineTo(0f,-0.9f*height*scale);
+                        rightMarker.close();
+                        oldHeight = height;
                     }
-                        
+                    
+                    leftMarker.offset(firstLineRect.left*scale, firstLineRect.top*scale);
+                    rightMarker.offset(lastLineRect.right*scale, lastLineRect.top*scale);
+                    canvas.drawPath(leftMarker, selectMarkerPaint);
+                    canvas.drawPath(rightMarker, selectMarkerPaint);
+                        //Undo the offset so that we can reuse the path
+                    leftMarker.offset(-firstLineRect.left*scale, -firstLineRect.top*scale);
+                    rightMarker.offset(-lastLineRect.right*scale, -lastLineRect.top*scale);                        
+                }
+                
+                if(useSmartTextSelection)
+                {
                     canvas.drawRect(0, 0, docRelXminSelection*scale, PageView.this.getHeight(), selectOverlayPaint);
                     canvas.drawRect(docRelXmaxSelection*scale, 0, PageView.this.getWidth(), PageView.this.getHeight(), selectOverlayPaint);
                 }

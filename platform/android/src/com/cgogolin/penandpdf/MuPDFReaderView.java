@@ -284,14 +284,11 @@ abstract public class MuPDFReaderView extends ReaderView {
 
         longPressHandler.removeCallbacks(longPressed);
         longPressStartEvent = null;
-        
-        switch (mMode) {
-            case Viewing:
-            case Selecting:
-                return super.onFling(e1, e2, velocityX, velocityY);
-            default:
-                return true;
-        }
+
+        if(maySwitchView()) 
+            return super.onFling(e1, e2, velocityX, velocityY);
+        else
+            return true;
     }
 
     public boolean onScaleBegin(ScaleGestureDetector d) {
