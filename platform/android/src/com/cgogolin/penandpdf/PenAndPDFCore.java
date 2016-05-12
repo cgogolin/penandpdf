@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.File;
+import java.io.ByteArrayOutputStream;
 import android.os.ParcelFileDescriptor;
 import android.content.pm.PackageManager;
 import android.content.Intent;
@@ -33,7 +34,6 @@ public class PenAndPDFCore extends MuPDFCore
 {
     private Uri uri = null;
     private File tmpFile = null;
-
 
         /* File IO is terribly inconsistent and badly documented on Android
          * to make matters worse the native part of the Core stops beeing
@@ -51,7 +51,7 @@ public class PenAndPDFCore extends MuPDFCore
         }
     
     
-    public void init(Context context, Uri uri) throws Exception
+    public synchronized void init(Context context, Uri uri) throws Exception
 	{
 //            Log.i("context.getString(R.string.app_name)", "creating with uri="+uri);
             
@@ -70,16 +70,29 @@ public class PenAndPDFCore extends MuPDFCore
 
                 if (cursor != null && cursor.moveToFirst())
                 {
+                    Log.i(context.getString(R.string.app_name), "got the cursor "+cursor);
+                    
                         //Try to get the display name/title
                     int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
                     if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
                     if(displayName==null)
                     {
-                        int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+                        int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.TITLE);
                         if(titleIndex >= 0) displayName = cursor.getString(titleIndex);
                         if(displayName==null)
                         {
-                            displayName="NoName.pdf";
+                            // try
+                            // {
+                            //     String path = PenAndPDFActivity.getActualPath(context, uri);
+                            //     int lastSlashPos = path.lastIndexOf('/');
+                            //     displayName = new String(lastSlashPos == -1 ? path : path.substring(lastSlashPos+1));
+                            // }
+                            // catch(Exception e)
+                            // {
+                            //     displayName = null;
+                            // }
+                            // if(displayName==null || displayName.equals(""))
+                            displayName=context.getString(R.string.unknown_file_name);
                         }
                     }       
                     cursor.close();
@@ -101,7 +114,6 @@ public class PenAndPDFCore extends MuPDFCore
                     }
                 }
                 
-                byte buffer[] = null;
                 InputStream is = null;
                 ParcelFileDescriptor pfd = null;
                 is = context.getContentResolver().openInputStream(uri);
@@ -113,11 +125,23 @@ public class PenAndPDFCore extends MuPDFCore
                 }
                 if(is != null && is.available() > 0)
                 {
-                    int len = is.available();
-                    buffer = new byte[len];
-                    is.read(buffer, 0, len);
-                    is.close();
-                    if(pfd != null) pfd.close();
+                    int len = 0;
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream(8192);
+                    try {
+                        byte buffer[] = new byte[8192];
+                        int num = 0;
+                        while((num = is.read(buffer)) != -1) {
+                            len+=num;
+                            baos.write(buffer, 0, num);
+                        }
+                        Log.i(context.getString(R.string.app_name), "reached end of stream");
+                    }
+                    finally
+                    {
+                        is.close();
+                        if(pfd != null) pfd.close();
+                    }
+                    byte buffer[] = baos.toByteArray();
                     Log.i(context.getString(R.string.app_name), "read "+len+" bytes into buffer "+buffer);
                     super.init(context, buffer, displayName);
                 }
@@ -145,7 +169,8 @@ public class PenAndPDFCore extends MuPDFCore
             init(context, Uri.fromFile(tmpFile)); 
                 //But now the Uri, as well as mFilenName and mPath in the superclass are wrong, so we repair this
             uri = oldUri;
-            relocate(oldPath, oldFileName, oldHasChanges);
+            relocate(oldPath, oldFileName);
+            setHasAdditionalChanges(oldHasChanges);
             
             return FileProvider.getUriForFile(context, "com.cgogolin.penandpdf.fileprovider", tmpFile);
         }
@@ -162,7 +187,7 @@ public class PenAndPDFCore extends MuPDFCore
             FileInputStream fileInputStream = null;
             try
             {
-                    //Write to tmpFile
+                    //Export to tmpFile
                 export(context);
                 
                     //Open the result as fileInputStream
@@ -206,40 +231,12 @@ public class PenAndPDFCore extends MuPDFCore
                 if(fileOutputStream != null) fileOutputStream.close();
                 if(pfd != null) pfd.close();
             }
-//            init(context, uri); //reinit because the MuPDFCore core gets useless after saveIntenal()
+                //remeber the new uri and tell the core that all changes were saved
+            this.uri = uri;
+            setHasAdditionalChanges(false);
         }
-
     
-    // public synchronized void saveAs(Context context, Uri uri) throws java.io.IOException, java.io.FileNotFoundException
-    //     {
-    //         if(canSaveToUriViaContentResolver(context, uri))
-    //         {
-    //             if(tmpFile == null) {
-    //                 File cacheDir = context.getCacheDir();
-    //                 tmpFile = File.createTempFile("prefix", "pdf", cacheDir);
-    //             }
-    //             if(saveAsInternal(tmpFile.getPath()) != 0)
-    //                 throw new java.io.IOException("native code failed to save to "+tmpFile.getPath());
-                
-    //             ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "w");
-    //             FileInputStream fileInputStream = new FileInputStream(tmpFile);
-    //             FileOutputStream fileOutputStream = new FileOutputStream(pfd.getFileDescriptor());
-    //             copyStream(fileInputStream,fileOutputStream);
-    //             fileInputStream.close();
-    //             fileOutputStream.close();
-    //             pfd.close();
-    //             this.uri = uri;
-    //         }
-    //         else
-    //         {
-    //             String path = Uri.decode(uri.getEncodedPath());
-    //             if(saveAsInternal(path) != 0)
-    //                 throw new java.io.IOException("native code failed to save to "+uri.toString());
-    //             this.uri = uri;
-    //         }
-    //     }
-    
-    private static void copyStream(InputStream input, OutputStream output)
+    private synchronized static void copyStream(InputStream input, OutputStream output)
         throws java.io.IOException
         {
             byte[] buffer = new byte[1024];
@@ -250,12 +247,11 @@ public class PenAndPDFCore extends MuPDFCore
             }
         }
     
-    public <T extends Context & TemporaryUriPermission.TemporaryUriPermissionProvider> boolean canSaveToUriViaContentResolver(T context, Uri uri) {
+    public synchronized <T extends Context & TemporaryUriPermission.TemporaryUriPermissionProvider> boolean canSaveToUriViaContentResolver(T context, Uri uri) {
         
         boolean haveWritePermissionToUri = false;
         try
         {
-            // if( ((AppCompatActivity) context).getIntent().getData().equals(uri) && (((AppCompatActivity) context).getIntent().getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             //     haveWritePermissionToUri = true;
             for(TemporaryUriPermission permission : (context).getTemporaryUriPermissions()) {
                 Log.i(context.getString(R.string.app_name), "checking saved temporary permission for "+permission.getUri()+" while uri="+uri+" write permission is "+permission.isWritePermission()+" and uris are equal "+permission.getUri().equals(uri));
@@ -366,30 +362,9 @@ public class PenAndPDFCore extends MuPDFCore
         }
         
         return canWrite;
-        
-        //     if(haveWritePermissionToUri)
-        //     {
-        //         Log.i(context.getString(R.string.app_name), "we have write permissions, so checking if we can open a pfd.");
-        //         ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "wa");
-        //         if(pfd != null) {
-        //             Log.i(context.getString(R.string.app_name), "opened pfd succesfully, hence closing and returning true");
-        //             pfd.close();
-        //             return true;
-        //         }
-        //         else
-        //         {
-        //             Log.i(context.getString(R.string.app_name), "unable to open stream, hence returning false");
-        //             return false;
-        //         }
-        //     }
-        //     else
-        //     {
-        //         Log.i(context.getString(R.string.app_name), "no write permissions so returing false.");
-        //         return false;
-        //     }
     }
     
-    public boolean canSaveToUriAsFile(Context context, Uri uri) {
+    public synchronized boolean canSaveToUriAsFile(Context context, Uri uri) {
         try
         {
                 //The way we use here to determine whether we can write to a file is error prone but I have so far not found a better way
@@ -407,11 +382,11 @@ public class PenAndPDFCore extends MuPDFCore
         }
     }
 
-    public <T extends Context & TemporaryUriPermission.TemporaryUriPermissionProvider> boolean canSaveToCurrentUri(T context) {
+    public synchronized <T extends Context & TemporaryUriPermission.TemporaryUriPermissionProvider> boolean canSaveToCurrentUri(T context) {
         return canSaveToUriViaContentResolver(context, getUri()) || canSaveToUriAsFile(context, getUri());
     }    
 
-    public Uri getUri(){
+    public synchronized Uri getUri(){
         return uri;
     }
     
@@ -421,7 +396,28 @@ public class PenAndPDFCore extends MuPDFCore
         if(tmpFile != null) tmpFile.delete();
     }
 
-    public static void createEmptyDocument(Context context, Uri uri) throws java.io.IOException, java.io.FileNotFoundException {
+    public synchronized boolean deleteDocument(Context context) {
+        try
+        {
+            context.getContentResolver().delete(uri, null, null);
+        }
+        catch(Exception e)
+        {
+            try
+            {
+                File file = new File(Uri.decode(uri.getEncodedPath()));
+                file.delete();
+            }
+            catch(Exception e2)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+        
+    
+    public synchronized static void createEmptyDocument(Context context, Uri uri) throws java.io.IOException, java.io.FileNotFoundException {
         FileOutputStream fileOutputStream = null;
         try
         {
@@ -438,9 +434,6 @@ public class PenAndPDFCore extends MuPDFCore
             String newline = System.getProperty ("line.separator");
             String minimalPDF =
                 "%PDF-1.1"+newline+
-//                "%¥±ë"+newline+
-//                "%\342\343\317\323"+newline+
-//                "Â¥Â±Ã«"+newline+
                 "\u00a5\u00b1\u00eb"+newline+
                 "1 0 obj "+newline+
                 "<<"+newline+
@@ -505,6 +498,11 @@ public class PenAndPDFCore extends MuPDFCore
             if(fileOutputStream != null) fileOutputStream.close();
         }
     }
-}
 
+    @Override
+    public synchronized boolean insertBlankPageBefore(int position) {
+        setHasAdditionalChanges(true);
+        return super.insertBlankPageBefore(position);
+    }
+}
 

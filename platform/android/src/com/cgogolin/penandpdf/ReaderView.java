@@ -9,6 +9,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.SparseArray;
@@ -374,7 +375,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             if (v != null) postSettle(v);
         }
     }
-
+    
     @Override
         public boolean onDown(MotionEvent arg0) {
         mScroller.forceFinished(true);
@@ -528,7 +529,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 float scale_factor = mReflow ? REFLOW_SCALE_FACTOR : 1.0f;
                 float min_scale = MIN_SCALE * scale_factor;
                 float max_scale = MAX_SCALE * scale_factor;
-                float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
+                float scale = getFillScreenScale(cv);
                 float fitWidthScale = (float)getWidth()/(cv.getMeasuredWidth()*scale);
                 if ( Math.abs(mScale - fitWidthScale) <= 0.15 && fitWidthScale >= 1.15) 
                 {
@@ -641,7 +642,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             post(this);
         }
             //... else check if we should be switching to a new view and do it
-        else if (cv != null) {
+        else if (cv != null && maySwitchView()) {
             Point cvOffset = subScreenSizeOffset(cv);
                 // Move to next if current is sufficiently off center
                 // cv.getRight() may be out of date with the current scale
@@ -682,8 +683,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 float scale_factor = mReflow ? REFLOW_SCALE_FACTOR : 1.0f;
                 float min_scale = MIN_SCALE * scale_factor;
                 float max_scale = MAX_SCALE * scale_factor;
-                float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
-                float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
+                float scale = getFillScreenScale(cv);
+                float scaleCorrection = getScaleCorrection(cv);
                 
                 if(mHasNewNormalizedScale)
                 {
@@ -875,14 +876,23 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         mChildViews.append(i, v); // Record the view against it's adapter index
     }
 
+    private float getFillScreenScale(View v) {
+        return Math.min((float)(getWidth()-getPaddingLeft()-getPaddingRight())/(float)v.getMeasuredWidth(),(float)(getHeight()-getPaddingTop()-getPaddingBottom())/(float)v.getMeasuredHeight());
+    }
+
+
+    private float getScaleCorrection(View v) {
+        return (float)(getWidth()-getPaddingLeft()-getPaddingRight())/(v.getMeasuredWidth()*getFillScreenScale(v));
+    }
+
+    
     private void measureView(View v) {
             // See what size the view wants to be
         v.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
 
         if (!mReflow) {
                 // Work out a scale that will fit it to this view
-            float scale;
-            scale = Math.min((float)(getWidth()-getPaddingLeft()-getPaddingRight())/(float)v.getMeasuredWidth(),(float)(getHeight()-getPaddingTop()-getPaddingBottom())/(float)v.getMeasuredHeight()); //This makes scale=1.0 correspond to fit to screen
+            float scale = getFillScreenScale(v); //This makes scale=1.0 correspond to fit to screen
                 // Use the fitting values scaled by our current scale factor
             v.measure(View.MeasureSpec.EXACTLY | (int)(v.getMeasuredWidth()*scale*mScale),
                       View.MeasureSpec.EXACTLY | (int)(v.getMeasuredHeight()*scale*mScale));
@@ -978,8 +988,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     {
         View cv = getSelectedView();
         if (cv != null) {
-            float scale = Math.min((float)getWidth()/(float)cv.getMeasuredWidth(),(float)getHeight()/(float)cv.getMeasuredHeight());
-            float scaleCorrection = (float)getWidth()/(cv.getMeasuredWidth()*scale);
+            float scale = Math.min((float)(getWidth()-getPaddingLeft()-getPaddingRight())/(float)cv.getMeasuredWidth(),(float)(getHeight()-getPaddingTop()-getPaddingBottom())/(float)cv.getMeasuredHeight());
+            float scaleCorrection = getScaleCorrection(cv);
             return mScale/scaleCorrection;
         }
         else
@@ -1059,6 +1069,49 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
         mUseStylus = sharedPref.getBoolean(SettingsActivity.PREF_USE_STYLUS, false);
         mFitWidth = sharedPref.getBoolean(SettingsActivity.PREF_FIT_WIDTH, false);
+    }
+
+        //This method can be overwritten in super classes to prevent view switching while, for example, we are in drawing mode
+    public boolean maySwitchView() {
+        return true;
+    }
+
+
+    @Override
+    public Parcelable onSaveInstanceState() {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("superInstanceState", super.onSaveInstanceState());
+            //Save
+        bundle.putInt("mCurrent", mCurrent);
+        bundle.putInt("mXScroll", mXScroll);
+        bundle.putInt("mYScroll", mYScroll);
+        bundle.putInt("mScrollerLastX", mScrollerLastX);
+        bundle.putInt("mScrollerLastY", mScrollerLastY);
+        bundle.putInt("previousFocusX", previousFocusX);
+        bundle.putInt("previousFocusY", previousFocusY);
+        bundle.putBoolean("mReflow", mReflow);
+        bundle.putBoolean("mScrollDisabled", mScrollDisabled);
+        return bundle;
+    }
+    
+    @Override
+    public void onRestoreInstanceState(Parcelable state) {
+        if (state instanceof Bundle) {
+            Bundle bundle = (Bundle) state;
+                //Load
+            mCurrent = bundle.getInt("mCurrent", mCurrent);
+            mXScroll = bundle.getInt("mXScroll", mXScroll);
+            mYScroll = bundle.getInt("mYScroll", mYScroll);
+            mScrollerLastX = bundle.getInt("mScrollerLastX", mScrollerLastX);
+            mScrollerLastY = bundle.getInt("mScrollerLastY", mScrollerLastY);
+            previousFocusX = bundle.getInt("previousFocusX", previousFocusX);
+            previousFocusY = bundle.getInt("previousFocusY", previousFocusY);
+            mReflow = bundle.getBoolean("mReflow", mReflow);
+            mScrollDisabled = bundle.getBoolean("mScrollDisabled", mScrollDisabled);
+        
+            state = bundle.getParcelable("superInstanceState");
+        }
+        super.onRestoreInstanceState(state);
     }
 }
 

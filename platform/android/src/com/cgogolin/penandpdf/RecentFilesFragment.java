@@ -223,5 +223,14 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
         mRecentFilesAdapter.addAll(recentFilesList.toArray(new String[recentFilesList.size()]));
         mRecentFilesAdapter.notifyDataSetChanged();
     }
-    
+
+    private void setTitle() {
+        Resources res = getResources();
+        String appName = res.getString(R.string.app_name);
+        getActivity().setTitle(appName);
+    }
+
+    public void inForground() {
+        setTitle();
+    }
 }

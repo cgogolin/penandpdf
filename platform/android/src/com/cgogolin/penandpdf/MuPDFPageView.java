@@ -668,11 +668,18 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		setItemSelectBox(null);
 	}
 
+    @Override
     public boolean saveDraw() { 
 		PointF[][] path = getDraw();
-		if (path == null) return false;
-                cancelDraw();
-                
+		if (path == null)
+            return false;
+
+            //Copy the overlay to the Hq view to prevent flickering,
+            //the Hq view is then anyway rendered again...
+        super.saveDraw();
+
+        cancelDraw();
+        
 		if (mAddInkAnnotation != null) {
 			mAddInkAnnotation.cancel(true);
 			mAddInkAnnotation = null;
@@ -681,11 +688,11 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			@Override
 			protected Void doInBackground(PointF[][]... params) {
 				mCore.addInkAnnotation(mPageNumber, params[0]);
-                                loadAnnotations();
+                loadAnnotations();
 				return null;
 			}
-		};
-                mAddInkAnnotation.execute(path);
+            };
+        mAddInkAnnotation.execute(path);
 
 		return true;
 	}

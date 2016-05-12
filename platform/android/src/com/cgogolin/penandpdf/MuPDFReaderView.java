@@ -30,7 +30,6 @@ abstract public class MuPDFReaderView extends ReaderView {
     private Mode mMode = Mode.Viewing;
     private boolean tapDisabled = false;
     private int tapPageMargin;
-//    private static final int BACKGROUND_COLOR = 0xF0F0F0F0;
     
     private SparseArray<SearchResult> SearchResults = new SparseArray<SearchResult>();    
         //To be overwritten in PenAndPDFActivity:
@@ -285,14 +284,11 @@ abstract public class MuPDFReaderView extends ReaderView {
 
         longPressHandler.removeCallbacks(longPressed);
         longPressStartEvent = null;
-        
-        switch (mMode) {
-            case Viewing:
-            case Selecting:
-                return super.onFling(e1, e2, velocityX, velocityY);
-            default:
-                return true;
-        }
+
+        if(maySwitchView()) 
+            return super.onFling(e1, e2, velocityX, velocityY);
+        else
+            return true;
     }
 
     public boolean onScaleBegin(ScaleGestureDetector d) {
@@ -531,11 +527,11 @@ abstract public class MuPDFReaderView extends ReaderView {
 
     @Override
     public Parcelable onSaveInstanceState() {
-//        Log.v("MuPDFReaderView", "onSaveInstanceState() getSelectedView()="+getSelectedView());
         Bundle bundle = new Bundle();
         bundle.putParcelable("superInstanceState", super.onSaveInstanceState());
             //Save
         bundle.putString("mMode", mMode.toString());
+        bundle.putInt("tapPageMargin", tapPageMargin);
         if(getSelectedView() != null) bundle.putParcelable("displayedViewInstanceState", ((PageView)getSelectedView()).onSaveInstanceState());
         
         return bundle;
@@ -543,12 +539,11 @@ abstract public class MuPDFReaderView extends ReaderView {
     
     @Override
     public void onRestoreInstanceState(Parcelable state) {
-//        Log.v("MuPDFReaderView", "onRestoreInstanceState() getSelectedView()="+getSelectedView());      
         if (state instanceof Bundle) {
             Bundle bundle = (Bundle) state;
                 //Load 
             mMode = Mode.valueOf(bundle.getString("mMode", mMode.toString()));
-                //Save the displayedViewInstanceState for later if getSelectedView() returns null
+            tapPageMargin = bundle.getInt("tapPageMargin", tapPageMargin);
             if(getSelectedView() != null)
                 ((PageView)getSelectedView()).onRestoreInstanceState(bundle.getParcelable("displayedViewInstanceState"));
             else
@@ -557,5 +552,10 @@ abstract public class MuPDFReaderView extends ReaderView {
             state = bundle.getParcelable("superInstanceState");
         }
         super.onRestoreInstanceState(state);
+    }
+
+    @Override
+    public boolean maySwitchView() {
+        return mMode.equals(Mode.Viewing) || mMode.equals(Mode.Searching);
     }
 }

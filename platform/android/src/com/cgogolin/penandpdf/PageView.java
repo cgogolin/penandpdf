@@ -149,7 +149,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     protected     Annotation mAnnotations[];
     private       AsyncTask<Void,Void,Annotation[]> mLoadAnnotationsTask;
 
-    private       View      mOverlayView;
+    private       OverlayView mOverlayView;
     private       SearchResult mSearchResult = null;
     private       RectF     mSelectBox;
     private       RectF     mItemSelectBox;
@@ -162,7 +162,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private       ProgressBar mBusyIndicator;
     private final Handler   mHandler = new Handler();
     
-        //Set in onSharedPreferenceChanged()
+        //Just dummy values, reall values are set in onSharedPreferenceChanged()
     private static float inkThickness = 10;
     private static float eraserThickness = 20;
     private static int inkColor = 0x80AC7225;
@@ -331,8 +331,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         float docRelX = (e.getX() - getLeft())/scale;
         float docRelY = (e.getY() - getTop())/scale;
 
-        Log.e("Pen", "old mSelectBox="+mSelectBox);
-
         // if(docRelX < mSelectBox.right)
         mSelectBox.left=docRelX;
         // else {
@@ -429,42 +427,42 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
                                     
             public void onEndText() {
-                if (useSmartTextSelection)
+                if(firstLineRect != null && lastLineRect != null)
                 {
-                    if(firstLineRect != null && lastLineRect != null)
+                    height = Math.min(Math.max(Math.max(firstLineRect.bottom - firstLineRect.top, lastLineRect.bottom - lastLineRect.top), getResources().getDisplayMetrics().xdpi*0.07f/scale), 4*getResources().getDisplayMetrics().xdpi*0.07f/scale);
+                    
+                    leftMarkerRect.set(firstLineRect.left-0.9f*height,firstLineRect.top,firstLineRect.left,firstLineRect.top+1.9f*height);
+                    rightMarkerRect.set(lastLineRect.right,lastLineRect.top,lastLineRect.right+0.9f*height,lastLineRect.top+1.9f*height);
+                    
+                    if(height != oldHeight || true)
                     {
-                        height = Math.max(Math.max(firstLineRect.bottom - firstLineRect.top, lastLineRect.bottom - lastLineRect.top), getResources().getDisplayMetrics().xdpi*0.07f/scale);
-
-                        leftMarkerRect.set(firstLineRect.left-0.9f*height,firstLineRect.top,firstLineRect.left,firstLineRect.top+1.9f*height);
-                        rightMarkerRect.set(lastLineRect.right,lastLineRect.top,lastLineRect.right+0.9f*height,lastLineRect.top+1.9f*height);
+                        leftMarker.rewind();
+                        leftMarker.moveTo(0f,0f);
+                        leftMarker.rLineTo(0f,1.9f*height*scale);
+                        leftMarker.rLineTo(-0.9f*height*scale,0f);
+                        leftMarker.rLineTo(0f,-0.9f*height*scale);
+                        leftMarker.close();
                         
-                        if(height != oldHeight || true)
-                        {
-                            leftMarker.rewind();
-                            leftMarker.moveTo(0f,0f);
-                            leftMarker.rLineTo(0f,1.9f*height*scale);
-                            leftMarker.rLineTo(-0.9f*height*scale,0f);
-                            leftMarker.rLineTo(0f,-0.9f*height*scale);
-                            leftMarker.close();
-                            
-                            rightMarker.rewind();
-                            rightMarker.moveTo(0f,0f);
-                            rightMarker.rLineTo(0f,1.9f*height*scale);
-                            rightMarker.rLineTo(0.9f*height*scale,0f);
-                            rightMarker.rLineTo(0f,-0.9f*height*scale);
-                            rightMarker.close();
-                            oldHeight = height;
-                        }
-                        
-                        leftMarker.offset(firstLineRect.left*scale, firstLineRect.top*scale);
-                        rightMarker.offset(lastLineRect.right*scale, lastLineRect.top*scale);
-                        canvas.drawPath(leftMarker, selectMarkerPaint);
-                        canvas.drawPath(rightMarker, selectMarkerPaint);
-                            //Undo the offset so that we can reuse the path
-                        leftMarker.offset(-firstLineRect.left*scale, -firstLineRect.top*scale);
-                        rightMarker.offset(-lastLineRect.right*scale, -lastLineRect.top*scale);                        
+                        rightMarker.rewind();
+                        rightMarker.moveTo(0f,0f);
+                        rightMarker.rLineTo(0f,1.9f*height*scale);
+                        rightMarker.rLineTo(0.9f*height*scale,0f);
+                        rightMarker.rLineTo(0f,-0.9f*height*scale);
+                        rightMarker.close();
+                        oldHeight = height;
                     }
-                        
+                    
+                    leftMarker.offset(firstLineRect.left*scale, firstLineRect.top*scale);
+                    rightMarker.offset(lastLineRect.right*scale, lastLineRect.top*scale);
+                    canvas.drawPath(leftMarker, selectMarkerPaint);
+                    canvas.drawPath(rightMarker, selectMarkerPaint);
+                        //Undo the offset so that we can reuse the path
+                    leftMarker.offset(-firstLineRect.left*scale, -firstLineRect.top*scale);
+                    rightMarker.offset(-lastLineRect.right*scale, -lastLineRect.top*scale);                        
+                }
+                
+                if(useSmartTextSelection)
+                {
                     canvas.drawRect(0, 0, docRelXminSelection*scale, PageView.this.getHeight(), selectOverlayPaint);
                     canvas.drawRect(docRelXmaxSelection*scale, 0, PageView.this.getWidth(), PageView.this.getHeight(), selectOverlayPaint);
                 }
@@ -611,47 +609,53 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             }
 
                 // Draw the current hand drawing
-            if (!mIsBlank && mDrawing != null) {
-                // PointF mP; //These are defined as member variables for performance 
-                // Iterator<ArrayList<PointF>> it;
-                // ArrayList<PointF> arc;
-                // Iterator<PointF> iit;
-                // float mX1, mY1, mX2, mY2;
-                drawingPaint.setStrokeWidth(inkThickness * scale);
-                drawingPaint.setColor(inkColor);  //Should be done only on settings change
-                it = mDrawing.iterator();
-                while (it.hasNext()) {
-                    arc = it.next();
-                    if (arc.size() >= 2) {
-                        iit = arc.iterator();
-                        if(iit.hasNext())
-                        {
-                            mP = iit.next();
-                            mX1 = mP.x * scale;
-                            mY1 = mP.y * scale;
-                            mDrawingPath.moveTo(mX1, mY1);
-                            while (iit.hasNext()) {
-                                mP = iit.next();
-                                mX2 = mP.x * scale;
-                                mY2 = mP.y * scale;
-                                mDrawingPath.lineTo(mX2, mY2);
-                            }
-                        }
-                        if(!canvas.quickReject(mDrawingPath, Canvas.EdgeType.AA))
-                        {
-                            canvas.drawPath(mDrawingPath, drawingPaint);
-                        }
-                        mDrawingPath.reset();
-                    }
-                }
-            }
-
+            if(!mIsBlank)
+                drawDrawing(canvas, scale);
+            
                 // Draw the eraser
             if (!mIsBlank && eraser != null) {
                 canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, eraserInnerPaint);
                 canvas.drawCircle(eraser.x * scale, eraser.y * scale, eraserThickness * scale, eraserOuterPaint);
             }
         }
+
+        private void drawDrawing(Canvas canvas, float scale)
+            {
+                if (mDrawing != null) {
+                        // PointF mP; //These are defined as member variables for performance 
+                        // Iterator<ArrayList<PointF>> it;
+                        // ArrayList<PointF> arc;
+                        // Iterator<PointF> iit;
+                        // float mX1, mY1, mX2, mY2;
+                    drawingPaint.setStrokeWidth(inkThickness * scale);
+                    drawingPaint.setColor(inkColor);  //Should be done only on settings change
+                    it = mDrawing.iterator();
+                    while (it.hasNext()) {
+                        arc = it.next();
+                        if (arc.size() >= 2) {
+                            iit = arc.iterator();
+                            if(iit.hasNext())
+                            {
+                                mP = iit.next();
+                                mX1 = mP.x * scale;
+                                mY1 = mP.y * scale;
+                                mDrawingPath.moveTo(mX1, mY1);
+                                while (iit.hasNext()) {
+                                    mP = iit.next();
+                                    mX2 = mP.x * scale;
+                                    mY2 = mP.y * scale;
+                                    mDrawingPath.lineTo(mX2, mY2);
+                                }
+                            }
+                            if(!canvas.quickReject(mDrawingPath, Canvas.EdgeType.AA))
+                            {
+                                canvas.drawPath(mDrawingPath, drawingPaint);
+                            }
+                            mDrawingPath.reset();
+                        }
+                    }
+                }
+            }
     }
 
     
@@ -1126,25 +1130,25 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         int w  = right-left;
         int h = bottom-top;
 
+
             //Layout the Hq patch
-        if (mHqView != null && mHqView.getArea() != null && mHqView.getPatchArea() != null) {
-            if(mHqView.getArea().width() != w || mHqView.getArea().height() != h) {
-                    // Remove Hq if zoomed since patch was created
+        if(mHqView != null)
+        {
+                // Remove Hq if zoomed since patch was created
+            if(mHqView.getArea() == null || mHqView.getPatchArea() == null || mHqView.getArea().width() != w || mHqView.getArea().height() != h) {
                 mHqView.setVisibility(View.GONE);
                 mHqView.reset();
-            } else
-            {
+            }
+            else if(mHqView.getPatchArea() != null && mHqView.getArea() != null && mHqView.getArea().width() == w && mHqView.getArea().height() == h) {
                 mHqView.layout(mHqView.getPatchArea().left, mHqView.getPatchArea().top, mHqView.getPatchArea().right, mHqView.getPatchArea().bottom);
                 mHqView.setVisibility(View.VISIBLE);
-//                Log.e("PenAndPDF", "layout() for "+mHqView.getPatchArea());
             }
         }
 
             //Layout the entire page view
-        if (mEntireView != null)
-        {
+        if (mEntireView != null) {
                 //Draw mEntireView only if it is not completely covered by a Hq patch
-            if(mHqView != null && mHqView.getDrawable() != null && mHqView.getLeft() == left &&  mHqView.getTop() == top && mHqView.getRight() == right && mHqView.getBottom() == bottom ) 
+            if(mHqView != null && mHqView.getDrawable() != null && mHqView.getLeft() == left &&  mHqView.getTop() == top && mHqView.getRight() == right && mHqView.getBottom() == bottom )
             {
                 mEntireView.setVisibility(View.GONE);
             }
@@ -1154,7 +1158,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 mEntireView.setImageMatrix(mEntireMat);
                 mEntireView.layout(0, 0, w, h);
                 mEntireView.setVisibility(View.VISIBLE);
-//                mEntireView.invalidate();
             }
         }
 
@@ -1202,10 +1205,12 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
     
     
-    public void addHq(boolean update) {//If update is true a more efficient method is used to redraw the patch but it is redrawn even if the area hasn't changed!
+    public void addHq(boolean update) {//If update is true a more efficient method is used to redraw the patch but it is redrawn even if the area hasn't changed
         Rect viewArea = new Rect(getLeft(),getTop(),getRight(),getBottom());
-//        Log.v("PageView", "addHq() page="+mPageNumber+", update="+update);
         
+        if(viewArea == null || mSize == null)
+            return;
+            
             // If the viewArea's size matches the unzoomed size, there is no need for a hq patch
         if (viewArea.width() == mSize.x && viewArea.height() == mSize.y) return;
 
@@ -1286,7 +1291,13 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             //Save
         bundle.putSerializable("mDrawing", mDrawing);
         bundle.putSerializable("mDrawingHistory", mDrawingHistory);
-
+        bundle.putFloat("inkThickness",inkThickness);
+        bundle.putFloat("eraserThickness",eraserThickness);
+        bundle.putInt("inkColor",inkColor);
+        bundle.putInt("highlightColor",highlightColor);
+        bundle.putInt("underlineColor",underlineColor);
+        bundle.putInt("strikeoutColor",strikeoutColor);
+        bundle.putBoolean("useSmartTextSelection",useSmartTextSelection);
         return bundle;
     }
 
@@ -1297,7 +1308,13 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 //Load 
             mDrawing = (ArrayList<ArrayList<PointF>>)bundle.getSerializable("mDrawing");
             mDrawingHistory = (ArrayDeque<ArrayList<ArrayList<PointF>>>)bundle.getSerializable("mDrawingHistory");
-
+            inkThickness = bundle.getFloat("inkThickness");
+            eraserThickness = bundle.getFloat("eraserThickness");
+            inkColor = bundle.getInt("inkColor");
+            highlightColor = bundle.getInt("highlightColor");
+            underlineColor = bundle.getInt("underlineColor");
+            strikeoutColor = bundle.getInt("strikeoutColor");
+            useSmartTextSelection = bundle.getBoolean("useSmartTextSelection");
             state = bundle.getParcelable("superInstanceState");
         }
         super.onRestoreInstanceState(state);
@@ -1306,5 +1323,20 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     public Bitmap getHqImageBitmap() {
         if(mHqView == null) return null;
         return mHqView.getImageBitmap();
+    }
+
+    public boolean saveDraw() {
+        if(mOverlayView != null && mHqView != null){
+            Bitmap bitmap = mHqView.getImageBitmap();
+            if(bitmap!=null)
+            {
+                Canvas canvas = new Canvas(bitmap);
+                float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+                canvas.translate(Math.min(getLeft(),0), Math.min(getTop(),0));
+                mOverlayView.drawDrawing(canvas, scale);
+                mHqView.setImageBitmap(bitmap);
+            }
+        }
+        return true;
     }
 }

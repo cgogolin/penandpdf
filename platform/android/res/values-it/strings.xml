@@ -43,7 +43,7 @@
 	<string name="search_backwards">Cerca indietro</string>
 	<string name="search_document">Cerca documento</string>
 	<string name="search_forwards">Cerca avanti</string>
-	<string name="searching_">Ricerca...</string>
+	<string name="searching_">Ricerca&#8230;</string>
 	<string name="select">Seleziona</string>
 	<string name="select_text">Seleziona testo</string>
 	<string name="strike_out">Barrato</string>

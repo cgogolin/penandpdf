@@ -8,5 +8,6 @@
      android:layout_height="wrap_content"
      android:id="@+id/draw_image_button"
      android:src="@drawable/ic_mode_edit_white_24dp"
+     android:contentDescription="@string/menu_draw"
      />
 </FrameLayout>

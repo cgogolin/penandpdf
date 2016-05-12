@@ -2,8 +2,6 @@ package com.cgogolin.penandpdf;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.ActionBar;
-//import android.app.Activity;
-//import android.app.AlertDialog;
 import android.app.SearchManager;
 import android.content.ContentUris;
 import android.content.Context;
@@ -29,7 +27,6 @@ import android.support.v7.widget.Toolbar;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AlertDialog;
-//import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.SearchView;
 import android.text.Editable;
 import android.text.format.Time;
@@ -56,13 +53,9 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.LinearLayout;
-//import android.widget.SearchView;
 import android.widget.SeekBar;
-//import android.widget.ShareActionProvider;
-//import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewAnimator;
-//import com.artifex.mupdfdemo.ReaderView.ViewMapper;
 import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -257,14 +250,6 @@ public static boolean isMediaDocument(Uri uri) {
             // in response, while leaving the core blocked. When the dialog receives the
             // user's response, it is sent to the core via replyToAlert, unblocking it.
             // Another alert-waiting task is then created to pick up the next alert.
-        // if (mAlertTask != null) {
-        //     mAlertTask.cancel(true);
-        //     mAlertTask = null;
-        // }
-        // if (mAlertDialog != null) {
-        //     mAlertDialog.cancel();
-        //     mAlertDialog = null;
-        // }
         destroyAlertWaiter();
         mAlertsActive = true;
         mAlertTask = new AsyncTask<Void,Void,MuPDFAlert>() {
@@ -423,10 +408,12 @@ public static boolean isMediaDocument(Uri uri) {
     protected void onResume()
         {
             super.onResume();
-//            Log.i(getString(R.string.app_name), "onResume()");
             
 			Intent intent = getIntent();
-			if (Intent.ACTION_MAIN.equals(intent.getAction()))
+
+//            Log.i(getString(R.string.app_name), "onResume() with intent="+intent+" core="+core);
+                        
+			if (Intent.ACTION_MAIN.equals(intent.getAction()) && core == null)
             {
 				setupEntryScreen();
             }
@@ -454,6 +441,7 @@ public static boolean isMediaDocument(Uri uri) {
 					SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
 					SharedPreferences.Editor edit = prefs.edit();
 					saveRecentFiles(prefs, edit, core.getUri());
+                    edit.apply();
 				}
 			}
 			
@@ -519,7 +507,6 @@ public static boolean isMediaDocument(Uri uri) {
 			mAlertTask = null;
 		}
 		searchView = null;
-//		mShareActionProvider = null;
 	}
     
     @Override
@@ -532,6 +519,16 @@ public static boolean isMediaDocument(Uri uri) {
             {
                 case Main:
                     inflater.inflate(R.menu.main_menu, menu);
+
+                        //Enable the delte note item if we have a note open
+                    File recentFile = new File(Uri.decode(getIntent().getData().getEncodedPath()));
+                    Log.e("ARG", "paths: "+recentFile.getAbsolutePath()+" "+getNotesDir(this).getAbsolutePath());
+                    
+					if(recentFile != null && recentFile.getAbsolutePath().startsWith(getNotesDir(this).getAbsolutePath()))
+                    {
+                        MenuItem deleteNoteItem = menu.findItem(R.id.menu_delete_note);
+                        deleteNoteItem.setVisible(true);
+                    }
                     
                         // Set up the back before link clicked icon
                     MenuItem linkBackItem = menu.findItem(R.id.menu_linkback);
@@ -550,21 +547,6 @@ public static boolean isMediaDocument(Uri uri) {
                         shareItem.setEnabled(false).setVisible(false);
                     else
                         shareItem.setEnabled(true).setVisible(true);
-                        
-                    // else
-                    // {
-                    //     if (mShareActionProvider == null)
-                    //     {
-					// 		mShareActionProvider = (android.support.v7.widget.ShareActionProvider)MenuItemCompat.getActionProvider(shareItem);
-							
-                    //         Intent shareIntent = new Intent();
-                    //         shareIntent.setAction(Intent.ACTION_SEND);
-                    //         shareIntent.setType("plain/text");
-                    //         shareIntent.setType("*/*");
-                    //         shareIntent.putExtra(Intent.EXTRA_STREAM, core.getUri());
-                    //         if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
-                    //     }   
-                    // }
                     break;
                 case Selection:
                     inflater.inflate(R.menu.selection_menu, menu);
@@ -575,25 +557,47 @@ public static boolean isMediaDocument(Uri uri) {
                         MenuItem undoButton = menu.findItem(R.id.menu_undo);
                         undoButton.setEnabled(false).setVisible(false);
                     }
-                    if(mDocView.getMode() == MuPDFReaderView.Mode.Erasing)
+
                     {
-                        MenuItem eraseButton = menu.findItem(R.id.menu_erase);
-                        eraseButton.setEnabled(false).setVisible(false);
+                        MenuItem cancelButton = menu.findItem(R.id.menu_cancel);
+                        View cancelButtonActionView = MenuItemCompat.getActionView(cancelButton);
+                        ImageButton cancelImageButton = (ImageButton)cancelButtonActionView.findViewById(R.id.cancel_image_button);
+                        final MuPDFView pageView = (MuPDFView) mDocView.getSelectedView();
+                        cancelImageButton.setOnClickListener(new OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    showInfo(getString(R.string.long_press_to_delete));
+                                }
+                            });
+                        cancelImageButton.setOnLongClickListener(new OnLongClickListener() {
+                                @Override
+                                public boolean onLongClick(View v) {
+                                    if (pageView != null) {
+                                        pageView.deselectText();
+                                        pageView.cancelDraw();
+                                    }
+                                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                                    return true;
+                                }
+                            });
                     }
+                    
                     if(mDocView.getMode() == MuPDFReaderView.Mode.Drawing)
                     {
                         MenuItem drawButton = menu.findItem(R.id.menu_draw);
                         drawButton.setEnabled(false).setVisible(false);
                     }
-                    else
+                    else if(mDocView.getMode() == MuPDFReaderView.Mode.Erasing)
                     {
+                        MenuItem eraseButton = menu.findItem(R.id.menu_erase);
+                        eraseButton.setEnabled(false).setVisible(false);
+
                         MenuItem drawButton = menu.findItem(R.id.menu_draw);
 						View drawButtonActionView = MenuItemCompat.getActionView(drawButton);
                         ImageButton drawImageButton = (ImageButton)drawButtonActionView.findViewById(R.id.draw_image_button);
                         drawImageButton.setOnClickListener(new OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
-//                                    mDocView.setMode(MuPDFReaderView.Mode.Erasing);
                                     mDocView.setMode(MuPDFReaderView.Mode.Drawing);
                                 }
                             });
@@ -612,12 +616,32 @@ public static boolean isMediaDocument(Uri uri) {
                         MenuItem editButton = menu.findItem(R.id.menu_edit);
                         editButton.setEnabled(false).setVisible(false);
                     }
+                    {
+                        MenuItem cancelButton = menu.findItem(R.id.menu_cancel);
+                        View cancelButtonActionView = MenuItemCompat.getActionView(cancelButton);
+                        ImageButton cancelImageButton = (ImageButton)cancelButtonActionView.findViewById(R.id.cancel_image_button);
+                        final MuPDFView pageView = (MuPDFView) mDocView.getSelectedView();
+                        cancelImageButton.setOnClickListener(new OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    showInfo(getString(R.string.long_press_to_delete));
+                                }
+                            });
+                        cancelImageButton.setOnLongClickListener(new OnLongClickListener() {
+                                @Override
+                                public boolean onLongClick(View v) {
+                                    if (pageView != null)
+                                        pageView.deleteSelectedAnnotation();
+                                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                                return true;
+                                }
+                            });
+                    }
                     break;
                 case Search:
                     inflater.inflate(R.menu.search_menu, menu);
                         // Associate searchable configuration with the SearchView
                     SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-//                    searchView = (SearchView) menu.findItem(R.id.menu_search_box).getActionView();
 					MenuItem searchItem = menu.findItem(R.id.menu_search_box);
 					searchView = (android.support.v7.widget.SearchView)MenuItemCompat.getActionView(searchItem);
                     searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
@@ -729,7 +753,15 @@ public static boolean isMediaDocument(Uri uri) {
                 return true;
             case R.id.menu_open:
                 openDocument();
-                return true;                
+                return true;
+            case R.id.menu_delete_note:
+                core.deleteDocument(this);
+                Intent restartIntent = new Intent(this, PenAndPDFActivity.class);
+                restartIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                restartIntent.setAction(Intent.ACTION_MAIN);
+                startActivity(restartIntent);
+                finish();
+                return true;
             case R.id.menu_save:
                 DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
@@ -759,8 +791,6 @@ public static boolean isMediaDocument(Uri uri) {
                 alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.saveas), listener);
                 alert.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), listener);
                 alert.show();
-                // if (core == null || !core.canSaveToCurrentUri(this))
-                //     alert.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false).setVisible(false);
                 return true;
             case R.id.menu_gotopage:
                 showGoToPageDialoge();
@@ -825,18 +855,18 @@ public static boolean isMediaDocument(Uri uri) {
                 return true;
             case R.id.menu_cancel:
                 switch (mActionBarMode) {
-                    case Annot:
-                        if (pageView != null) {
-                                pageView.deselectText();
-                                pageView.cancelDraw();
-                        }
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                        break;
-                    case Edit:
-                        if (pageView != null)
-                            pageView.deleteSelectedAnnotation();
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                        break;
+                    // case Annot:
+                    //     if (pageView != null) {
+                    //             pageView.deselectText();
+                    //             pageView.cancelDraw();
+                    //     }
+                    //     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                    //     break;
+                    // case Edit:
+                    //     if (pageView != null)
+                    //         pageView.deleteSelectedAnnotation();
+                    //     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                    //     break;
                     case Search:
                         hideKeyboard();
                         if (mSearchTaskManager != null) mSearchTaskManager.stop();
@@ -844,10 +874,10 @@ public static boolean isMediaDocument(Uri uri) {
                         mDocView.clearSearchResults();
                         mDocView.resetupChildren();
                         break;
-                    case Selection:
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                        pageView.deselectText();
-                        break;
+                    // case Selection:
+                    //     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                    //     pageView.deselectText();
+                    //     break;
                     case AddingTextAnnot:
                         mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         break;
@@ -925,12 +955,10 @@ public static boolean isMediaDocument(Uri uri) {
                 alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
                                 new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int which) {
-//                                        finish();
                                     }
                                 });
                 alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         public void onDismiss(DialogInterface dialog) {
-//                            finish();
                         }
                     });
                 alert.show();
@@ -985,7 +1013,7 @@ public static boolean isMediaDocument(Uri uri) {
     
     public void setupDocView() { //Is called during onResume()
             //If we don't even have a core there is nothing to do
-        if (core == null) return;            
+        if(core == null) return;            
             //If the doc view is not present create it
         if(mDocView == null)
         {
@@ -1067,7 +1095,7 @@ public static boolean isMediaDocument(Uri uri) {
 						mAlertDialog = mAlertBuilder.create();
                         final LinearLayout editTextLayout = new LinearLayout(mAlertDialog.getContext());
                         editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-                        editTextLayout.setOrientation(1);
+                        editTextLayout.setOrientation(LinearLayout.VERTICAL);
                         editTextLayout.setPadding(16, 16, 16, 0);//should not be hard coded
                         final EditText input = new EditText(editTextLayout.getContext());
                         input.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_NORMAL|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
@@ -1123,7 +1151,7 @@ public static boolean isMediaDocument(Uri uri) {
                             case TextAnnotation:
                                 break;
                             case Nothing:
-                                if(mActionBarMode != ActionBarMode.Search)
+                                if(mActionBarMode != ActionBarMode.Search && mActionBarMode != ActionBarMode.Hidden)
                                 {
                                     mActionBarMode = ActionBarMode.Main;
                                     invalidateOptionsMenu();
@@ -1156,7 +1184,7 @@ public static boolean isMediaDocument(Uri uri) {
 			
             mDocViewNeedsNewAdapter = true;
 
-				//Make appear below the toolbar if completely zoomed out
+				//Make content appear below the toolbar if completely zoomed out
             TypedValue tv = new TypedValue();
             if(getSupportActionBar().isShowing() && getTheme().resolveAttribute(android.support.v7.appcompat.R.attr.actionBarSize, tv, true)) {
                 int actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data,getResources().getDisplayMetrics());
@@ -1184,7 +1212,7 @@ public static boolean isMediaDocument(Uri uri) {
             }
 			
                 //Reinstate last viewport if it was recorded
-            restoreVieport();
+            restoreViewport();
 
                 //Restore the state of mDocView from its saved state in case there is one
             if(mDocViewParcelable != null) mDocView.onRestoreInstanceState(mDocViewParcelable);
@@ -1235,15 +1263,6 @@ public static boolean isMediaDocument(Uri uri) {
             openDocumentIntent.addCategory(Intent.CATEGORY_OPENABLE);
             openDocumentIntent.setType("application/pdf");
             openDocumentIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-            
-            // ArrayList<Intent> extraIntents = new ArrayList<Intent>();
-            // Intent getContentIntent = new Intent(Intent.ACTION_GET_CONTENT);
-            // getContentIntent.addCategory(Intent.CATEGORY_OPENABLE);
-            // getContentIntent.setType("application/pdf");
-            // getContentIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-            // extraIntents.add(getContentIntent);
-            // openDocumentIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents.toArray(new Intent[] { }));
-
 			intent = openDocumentIntent;
 		}
 		
@@ -1278,10 +1297,13 @@ public static boolean isMediaDocument(Uri uri) {
 							{
 								if(!save())
 									showInfo(getString(R.string.error_saveing));
+                                else
+                                    showOpenDocumentDialog();
 							}
 							else
 							{
 								showSaveAsActivity();
+                                    //We should show the open dialog after save as has compltete...
 							}
 						}
 						if (which == AlertDialog.BUTTON_NEGATIVE) {
@@ -1310,6 +1332,9 @@ public static boolean isMediaDocument(Uri uri) {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if(intent!=null)
+            Log.i(getString(R.string.app_name), "onActivityResult() flags="+intent.getFlags()+" and write flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == Intent.FLAG_GRANT_WRITE_URI_PERMISSION)+" and read flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION) == Intent.FLAG_GRANT_READ_URI_PERMISSION));
+        
         switch (requestCode) {
             case EDIT_REQUEST:
                 overridePendingTransition(R.animator.fade_in, R.animator.exit_to_left);
@@ -1319,8 +1344,6 @@ public static boolean isMediaDocument(Uri uri) {
                         getIntent().setAction(Intent.ACTION_VIEW);
                         getIntent().setData(intent.getData());
                         getIntent().setFlags((getIntent().getFlags() & ~Intent.FLAG_GRANT_WRITE_URI_PERMISSION & ~Intent.FLAG_GRANT_READ_URI_PERMISSION) | (intent.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) | (intent.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION));//Set the read and writ flags to what they are in the received intent
-
-                        Log.i(getString(R.string.app_name), "onActivityResult() flags="+intent.getFlags()+" and write flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == Intent.FLAG_GRANT_WRITE_URI_PERMISSION)+" and read flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION) == Intent.FLAG_GRANT_READ_URI_PERMISSION));
                         
                         if (core != null) {
                             core.onDestroy();
@@ -1425,13 +1448,6 @@ public static boolean isMediaDocument(Uri uri) {
 			//Try to take permissions
 		tryToTakePersistablePermissions(getIntent());
         rememberTemporaryUriPermission(getIntent());
-        //     //Resetup the ShareActionProvider
-        // Intent shareIntent = new Intent();
-        // shareIntent.setAction(Intent.ACTION_SEND);
-        // shareIntent.setType("plain/text");
-        // shareIntent.setType("*/*");
-        // shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(uri.getPath())));
-        // if (mShareActionProvider != null) mShareActionProvider.setShareIntent(shareIntent);
         return true;
     }
     
@@ -1463,7 +1479,7 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
 
-    private void restoreVieport() {
+    private void restoreViewport() {
         if (core != null && mDocView != null) {
             SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
             setViewport(prefs, core.getUri());
@@ -1471,7 +1487,6 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
 
-//    private void setViewport(SharedPreferences prefs, String path) {
     private void setViewport(SharedPreferences prefs, Uri uri) {
         setViewport(prefs.getInt("page"+uri.toString(), 0),prefs.getFloat("normalizedscale"+uri.toString(), 0.0f),prefs.getFloat("normalizedxscroll"+uri.toString(), 0.0f), prefs.getFloat("normalizedyscroll"+uri.toString(), 0.0f));
     }
@@ -1485,6 +1500,9 @@ public static boolean isMediaDocument(Uri uri) {
 
 
     private void saveRecentFiles(SharedPreferences prefs, SharedPreferences.Editor edit, Uri uri) {
+
+        Log.i(getString(R.string.app_name), "saveRecentFiles() with uri="+uri);
+
             //Read the recent files list from preferences
         RecentFilesList recentFilesList = new RecentFilesList(prefs);                    
             //Add the current file
@@ -1504,6 +1522,7 @@ public static boolean isMediaDocument(Uri uri) {
         }
         else
             saveViewport(edit, uri.toString());
+        edit.apply();
     }
     
         @Override
@@ -1625,7 +1644,7 @@ public static boolean isMediaDocument(Uri uri) {
 
 		final LinearLayout editTextLayout = new LinearLayout(mAlertDialog.getContext());
 		editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-		editTextLayout.setOrientation(1);
+		editTextLayout.setOrientation(LinearLayout.VERTICAL);
 		editTextLayout.setPadding(16, 16, 16, 0);//should not be hard coded
 		
         final EditText input = new EditText(editTextLayout.getContext());
@@ -1666,7 +1685,7 @@ public static boolean isMediaDocument(Uri uri) {
 
 		final LinearLayout editTextLayout = new LinearLayout(mAlertDialog.getContext());
 		editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-		editTextLayout.setOrientation(1);
+		editTextLayout.setOrientation(LinearLayout.VERTICAL);
 		editTextLayout.setPadding(16, 16, 16, 0);//should not be hard coded
         final EditText input = new EditText(editTextLayout.getContext());
         input.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
@@ -1677,7 +1696,7 @@ public static boolean isMediaDocument(Uri uri) {
         TextDrawable textDrawable = new TextDrawable(".pdf", input.getTextSize(), input.getCurrentTextColor());
         input.setCompoundDrawablesWithIntrinsicBounds(null , null, textDrawable, null);
         input.setFocusable(true);
-        input.setGravity(Gravity.RIGHT);
+        input.setGravity(Gravity.END);
 		mAlertDialog.setTitle(R.string.dialog_newdoc_title);
 		DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener()
 			{
@@ -1756,8 +1775,6 @@ public static boolean isMediaDocument(Uri uri) {
                 return;
             case Selection:
                 mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                // mActionBarMode = ActionBarMode.Main;
-                // invalidateOptionsMenu();
                 MuPDFView pageView = (MuPDFView) mDocView.getSelectedView();
                 if (pageView != null) pageView.deselectText();
                 return;
@@ -1840,15 +1857,30 @@ public static boolean isMediaDocument(Uri uri) {
         getSupportActionBar().hide();
         mActionBarMode = ActionBarMode.Hidden;
         invalidateOptionsMenu();
-        resetupDocViewAfterActionBarAnimation(false);
+//        mDocView.setNormalizedScroll(0f,0f);
+        mDocView.setScale(1.0f);
+        mDocView.setLinksEnabled(false);
+//        resetupDocViewAfterActionBarAnimation(false);
+        mDocView.setPadding(0, 0, 0, 0);
     }
             
     private void exitFullScreen() {
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getSupportActionBar().show();
-        mActionBarMode = ActionBarMode.Main;
+        if(mActionBarMode == ActionBarMode.Hidden)
+            mActionBarMode = ActionBarMode.Main;
         invalidateOptionsMenu();
-        resetupDocViewAfterActionBarAnimation(true);
+        mDocView.setScale(1.0f);
+//        mDocView.setNormalizedScroll(0f,0f);
+        mDocView.setLinksEnabled(true);
+//        resetupDocViewAfterActionBarAnimation(true);
+            //Make content appear below the toolbar if completely zoomed out
+        TypedValue tv = new TypedValue();
+        if(getSupportActionBar().isShowing() && getTheme().resolveAttribute(android.support.v7.appcompat.R.attr.actionBarSize, tv, true)) {
+            int actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data,getResources().getDisplayMetrics());
+            mDocView.setPadding(0, actionBarHeight, 0, 0);
+            mDocView.setClipToPadding(false);
+        }
     }
 
     private void resetupDocViewAfterActionBarAnimation(final boolean linksEnabled) {

@@ -88,10 +88,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
     public boolean onCreate() {
         mNotesDir = PenAndPDFActivity.getNotesDir(getContext());
 
-        Log.i("PenAndPDFContentProvider", "onCreate()");
-        
         for( UriPermission permission : getContext().getContentResolver().getOutgoingPersistedUriPermissions()) {
-            Log.i("PenAndPDFContentProvider", "has given persission "+permission.toString());
         }
         
         return true;
@@ -116,7 +113,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
     }
 
     private File getFileForDocId(String documentId) {
-        Log.i("PenAndPDFContentProvider", "getFileForDocId for id "+documentId+" and mNotesDir.getName()="+mNotesDir.getName());
+//        Log.i("PenAndPDFContentProvider", "getFileForDocId for id "+documentId+" and mNotesDir.getName()="+mNotesDir.getName());
         if(documentId.equals(mNotesDir.getName())) 
             return mNotesDir;
         else
@@ -161,7 +158,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
         row.add(Document.COLUMN_MIME_TYPE, mimeType);
         row.add(Document.COLUMN_LAST_MODIFIED, file.lastModified());
         row.add(Document.COLUMN_FLAGS, flags);
-        Log.i("PenAndPDFContentProvider", "includeFile() for id="+documentId+" with displayName="+displayName+" and flags="+flags+" so that FLAG_SUPPORTS_WRITE="+((flags & Document.FLAG_SUPPORTS_WRITE) == Document.FLAG_SUPPORTS_WRITE));
+//        Log.i("PenAndPDFContentProvider", "includeFile() for id="+documentId+" with displayName="+displayName+" and flags="+flags+" so that FLAG_SUPPORTS_WRITE="+((flags & Document.FLAG_SUPPORTS_WRITE) == Document.FLAG_SUPPORTS_WRITE));
     }
     
     @Override
@@ -207,7 +204,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
         final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
         final File parent = getFileForDocId(parentDocumentId);
         if(parent == null) return null;
-        Log.i("PenAndPDFContentProvider", "queryChildDocuments() for parent "+parent.getPath()+" with id "+parentDocumentId);
+//        Log.i("PenAndPDFContentProvider", "queryChildDocuments() for parent "+parent.getPath()+" with id "+parentDocumentId);
         for (File file : parent.listFiles()) {
             includeFile(result, null, file);
         }
@@ -216,7 +213,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
 
     @Override
     public Cursor queryRecentDocuments(String rootId, String[] projection) {
-        Log.i("PenAndPDFContentProvider", "queryRecentDocuments() for rootId "+rootId);
+//        Log.i("PenAndPDFContentProvider", "queryRecentDocuments() for rootId "+rootId);
         final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
             //Return recently modified documents under the requested root.
         if(ROOT_NOTES.equals(rootId))
@@ -242,7 +239,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
     
     @Override
     public Cursor queryDocument(String documentId, String[] projection) throws FileNotFoundException {
-        Log.i("PenAndPDFContentProvider", "queryDocument() with id "+documentId);
+//        Log.i("PenAndPDFContentProvider", "queryDocument() with id "+documentId);
             // Create a cursor with the requested projection, or the default projection.
         final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
         includeFile(result, documentId, null);
@@ -256,7 +253,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
         
         final File file = getFileForDocId(documentId);
 
-        Log.i("PenAndPDFContentProvider", " openDocument() with accessMode="+accessMode+" parsed="+ParcelFileDescriptor.parseMode(accessMode)+" MODE_READ_WRITE="+ParcelFileDescriptor.MODE_READ_WRITE+" for file "+file+" with uri");
+//        Log.i("PenAndPDFContentProvider", " openDocument() with accessMode="+accessMode+" parsed="+ParcelFileDescriptor.parseMode(accessMode)+" MODE_READ_WRITE="+ParcelFileDescriptor.MODE_READ_WRITE+" for file "+file+" with uri");
 
         
         // final boolean isWrite = (accessMode.indexOf('w') != -1);
