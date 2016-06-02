@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<color name="window_background">#FFF0F0F0</color>
-	<color name="primary">#AA000000</color>
+	<color name="window_background">#F0F0F0</color>
+	<color name="primary">#000000</color>
 	<color name="primary_dark">#000000</color>
 	<color name="accent">#CC0000</color>
 	<color name="primary_text">#0F0F0F</color>
-	<color name="primary_text_toolbar">#FFFFFFFF</color>
-	<color name="hint_text_toolbar">#FFEFEFEF</color>
+	<color name="primary_text_toolbar">#FFFFFF</color>
+	<color name="hint_text_toolbar">#EFEFEF</color>
 	<color name="secondary_text">#0F0F0F</color>
-<!--	<color name="icons">#FFFFFF</color>-->
-<!--	<color name="divider">#B6B6B6</color>-->
-<!--	<color name="ripple">#FF0000</color>-->
 	<color name="busy_indicator">#C0202020</color>
 </resources>
