@@ -63,6 +63,7 @@
     <item name="android:textColorSecondary">@color/primary_text_toolbar</item>
     <item name="android:textColorHint">@color/hint_text_toolbar</item>
     <item name="android:actionMenuTextColor">@color/primary_text_toolbar</item>
+	<item name="android:background">@color/toolbar</item>
     <item name="popupTheme">@style/ThemeOverlay.AppCompat.Light</item>
   </style>
 </resources>

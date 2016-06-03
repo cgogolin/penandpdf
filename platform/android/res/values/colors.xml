@@ -9,4 +9,5 @@
 	<color name="hint_text_toolbar">#EFEFEF</color>
 	<color name="secondary_text">#0F0F0F</color>
 	<color name="busy_indicator">#C0202020</color>
+	<color name="toolbar">#AA000000</color>
 </resources>
