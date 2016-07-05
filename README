@@ -1,33 +1,12 @@
 ABOUT
 
-MuPDF is a lightweight PDF, XPS, EPUB and CBZ viewer and parser/rendering
-library.
+Pen&PDF is a PDF viewer and annotation app for Android built on top of MuPDF.
 
-The renderer in MuPDF is tailored for high quality anti-aliased graphics. It
-renders text with metrics and spacing accurate to within fractions of a pixel
-for the highest fidelity in reproducing the look of a printed page on screen.
-
-MuPDF is also small, fast, and yet complete. We support PDF 1.7 with
-transparency, encryption, hyperlinks, annotations, search and many other bells
-and whistles. MuPDF can also read XPS documents (OpenXPS / ECMA-388),
-EPUB and CBZ (Comic Book archive) files.
-
-MuPDF is written to be both modular and portable; the example applications
-are merely thin layers on top of the functionality offered by the library,
-so custom viewers can be easily built for a wide range of platforms. Example
-viewer applications are supplied for Windows, Linux, MacOS, iOS and Android.
-
-MuPDF is deliberately designed to be threading library agnostic, while still
-supporting multi-threaded operation. In the absence of a thread library
-it will run single-threaded, but by adding one significant benefits in
-rendering speed on multi-core platforms can be obtained.
-
-Interactive features such as form filling, javascript and transitions
-are in development and partially supported by the Android application.
+Pen&PDF intents to makes editing PDFs as easy as writing on a piece of paper.
 
 LICENSE
 
-MuPDF is Copyright 2006-2015 Artifex Software, Inc.
+Pen&PDF is Copyright 2015-2016 Christian Gogolin
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU Affero General Public License as published by the Free
@@ -65,18 +44,19 @@ DOWNLOAD
 
 The latest development source is available directly from the git repository:
 
-	git clone http://mupdf.com/repos/mupdf.git
+	git clone https://github.com/cgogolin/penandpdf.git
 
-In the mupdf directory, update the third party libraries:
+In the penandpdf directory, update the third party libraries:
 
 	git submodule update --init
 
-INSTALLING (UNIX)
-
-Typing "make prefix=/usr/local install" will install the binaries, man-pages,
-static libraries and header files on your system.
-
 REPORTING BUGS AND PROBLEMS
+
+Pen&PDF uses the GitHub issue tracker on:
+
+    https://github.com/cgogolin/penandpdf/issues
+
+In case your problem is directly related to MuPDF, please consider the following:
 
 The MuPDF developers hang out on IRC in the #ghostscript channel on
 irc.freenode.net.
