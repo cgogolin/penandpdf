@@ -213,9 +213,9 @@ abstract public class MuPDFReaderView extends ReaderView {
                         if(mMode == Mode.Viewing || mMode == Mode.Selecting)
                         {
                             MuPDFPageView cv = (MuPDFPageView)getSelectedView();
-                            if(cv==null) return;
+                            if(cv==null || longPressStartEvent==null) return;
                                 //Strangely getY() doesn't return the correct coordinate relative to the view on my device so we have to compute them ourselves from the getRaw methods. I hope this works on multiwindow devices...
-                            int[] locationOnScreen = new int[2];
+                            int[] locationOnScreen = new int[] {0,0};
                             getLocationOnScreen(locationOnScreen);
                             
                             cv.deselectText();

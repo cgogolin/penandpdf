@@ -647,8 +647,10 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                                     mDrawingPath.lineTo(mX2, mY2);
                                 }
                             }
-                            if(!canvas.quickReject(mDrawingPath, Canvas.EdgeType.AA))
-                            {
+                            if (android.os.Build.VERSION.SDK_INT >= 11 && canvas.isHardwareAccelerated()
+                                && android.os.Build.VERSION.SDK_INT < 16) {
+                                canvas.drawPath(mDrawingPath, drawingPaint);
+                            } else if (!canvas.quickReject(mDrawingPath, Canvas.EdgeType.AA)) {
                                 canvas.drawPath(mDrawingPath, drawingPaint);
                             }
                             mDrawingPath.reset();
