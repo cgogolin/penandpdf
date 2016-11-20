@@ -521,13 +521,15 @@ public static boolean isMediaDocument(Uri uri) {
                     inflater.inflate(R.menu.main_menu, menu);
 
                         //Enable the delte note item if we have a note open
-                    File recentFile = new File(Uri.decode(getIntent().getData().getEncodedPath()));
-                    Log.e("ARG", "paths: "+recentFile.getAbsolutePath()+" "+getNotesDir(this).getAbsolutePath());
-                    
-					if(recentFile != null && recentFile.getAbsolutePath().startsWith(getNotesDir(this).getAbsolutePath()))
+                    if(getIntent() != null && getIntent().getData() != null && getIntent().getData().getEncodedPath() != null)
                     {
-                        MenuItem deleteNoteItem = menu.findItem(R.id.menu_delete_note);
-                        deleteNoteItem.setVisible(true);
+                        File recentFile = new File(Uri.decode(getIntent().getData().getEncodedPath()));
+                    
+                        if(recentFile != null && recentFile.getAbsolutePath().startsWith(getNotesDir(this).getAbsolutePath()))
+                        {
+                            MenuItem deleteNoteItem = menu.findItem(R.id.menu_delete_note);
+                            deleteNoteItem.setVisible(true);
+                        }
                     }
                     
                         // Set up the back before link clicked icon
