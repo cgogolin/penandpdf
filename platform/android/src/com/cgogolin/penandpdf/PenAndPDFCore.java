@@ -275,7 +275,7 @@ public class PenAndPDFCore extends MuPDFCore
                 }
                 else
                 {
-                    if(context.checkCallingUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED)
+                    if(context.checkCallingOrSelfUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED)
                     {
                         haveWritePermissionToUri = true;
                     }
