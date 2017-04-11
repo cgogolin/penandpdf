@@ -1960,7 +1960,30 @@ public static boolean isMediaDocument(Uri uri) {
                  * is restarted from scratch.
                  * */
             //onResume();
-            android.os.Process.killProcess(android.os.Process.myPid());
+            Boolean anyResultPositive = false;
+            for (int result : grantResults)
+                if(result ==  android.content.pm.PackageManager.PERMISSION_GRANTED ) {
+                    anyResultPositive = true;
+                    break;
+                }
+            
+            if(anyResultPositive) 
+            {   
+                AlertDialog alert = mAlertBuilder.create();
+                alert.setTitle(R.string.dialog_newpermissions_title);
+                alert.setMessage(getResources().getString(R.string.dialog_newpermissions_message));
+                alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dialog_newpermissions_ok),
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                    }
+                                });
+                alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        public void onDismiss(DialogInterface dialog) {
+                            android.os.Process.killProcess(android.os.Process.myPid());
+                        }
+                    });
+                alert.show();
+            }
         }
     }
 }

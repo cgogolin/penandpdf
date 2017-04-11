@@ -26,6 +26,9 @@
   <string name="dialog_newdoc_ok">Create</string>
   <string name="dialog_newdoc_title">Create blank PDF</string>
   <!--<string name="dialog_newdoc_hint">filename&#8230;</string>-->
+  <string name="dialog_newpermissions_ok">Close</string>
+  <string name="dialog_newpermissions_title">Restart required</string>
+  <string name="dialog_newpermissions_message">Due to a bug in some versions of Android the app must be closed and restarted to actually obtain the permissions that were just granted.</string>
   <string name="dismiss">Dismiss</string>
   <string name="display_settings">Display settings</string>
   <string name="document_has_changes_save_them">Document has changes. Do you want to save them?</string>
