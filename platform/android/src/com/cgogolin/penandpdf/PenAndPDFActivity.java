@@ -7,12 +7,14 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.RectF;
+import android.Manifest.permission;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build.VERSION;
@@ -20,11 +22,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Parcelable;
+import android.os.Process;
 import android.preference.PreferenceManager;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.v7.widget.Toolbar;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SearchView;
@@ -65,7 +69,6 @@ import java.util.concurrent.Executor;
 import java.util.Set;
 import android.view.Gravity;
 
-
 class ThreadPerTaskExecutor implements Executor {
     public void execute(Runnable r) {
         new Thread(r).start();
@@ -93,6 +96,8 @@ public class PenAndPDFActivity extends AppCompatActivity implements SharedPrefer
     private final int    FILEPICK_REQUEST = 2;
     private final int    SAVEAS_REQUEST=3;
     private final int    EDIT_REQUEST = 4;
+
+    private final int    WRITE_PERMISSION_DURING_RESUME_REQUEST = 1;
     
     private PenAndPDFCore    core;
     private MuPDFReaderView mDocView;
@@ -408,6 +413,15 @@ public static boolean isMediaDocument(Uri uri) {
     protected void onResume()
         {
             super.onResume();
+            
+                /*On Android >=v23 we might not be allowed to read all files,
+                 * so if we are given a raw path (not a content:// uri we ask
+                 * for READ permissions to external storage just in case... */
+            if (android.os.Build.VERSION.SDK_INT >= 23 && (android.support.v4.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED || android.support.v4.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) )
+            {
+                requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_PERMISSION_DURING_RESUME_REQUEST);
+                return; //onResume() is then called again from onRequestPermissionsResult()
+            }
             
 			Intent intent = getIntent();
 
@@ -765,6 +779,9 @@ public static boolean isMediaDocument(Uri uri) {
                 finish();
                 return true;
             case R.id.menu_save:
+                if (android.os.Build.VERSION.SDK_INT >= 23 && (android.support.v4.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) )
+                    requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+                
                 DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             if (which == AlertDialog.BUTTON_POSITIVE) {
@@ -939,11 +956,12 @@ public static boolean isMediaDocument(Uri uri) {
 	
 
     public void setupCore() {//Called during onResume()		
-        if (core == null) {
+        if (core == null) {            
             mDocViewNeedsNewAdapter = true;
             Intent intent = getIntent();
 			
             Uri uri = intent.getData();
+            
             try 
             {
                 core = new PenAndPDFCore(this, uri);
@@ -1226,6 +1244,7 @@ public static boolean isMediaDocument(Uri uri) {
         }
     }
 
+    
 	private void setupEntryScreen() {
 		findViewById(R.id.entry_screen_layout).setVisibility(View.VISIBLE);
 		
@@ -1250,7 +1269,8 @@ public static boolean isMediaDocument(Uri uri) {
 				}
 			});
 	}
-	
+
+    
     public void showOpenDocumentDialog() {
 		Intent intent = null;
 		if (android.os.Build.VERSION.SDK_INT < 19)
@@ -1272,6 +1292,7 @@ public static boolean isMediaDocument(Uri uri) {
 		overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
 	}
 
+    
     public void openNewDocument(String filename) throws java.io.IOException {		
         File dir = getNotesDir(this); //Should be done via the provider once implemented
 		File file = new File(dir, filename);
@@ -1287,8 +1308,9 @@ public static boolean isMediaDocument(Uri uri) {
 		}
 		onResume();//New core and new docview are setup here	
 	}
-	
-    public void openDocument() {		
+
+    
+    public void openDocument() {
 		if (core!=null && core.hasChanges()) {
             final PenAndPDFActivity activity = this;//Not sure if this is good style...
             
@@ -1925,4 +1947,21 @@ public static boolean isMediaDocument(Uri uri) {
         Log.i(getString(R.string.app_name), "remembering temporary permission for "+intent.getData()+" with flags="+intent.getFlags());
         temporaryUriPermissions.add(new TemporaryUriPermission(intent));
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == WRITE_PERMISSION_DURING_RESUME_REQUEST) {
+                /*We just resume irrespective of whether the permission was
+                 * granted and then handle cases where we can not access a
+                 * file on a per case basis.
+                 * Addendum: We should be able to simply resume here, but
+                 * due to a bug in Android we have to kill the current process
+                 * because we only actually get the permission after the app
+                 * is restarted from scratch.
+                 * */
+            //onResume();
+            android.os.Process.killProcess(android.os.Process.myPid());
+        }
+    }
 }
+    

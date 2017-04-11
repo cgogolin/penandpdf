@@ -57,14 +57,16 @@ public class PenAndPDFCore extends MuPDFCore
             
             this.uri = uri;
 
-            if(new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
+                /*Sometimes we can open a uri both as a file and via a content provider. On old versions of Android the former works better, whereas on new versions the latter works generally better. Hence we switch the order in which we try depending on the Android version.*/
+            
+            if(android.os.Build.VERSION.SDK_INT < 23 && new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
             {
-                Log.i(context.getString(R.string.app_name), "uri points to file");
+                Log.i(context.getString(R.string.app_name), "uri "+uri.toString()+" points to file");
                 super.init(context, Uri.decode(uri.getEncodedPath()));
             }
             else if (uri.toString().startsWith("content://")) //Uri points to a content provider
             {
-                Log.i(context.getString(R.string.app_name), "uri points to content");
+                Log.i(context.getString(R.string.app_name), "uri "+uri.toString()+" points to content");
                 String displayName = null;
                 Cursor cursor = context.getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null); //This should be done asynchonously!
 
@@ -147,6 +149,11 @@ public class PenAndPDFCore extends MuPDFCore
                 }
                 else
                     throw new Exception("unable to open input stream to uri "+uri.toString());
+            }
+            else if(android.os.Build.VERSION.SDK_INT >= 23 && new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
+            {
+                Log.i(context.getString(R.string.app_name), "uri "+uri.toString()+" points to file");
+                super.init(context, Uri.decode(uri.getEncodedPath()));
             }
         }
 
