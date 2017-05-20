@@ -389,6 +389,7 @@ public static boolean isMediaDocument(Uri uri) {
                 mDocViewParcelable = savedInstanceState.getParcelable("mDocView");
 
                 latestTextInSearchBox = savedInstanceState.getString("latestTextInSearchBox", latestTextInSearchBox);
+                invalidateOptionsMenu();
             }
             
                 //Initialize the alert builder working arround a bug in varoious themes
