@@ -26,7 +26,7 @@ public class RecentFilesList extends LinkedList<String> implements List<String> 
                     //Make sure we add only readable files
 //                File recentFile = new File(recentFileString);
 				File recentFile = new File(Uri.decode(recentFileUri.getEncodedPath()));
-                if(recentFile != null && recentFile.isFile() && recentFile.canRead()) {
+                if( (recentFile != null && recentFile.isFile() && recentFile.canRead()) || android.os.Build.VERSION.SDK_INT >= 23 ) {
 					
                     push(recentFileString);
 //					Log.e("RecentFilesList","File "+recentFileString+" added");
