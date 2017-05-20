@@ -7,6 +7,8 @@ import java.util.ArrayDeque;
 import java.util.LinkedList;
 import java.lang.Thread;
 
+import java.io.Serializable;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -46,6 +48,24 @@ interface TextProcessor {
     void onWord(TextWord word);
     void onEndLine();
     void onEndText();
+}
+
+
+class PointFSerializable extends PointF implements Serializable
+{
+    public PointFSerializable(PointF pointF) {
+        super(pointF.x, pointF.y);
+    }
+    // private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+        
+    // }
+    // private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+    //     this.x = 
+    //         this.y =
+    // }
+    // private void readObjectNoData() throws ObjectStreamException {
+        
+    // }
 }
 
 
@@ -1290,9 +1310,34 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     public Parcelable onSaveInstanceState() {
         Bundle bundle = new Bundle();
         bundle.putParcelable("superInstanceState", super.onSaveInstanceState());
-            //Save
-        bundle.putSerializable("mDrawing", mDrawing);
-        bundle.putSerializable("mDrawingHistory", mDrawingHistory);
+            //Before we can save we first need to copy drawing data into an
+            //object of a serializable class because unfortunately PointF
+            //does not implement Serializable.
+        ArrayList<ArrayList<PointFSerializable>> drawingSerializable = new ArrayList<ArrayList<PointFSerializable>>();
+        if(mDrawing != null)
+            for(ArrayList<PointF> stroke : mDrawing) {
+                ArrayList<PointFSerializable> strokeSerializable = new ArrayList<PointFSerializable>();
+                for(PointF pointF : stroke) {
+                    strokeSerializable.add(new PointFSerializable(pointF));
+                }
+                drawingSerializable.add(strokeSerializable);
+            }
+        ArrayDeque<ArrayList<ArrayList<PointFSerializable>>> drawingHistorySerializable = new ArrayDeque<ArrayList<ArrayList<PointFSerializable>>>();
+        if(mDrawingHistory != null)
+            for(ArrayList<ArrayList<PointF>> list : mDrawingHistory) {
+                ArrayList<ArrayList<PointFSerializable>> listSerializable = new ArrayList<ArrayList<PointFSerializable>>();
+                for(ArrayList<PointF> stroke : list) {
+                    ArrayList<PointFSerializable> strokeSerializable = new ArrayList<PointFSerializable>();
+                    for(PointF pointF : stroke) {
+                        strokeSerializable.add(new PointFSerializable(pointF));
+                    }
+                    listSerializable.add(strokeSerializable);
+                }
+                drawingHistorySerializable.add(listSerializable);
+            }
+        
+        bundle.putSerializable("mDrawing", drawingSerializable);
+        bundle.putSerializable("mDrawingHistory", drawingHistorySerializable);
         bundle.putFloat("inkThickness",inkThickness);
         bundle.putFloat("eraserThickness",eraserThickness);
         bundle.putInt("inkColor",inkColor);
@@ -1308,8 +1353,30 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         if (state instanceof Bundle) {
             Bundle bundle = (Bundle) state;
                 //Load 
-            mDrawing = (ArrayList<ArrayList<PointF>>)bundle.getSerializable("mDrawing");
-            mDrawingHistory = (ArrayDeque<ArrayList<ArrayList<PointF>>>)bundle.getSerializable("mDrawingHistory");
+            ArrayList<ArrayList<PointFSerializable>> drawingSerializable = (ArrayList<ArrayList<PointFSerializable>>)bundle.getSerializable("mDrawing");
+            ArrayDeque<ArrayList<ArrayList<PointFSerializable>>> drawingHistorySerializable = (ArrayDeque<ArrayList<ArrayList<PointFSerializable>>>)bundle.getSerializable("mDrawingHistory");
+            
+            mDrawing = new ArrayList<ArrayList<PointF>>();
+            for(ArrayList<PointFSerializable> strokeSerializable : drawingSerializable) {
+                ArrayList<PointF> stroke = new ArrayList<PointF>();
+                for(PointFSerializable pointFSerializable : strokeSerializable) {
+                    stroke.add((PointF)pointFSerializable);
+                }
+                mDrawing.add(stroke);
+            }
+            mDrawingHistory = new ArrayDeque<ArrayList<ArrayList<PointF>>>();
+            for(ArrayList<ArrayList<PointFSerializable>> listSerializable : drawingHistorySerializable) {
+                ArrayList<ArrayList<PointF>> list = new ArrayList<ArrayList<PointF>>();
+                for(ArrayList<PointFSerializable> strokeSerializable : listSerializable) {
+                    ArrayList<PointF> stroke = new ArrayList<PointF>();
+                    for(PointF pointFSerializable : strokeSerializable) {
+                        stroke.add((PointF)pointFSerializable);
+                    }
+                    list.add(stroke);
+                }
+                mDrawingHistory.add(list);
+            }            
+            
             inkThickness = bundle.getFloat("inkThickness");
             eraserThickness = bundle.getFloat("eraserThickness");
             inkColor = bundle.getInt("inkColor");

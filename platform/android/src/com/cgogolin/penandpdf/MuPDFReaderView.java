@@ -542,7 +542,7 @@ abstract public class MuPDFReaderView extends ReaderView {
         if (state instanceof Bundle) {
             Bundle bundle = (Bundle) state;
                 //Load 
-            mMode = Mode.valueOf(bundle.getString("mMode", mMode.toString()));
+            setMode(Mode.valueOf(bundle.getString("mMode", mMode.toString())));
             tapPageMargin = bundle.getInt("tapPageMargin", tapPageMargin);
             if(getSelectedView() != null)
                 ((PageView)getSelectedView()).onRestoreInstanceState(bundle.getParcelable("displayedViewInstanceState"));

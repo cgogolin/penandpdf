@@ -24,6 +24,9 @@ import android.content.SharedPreferences;
 import android.content.UriPermission;
 import android.net.Uri;
 
+import android.provider.MediaStore.MediaColumns;
+import android.provider.MediaStore;
+
 //import android.os.Bundle;
 import android.content.ContentResolver;
 //import android.content.res.AssetFileDescriptor;
@@ -125,7 +128,8 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
         return "application/pdf";
     }
 
-        // Adds the file's display name, MIME type, size, and so on.
+        // Adds the file's display name, MIME type, size, and so on to the
+        // given MatrixCursor
     private void includeFile(MatrixCursor result, String documentId, File file) {
         if (documentId == null) {
             documentId = getDocIdForFile(file);
@@ -146,6 +150,9 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
             
         final String displayName = file.getName();
         final String mimeType = getTypeForFile(file);
+        long length = file.length();
+        long lastModified = file.lastModified();
+   
         if(!Document.MIME_TYPE_DIR.equals(mimeType) && !mimeType.endsWith("pdf"))
             return;
         // if (mimeType.startsWith("image/")) {
@@ -154,11 +161,60 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
         final RowBuilder row = result.newRow();
         row.add(Document.COLUMN_DOCUMENT_ID, documentId);
         row.add(Document.COLUMN_DISPLAY_NAME, displayName);
-        row.add(Document.COLUMN_SIZE, file.length());
+        row.add(Document.COLUMN_SIZE, length);
         row.add(Document.COLUMN_MIME_TYPE, mimeType);
-        row.add(Document.COLUMN_LAST_MODIFIED, file.lastModified());
+        row.add(Document.COLUMN_LAST_MODIFIED, lastModified);
         row.add(Document.COLUMN_FLAGS, flags);
-//        Log.i("PenAndPDFContentProvider", "includeFile() for id="+documentId+" with displayName="+displayName+" and flags="+flags+" so that FLAG_SUPPORTS_WRITE="+((flags & Document.FLAG_SUPPORTS_WRITE) == Document.FLAG_SUPPORTS_WRITE));
+
+//        Log.i("PenAndPDFContentProvider", "includeFile()       id="+documentId+" displayName="+displayName+" flags="+flags+ " length="+length+" lastModified="+lastModified);
+    }
+
+    private void includeForeignUri(MatrixCursor result, Uri uri) {
+        Cursor cursor = getContext().getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.DATE_MODIFIED, MediaStore.MediaColumns.SIZE, MediaStore.MediaColumns.MIME_TYPE, MediaStore.MediaColumns.TITLE}, null, null, null); //This should be done asynchonously!
+
+        if (cursor == null)
+            return;
+        cursor.moveToFirst();                  
+            
+        String documentId = uri.toString();
+        int flags = 0;
+        flags |= Document.FLAG_SUPPORTS_WRITE;
+        String displayName = "";
+        String mimeType = "";
+        long length = 0;
+        long lastModified = 0l;
+        
+        int index;
+        index = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+        if(index>=0) displayName = cursor.getString(index);
+        if(displayName.equals("")) 
+        {
+            index = cursor.getColumnIndex(MediaStore.MediaColumns.TITLE);
+            if(index>=0) displayName = cursor.getString(index);
+        }
+        index = cursor.getColumnIndex(MediaStore.MediaColumns.MIME_TYPE);
+        if(index>=0) mimeType = cursor.getString(index);
+        index = cursor.getColumnIndex(MediaStore.MediaColumns.SIZE);
+        if(index>=0) {
+            length = cursor.getLong(index);
+        }
+        index = cursor.getColumnIndex(MediaStore.MediaColumns.DATE_MODIFIED);
+//        Log.i("PenAndPDFContentProvider", "includeForeignUri() DATE_MODIFIED index is "+index);
+        if(index>=0) {
+            lastModified = cursor.getLong(index);
+            if(lastModified==0) lastModified=1;//On some Android versions we get 0 here every time. We then claim 1 because otherwise the entry does not show up in the file picker
+//            Log.i("PenAndPDFContentProvider", "includeForeignUri() DATE_MODIFIED long is "+lastModified);
+        }
+
+//        Log.i("PenAndPDFContentProvider", "includeForeignUri() id="+documentId+" displayName="+displayName+" flags="+flags+ " length="+length+" lastModified="+lastModified);
+        
+        final RowBuilder row = result.newRow();
+        row.add(Document.COLUMN_DOCUMENT_ID, documentId);
+        row.add(Document.COLUMN_DISPLAY_NAME, displayName);
+        row.add(Document.COLUMN_SIZE, length);
+        row.add(Document.COLUMN_MIME_TYPE, mimeType);
+        row.add(Document.COLUMN_LAST_MODIFIED, lastModified);
+        row.add(Document.COLUMN_FLAGS, flags);
     }
     
     @Override
@@ -216,15 +272,28 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
 //        Log.i("PenAndPDFContentProvider", "queryRecentDocuments() for rootId "+rootId);
         final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
             //Return recently modified documents under the requested root.
+            //Here we cheat and not only return notes, but also other documents
+            //that were recently opened in Pen&Pdf. These have ids that start
+            //with content:// as we simply take their uri to the the id. This
+            //allos us to open a ParcelFileDescriptor to them in openDocument().
         if(ROOT_NOTES.equals(rootId))
         {   
                 //Read the recent files list from preferences
             SharedPreferences prefs = getContext().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
             RecentFilesList recentFilesList = new RecentFilesList(prefs);
             
-            for(String path : recentFilesList)
+            for(String uriString : recentFilesList)
             {
-                includeFile(result, null, new File(Uri.parse(path).getPath()));
+                File file = new File(Uri.parse(uriString).getPath());
+                if(file.exists() && file.isFile() && file.canRead()) {
+//                    Log.i("PenAndPDFContentProvider", "adding file to recent files list");
+                    includeFile(result, null, file);                    
+                }
+                else {
+//                    Log.i("PenAndPDFContentProvider", "adding uri to recent files list");
+                    includeForeignUri(result, Uri.parse(uriString));
+                }
+                    
             }
         }
         
@@ -242,18 +311,33 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
 //        Log.i("PenAndPDFContentProvider", "queryDocument() with id "+documentId);
             // Create a cursor with the requested projection, or the default projection.
         final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
-        includeFile(result, documentId, null);
+        if(documentId.startsWith("content://"))
+            includeForeignUri(result, Uri.parse(documentId));
+        else
+            includeFile(result, documentId, null);
         return result;
     }
 
     @Override
     public ParcelFileDescriptor openDocument(final String documentId, final String accessMode, CancellationSignal signal) throws FileNotFoundException {
+        ParcelFileDescriptor pfd;
             // It's OK to do long operatos in this method as long as you periodically
             // check the CancellationSignal.
-        
-        final File file = getFileForDocId(documentId);
 
-//        Log.i("PenAndPDFContentProvider", " openDocument() with accessMode="+accessMode+" parsed="+ParcelFileDescriptor.parseMode(accessMode)+" MODE_READ_WRITE="+ParcelFileDescriptor.MODE_READ_WRITE+" for file "+file+" with uri");
+        if(documentId.startsWith("content://")) 
+        {
+            final Uri uri = Uri.parse(documentId);
+            pfd = getContext().getContentResolver().openFileDescriptor(uri, "rw");
+            if(pfd==null)
+                pfd = getContext().getContentResolver().openFileDescriptor(uri, "r");            
+//            Log.i("PenAndPDFContentProvider", " openDocument() with accessMode="+accessMode+" parsed="+ParcelFileDescriptor.parseMode(accessMode)+" MODE_READ_WRITE="+ParcelFileDescriptor.MODE_READ_WRITE+" for uri "+uri);
+        }    
+        else 
+        {
+            final File file = getFileForDocId(documentId);
+            pfd = ParcelFileDescriptor.open(file, ParcelFileDescriptor.parseMode(accessMode));
+//            Log.i("PenAndPDFContentProvider", " openDocument() with accessMode="+accessMode+" parsed="+ParcelFileDescriptor.parseMode(accessMode)+" MODE_READ_WRITE="+ParcelFileDescriptor.MODE_READ_WRITE+" for file "+file);
+        }
 
         
         // final boolean isWrite = (accessMode.indexOf('w') != -1);
@@ -277,7 +361,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
             //         throw new FileNotFoundException("Failed to open document with id " + documentId + " and mode " + mode);
             //     }
             // } else {
-        return ParcelFileDescriptor.open(file, ParcelFileDescriptor.parseMode(accessMode));
+        return pfd;
             //    }
     }
 

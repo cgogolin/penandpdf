@@ -72,7 +72,7 @@ public class PenAndPDFCore extends MuPDFCore
 
                 if (cursor != null && cursor.moveToFirst())
                 {
-                    Log.i(context.getString(R.string.app_name), "got the cursor "+cursor);
+//                    Log.i(context.getString(R.string.app_name), "got the cursor "+cursor);
                     
                         //Try to get the display name/title
                     int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);

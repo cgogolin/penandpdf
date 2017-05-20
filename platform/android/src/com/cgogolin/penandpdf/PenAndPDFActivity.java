@@ -380,10 +380,10 @@ public static boolean isMediaDocument(Uri uri) {
             
                 //Get various data from the bundle
             if(savedInstanceState != null)
-            {
+            {   
                 mActionBarMode = ActionBarMode.valueOf(savedInstanceState.getString("ActionBarMode", ActionBarMode.Main.toString ()));
                 mPageBeforeInternalLinkHit = savedInstanceState.getInt("PageBeforeInternalLinkHit", mPageBeforeInternalLinkHit);
-                mNormalizedScaleBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedScaleBeforeInternalLinkHit", mNormalizedScaleBeforeInternalLinkHit);
+                mNormalizedScaleBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedScaleBeforeInternalLinkHit", mNormalizedScaleBeforeInternalLinkHit); 
                 mNormalizedXScrollBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedXScrollBeforeInternalLinkHit", mNormalizedXScrollBeforeInternalLinkHit);
                 mNormalizedYScrollBeforeInternalLinkHit = savedInstanceState.getFloat("NormalizedYScrollBeforeInternalLinkHit", mNormalizedYScrollBeforeInternalLinkHit);
                 mDocViewParcelable = savedInstanceState.getParcelable("mDocView");
@@ -932,7 +932,7 @@ public static boolean isMediaDocument(Uri uri) {
 			try
 			{
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                Log.i(getString(R.string.app_name), "Succesfully took persistable read uri permissions for "+uri);
+//                Log.i(getString(R.string.app_name), "Succesfully took persistable read uri permissions for "+uri);
 			}
 			catch(Exception e)
 			{
@@ -944,7 +944,7 @@ public static boolean isMediaDocument(Uri uri) {
                 try
                 {
                     getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                    Log.i(getString(R.string.app_name), "Succesfully took persistable write uri permissions for "+uri);
+//                    Log.i(getString(R.string.app_name), "Succesfully took persistable write uri permissions for "+uri);
                 }
                 catch(Exception e)
                 {
@@ -1220,8 +1220,8 @@ public static boolean isMediaDocument(Uri uri) {
         }
         if(mDocView!=null)
         {
-				//Set the action bar mode
-			mActionBarMode = ActionBarMode.Main;
+				//Synchronize modes of DocView and ActionBar 
+            mDocView.setMode(mDocView.getMode());
 			
                 //Clear the search results 
             mDocView.clearSearchResults();  
@@ -1550,7 +1550,7 @@ public static boolean isMediaDocument(Uri uri) {
         edit.apply();
     }
     
-        @Override
+    @Override
     public Object onRetainCustomNonConfigurationInstance() { //Called if the app is destroyed for a configuration change
         PenAndPDFCore mycore = core;
         core = null;
@@ -1561,7 +1561,7 @@ public static boolean isMediaDocument(Uri uri) {
     @Override
     protected void onSaveInstanceState(Bundle outState) { //Called when the app is destroyed by the system and in various other cases
         super.onSaveInstanceState(outState);
-        
+
         outState.putString("ActionBarMode", mActionBarMode.toString());
         outState.putInt("PageBeforeInternalLinkHit", mPageBeforeInternalLinkHit);
         outState.putFloat("NormalizedScaleBeforeInternalLinkHit", mNormalizedScaleBeforeInternalLinkHit);
