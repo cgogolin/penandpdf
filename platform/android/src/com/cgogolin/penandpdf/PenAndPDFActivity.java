@@ -85,6 +85,8 @@ public class PenAndPDFActivity extends AppCompatActivity implements SharedPrefer
 //    private ShareActionProvider mShareActionProvider = null;
     private boolean mSaveOnStop = false;
     private boolean mSaveOnDestroy = false;
+    private boolean mIgnoreSaveOnStopThisTime = false;
+    private boolean mIgnoreSaveOnDestroyThisTime = false;
     private boolean mDocViewNeedsNewAdapter = false;
     private int mPageBeforeInternalLinkHit = -1;
     private float mNormalizedScaleBeforeInternalLinkHit = 1.0f;
@@ -488,12 +490,13 @@ public static boolean isMediaDocument(Uri uri) {
             //Save only during onStop() as this can take some time
         if(core != null && !isChangingConfigurations())
         {
-			if(core.canSaveToCurrentUri(this) && mSaveOnStop)
+			if(mSaveOnStop && !mIgnoreSaveOnStopThisTime && core.canSaveToCurrentUri(this))
             {
                 if(!save())
                     showInfo(getString(R.string.error_saveing));
             }
         }
+        mIgnoreSaveOnStopThisTime = false;
     }
     
     
@@ -505,7 +508,7 @@ public static boolean isMediaDocument(Uri uri) {
 		if(core != null && !isChangingConfigurations())
 		{
 			SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
-			if(core.canSaveToCurrentUri(this) && mSaveOnDestroy)
+			if(mSaveOnDestroy && !mIgnoreSaveOnDestroyThisTime && core.canSaveToCurrentUri(this))
 			{
 				if(!save())
 					showInfo(getString(R.string.error_saveing));
@@ -516,7 +519,7 @@ public static boolean isMediaDocument(Uri uri) {
 				core = null;
 			}
 		}
-        
+        mIgnoreSaveOnDestroyThisTime = false;
 		if (mAlertTask != null) {
 			mAlertTask.cancel(true);
 			mAlertTask = null;
@@ -1813,13 +1816,19 @@ public static boolean isMediaDocument(Uri uri) {
                             {
                                 if(!save())
                                     showInfo(getString(R.string.error_saveing));
-                                else
+                                else 
+                                {
+                                    mIgnoreSaveOnStopThisTime = true;//No need to save twice
+                                    mIgnoreSaveOnDestroyThisTime = true;//No need to save twice
                                     finish();
+                                }
                             }
                             else
                                 showSaveAsActivity();
                         }
                         if (which == AlertDialog.BUTTON_NEGATIVE) {
+                            mIgnoreSaveOnStopThisTime = true;
+                            mIgnoreSaveOnDestroyThisTime = true;
                             finish();
                         }
                         if (which == AlertDialog.BUTTON_NEUTRAL) {
