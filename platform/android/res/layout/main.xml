@@ -5,23 +5,24 @@
 	     android:id="@+id/main_layout"
 	     android:orientation="vertical"
 	     android:layout_width="match_parent"
-	     android:layout_height="match_parent" >
+	     android:layout_height="match_parent"
+	     android:animateLayoutChanges="true">
   
-  <!-- content will be added here -->
+  <!-- mDocView is added here -->
+  
   <ScrollView
+     android:id="@+id/entry_screen_scroll_view"
+     android:visibility="gone"
      android:layout_width="fill_parent"	
      android:layout_height="wrap_content">
   <LinearLayout
      android:id="@+id/entry_screen_layout"
-     android:visibility="gone"
      android:orientation="vertical"
      android:layout_width="match_parent"
      android:layout_height="wrap_content"
-     android:layout_marginLeft="6dp"
-     android:layout_marginRight="6dp"
      android:paddingTop="?attr/actionBarSize"
      android:animateLayoutChanges="true">
-    <android.support.v7.widget.CardView
+<!--    <android.support.v7.widget.CardView
        xmlns:card_view="http://schemas.android.com/apk/res-auto"
        android:id="@+id/entry_screen_open_document_card_view"
        android:layout_width="match_parent"
@@ -123,7 +124,7 @@
 		  android:layout_below="@id/title_settings"
 		  android:layout_alignLeft="@id/title_settings"/>
       </RelativeLayout>
-    </android.support.v7.widget.CardView>
+    </android.support.v7.widget.CardView>-->
   </LinearLayout>
   </ScrollView>
   
@@ -134,5 +135,6 @@
      android:background="@color/toolbar"
      android:elevation="4dp"
      android:theme="@style/PenAndPDFToolbarTheme"
+     android:animateLayoutChanges="true"
      android:layout_gravity="center_horizontal|top"/>
 </RelativeLayout>

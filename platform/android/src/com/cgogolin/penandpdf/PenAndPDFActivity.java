@@ -1,6 +1,11 @@
 package com.cgogolin.penandpdf;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.PropertyValuesHolder;
+import android.animation.ObjectAnimator;
+import android.animation.LayoutTransition;
+import android.view.animation.OvershootInterpolator;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.app.ActionBar;
 import android.app.SearchManager;
 import android.content.ContentUris;
@@ -59,10 +64,12 @@ import android.widget.RelativeLayout;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Toast;
 import android.widget.ViewAnimator;
 import android.widget.TextView;
+import android.widget.ImageView;
 import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -409,10 +416,16 @@ public static boolean isMediaDocument(Uri uri) {
         }
 
 
-    // @Override
-    // protected void onStart() {
-    // super.onStart();
-    // }
+    @Override
+    protected void onStart() {
+        super.onStart();
+        
+        Intent intent = getIntent();
+        if (Intent.ACTION_MAIN.equals(intent.getAction()) && core == null)
+        {
+            showDashboard();
+        }
+    }
 
     
     @Override
@@ -435,7 +448,7 @@ public static boolean isMediaDocument(Uri uri) {
                         
 			if (Intent.ACTION_MAIN.equals(intent.getAction()) && core == null)
             {
-				showDashboard();
+//				showDashboard();
             }
             else if (Intent.ACTION_VIEW.equals(intent.getAction()))
             {		
@@ -1222,7 +1235,7 @@ public static boolean isMediaDocument(Uri uri) {
                 //Make the doc view visible
 			RelativeLayout layout = (RelativeLayout)findViewById(R.id.main_layout);
 			layout.addView(mDocView, 0, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-			findViewById(R.id.entry_screen_layout).setVisibility(View.GONE);
+            hideDashboard();
         }
         if(mDocView!=null)
         {
@@ -1251,23 +1264,80 @@ public static boolean isMediaDocument(Uri uri) {
         }
     }
 
+	private void hideDashboard() {
+        ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
+        LinearLayout entryScreenLayout = (LinearLayout)findViewById(R.id.entry_screen_layout);
+        entryScreenLayout.removeAllViews();
+        entryScreenScrollView.setVisibility(View.GONE);
+        mActionBarMode = ActionBarMode.Main;
+        invalidateOptionsMenu();
+    }
+
+    
+    private boolean dashboardIsShown() {
+        return findViewById(R.id.entry_screen_layout).getVisibility() == View.VISIBLE;
+    }
+
     
 	private void showDashboard() {
-		findViewById(R.id.entry_screen_layout).setVisibility(View.VISIBLE);
-		
-		findViewById(R.id.entry_screen_open_document_card_view).setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View view) {
-					openDocument();
-				}
-			});
-		findViewById(R.id.entry_screen_new_document_card_view).setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View view) {
-                    showOpenNewDocumentDialoge();
-				}
-			});
-		findViewById(R.id.entry_screen_settings_card_view).setOnClickListener(new OnClickListener() {
+        mActionBarMode = ActionBarMode.Empty;
+        invalidateOptionsMenu();
+
+        ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
+        LinearLayout entryScreenLayout = (LinearLayout)findViewById(R.id.entry_screen_layout);
+
+        Animator scaleDown = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat("scaleX", 1, 0), PropertyValuesHolder.ofFloat("scaleY", 1, 0));
+        scaleDown.setDuration(300);
+        scaleDown.setInterpolator(new OvershootInterpolator());
+        Animator scaleUp = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat("scaleX", 0, 1), PropertyValuesHolder.ofFloat("scaleY", 0, 1));
+        scaleUp.setDuration(300);
+        scaleUp.setStartDelay(300);
+        scaleUp.setInterpolator(new OvershootInterpolator());
+
+        Animator scrollUp = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat("translationY", dpToPixel(300), 0));
+        scrollUp.setDuration(300);
+        scrollUp.setInterpolator(new AccelerateDecelerateInterpolator());
+        Animator scrollDown = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat("translationY", 0, dpToPixel(300)));
+        scrollDown.setDuration(300);
+        scrollDown.setInterpolator(new AccelerateDecelerateInterpolator());
+
+        Animator fadeIn = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat(View.ALPHA, 1, 0));
+        fadeIn.setDuration(100);
+        fadeIn.setInterpolator(new AccelerateDecelerateInterpolator());
+        Animator fadeOut = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat(View.ALPHA, 0, 1));
+        fadeOut.setDuration(100);
+        fadeOut.setInterpolator(new AccelerateDecelerateInterpolator());
+        
+        LayoutTransition layoutTransition;
+        layoutTransition = new LayoutTransition();
+        layoutTransition.setAnimator(LayoutTransition.APPEARING, fadeIn);
+        layoutTransition.setAnimator(LayoutTransition.DISAPPEARING, fadeOut);
+        entryScreenScrollView.setLayoutTransition(layoutTransition);
+        layoutTransition = new LayoutTransition();
+        layoutTransition.setAnimator(LayoutTransition.APPEARING, scrollUp);
+        layoutTransition.setAnimator(LayoutTransition.DISAPPEARING, scrollDown);
+        entryScreenLayout.setLayoutTransition(layoutTransition);
+        
+        if(mDocView != null)
+            entryScreenScrollView.setBackgroundResource(R.color.shadow);
+        
+        entryScreenScrollView.setVisibility(View.VISIBLE);
+        
+        SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+        int elevation = 5;
+        int elevationInc = 5;
+        CardView fixedcard;
+        ImageView icon;
+        TextView title;
+        TextView subtitle;
+        fixedcard = (CardView)getLayoutInflater().inflate(R.layout.dashboard_card, entryScreenLayout, false);
+        icon = (ImageView)fixedcard.findViewById(R.id.image);
+        title = (TextView)fixedcard.findViewById(R.id.title);
+        subtitle = (TextView)fixedcard.findViewById(R.id.subtitle);
+        icon.setImageResource(R.drawable.ic_settings);
+        title.setText(R.string.entry_screen_settings);
+        subtitle.setText(R.string.entry_screen_settings_summ);
+        fixedcard.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View view) {
 					Intent intent = new Intent(view.getContext(), SettingsActivity.class);
@@ -1275,13 +1345,48 @@ public static boolean isMediaDocument(Uri uri) {
 					overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
 				}
 			});
-
-        LinearLayout entryScreenLayout = (LinearLayout)findViewById(R.id.entry_screen_layout);
-        SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+        fixedcard.setElevation(elevation);
+        entryScreenLayout.addView(fixedcard);
+        
+        fixedcard = (CardView)getLayoutInflater().inflate(R.layout.dashboard_card, entryScreenLayout, false);
+        icon = (ImageView)fixedcard.findViewById(R.id.image);
+        title = (TextView)fixedcard.findViewById(R.id.title);
+        subtitle = (TextView)fixedcard.findViewById(R.id.subtitle);
+        icon.setImageResource(R.drawable.ic_new);
+        title.setText(R.string.entry_screen_new_document);
+        subtitle.setText(R.string.entry_screen_new_document_summ);
+        fixedcard.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View view) {
+                    showOpenNewDocumentDialoge();
+				}
+			});
+        fixedcard.setElevation(elevation);
+        entryScreenLayout.addView(fixedcard);
+        
+        fixedcard = (CardView)getLayoutInflater().inflate(R.layout.dashboard_card, entryScreenLayout, false);
+        icon = (ImageView)fixedcard.findViewById(R.id.image);
+        title = (TextView)fixedcard.findViewById(R.id.title);
+        subtitle = (TextView)fixedcard.findViewById(R.id.subtitle);
+        icon.setImageResource(R.drawable.ic_open);
+        title.setText(R.string.entry_screen_open_document);
+        subtitle.setText(R.string.entry_screen_open_document_summ);
+        fixedcard.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View view) {
+					openDocument();
+				}
+			});
+        fixedcard.setElevation(elevation);
+        entryScreenLayout.addView(fixedcard);
+        
         RecentFilesList recentFilesList = new RecentFilesList(prefs);
         for(final RecentFile recentFile: recentFilesList) {
 
-            final CardView card = (CardView)getLayoutInflater().inflate(R.layout.recent_file, entryScreenLayout, false);
+            final CardView card = (CardView)getLayoutInflater().inflate(R.layout.dashboard_card_recent_file, entryScreenLayout, false);
+
+            elevation += elevationInc;
+            card.setElevation(elevation);
             
             // CardView card = new CardView(this);
             // LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -1302,10 +1407,18 @@ public static boolean isMediaDocument(Uri uri) {
             card.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, recentFile.getUri(), card.getContext(), PenAndPDFActivity.class);
-                        intent.putExtra(Intent.EXTRA_TITLE, recentFile.getDisplayName());
-                        startActivity(intent);
-                        finish();
+                        // Intent intent = new Intent(Intent.ACTION_VIEW, recentFile.getUri(), card.getContext(), PenAndPDFActivity.class);
+                        // intent.putExtra(Intent.EXTRA_TITLE, recentFile.getDisplayName());
+                        // startActivity(intent);
+                        // finish();
+                        getIntent().setAction(Intent.ACTION_VIEW);
+                        getIntent().setData(recentFile.getUri());
+                        if (core != null) {
+                            core.onDestroy();
+                            core = null;
+                        }
+                        onResume();
+                        hideDashboard();
                     }
                 });
             entryScreenLayout.addView(card);
@@ -1823,6 +1936,10 @@ public static boolean isMediaDocument(Uri uri) {
             exitFullScreen();
             return;
         };
+        if(dashboardIsShown() && mDocView != null) {
+            hideDashboard();
+            return;
+        }
         switch (mActionBarMode) {
             case Annot:
                 return;
@@ -2030,6 +2147,12 @@ public static boolean isMediaDocument(Uri uri) {
                 alert.show();
             }
         }
+    }
+
+    public int dpToPixel(float sizeInDp) {
+        float scale = getResources().getDisplayMetrics().density;
+        int dpAsPixels = (int) (sizeInDp*scale + 0.5f);
+        return dpAsPixels;
     }
 }
     
