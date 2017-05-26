@@ -32,6 +32,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SearchView;
+import android.support.v7.widget.CardView;
 import android.text.Editable;
 import android.text.format.Time;
 import android.text.InputType;
@@ -60,6 +61,7 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Toast;
 import android.widget.ViewAnimator;
+import android.widget.TextView;
 import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -1272,6 +1274,41 @@ public static boolean isMediaDocument(Uri uri) {
 					overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
 				}
 			});
+
+        LinearLayout entryScreenLayout = (LinearLayout)findViewById(R.id.entry_screen_layout);
+        SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+        RecentFilesList recentFilesList = new RecentFilesList(prefs);
+        for(final RecentFile recentFile: recentFilesList) {
+
+            final CardView card = (CardView)getLayoutInflater().inflate(R.layout.recent_file, entryScreenLayout, false);
+            
+            // CardView card = new CardView(this);
+            // LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+            //     LayoutParams.MATCH_PARENT,
+            //     LayoutParams.WRAP_CONTENT
+            //                                        );
+            // params.setMargins(0, 10, 0, 10);
+            // card.setLayoutParams(params);
+            // card.setRadius(5);
+            // card.setCardElevation(2);
+            // TextView tv = new TextView(this);
+            // tv.setLayoutParams(params);
+            // tv.setText(recentFile.getDisplayName()); 
+            // card.addView(tv);
+            TextView tv = (TextView)card.findViewById(R.id.title);
+            tv.setText(recentFile.getDisplayName());
+            
+            card.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, recentFile.getUri(), card.getContext(), PenAndPDFActivity.class);
+                        intent.putExtra(Intent.EXTRA_TITLE, recentFile.getDisplayName());
+                        startActivity(intent);
+                        finish();
+                    }
+                });
+            entryScreenLayout.addView(card);
+        }
 	}
 
     
@@ -1528,13 +1565,10 @@ public static boolean isMediaDocument(Uri uri) {
 
 
     private void saveRecentFiles(SharedPreferences prefs, SharedPreferences.Editor edit, Uri uri) {
-
-        Log.i(getString(R.string.app_name), "saveRecentFiles() with uri="+uri);
-
             //Read the recent files list from preferences
         RecentFilesList recentFilesList = new RecentFilesList(prefs);                    
             //Add the current file
-        recentFilesList.push(uri.toString());
+        recentFilesList.push(new RecentFile(uri.toString(), core.getFileName(), 0l));
             //Write the recent files list
         recentFilesList.write(edit);
     }

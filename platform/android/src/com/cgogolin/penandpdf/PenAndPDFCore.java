@@ -226,6 +226,7 @@ public class PenAndPDFCore extends MuPDFCore
             }
             catch (java.io.FileNotFoundException e) 
             {
+                Log.i("context.getString(R.string.app_name)", "Exception for uri="+uri);
                 throw e;
             }
             catch (java.io.IOException e)
