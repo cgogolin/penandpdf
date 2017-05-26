@@ -416,16 +416,28 @@ public static boolean isMediaDocument(Uri uri) {
         }
 
 
-    @Override
-    protected void onStart() {
-        super.onStart();
+    // @Override
+    // public void onWindowFocusChanged (boolean hasFocus) {
+    //     super.onWindowFocusChanged(hasFocus);
+    //     if (hasFocus) {
+    //         Intent intent = getIntent();
+    //         if (Intent.ACTION_MAIN.equals(intent.getAction()) && core == null && !dashboardIsShown())
+    //         {
+    //             showDashboard();//If this is done earlier the animation is not played
+    //         }
+    //     }
+    // }
+
+    // @Override
+    // protected void onStart() {
+    //     super.onStart();
         
-        Intent intent = getIntent();
-        if (Intent.ACTION_MAIN.equals(intent.getAction()) && core == null)
-        {
-            showDashboard();
-        }
-    }
+    //     Intent intent = getIntent();
+    //     if (Intent.ACTION_MAIN.equals(intent.getAction()) && core == null)
+    //     {
+    //         showDashboard();
+    //     }
+    // }
 
     
     @Override
@@ -448,7 +460,15 @@ public static boolean isMediaDocument(Uri uri) {
                         
 			if (Intent.ACTION_MAIN.equals(intent.getAction()) && core == null)
             {
-//				showDashboard();
+                    //If showDashboard() is run directly from onResume() the animation doesn't play...
+//				showDashboard(); 
+                final Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            showDashboard();
+                        }
+                    }, 100);
             }
             else if (Intent.ACTION_VIEW.equals(intent.getAction()))
             {		
