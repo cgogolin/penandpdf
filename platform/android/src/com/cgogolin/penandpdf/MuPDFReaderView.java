@@ -116,7 +116,7 @@ abstract public class MuPDFReaderView extends ReaderView {
                                     //If the link target is of /XYZ type r might be a zoom value
                                 if( (li.targetFlags & LinkInfoInternal.fz_link_flag_r_is_zoom) == LinkInfoInternal.fz_link_flag_r_is_zoom && (li.targetFlags & LinkInfoInternal.fz_link_flag_r_valid) == LinkInfoInternal.fz_link_flag_r_valid )
                                 {
-                                    Toast.makeText(getContext(), "zoom="+li.target.right, Toast.LENGTH_SHORT).show();
+//                                    Toast.makeText(getContext(), "zoom="+li.target.right, Toast.LENGTH_SHORT).show();
                                     if(li.target.right > 0 && li.target.right <= 1.0f)
                                         setScale(li.target.right);
                                 }

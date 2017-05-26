@@ -711,11 +711,11 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                     int YScroll = (int)(getNormalizedYScroll()*cv.getMeasuredHeight()*mScale*scale);
                     
                     if(mHasNewNormalizedXScroll){
-                        XScroll = (int)(mNewNormalizedXScroll*cv.getMeasuredWidth()*mScale*scale);
+                        XScroll = (int)(mNewNormalizedXScroll*cv.getMeasuredWidth()*mScale*scale)+getPaddingLeft();
                         mHasNewNormalizedXScroll = false;
                     }
                     if(mHasNewNormalizedYScroll){
-                        YScroll = (int)(mNewNormalizedYScroll*cv.getMeasuredHeight()*mScale*scale);
+                        YScroll = (int)(mNewNormalizedYScroll*cv.getMeasuredHeight()*mScale*scale)+getPaddingTop();
                         mHasNewNormalizedYScroll = false;
                     }
 
@@ -1000,7 +1000,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     {
         View cv = getSelectedView();
         if (cv != null) {
-            return cv.getLeft()/(float)cv.getMeasuredWidth();
+            return (cv.getLeft()-getPaddingLeft())/(float)cv.getMeasuredWidth();
         }
         else return 0;
     }
@@ -1009,7 +1009,7 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     {
         View cv = getSelectedView();
         if (cv != null) {
-            return cv.getTop()/(float)cv.getMeasuredHeight();
+            return (cv.getTop()-getPaddingTop())/(float)cv.getMeasuredHeight();
         }
         else return 0;
     }

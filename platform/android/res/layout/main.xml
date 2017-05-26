@@ -13,7 +13,6 @@
      android:layout_height="wrap_content">
   <LinearLayout
      android:id="@+id/entry_screen_layout"
-     android:visibility="gone"
      android:orientation="vertical"
      android:layout_width="match_parent"
      android:layout_height="wrap_content"
