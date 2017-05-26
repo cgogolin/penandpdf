@@ -55,6 +55,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.LinearLayout;
@@ -434,7 +435,7 @@ public static boolean isMediaDocument(Uri uri) {
                         
 			if (Intent.ACTION_MAIN.equals(intent.getAction()) && core == null)
             {
-				setupEntryScreen();
+				showDashboard();
             }
             else if (Intent.ACTION_VIEW.equals(intent.getAction()))
             {		
@@ -774,7 +775,7 @@ public static boolean isMediaDocument(Uri uri) {
                 }
                 return true;
             case R.id.menu_open:
-                openDocument();
+                showDashboard();
                 return true;
             case R.id.menu_delete_note:
                 core.deleteDocument(this);
@@ -1219,8 +1220,8 @@ public static boolean isMediaDocument(Uri uri) {
             }
             
                 //Make the doc view visible
-			FrameLayout layout = (FrameLayout)findViewById(R.id.main_layout);
-			layout.addView(mDocView, 1, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+			RelativeLayout layout = (RelativeLayout)findViewById(R.id.main_layout);
+			layout.addView(mDocView, 0, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 			findViewById(R.id.entry_screen_layout).setVisibility(View.GONE);
         }
         if(mDocView!=null)
@@ -1251,7 +1252,7 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
     
-	private void setupEntryScreen() {
+	private void showDashboard() {
 		findViewById(R.id.entry_screen_layout).setVisibility(View.VISIBLE);
 		
 		findViewById(R.id.entry_screen_open_document_card_view).setOnClickListener(new OnClickListener() {
@@ -1310,7 +1311,7 @@ public static boolean isMediaDocument(Uri uri) {
             entryScreenLayout.addView(card);
         }
 	}
-
+    
     
     public void showOpenDocumentDialog() {
 		Intent intent = null;

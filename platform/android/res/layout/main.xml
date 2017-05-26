@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	     xmlns:app="http://schemas.android.com/apk/res-auto"
 	     xmlns:card_view="http://schemas.android.com/apk/res-auto"
 	     android:id="@+id/main_layout"
@@ -13,6 +13,7 @@
      android:layout_height="wrap_content">
   <LinearLayout
      android:id="@+id/entry_screen_layout"
+     android:visibility="gone"
      android:orientation="vertical"
      android:layout_width="match_parent"
      android:layout_height="wrap_content"
@@ -63,7 +64,9 @@
        android:layout_marginTop="10dp"
        card_view:cardElevation="2dp"
        card_view:cardCornerRadius="1dp"
-       android:foreground="?android:attr/selectableItemBackground">
+       android:foreground="?android:attr/selectableItemBackground"
+       android:clickable="true"
+       android:focusable="true">
       <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 		      android:layout_width="match_parent"
 		      android:layout_height="match_parent">
@@ -96,7 +99,9 @@
        android:layout_marginBottom="10dp"
        card_view:cardElevation="2dp"
        card_view:cardCornerRadius="1dp"
-       android:foreground="?android:attr/selectableItemBackground">
+       android:foreground="?android:attr/selectableItemBackground"
+       android:clickable="true"
+       android:focusable="true">
       <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 			    android:layout_width="match_parent"
 			    android:layout_height="match_parent">
@@ -130,4 +135,4 @@
      android:elevation="4dp"
      android:theme="@style/PenAndPDFToolbarTheme"
      android:layout_gravity="center_horizontal|top"/>
-</FrameLayout>
+</RelativeLayout>

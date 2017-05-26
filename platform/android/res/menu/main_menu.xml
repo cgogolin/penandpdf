@@ -6,7 +6,8 @@
 	app:showAsAction="never"/>
   <item android:id="@+id/menu_open"
 	android:title="@string/menu_open"
-	app:showAsAction="never"/>
+        android:icon="@drawable/ic_insert_drive_file_white_24dp"
+	app:showAsAction="always"/>
   <item android:id="@+id/menu_gotopage"
 	android:title="@string/menu_gotopage"
 	app:showAsAction="never"/>
