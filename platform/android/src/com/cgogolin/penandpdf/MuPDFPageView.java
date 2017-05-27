@@ -711,7 +711,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
     }
 	
 	@Override
-	protected CancellableTaskDefinition<PatchInfo, PatchInfo>	getRenderTask(PatchInfo patchInfo) {
+	protected CancellableTaskDefinition<PatchInfo, PatchInfo> getRenderTask(PatchInfo patchInfo) {
 		return new MuPDFCancellableTaskDefinition<PatchInfo, PatchInfo>(mCore) {
 			public PatchInfo doInBackground(MuPDFCore.Cookie cookie, PatchInfo... v) {
 				PatchInfo patchInfo = v[0];

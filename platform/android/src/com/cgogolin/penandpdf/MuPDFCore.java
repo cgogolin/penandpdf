@@ -124,6 +124,7 @@ public class MuPDFCore
         
         public void abort()
             {
+                Log.v("Core", "aborting cookie "+cookiePtr);
                 abortCookie(cookiePtr);
             }
         
@@ -249,6 +250,9 @@ public class MuPDFCore
 									  int patchX, int patchY,
 									  int patchW, int patchH,
 									  MuPDFCore.Cookie cookie) {
+        if(globals==0 || bm==null || cookie==null)
+            return;
+        
 		gotoPage(page);
 		drawPage(bm, pageW, pageH, patchX, patchY, patchW, patchH, cookie.cookiePtr);
 	}
@@ -258,6 +262,9 @@ public class MuPDFCore
 										int patchX, int patchY,
 										int patchW, int patchH,
 										MuPDFCore.Cookie cookie) {
+        if(globals==0 || bm==null || cookie==null)
+            return;
+        
 		updatePageInternal(bm, page, pageW, pageH, patchX, patchY, patchW, patchH, cookie.cookiePtr);
 	}
 
