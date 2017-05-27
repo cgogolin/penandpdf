@@ -578,7 +578,7 @@ public static boolean isMediaDocument(Uri uri) {
                 case Main:
                     inflater.inflate(R.menu.main_menu, menu);
 
-                        //Enable the delte note item if we have a note open
+                        //Enable the delete note item if we have a note open
                     if(getIntent() != null && getIntent().getData() != null && getIntent().getData().getEncodedPath() != null)
                     {
                         File recentFile = new File(Uri.decode(getIntent().getData().getEncodedPath()));
@@ -1293,13 +1293,6 @@ public static boolean isMediaDocument(Uri uri) {
         final ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
         LinearLayout entryScreenLayout = (LinearLayout)findViewById(R.id.entry_screen_layout);
         entryScreenLayout.removeAllViews();
-        // final Handler handler = new Handler();
-        // handler.postDelayed(new Runnable() {
-        //         @Override
-        //         public void run() {
-        //             entryScreenScrollView.setVisibility(View.INVISIBLE);
-        //         }
-        //     }, 1000);
         entryScreenBackgroundContent.setVisibility(View.GONE);
         mActionBarMode = ActionBarMode.Main;
         mDashboardIsShown = false;
@@ -1308,8 +1301,6 @@ public static boolean isMediaDocument(Uri uri) {
 
     
     private boolean dashboardIsShown() {
-        // ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
-        // return entryScreenScrollView.getVisibility() == View.VISIBLE;
         return mDashboardIsShown;
     }
 
@@ -1374,19 +1365,18 @@ public static boolean isMediaDocument(Uri uri) {
         ImageView icon;
         TextView title;
         TextView subtitle;
+
         fixedcard = (CardView)getLayoutInflater().inflate(R.layout.dashboard_card, entryScreenLayout, false);
         icon = (ImageView)fixedcard.findViewById(R.id.image);
         title = (TextView)fixedcard.findViewById(R.id.title);
         subtitle = (TextView)fixedcard.findViewById(R.id.subtitle);
-        icon.setImageResource(R.drawable.ic_settings);
-        title.setText(R.string.entry_screen_settings);
-        subtitle.setText(R.string.entry_screen_settings_summ);
+        icon.setImageResource(R.drawable.ic_open);
+        title.setText(R.string.entry_screen_open_document);
+        subtitle.setText(R.string.entry_screen_open_document_summ);
         fixedcard.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View view) {
-					Intent intent = new Intent(view.getContext(), SettingsActivity.class);
-					view.getContext().startActivity(intent);
-					overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
+					openDocument();
 				}
 			});
         fixedcard.setElevation(elevation);
@@ -1412,13 +1402,15 @@ public static boolean isMediaDocument(Uri uri) {
         icon = (ImageView)fixedcard.findViewById(R.id.image);
         title = (TextView)fixedcard.findViewById(R.id.title);
         subtitle = (TextView)fixedcard.findViewById(R.id.subtitle);
-        icon.setImageResource(R.drawable.ic_open);
-        title.setText(R.string.entry_screen_open_document);
-        subtitle.setText(R.string.entry_screen_open_document_summ);
+        icon.setImageResource(R.drawable.ic_settings);
+        title.setText(R.string.entry_screen_settings);
+        subtitle.setText(R.string.entry_screen_settings_summ);
         fixedcard.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View view) {
-					openDocument();
+					Intent intent = new Intent(view.getContext(), SettingsActivity.class);
+					view.getContext().startActivity(intent);
+					overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
 				}
 			});
         fixedcard.setElevation(elevation);
@@ -1426,6 +1418,8 @@ public static boolean isMediaDocument(Uri uri) {
         
         RecentFilesList recentFilesList = new RecentFilesList(prefs);
         for(final RecentFile recentFile: recentFilesList) {
+            if (!PenAndPDFCore.canReadFromUri(this, recentFile.getUri()))
+                continue;
 
             final CardView card = (CardView)getLayoutInflater().inflate(R.layout.dashboard_card_recent_file, entryScreenLayout, false);
 

@@ -33,7 +33,8 @@
      android:visibility="invisible"
      android:layout_width="fill_parent"	
      android:layout_height="fill_parent"
-     android:scrollIndicators="none"
+     android:scrollbars="none"
+     android:fillViewport="true"
      android:animateLayoutChanges="false">
   <LinearLayout
      android:id="@+id/entry_screen_layout"

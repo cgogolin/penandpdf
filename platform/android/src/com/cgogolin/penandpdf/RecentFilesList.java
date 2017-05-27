@@ -25,11 +25,15 @@ public class RecentFilesList extends LinkedList<RecentFile> implements List<Rece
             if(recentFileString != null)
             {
                 Uri recentFileUri = Uri.parse(recentFileString);
-                    //Make sure we add only readable files
-				File recentFile = new File(Uri.decode(recentFileUri.getEncodedPath()));
-                if( (recentFile != null && recentFile.isFile() && recentFile.canRead()) || android.os.Build.VERSION.SDK_INT >= 23 ) {
+                if( android.os.Build.VERSION.SDK_INT < 19 ) 
+                {
+                        //Make sure we add only readable files
+                    File recentFile = new File(Uri.decode(recentFileUri.getEncodedPath()));
+                    if(recentFile != null && recentFile.isFile() && recentFile.canRead())
+                        push(new RecentFile(recentFileString, displayName, recentFileLastModified));
+                } else {
                     push(new RecentFile(recentFileString, displayName, recentFileLastModified));
-				}
+                }
             }
         }
     }
