@@ -72,6 +72,8 @@ import android.widget.TextView;
 import android.widget.ImageView;
 import java.io.File;
 import java.io.InputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.lang.reflect.Field;
 import java.lang.Runtime;
 import java.util.ArrayList;
@@ -1489,7 +1491,7 @@ public static boolean isMediaDocument(Uri uri) {
 
     
     public void openNewDocument(String filename) throws java.io.IOException {		
-        File dir = getNotesDir(this); //Should be done via the provider once implemented
+        File dir = getNotesDir(this);
 		File file = new File(dir, filename);
 		Uri uri = Uri.fromFile(file);
 		
@@ -2139,7 +2141,41 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
     public static File getNotesDir(Context contex) {
-        return contex.getDir("notes", Context.MODE_WORLD_READABLE);
+        try
+        {
+            File notesDir = new File(Environment.getExternalStorageDirectory(), "PenAndPDFNotes");
+            notesDir.mkdirs();
+            
+                //Migrate old notes
+            File oldNotesDir = contex.getDir("notes", Context.MODE_WORLD_READABLE);
+            File[] listOfFiles = oldNotesDir.listFiles();
+            if(listOfFiles != null && listOfFiles.length > 0)
+            {
+                for (File child : listOfFiles)
+                {
+                    File targetFile = new File(notesDir, child.getName());
+                    if(child.isFile() && !targetFile.exists()) 
+                    {
+                        FileInputStream in = new FileInputStream(child);
+                        FileOutputStream out = new FileOutputStream(targetFile);
+                        byte[] buf = new byte[1024];
+                        int len;
+                        while ((len = in.read(buf)) > 0) {
+                            out.write(buf, 0, len);
+                        }
+                        in.close();
+                        out.close();
+                        child.delete();
+                    }
+                }
+            }
+            
+            return notesDir;
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
     }
 
     public ArrayList<TemporaryUriPermission> getTemporaryUriPermissions() {
