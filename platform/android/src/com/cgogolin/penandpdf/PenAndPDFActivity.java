@@ -128,7 +128,8 @@ public class PenAndPDFActivity extends AppCompatActivity implements SharedPrefer
     private FilePicker mFilePicker;
 
     private ArrayList<TemporaryUriPermission> temporaryUriPermissions = new ArrayList<TemporaryUriPermission>();
-    
+
+    private boolean mDashboardIsShown = false;
 		//Code from http://stackoverflow.com/questions/13209494/how-to-get-the-full-file-path-from-uri
 /**
  * Get a file path from a Uri. This will get the the path for Storage Access
@@ -1288,58 +1289,77 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
 	private void hideDashboard() {
-        ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
+        LinearLayout entryScreenBackgroundContent = (LinearLayout)findViewById(R.id.entry_screen_background_content);
+        final ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
         LinearLayout entryScreenLayout = (LinearLayout)findViewById(R.id.entry_screen_layout);
         entryScreenLayout.removeAllViews();
-        entryScreenScrollView.setVisibility(View.INVISIBLE);
+        // final Handler handler = new Handler();
+        // handler.postDelayed(new Runnable() {
+        //         @Override
+        //         public void run() {
+        //             entryScreenScrollView.setVisibility(View.INVISIBLE);
+        //         }
+        //     }, 1000);
+        entryScreenBackgroundContent.setVisibility(View.GONE);
         mActionBarMode = ActionBarMode.Main;
+        mDashboardIsShown = false;
         invalidateOptionsMenu();
     }
 
     
     private boolean dashboardIsShown() {
-        ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
-        return entryScreenScrollView.getVisibility() == View.VISIBLE;
+        // ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
+        // return entryScreenScrollView.getVisibility() == View.VISIBLE;
+        return mDashboardIsShown;
     }
 
     
 	private void showDashboard() {
         if(dashboardIsShown())
             return;
+        mDashboardIsShown = true;
         
         mActionBarMode = ActionBarMode.Empty;
         invalidateOptionsMenu();
 
-        LinearLayout entryScreenScrollViewContainer = (LinearLayout)findViewById(R.id.entry_screen_scroll_container);
-        ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
+        LinearLayout entryScreenBackground = (LinearLayout)findViewById(R.id.entry_screen_background);
+        LinearLayout entryScreenBackgroundContent = (LinearLayout)findViewById(R.id.entry_screen_background_content);
+        final ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
         LinearLayout entryScreenLayout = (LinearLayout)findViewById(R.id.entry_screen_layout);
         entryScreenLayout.removeAllViews();
         entryScreenScrollView.scrollTo(0, 0);
         
         Animator scrollUp = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat("translationY", entryScreenScrollView.getHeight(), 0));
-        scrollUp.setDuration(5000);
-        scrollUp.setStartDelay(1000);
         scrollUp.setInterpolator(new AccelerateDecelerateInterpolator());
         Animator scrollDown = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat("translationY", 0, entryScreenScrollView.getHeight()));
-        scrollDown.setDuration(5000);
         scrollDown.setInterpolator(new AccelerateDecelerateInterpolator());
+        scrollDown.addListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    entryScreenScrollView.setVisibility(View.INVISIBLE);
+                }
+                @Override
+                public void onAnimationStart(Animator animation) {}
+                @Override
+                public void onAnimationCancel(Animator animation) {}
+                @Override
+                public void onAnimationRepeat(Animator animation) {}
+            });
 
         Animator fadeIn = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat(View.ALPHA, 0, 1));
-        fadeIn.setDuration(5000);
         fadeIn.setInterpolator(new AccelerateDecelerateInterpolator());
         Animator fadeOut = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat(View.ALPHA, 1, 0));
-        fadeOut.setStartDelay(5000);
-        fadeOut.setDuration(5000);
         fadeOut.setInterpolator(new AccelerateDecelerateInterpolator());
         
         LayoutTransition layoutTransition;
         layoutTransition = new LayoutTransition();
         layoutTransition.setAnimator(LayoutTransition.APPEARING, fadeIn);
         layoutTransition.setAnimator(LayoutTransition.DISAPPEARING, fadeOut);
-        entryScreenScrollViewContainer.setLayoutTransition(layoutTransition);
+        entryScreenBackground.setLayoutTransition(layoutTransition);
 
         if(mDocView != null)
-            entryScreenScrollView.setBackgroundResource(R.color.shadow);
+//            entryScreenScrollView.setBackgroundResource(R.color.shadow);
+            entryScreenBackgroundContent.setVisibility(View.VISIBLE);
         entryScreenScrollView.setVisibility(View.VISIBLE);
         
         layoutTransition = new LayoutTransition();
@@ -1434,6 +1454,8 @@ public static boolean isMediaDocument(Uri uri) {
                         Intent intent = new Intent(Intent.ACTION_VIEW, recentFile.getUri(), card.getContext(), PenAndPDFActivity.class);
                         intent.putExtra(Intent.EXTRA_TITLE, recentFile.getDisplayName());
                         startActivity(intent);
+                        overridePendingTransition(R.animator.fade_in, R.animator.fade_out);
+                        hideDashboard();
                         finish();
                         // getIntent().setAction(Intent.ACTION_VIEW);
                         // getIntent().setData(recentFile.getUri());
