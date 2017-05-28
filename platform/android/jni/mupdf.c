@@ -834,8 +834,8 @@ JNI_FN(MuPDFCore_drawPage)(JNIEnv *env, jobject thiz, jobject bitmap,
 			dev = fz_new_list_device(ctx, pc->page_list);
 
             LOGI("native draw_page() with cookie=%d", cookie);
-            
-			fz_run_page_contents(ctx, pc->page, dev, &fz_identity, cookie);
+            if (cookie != NULL && !cookie->abort)
+                fz_run_page_contents(ctx, pc->page, dev, &fz_identity, cookie);
 			fz_drop_device(ctx, dev);
 			dev = NULL;
 			if (cookie != NULL && cookie->abort)
@@ -850,8 +850,12 @@ JNI_FN(MuPDFCore_drawPage)(JNIEnv *env, jobject thiz, jobject bitmap,
 			fz_annot *annot;
 			pc->annot_list = fz_new_display_list(ctx);
 			dev = fz_new_list_device(ctx, pc->annot_list);
-			for (annot = fz_first_annot(ctx, pc->page); annot; annot = fz_next_annot(ctx, pc->page, annot))
+			for (annot = fz_first_annot(ctx, pc->page); annot; annot = fz_next_annot(ctx, pc->page, annot)) 
+            {
+                if (cookie == NULL || cookie->abort)
+                    break;
 				fz_run_annot(ctx, pc->page, annot, dev, &fz_identity, cookie);
+            }
 			fz_drop_device(ctx, dev);
 			dev = NULL;
 			if (cookie != NULL && cookie->abort)
