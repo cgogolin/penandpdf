@@ -19,6 +19,7 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.RectF;
+import android.graphics.drawable.TransitionDrawable;
 import android.Manifest.permission;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -1291,14 +1292,24 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
 	private void hideDashboard() {
-        LinearLayout entryScreenBackgroundContent = (LinearLayout)findViewById(R.id.entry_screen_background_content);
         final ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
         LinearLayout entryScreenLayout = (LinearLayout)findViewById(R.id.entry_screen_layout);
-        entryScreenLayout.removeAllViews();
-        entryScreenBackgroundContent.setVisibility(View.GONE);
+            //entryScreenLayout.removeAllViews();
+        if(entryScreenLayout.getChildCount() > 0)
+            entryScreenLayout.removeViews(0,entryScreenLayout.getChildCount());
         mActionBarMode = ActionBarMode.Main;
         mDashboardIsShown = false;
         invalidateOptionsMenu();
+        TransitionDrawable transition = (TransitionDrawable) entryScreenScrollView.getBackground();
+        int animationTime = (int)entryScreenLayout.getLayoutTransition().getDuration(LayoutTransition.DISAPPEARING);
+        transition.reverseTransition(animationTime);
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    entryScreenScrollView.setVisibility(View.INVISIBLE);
+                }
+            }, animationTime);
     }
 
     
@@ -1315,8 +1326,8 @@ public static boolean isMediaDocument(Uri uri) {
         mActionBarMode = ActionBarMode.Empty;
         invalidateOptionsMenu();
 
-        LinearLayout entryScreenBackground = (LinearLayout)findViewById(R.id.entry_screen_background);
-        LinearLayout entryScreenBackgroundContent = (LinearLayout)findViewById(R.id.entry_screen_background_content);
+//        LinearLayout entryScreenBackground = (LinearLayout)findViewById(R.id.entry_screen_background);
+//        LinearLayout entryScreenBackgroundContent = (LinearLayout)findViewById(R.id.entry_screen_background_content);
         final ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
         LinearLayout entryScreenLayout = (LinearLayout)findViewById(R.id.entry_screen_layout);
         entryScreenLayout.removeAllViews();
@@ -1329,7 +1340,8 @@ public static boolean isMediaDocument(Uri uri) {
         scrollDown.addListener(new Animator.AnimatorListener() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    entryScreenScrollView.setVisibility(View.INVISIBLE);
+                    // if(entryScreenScrollView.getChildCount() == 0)
+                    //     entryScreenScrollView.setVisibility(View.INVISIBLE);
                 }
                 @Override
                 public void onAnimationStart(Animator animation) {}
@@ -1339,21 +1351,25 @@ public static boolean isMediaDocument(Uri uri) {
                 public void onAnimationRepeat(Animator animation) {}
             });
 
-        Animator fadeIn = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat(View.ALPHA, 0, 1));
-        fadeIn.setInterpolator(new AccelerateDecelerateInterpolator());
-        Animator fadeOut = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat(View.ALPHA, 1, 0));
-        fadeOut.setInterpolator(new AccelerateDecelerateInterpolator());
-        
+        // Animator fadeIn = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat(View.ALPHA, 0, 1));
+        // fadeIn.setInterpolator(new AccelerateDecelerateInterpolator());
+        // Animator fadeOut = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat(View.ALPHA, 1, 0));
+        // fadeOut.setInterpolator(new AccelerateDecelerateInterpolator());
         LayoutTransition layoutTransition;
-        layoutTransition = new LayoutTransition();
-        layoutTransition.setAnimator(LayoutTransition.APPEARING, fadeIn);
-        layoutTransition.setAnimator(LayoutTransition.DISAPPEARING, fadeOut);
-        entryScreenBackground.setLayoutTransition(layoutTransition);
+        // layoutTransition = new LayoutTransition();
+        // layoutTransition.setAnimator(LayoutTransition.APPEARING, fadeIn);
+        // layoutTransition.setAnimator(LayoutTransition.DISAPPEARING, fadeOut);
+        // entryScreenBackground.setLayoutTransition(layoutTransition);
 
-        if(mDocView != null)
-//            entryScreenScrollView.setBackgroundResource(R.color.shadow);
-            entryScreenBackgroundContent.setVisibility(View.VISIBLE);
         entryScreenScrollView.setVisibility(View.VISIBLE);
+        if(mDocView != null)
+        {
+//            entryScreenScrollView.setBackgroundResource(R.color.shadow);
+//            entryScreenBackgroundContent.setVisibility(View.VISIBLE);
+            TransitionDrawable transition = (TransitionDrawable) entryScreenScrollView.getBackground();
+            transition.startTransition(300);
+        }
+        
         
         layoutTransition = new LayoutTransition();
         layoutTransition.setAnimator(LayoutTransition.APPEARING, scrollUp);
@@ -2056,7 +2072,7 @@ public static boolean isMediaDocument(Uri uri) {
     private void setTitle() {
         if (core == null || mDocView == null)  return;
         int pageNumber = mDocView.getSelectedItemPosition();
-        String title = getString(R.string.app_name)+" ("+Integer.toString(pageNumber+1)+"/"+Integer.toString(core.countPages())+")";
+        String title = getString(R.string.app_name)+" "+Integer.toString(pageNumber+1)+"/"+Integer.toString(core.countPages());
 		String subtitle = "";
 		if(core.getFileName() != null) subtitle+=core.getFileName();
         android.support.v7.app.ActionBar actionBar = getSupportActionBar();

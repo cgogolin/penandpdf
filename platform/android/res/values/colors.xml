@@ -11,4 +11,5 @@
 	<color name="busy_indicator">#C0202020</color>
 	<color name="toolbar">#99000000</color>
 	<color name="shadow">#55000000</color>
+  	<color name="transparent">#00000000</color>
 </resources>

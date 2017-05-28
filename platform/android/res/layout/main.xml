@@ -10,12 +10,12 @@
 
   <!-- mDocView is added here -->
   
-  <RelativeLayout
+  <!--<RelativeLayout
      android:id="@+id/entry_screen_scroll_container"
      android:layout_width="fill_parent"	
      android:layout_height="fill_parent"
-     android:animateLayoutChanges="false">
-    <LinearLayout
+     android:animateLayoutChanges="false">-->
+    <!--<LinearLayout
        android:id="@+id/entry_screen_background"
        android:layout_width="fill_parent"	
        android:layout_height="fill_parent"
@@ -27,13 +27,14 @@
 	 android:background="@color/shadow"
 	 android:visibility="gone">
       </LinearLayout>
-    </LinearLayout>
+    </LinearLayout>-->
   <ScrollView
      android:id="@+id/entry_screen_scroll_view"
      android:visibility="invisible"
      android:layout_width="fill_parent"	
      android:layout_height="fill_parent"
      android:scrollbars="none"
+     android:background="@drawable/fading_shadow"
      android:fillViewport="true"
      android:animateLayoutChanges="false">
   <LinearLayout
@@ -148,7 +149,7 @@
     </android.support.v7.widget.CardView>-->
   </LinearLayout>
   </ScrollView>
-  </RelativeLayout>
+  <!--</RelativeLayout>-->
   
   <android.support.v7.widget.Toolbar
      android:id="@+id/toolbar"
