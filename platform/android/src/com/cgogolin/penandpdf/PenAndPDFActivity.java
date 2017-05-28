@@ -1,4 +1,5 @@
 package com.cgogolin.penandpdf;
+import java.util.concurrent.Callable;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.PropertyValuesHolder;
@@ -1326,8 +1327,6 @@ public static boolean isMediaDocument(Uri uri) {
         mActionBarMode = ActionBarMode.Empty;
         invalidateOptionsMenu();
 
-//        LinearLayout entryScreenBackground = (LinearLayout)findViewById(R.id.entry_screen_background);
-//        LinearLayout entryScreenBackgroundContent = (LinearLayout)findViewById(R.id.entry_screen_background_content);
         final ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
         LinearLayout entryScreenLayout = (LinearLayout)findViewById(R.id.entry_screen_layout);
         entryScreenLayout.removeAllViews();
@@ -1351,30 +1350,20 @@ public static boolean isMediaDocument(Uri uri) {
                 public void onAnimationRepeat(Animator animation) {}
             });
 
-        // Animator fadeIn = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat(View.ALPHA, 0, 1));
-        // fadeIn.setInterpolator(new AccelerateDecelerateInterpolator());
-        // Animator fadeOut = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat(View.ALPHA, 1, 0));
-        // fadeOut.setInterpolator(new AccelerateDecelerateInterpolator());
         LayoutTransition layoutTransition;
-        // layoutTransition = new LayoutTransition();
-        // layoutTransition.setAnimator(LayoutTransition.APPEARING, fadeIn);
-        // layoutTransition.setAnimator(LayoutTransition.DISAPPEARING, fadeOut);
-        // entryScreenBackground.setLayoutTransition(layoutTransition);
-
-        entryScreenScrollView.setVisibility(View.VISIBLE);
-        if(mDocView != null)
-        {
-//            entryScreenScrollView.setBackgroundResource(R.color.shadow);
-//            entryScreenBackgroundContent.setVisibility(View.VISIBLE);
-            TransitionDrawable transition = (TransitionDrawable) entryScreenScrollView.getBackground();
-            transition.startTransition(300);
-        }
-        
-        
         layoutTransition = new LayoutTransition();
         layoutTransition.setAnimator(LayoutTransition.APPEARING, scrollUp);
         layoutTransition.setAnimator(LayoutTransition.DISAPPEARING, scrollDown);
         entryScreenLayout.setLayoutTransition(layoutTransition);
+
+        entryScreenScrollView.setVisibility(View.VISIBLE);
+        if(mDocView != null)
+        {
+            TransitionDrawable transition = (TransitionDrawable) entryScreenScrollView.getBackground();
+            int animationTime = (int)entryScreenLayout.getLayoutTransition().getDuration(LayoutTransition.DISAPPEARING);
+
+            transition.startTransition(animationTime);
+        }
         
         SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
         int elevation = 5;
@@ -1443,32 +1432,28 @@ public static boolean isMediaDocument(Uri uri) {
 
             elevation += elevationInc;
             card.setElevation(elevation);
-            
-            // CardView card = new CardView(this);
-            // LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-            //     LayoutParams.MATCH_PARENT,
-            //     LayoutParams.WRAP_CONTENT
-            //                                        );
-            // params.setMargins(0, 10, 0, 10);
-            // card.setLayoutParams(params);
-            // card.setRadius(5);
-            // card.setCardElevation(2);
-            // TextView tv = new TextView(this);
-            // tv.setLayoutParams(params);
-            // tv.setText(recentFile.getDisplayName()); 
-            // card.addView(tv);
             TextView tv = (TextView)card.findViewById(R.id.title);
             tv.setText(recentFile.getDisplayName());
             
             card.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, recentFile.getUri(), card.getContext(), PenAndPDFActivity.class);
-                        intent.putExtra(Intent.EXTRA_TITLE, recentFile.getDisplayName());
-                        startActivity(intent);
-                        overridePendingTransition(R.animator.fade_in, R.animator.fade_out);
-                        hideDashboard();
-                        finish();
+                        // Intent intent = new Intent(Intent.ACTION_VIEW, recentFile.getUri(), card.getContext(), PenAndPDFActivity.class);
+                        // intent.putExtra(Intent.EXTRA_TITLE, recentFile.getDisplayName());
+                        // startActivity(intent);
+                        // overridePendingTransition(R.animator.fade_in, R.animator.fade_out);
+                        // hideDashboard();
+                        // finish();
+                        checkSaveThenCall(new Callable<Void>(){
+                                public Void call() {
+                                    Intent intent = new Intent(Intent.ACTION_VIEW, recentFile.getUri(), card.getContext(), PenAndPDFActivity.class);
+                                    intent.putExtra(Intent.EXTRA_TITLE, recentFile.getDisplayName());
+                                    startActivity(intent);
+                                    overridePendingTransition(R.animator.fade_in, R.animator.fade_out);
+                                    hideDashboard();
+                                    finish();
+                                    return null;
+                                }});
                         // getIntent().setAction(Intent.ACTION_VIEW);
                         // getIntent().setData(recentFile.getUri());
                         // if (core != null) {
@@ -1524,6 +1509,14 @@ public static boolean isMediaDocument(Uri uri) {
 
     
     public void openDocument() {
+        checkSaveThenCall(new Callable<Void>(){
+                public Void call() {
+                    showOpenDocumentDialog();
+                    return null;
+                }});
+    }
+    
+    public void checkSaveThenCall(final Callable callable) {
 		if (core!=null && core.hasChanges()) {
             final PenAndPDFActivity activity = this;//Not sure if this is good style...
             
@@ -1535,7 +1528,9 @@ public static boolean isMediaDocument(Uri uri) {
 								if(!save())
 									showInfo(getString(R.string.error_saveing));
                                 else
-                                    showOpenDocumentDialog();
+//                                    showOpenDocumentDialog();
+                                    try{callable.call();}catch(Exception e){}
+                                
 							}
 							else
 							{
@@ -1544,7 +1539,8 @@ public static boolean isMediaDocument(Uri uri) {
 							}
 						}
 						if (which == AlertDialog.BUTTON_NEGATIVE) {
-							showOpenDocumentDialog();
+//							showOpenDocumentDialog();
+                            try{callable.call();}catch(Exception e){}
 						}
 						if (which == AlertDialog.BUTTON_NEUTRAL) {
 						}
@@ -1563,7 +1559,8 @@ public static boolean isMediaDocument(Uri uri) {
 		}
 		else
 		{
-			showOpenDocumentDialog();
+//			showOpenDocumentDialog();
+            try{callable.call();}catch(Exception e){}
 		}
     }
 
