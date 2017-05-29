@@ -1426,8 +1426,10 @@ public static boolean isMediaDocument(Uri uri) {
         RecentFilesList recentFilesList = new RecentFilesList(prefs);
         for(final RecentFile recentFile: recentFilesList) {
             if (!PenAndPDFCore.canReadFromUri(this, recentFile.getUri()))
+            {
                 continue;
-
+            }
+            
             final CardView card = (CardView)getLayoutInflater().inflate(R.layout.dashboard_card_recent_file, entryScreenLayout, false);
 
             elevation += elevationInc;
@@ -1518,7 +1520,7 @@ public static boolean isMediaDocument(Uri uri) {
     
     public void checkSaveThenCall(final Callable callable) {
 		if (core!=null && core.hasChanges()) {
-            final PenAndPDFActivity activity = this;//Not sure if this is good style...
+            final PenAndPDFActivity activity = this;
             
 			DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {

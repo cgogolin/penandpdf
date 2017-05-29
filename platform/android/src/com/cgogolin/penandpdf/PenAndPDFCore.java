@@ -515,52 +515,55 @@ public class PenAndPDFCore extends MuPDFCore
 
 
     public static synchronized <T extends Context & TemporaryUriPermission.TemporaryUriPermissionProvider> boolean canReadFromUri(T context, Uri uri) {
-        // boolean haveReadPermissionToUri = false;
-        // try
-        // {
-        //     if (android.os.Build.VERSION.SDK_INT >= 19)
-        //     {
-        //         for(UriPermission permission : (context).getContentResolver().getPersistedUriPermissions()) {
-        //             if(permission.isReadPermission() && permission.getUri().equals(uri))
-        //             {
-        //                 haveReadPermissionToUri = true;
-        //                 break;
-        //             }
-        //         }
-        //     }
-        // }
-        // catch(Exception e)
-        // {
-        //     Log.i(context.getString(R.string.app_name), "exception while trying to figure out permissions: "+e);
-        //     return false;
-        // }
-        // if(!haveReadPermissionToUri)
-        //     return false;
-        
-        boolean canRead = false;
-        InputStream is = null;
-        try{
-            is = context.getContentResolver().openInputStream(uri);
-            if(is != null)
+        boolean haveReadPermissionToUri = false;
+        try
+        {
+            if (android.os.Build.VERSION.SDK_INT >= 19)
             {
-                is.close();
-                canRead = true;
+                for(UriPermission permission : (context).getContentResolver().getPersistedUriPermissions()) {
+                    if(permission.isReadPermission() && permission.getUri().equals(uri))
+                    {
+                        haveReadPermissionToUri = true;
+                        break;
+                    }
+                }
             }
         }
         catch(Exception e)
         {
-            if(is != null)
-                try
-                {
-                    is.close();
-                }
-                catch(Exception e2)
-                {
-                    is = null;
-                }
+            Log.i(context.getString(R.string.app_name), "exception while trying to figure out permissions: "+e);
+            return false;
         }
+        // if(!haveReadPermissionToUri)
+        //     return false;
+        return haveReadPermissionToUri;
+
+
+            //Opening an input stream can lock for very long time if the Uri for exaple came from Google drive and there is no network 
+        // boolean canRead = false;
+        // InputStream is = null;
+        // try{
+        //     is = context.getContentResolver().openInputStream(uri);
+        //     if(is != null)
+        //     {
+        //         is.close();
+        //         canRead = true;
+        //     }
+        // }
+        // catch(Exception e)
+        // {
+        //     if(is != null)
+        //         try
+        //         {
+        //             is.close();
+        //         }
+        //         catch(Exception e2)
+        //         {
+        //             is = null;
+        //         }
+        // }
         
-        return canRead;
+        // return canRead;
     }
 }
 
