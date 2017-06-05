@@ -485,7 +485,8 @@ public class MuPDFCore
 
     public synchronized String getFileName() {
         return mFileName;
-    }
+    }    
+
     
     public synchronized void onSharedPreferenceChanged(SharedPreferences sharedPref, String key){
             //Set ink thickness

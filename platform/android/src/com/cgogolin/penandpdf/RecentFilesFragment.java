@@ -199,7 +199,7 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
         
             //Read the recent files list from preferences
         SharedPreferences prefs = getActivity().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-        RecentFilesList recentFilesList = new RecentFilesList(prefs);
+        RecentFilesList recentFilesList = new RecentFilesList(getActivity().getApplicationContext(), prefs);
 
             //Add the directories of the most recent files to the list if we were asked to pick a file
         RecentFilesList recentDirectoriesList = new RecentFilesList();

@@ -20,7 +20,9 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.RectF;
+import android.graphics.Point;
 import android.graphics.drawable.TransitionDrawable;
+import android.graphics.drawable.BitmapDrawable;
 import android.Manifest.permission;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -78,10 +80,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.lang.reflect.Field;
 import java.lang.Runtime;
+import java.lang.Math;
 import java.util.ArrayList;
 import java.util.concurrent.Executor;
 import java.util.Set;
 import android.view.Gravity;
+import android.view.Display;
 
 class ThreadPerTaskExecutor implements Executor {
     public void execute(Runnable r) {
@@ -128,6 +132,7 @@ public class PenAndPDFActivity extends AppCompatActivity implements SharedPrefer
     private boolean mAlertsActive= false;
     private boolean mReflow = false;
     private AsyncTask<Void,Void,MuPDFAlert> mAlertTask;
+    private CancellableAsyncTask<RecentFile, RecentFile> mRenderThumbnailTask = null;
     private AlertDialog mAlertDialog;
     private FilePicker mFilePicker;
 
@@ -1423,7 +1428,7 @@ public static boolean isMediaDocument(Uri uri) {
         fixedcard.setElevation(elevation);
         entryScreenLayout.addView(fixedcard);
         
-        RecentFilesList recentFilesList = new RecentFilesList(prefs);
+        RecentFilesList recentFilesList = new RecentFilesList(getApplicationContext(), prefs);
         for(final RecentFile recentFile: recentFilesList) {
             if (!PenAndPDFCore.canReadFromUri(this, recentFile.getUri()))
             {
@@ -1436,6 +1441,24 @@ public static boolean isMediaDocument(Uri uri) {
             card.setElevation(elevation);
             TextView tv = (TextView)card.findViewById(R.id.title);
             tv.setText(recentFile.getDisplayName());
+            
+            AsyncTask<RecentFile,Void,BitmapDrawable> setRecentFileThumbnailTask = new AsyncTask<RecentFile,Void,BitmapDrawable>() {
+                @Override
+                protected BitmapDrawable doInBackground(RecentFile... recentFile0) {
+                    RecentFile recentFile = recentFile0[0];
+                    PdfThumbnailManager pdfThumbnailManager = new PdfThumbnailManager(card.getContext());
+                    return pdfThumbnailManager.getDrawable(getResources(), recentFile.getThumbnailString());
+                }
+                @Override
+                protected void onPostExecute(BitmapDrawable drawable) {
+                    Log.i("Pen&PDF", "received drawable="+drawable);
+                    
+                    ImageView iv = (ImageView)card.findViewById(R.id.image);
+                    iv.setImageDrawable(drawable);
+                }
+            };   
+            setRecentFileThumbnailTask.execute(recentFile);
+            
             
             card.setOnClickListener(new OnClickListener() {
                     @Override
@@ -1736,13 +1759,54 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
 
-    private void saveRecentFiles(SharedPreferences prefs, SharedPreferences.Editor edit, Uri uri) {
+    private void saveRecentFiles(SharedPreferences prefs, final SharedPreferences.Editor edit, Uri uri) {
             //Read the recent files list from preferences
-        RecentFilesList recentFilesList = new RecentFilesList(prefs);                    
+        final RecentFilesList recentFilesList = new RecentFilesList(getApplicationContext(), prefs);                    
             //Add the current file
-        recentFilesList.push(new RecentFile(uri.toString(), core.getFileName(), 0l));
+        RecentFile recentFile = new RecentFile(uri.toString(), core.getFileName(), 0l);
+        recentFilesList.push(recentFile);
+        
             //Write the recent files list
         recentFilesList.write(edit);
+        edit.apply();
+
+            //Generate and add a thubnail in the background
+        if(mRenderThumbnailTask!=null)
+            mRenderThumbnailTask.cancel();
+
+        final PdfThumbnailManager thumbnailManager = new PdfThumbnailManager(this, core);
+        final MuPDFCore.Cookie cookie = core.new Cookie();        
+//        mRenderThumbnailTask = new AsyncTask<RecentFile,Null,RecentFile>(){
+        mRenderThumbnailTask = new CancellableAsyncTask<RecentFile, RecentFile>(new MuPDFCancellableTaskDefinition<RecentFile,RecentFile>(core) 
+            {
+                @Override
+                public RecentFile doInBackground(MuPDFCore.Cookie cookie, RecentFile... recentFile0) {
+                    RecentFile recentFile = recentFile0[0];
+                    int bmWidth;
+                    int bmHeight;
+                    Display display = getWindowManager().getDefaultDisplay();
+                    if (android.os.Build.VERSION.SDK_INT < 13) {
+                        bmWidth = Math.min(display.getWidth(), display.getHeight());
+                    } else {
+                        Point size = new Point();
+                        display.getSize(size);
+                        bmWidth = Math.min(size.x,size.y);
+                    }
+                    bmHeight = (int)((float)bmWidth*0.25);
+                    
+                    recentFile.setThumbnailString(thumbnailManager.generate(bmWidth, bmHeight, cookie));
+                    return recentFile;
+                }
+            }                                                                              )
+                               {
+                                   @Override
+                                   protected void onPostExecute(final RecentFile recentFile) {                       
+                                       recentFilesList.push(recentFile);//this replaces the previously pushed version
+                                       recentFilesList.write(edit);
+                                       edit.apply();
+                                   }
+            };
+        mRenderThumbnailTask.execute(new RecentFile(recentFile));
     }
     
     

@@ -5,7 +5,7 @@
   <string name="add_a_note">Add a note&#8230;</string>
   <string name="annotation_settings">Annotation settings</string>
   <string name="autosave_settings">Auto save</string>
-  <!--<string name="browse">Browse</string>-->
+  <string name="browse">Browse</string>
   <string name="cancel">Cancel</string>
   <string name="cannot_interpret_file">Cannot read file: %1$s</string>
   <string name="cannot_open_buffer">Cannot open buffer</string>

@@ -2,27 +2,38 @@ package com.cgogolin.penandpdf;
 
 import android.net.Uri;
 
-public class RecentFile {
+public class RecentFile extends Object {
     private String recentFileString;
     private long lastModified;
     private String displayName;
+    private String bitmapString = null;
+
     
     public RecentFile(String recentFileString) {
-        init(recentFileString);
+        init(recentFileString, null, System.currentTimeMillis(), null);
     }
 
     public RecentFile(String recentFileString, String displayName, long lastModified) {
-        init(recentFileString, displayName, lastModified);
+        init(recentFileString, displayName, lastModified, null);
     }
 
-    protected void init(String recentFileString) {
-        init(recentFileString, null, System.currentTimeMillis());
+    public RecentFile(String recentFileString, String displayName, long lastModified, String bitmapString) {
+        init(recentFileString, displayName, lastModified, bitmapString);
     }
 
-    protected void init(String recentFileString, String displayName, long lastModified) {
+    public RecentFile(RecentFile recentFile) {
+        init(recentFile.getRecentFileString(), recentFile.getDisplayName(), recentFile.getLastModified(), recentFile.getThumbnailString());
+    }
+    
+    protected void init(String recentFileString, String displayName, long lastModified, String bitmapString) {
         this.recentFileString = recentFileString;
         this.lastModified = lastModified;
         this.displayName = displayName;
+        this.bitmapString = bitmapString;
+    }
+
+    public String getRecentFileString() {
+        return recentFileString;
     }
     
     public Uri getUri() {
@@ -56,5 +67,13 @@ public class RecentFile {
     @Override
     public int hashCode() {
         return getFileString().hashCode();
+    }
+
+    public void setThumbnailString(String bitmapString) {
+        this.bitmapString = bitmapString;
+    }
+
+    public String getThumbnailString() {
+        return bitmapString;
     }
 }

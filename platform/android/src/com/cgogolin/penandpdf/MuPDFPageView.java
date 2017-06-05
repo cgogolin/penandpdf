@@ -713,6 +713,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	@Override
 	protected CancellableTaskDefinition<PatchInfo, PatchInfo> getRenderTask(PatchInfo patchInfo) {
 		return new MuPDFCancellableTaskDefinition<PatchInfo, PatchInfo>(mCore) {
+            @Override
 			public PatchInfo doInBackground(MuPDFCore.Cookie cookie, PatchInfo... v) {
 				PatchInfo patchInfo = v[0];
 					// Workaround bug in Android Honeycomb 3.x, where the bitmap generation count

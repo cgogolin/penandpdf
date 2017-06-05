@@ -10,24 +10,6 @@
 
   <!-- mDocView is added here -->
   
-  <!--<RelativeLayout
-     android:id="@+id/entry_screen_scroll_container"
-     android:layout_width="fill_parent"	
-     android:layout_height="fill_parent"
-     android:animateLayoutChanges="false">-->
-    <!--<LinearLayout
-       android:id="@+id/entry_screen_background"
-       android:layout_width="fill_parent"	
-       android:layout_height="fill_parent"
-       android:animateLayoutChanges="true">
-      <LinearLayout
-	 android:id="@+id/entry_screen_background_content"
-	 android:layout_width="fill_parent"	
-	 android:layout_height="fill_parent"
-	 android:background="@color/shadow"
-	 android:visibility="gone">
-      </LinearLayout>
-    </LinearLayout>-->
   <ScrollView
      android:id="@+id/entry_screen_scroll_view"
      android:visibility="invisible"
@@ -44,112 +26,8 @@
      android:layout_height="wrap_content"
      android:paddingTop="?attr/actionBarSize"
      android:animateLayoutChanges="true">
-<!--    <android.support.v7.widget.CardView
-       xmlns:card_view="http://schemas.android.com/apk/res-auto"
-       android:id="@+id/entry_screen_open_document_card_view"
-       android:layout_width="match_parent"
-       android:layout_height="wrap_content"
-       card_view:contentPadding="10dp"
-       android:layout_marginTop="10dp"
-       card_view:cardElevation="2dp"
-       card_view:cardCornerRadius="1dp"
-       android:foreground="?android:attr/selectableItemBackground"
-       android:clickable="true"
-       android:focusable="true">
-      <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-		      android:layout_width="match_parent"
-		      android:layout_height="match_parent">
-	<ImageView android:id="@+id/image_open_document"
-		   android:layout_width="wrap_content"
-		   android:layout_height="wrap_content"	
-		   android:src="@drawable/ic_open" />
-	<TextView style="@style/Base.TextAppearance.AppCompat.Title"
-		  android:id="@+id/title_open_document"
-		  android:text="@string/entry_screen_open_document"
-		  android:layout_width="wrap_content"    
-		  android:layout_height="wrap_content"
-		  android:layout_toRightOf="@id/image_open_document"/>
-	<TextView style="@style/Base.TextAppearance.AppCompat.Subhead"
-		  android:id="@+id/subtitle_open_document"
-		  android:text="@string/entry_screen_open_document_summ"
-		  android:layout_width="wrap_content"    
-		  android:layout_height="wrap_content"
-		  android:layout_below="@id/title_open_document"
-		  android:layout_alignLeft="@id/title_open_document"/>
-      </RelativeLayout>
-    </android.support.v7.widget.CardView>
-    <android.support.v7.widget.CardView
-       xmlns:card_view="http://schemas.android.com/apk/res-auto"
-       android:id="@+id/entry_screen_new_document_card_view"
-       android:layout_width="match_parent"
-       android:layout_height="wrap_content"
-       card_view:contentPadding="10dp"
-       android:layout_marginTop="10dp"
-       card_view:cardElevation="2dp"
-       card_view:cardCornerRadius="1dp"
-       android:foreground="?android:attr/selectableItemBackground"
-       android:clickable="true"
-       android:focusable="true">
-      <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-		      android:layout_width="match_parent"
-		      android:layout_height="match_parent">
-	<ImageView android:id="@+id/image_new_document"
-		   android:layout_width="wrap_content"
-		   android:layout_height="wrap_content"	
-		   android:src="@drawable/ic_new" />
-	<TextView style="@style/Base.TextAppearance.AppCompat.Title"
-		  android:id="@+id/title_new_document"
-		  android:text="@string/entry_screen_new_document"
-		  android:layout_width="wrap_content"    
-		  android:layout_height="wrap_content"
-		  android:layout_toRightOf="@id/image_new_document" />
-	<TextView style="@style/Base.TextAppearance.AppCompat.Subhead"
-		  android:id="@+id/subtitle_new_document"
-		  android:text="@string/entry_screen_new_document_summ"
-		  android:layout_width="wrap_content"    
-		  android:layout_height="wrap_content"
-		  android:layout_below="@id/title_new_document"
-		  android:layout_alignLeft="@id/title_new_document"/>
-      </RelativeLayout>
-    </android.support.v7.widget.CardView>
-    <android.support.v7.widget.CardView
-       xmlns:card_view="http://schemas.android.com/apk/res-auto"
-       android:id="@+id/entry_screen_settings_card_view"
-       android:layout_width="match_parent"
-       android:layout_height="wrap_content"
-       card_view:contentPadding="10dp"
-       android:layout_marginTop="10dp"
-       android:layout_marginBottom="10dp"
-       card_view:cardElevation="2dp"
-       card_view:cardCornerRadius="1dp"
-       android:foreground="?android:attr/selectableItemBackground"
-       android:clickable="true"
-       android:focusable="true">
-      <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-			    android:layout_width="match_parent"
-			    android:layout_height="match_parent">
-	<ImageView android:id="@+id/image_settings"
-		   android:layout_width="wrap_content"
-		   android:layout_height="wrap_content"	
-		   android:src="@drawable/ic_settings" />
-	<TextView style="@style/Base.TextAppearance.AppCompat.Title"
-		  android:id="@+id/title_settings"
-		  android:text="@string/entry_screen_settings"
-		  android:layout_width="wrap_content"    
-		  android:layout_height="wrap_content"
-		  android:layout_toRightOf="@id/image_settings" />
-	<TextView style="@style/Base.TextAppearance.AppCompat.Subhead"
-		  android:id="@+id/subtitle_settings"
-		  android:text="@string/entry_screen_settings_summ"
-		  android:layout_width="wrap_content"    
-		  android:layout_height="wrap_content"
-		  android:layout_below="@id/title_settings"
-		  android:layout_alignLeft="@id/title_settings"/>
-      </RelativeLayout>
-    </android.support.v7.widget.CardView>-->
   </LinearLayout>
   </ScrollView>
-  <!--</RelativeLayout>-->
   
   <android.support.v7.widget.Toolbar
      android:id="@+id/toolbar"

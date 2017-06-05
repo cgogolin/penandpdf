@@ -280,7 +280,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
         {   
                 //Read the recent files list from preferences
             SharedPreferences prefs = getContext().getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-            RecentFilesList recentFilesList = new RecentFilesList(prefs);
+            RecentFilesList recentFilesList = new RecentFilesList(getContext(), prefs);
             
             for(RecentFile recentFile: recentFilesList)
             {

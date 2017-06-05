@@ -66,55 +66,7 @@ public class PenAndPDFCore extends MuPDFCore
             }
             else if (uri.toString().startsWith("content://")) //Uri points to a content provider
             {
-                Log.i(context.getString(R.string.app_name), "uri "+uri.toString()+" points to content");
-                String displayName = null;
-                Cursor cursor = context.getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null); //This should be done asynchonously!
-
-                if (cursor != null && cursor.moveToFirst())
-                {
-//                    Log.i(context.getString(R.string.app_name), "got the cursor "+cursor);
-                    
-                        //Try to get the display name/title
-                    int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
-                    if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
-                    if(displayName==null)
-                    {
-                        int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.TITLE);
-                        if(titleIndex >= 0) displayName = cursor.getString(titleIndex);
-                        if(displayName==null)
-                        {
-                            // try
-                            // {
-                            //     String path = PenAndPDFActivity.getActualPath(context, uri);
-                            //     int lastSlashPos = path.lastIndexOf('/');
-                            //     displayName = new String(lastSlashPos == -1 ? path : path.substring(lastSlashPos+1));
-                            // }
-                            // catch(Exception e)
-                            // {
-                            //     displayName = null;
-                            // }
-                            // if(displayName==null || displayName.equals(""))
-                            displayName=context.getString(R.string.unknown_file_name);
-                        }
-                    }       
-                    cursor.close();
-                    
-                        //Some programms encode parts of the filename in utf-8 base 64 encoding if the filename contains special charcters. This can look like this: '=?UTF-8?B?[text here]==?=' Here we decode such cases:
-                    Pattern utf8BPattern = Pattern.compile("=\\?UTF-8\\?B\\?(.+)\\?=");
-                    Matcher matcher = utf8BPattern.matcher(displayName);
-                    while (matcher.find()) {
-                        String base64 = matcher.group(1);
-                        byte[] data = Base64.decode(base64, Base64.DEFAULT);
-                        String decodedText = "";
-                        try
-                        {
-                            decodedText = new String(data, "UTF-8");
-                        }
-                        catch(Exception e)
-                        {}
-                        displayName = displayName.replace(matcher.group(),decodedText);
-                    }
-                }
+                String displayName = getFileName(context, uri);
                 
                 InputStream is = null;
                 ParcelFileDescriptor pfd = null;
@@ -241,6 +193,9 @@ public class PenAndPDFCore extends MuPDFCore
             }
                 //remeber the new uri and tell the core that all changes were saved
             this.uri = uri;
+            
+            relocate(uri.getPath(), getFileName(context, uri));
+            
             setHasAdditionalChanges(false);
         }
     
@@ -528,6 +483,11 @@ public class PenAndPDFCore extends MuPDFCore
                     }
                 }
             }
+
+            if(!haveReadPermissionToUri) {
+                if(context.checkCallingOrSelfUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED)
+                    haveReadPermissionToUri = true;
+            }
         }
         catch(Exception e)
         {
@@ -564,6 +524,58 @@ public class PenAndPDFCore extends MuPDFCore
         // }
         
         // return canRead;
+    }
+
+    public synchronized String getFileName(Context context, Uri uri) {
+        String displayName = null;
+        if (uri.toString().startsWith("content://")) //Uri points to a content provider
+        {
+//            Log.i(context.getString(R.string.app_name), "uri "+uri.toString()+" points to content");
+            Cursor cursor = context.getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null); //This should be done asynchonously!
+
+            if (cursor != null && cursor.moveToFirst())
+            {
+//                    Log.i(context.getString(R.string.app_name), "got the cursor "+cursor);
+                    
+                    //Try to get the display name/title
+                int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+                if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
+                if(displayName==null)
+                {
+                    int titleIndex = cursor.getColumnIndex(MediaStore.MediaColumns.TITLE);
+                    if(titleIndex >= 0) displayName = cursor.getString(titleIndex);
+                }       
+                cursor.close();
+            }
+            
+                    //Some programms encode parts of the filename in utf-8 base 64 encoding if the filename contains special charcters. This can look like this: '=?UTF-8?B?[text here]==?=' Here we decode such cases:
+            if(displayName!=null)
+            {
+                Pattern utf8BPattern = Pattern.compile("=\\?UTF-8\\?B\\?(.+)\\?=");
+                Matcher matcher = utf8BPattern.matcher(displayName);
+                while (matcher.find()) {
+                    String base64 = matcher.group(1);
+                    byte[] data = Base64.decode(base64, Base64.DEFAULT);
+                    String decodedText = "";
+                    try
+                    {
+                        decodedText = new String(data, "UTF-8");
+                    }
+                    catch(Exception e)
+                    {}
+                    displayName = displayName.replace(matcher.group(),decodedText);
+                }
+            }
+        } else {
+            File file = new File(Uri.decode(uri.getEncodedPath()));
+            if(file.isFile())
+                displayName = file.getName();
+        }
+        
+        if(displayName==null || displayName.equals(""))
+            displayName=context.getString(R.string.unknown_file_name);
+        
+        return displayName;
     }
 }
 

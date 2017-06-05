@@ -7,21 +7,29 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import android.content.Context;
+import android.util.Log;
 
 public class RecentFilesList extends LinkedList<RecentFile> implements List<RecentFile> { //Probably not the most appropriate list type...
 
     static final int MAX_RECENT_FILES=20;
 
+    private Context context = null;
+    
     public RecentFilesList() {
         super();
     }
     
-    public RecentFilesList(SharedPreferences prefs) {
-        for (int i = MAX_RECENT_FILES-1; i>=0; i--) //Read in revers order because we use push
+    public RecentFilesList(Context context, SharedPreferences prefs) {
+        this.context = context;
+        
+        for (int i = MAX_RECENT_FILES-1; i>=0; i--) //Read in reverse order because we use push
         {
             String recentFileString = prefs.getString("recentfile"+i, null);
             long recentFileLastModified = prefs.getLong("recentfile_lastModified"+i, 0l);
             String displayName = prefs.getString("recentfile_displayName"+i, null);
+            String bitmapString = prefs.getString("recentfile_thumbnailString"+i, null);
+            
             if(recentFileString != null)
             {
                 Uri recentFileUri = Uri.parse(recentFileString);
@@ -30,9 +38,9 @@ public class RecentFilesList extends LinkedList<RecentFile> implements List<Rece
                         //Make sure we add only readable files
                     File recentFile = new File(Uri.decode(recentFileUri.getEncodedPath()));
                     if(recentFile != null && recentFile.isFile() && recentFile.canRead())
-                        push(new RecentFile(recentFileString, displayName, recentFileLastModified));
+                        push(new RecentFile(recentFileString, displayName, recentFileLastModified, bitmapString));
                 } else {
-                    push(new RecentFile(recentFileString, displayName, recentFileLastModified));
+                    push(new RecentFile(recentFileString, displayName, recentFileLastModified, bitmapString));
                 }
             }
         }
@@ -44,6 +52,7 @@ public class RecentFilesList extends LinkedList<RecentFile> implements List<Rece
             edit.putString("recentfile"+i, get(i).getFileString());
             edit.putLong("recentfile_lastModified"+i, get(i).getLastModified());
             edit.putString("recentfile_displayName"+i, get(i).getDisplayName());
+            edit.putString("recentfile_thumbnailString"+i, get(i).getThumbnailString());
         }
     }
 
@@ -56,10 +65,17 @@ public class RecentFilesList extends LinkedList<RecentFile> implements List<Rece
     @Override
     public void push(RecentFile recentFile) {
             //Make sure we don't put duplicates
-        while(remove(recentFile)) {};
+        PdfThumbnailManager pdfThumbnailManager = new PdfThumbnailManager(context);
+        int index = -1;
+        while((index=indexOf(recentFile))!=-1) {
+            Log.i("Pen&PDF", "removing duplicates");
+            pdfThumbnailManager.delete(super.remove(index).getThumbnailString());
+        };
             //Add
         super.addFirst(recentFile);
             //Remove elements until lenght is short enough
-        while (size() > MAX_RECENT_FILES) { removeLast(); }
+        while (size() > MAX_RECENT_FILES) {
+            pdfThumbnailManager.delete(removeLast().getThumbnailString());
+        }
     }
 }
