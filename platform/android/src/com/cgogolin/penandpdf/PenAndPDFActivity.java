@@ -23,6 +23,7 @@ import android.graphics.RectF;
 import android.graphics.Point;
 import android.graphics.drawable.TransitionDrawable;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.Matrix;
 import android.Manifest.permission;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -543,6 +544,9 @@ public static boolean isMediaDocument(Uri uri) {
             }
         }
         mIgnoreSaveOnStopThisTime = false;
+
+        if(mRenderThumbnailTask!=null)
+            mRenderThumbnailTask.cancel();
     }
     
     
@@ -1333,7 +1337,7 @@ public static boolean isMediaDocument(Uri uri) {
         invalidateOptionsMenu();
 
         final ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
-        LinearLayout entryScreenLayout = (LinearLayout)findViewById(R.id.entry_screen_layout);
+        final LinearLayout entryScreenLayout = (LinearLayout)findViewById(R.id.entry_screen_layout);
         entryScreenLayout.removeAllViews();
         entryScreenScrollView.scrollTo(0, 0);
         
@@ -1442,24 +1446,6 @@ public static boolean isMediaDocument(Uri uri) {
             TextView tv = (TextView)card.findViewById(R.id.title);
             tv.setText(recentFile.getDisplayName());
             
-            AsyncTask<RecentFile,Void,BitmapDrawable> setRecentFileThumbnailTask = new AsyncTask<RecentFile,Void,BitmapDrawable>() {
-                @Override
-                protected BitmapDrawable doInBackground(RecentFile... recentFile0) {
-                    RecentFile recentFile = recentFile0[0];
-                    PdfThumbnailManager pdfThumbnailManager = new PdfThumbnailManager(card.getContext());
-                    return pdfThumbnailManager.getDrawable(getResources(), recentFile.getThumbnailString());
-                }
-                @Override
-                protected void onPostExecute(BitmapDrawable drawable) {
-                    Log.i("Pen&PDF", "received drawable="+drawable);
-                    
-                    ImageView iv = (ImageView)card.findViewById(R.id.image);
-                    iv.setImageDrawable(drawable);
-                }
-            };   
-            setRecentFileThumbnailTask.execute(recentFile);
-            
-            
             card.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View view) {
@@ -1489,7 +1475,34 @@ public static boolean isMediaDocument(Uri uri) {
                         // hideDashboard();
                     }
                 });
-            entryScreenLayout.addView(card);
+
+            AsyncTask<RecentFile,Void,BitmapDrawable> setRecentFileThumbnailTask = new AsyncTask<RecentFile,Void,BitmapDrawable>() {
+                @Override
+                protected BitmapDrawable doInBackground(RecentFile... recentFile0) {
+                    RecentFile recentFile = recentFile0[0];
+                    PdfThumbnailManager pdfThumbnailManager = new PdfThumbnailManager(card.getContext());
+                    return pdfThumbnailManager.getDrawable(getResources(), recentFile.getThumbnailString());
+                }
+                @Override
+                protected void onPostExecute(BitmapDrawable drawable) {
+//                    Log.i("Pen&PDF", "received drawable="+drawable);
+                    ImageView imageView = (ImageView)card.findViewById(R.id.image);
+                    imageView.setImageDrawable(drawable);
+                    if(drawable!=null) 
+                    {
+                        final Matrix matrix = imageView.getImageMatrix();
+                        final float imageWidth = drawable.getIntrinsicWidth();
+                        final int screenWidth = entryScreenLayout.getWidth();
+                        final float scaleRatio = screenWidth / imageWidth;
+                        matrix.postScale(scaleRatio, scaleRatio);
+                        imageView.setImageMatrix(matrix);
+                    }
+
+                    entryScreenLayout.addView(card);
+                }
+            };
+            setRecentFileThumbnailTask.execute(recentFile);
+//            entryScreenLayout.addView(card);
         }
 	}
     
@@ -1792,7 +1805,7 @@ public static boolean isMediaDocument(Uri uri) {
                         display.getSize(size);
                         bmWidth = Math.min(size.x,size.y);
                     }
-                    bmHeight = (int)((float)bmWidth*0.25);
+                    bmHeight = (int)((float)bmWidth*0.5);
                     
                     recentFile.setThumbnailString(thumbnailManager.generate(bmWidth, bmHeight, cookie));
                     return recentFile;
