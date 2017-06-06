@@ -68,8 +68,11 @@ public class RecentFilesList extends LinkedList<RecentFile> implements List<Rece
         PdfThumbnailManager pdfThumbnailManager = new PdfThumbnailManager(context);
         int index = -1;
         while((index=indexOf(recentFile))!=-1) {
-            Log.i("Pen&PDF", "removing duplicates");
-            pdfThumbnailManager.delete(super.remove(index).getThumbnailString());
+            RecentFile recentFileToRemove = super.remove(index);
+            if(recentFile.getThumbnailString() == null)
+                recentFile.setThumbnailString(recentFileToRemove.getThumbnailString());
+            else
+                pdfThumbnailManager.delete(recentFileToRemove.getThumbnailString());
         };
             //Add
         super.addFirst(recentFile);
