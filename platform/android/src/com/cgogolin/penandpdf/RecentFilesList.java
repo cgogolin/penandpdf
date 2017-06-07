@@ -50,7 +50,7 @@ public class RecentFilesList extends LinkedList<RecentFile> implements List<Rece
         for (int i = 0; i<size(); i++)
         {
             edit.putString("recentfile"+i, get(i).getFileString());
-            edit.putLong("recentfile_lastModified"+i, get(i).getLastModified());
+            edit.putLong("recentfile_lastModified"+i, get(i).getLastOpened());
             edit.putString("recentfile_displayName"+i, get(i).getDisplayName());
             edit.putString("recentfile_thumbnailString"+i, get(i).getThumbnailString());
         }
@@ -64,6 +64,9 @@ public class RecentFilesList extends LinkedList<RecentFile> implements List<Rece
     
     @Override
     public void push(RecentFile recentFile) {
+
+        Log.i("Pen&PDF", "push() recent file "+recentFile.getDisplayName()+" with thunbnail "+recentFile.getThumbnailString());
+                    
             //Make sure we don't put duplicates
         PdfThumbnailManager pdfThumbnailManager = new PdfThumbnailManager(context);
         int index = -1;

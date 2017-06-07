@@ -4,7 +4,7 @@ import android.net.Uri;
 
 public class RecentFile extends Object {
     private String recentFileString;
-    private long lastModified;
+    private long lastOpened;
     private String displayName;
     private String bitmapString = null;
 
@@ -13,21 +13,25 @@ public class RecentFile extends Object {
         init(recentFileString, null, System.currentTimeMillis(), null);
     }
 
-    public RecentFile(String recentFileString, String displayName, long lastModified) {
-        init(recentFileString, displayName, lastModified, null);
+    public RecentFile(String recentFileString, String displayName) {
+        init(recentFileString, displayName, System.currentTimeMillis(), null);
     }
 
-    public RecentFile(String recentFileString, String displayName, long lastModified, String bitmapString) {
-        init(recentFileString, displayName, lastModified, bitmapString);
+    public RecentFile(String recentFileString, String displayName, long lastOpened) {
+        init(recentFileString, displayName, lastOpened, null);
+    }
+
+    public RecentFile(String recentFileString, String displayName, long lastOpened, String bitmapString) {
+        init(recentFileString, displayName, lastOpened, bitmapString);
     }
 
     public RecentFile(RecentFile recentFile) {
-        init(recentFile.getRecentFileString(), recentFile.getDisplayName(), recentFile.getLastModified(), recentFile.getThumbnailString());
+        init(recentFile.getRecentFileString(), recentFile.getDisplayName(), recentFile.getLastOpened(), recentFile.getThumbnailString());
     }
     
-    protected void init(String recentFileString, String displayName, long lastModified, String bitmapString) {
+    protected void init(String recentFileString, String displayName, long lastOpened, String bitmapString) {
         this.recentFileString = recentFileString;
-        this.lastModified = lastModified;
+        this.lastOpened = lastOpened;
         this.displayName = displayName;
         this.bitmapString = bitmapString;
     }
@@ -44,8 +48,8 @@ public class RecentFile extends Object {
         return recentFileString;
     }
 
-    public long getLastModified() {
-        return lastModified;
+    public long getLastOpened() {
+        return lastOpened;
     }
 
     public String getDisplayName() {

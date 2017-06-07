@@ -292,7 +292,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
                 }
                 else {
 //                    Log.i("PenAndPDFContentProvider", "adding uri to recent files list");
-                    includeForeignUri(result, recentFile.getUri(), recentFile.getLastModified());
+                    includeForeignUri(result, recentFile.getUri(), recentFile.getLastOpened());
                 }
                     
             }

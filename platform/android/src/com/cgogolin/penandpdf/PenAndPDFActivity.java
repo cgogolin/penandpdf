@@ -1780,7 +1780,7 @@ public static boolean isMediaDocument(Uri uri) {
             //Read the recent files list from preferences
         final RecentFilesList recentFilesList = new RecentFilesList(getApplicationContext(), prefs);                    
             //Add the current file
-        RecentFile recentFile = new RecentFile(uri.toString(), core.getFileName(), 0l);
+        RecentFile recentFile = new RecentFile(uri.toString(), core.getFileName());
         recentFilesList.push(recentFile);
         
             //Write the recent files list
@@ -1814,7 +1814,7 @@ public static boolean isMediaDocument(Uri uri) {
                     if(thunbnailString != null && !cookie.aborted())
                     {
                         recentFile.setThumbnailString(thunbnailString);
-                        recentFilesList.push(recentFile);//this replaces the previously pushed version
+//                        recentFilesList.push(recentFile);//this replaces the previously pushed version
                         recentFilesList.write(edit);
                         edit.apply();
                     }
@@ -1830,7 +1830,8 @@ public static boolean isMediaDocument(Uri uri) {
                                    //     edit.apply();
                                    // }
             };
-        mRenderThumbnailTask.execute(new RecentFile(recentFile));
+//        mRenderThumbnailTask.execute(new RecentFile(recentFile));
+        mRenderThumbnailTask.execute(recentFile);
     }
     
     
