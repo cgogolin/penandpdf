@@ -204,7 +204,7 @@ abstract public class MuPDFReaderView extends ReaderView {
         
             //Make text selectable by long press
         MuPDFPageView cv = (MuPDFPageView)getSelectedView();
-        if( (mMode == Mode.Viewing || mMode == Mode.Selecting) && cv != null && !cv.hitsLeftMarker(e.getX(),e.getY()) && !cv.hitsRightMarker(e.getX(),e.getY()) )
+        if( (mMode == Mode.Viewing || mMode == Mode.Selecting || mMode == Mode.Drawing) && cv != null && !cv.hitsLeftMarker(e.getX(),e.getY()) && !cv.hitsRightMarker(e.getX(),e.getY()) )
         {
             longPressStartEvent = e;
             longPressed = new Runnable() { 
@@ -225,7 +225,7 @@ abstract public class MuPDFReaderView extends ReaderView {
                                 //Strangely getY() doesn't return the correct coordinate relative to the view on my device so we have to compute them ourselves from the getRaw methods. I hope this works on multiwindow devices...
                             int[] locationOnScreen = new int[] {0,0};
                             getLocationOnScreen(locationOnScreen);
-                            
+                            cv.deselectAnnotation();
                             cv.deselectText();
                             cv.selectText(longPressStartEvent.getX(),longPressStartEvent.getRawY()-locationOnScreen[1],longPressStartEvent.getX()+1,longPressStartEvent.getRawY()+1-locationOnScreen[1]);
                             if(cv.hasTextSelected()) {
@@ -323,18 +323,18 @@ abstract public class MuPDFReaderView extends ReaderView {
                 longPressHandler.removeCallbacks(longPressed);
                 longPressStartEvent = null;
                 break;
-            case MotionEvent.ACTION_HOVER_ENTER:
-            case MotionEvent.ACTION_HOVER_EXIT:
-            case MotionEvent.ACTION_HOVER_MOVE:
-                    //If a stylus is hovering interup the long press handler to avoid swithcing to selectio mode
-                for(int pointerIndex = 0; pointerIndex < event.getPointerCount(); pointerIndex++) {
-                    if (event.getToolType(pointerIndex) == android.view.MotionEvent.TOOL_TYPE_STYLUS) {
-                        longPressHandler.removeCallbacks(longPressed);
-                        longPressStartEvent = null;
-                        break;
-                    }
-                }
-                break;
+            // case MotionEvent.ACTION_HOVER_ENTER:
+            // case MotionEvent.ACTION_HOVER_EXIT:
+            // case MotionEvent.ACTION_HOVER_MOVE:
+            //         //If a stylus is hovering interup the long press handler to avoid swithcing to selectio mode
+            //     for(int pointerIndex = 0; pointerIndex < event.getPointerCount(); pointerIndex++) {
+            //         if (event.getToolType(pointerIndex) == android.view.MotionEvent.TOOL_TYPE_STYLUS) {
+            //             longPressHandler.removeCallbacks(longPressed);
+            //             longPressStartEvent = null;
+            //             break;
+            //         }
+            //     }
+            //     break;
         }
         
             // Now we process events to be interpreted as drawing or ereasing or as events that start drawing
