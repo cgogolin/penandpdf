@@ -1809,10 +1809,11 @@ public static boolean isMediaDocument(Uri uri) {
                         bmWidth = Math.min(size.x,size.y);
                     }
                     bmHeight = (int)((float)bmWidth*0.5);
-                    
-                    recentFile.setThumbnailString(thumbnailManager.generate(bmWidth, bmHeight, cookie));
-                    if(!cookie.aborted())
+
+                    String thunbnailString = thumbnailManager.generate(bmWidth, bmHeight, cookie);
+                    if(thunbnailString != null && !cookie.aborted())
                     {
+                        recentFile.setThumbnailString(thunbnailString);
                         recentFilesList.push(recentFile);//this replaces the previously pushed version
                         recentFilesList.write(edit);
                         edit.apply();
