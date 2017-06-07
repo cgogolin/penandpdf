@@ -13,4 +13,5 @@
 	<color name="shadow">#55000000</color>
   	<color name="transparent">#00000000</color>
 	<color name="mist">#99FFFFFF</color>
+	<color name="white">#FFFFFFFF</color>
 </resources>

@@ -523,7 +523,7 @@ public static boolean isMediaDocument(Uri uri) {
         if (core != null)
         {
                 //Save the Viewport and update the recent files list
-            saveViewportAndRecentFiles(core.getUri());
+            saveViewport(core.getUri());
                 //Stop receiving alerts
             core.stopAlerts();
             destroyAlertWaiter();
@@ -545,8 +545,11 @@ public static boolean isMediaDocument(Uri uri) {
         }
         mIgnoreSaveOnStopThisTime = false;
 
-        if(mRenderThumbnailTask!=null)
+        if(mRenderThumbnailTask!=null) 
+        {
             mRenderThumbnailTask.cancel();
+            mRenderThumbnailTask = null;
+        }
     }
     
     
@@ -738,7 +741,7 @@ public static boolean isMediaDocument(Uri uri) {
         }
 
     @Override
-    public boolean onClose() {//???
+    public boolean onClose() {
         hideKeyboard();
         textOfLastSearch = "";
         searchView.setQuery("", false);
@@ -1049,9 +1052,10 @@ public static boolean isMediaDocument(Uri uri) {
                 core = null;
             }
             if (core != null) {
+                    /*There seems to be some bug in this that sometimes make the native code lock up. As it is not so important I am disabeling this for now*/
                     //Start receiving alerts
-                createAlertWaiter();
-                core.startAlerts();
+                // createAlertWaiter();
+                // core.startAlerts();
                 
                     //Make the core read the current preferences
                 SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
@@ -1788,8 +1792,7 @@ public static boolean isMediaDocument(Uri uri) {
             mRenderThumbnailTask.cancel();
 
         final PdfThumbnailManager thumbnailManager = new PdfThumbnailManager(this, core);
-        final MuPDFCore.Cookie cookie = core.new Cookie();        
-//        mRenderThumbnailTask = new AsyncTask<RecentFile,Null,RecentFile>(){
+        final MuPDFCore.Cookie cookie = core.new Cookie();
         mRenderThumbnailTask = new CancellableAsyncTask<RecentFile, RecentFile>(new MuPDFCancellableTaskDefinition<RecentFile,RecentFile>(core) 
             {
                 @Override
@@ -1808,33 +1811,50 @@ public static boolean isMediaDocument(Uri uri) {
                     bmHeight = (int)((float)bmWidth*0.5);
                     
                     recentFile.setThumbnailString(thumbnailManager.generate(bmWidth, bmHeight, cookie));
+                    if(!cookie.aborted())
+                    {
+                        recentFilesList.push(recentFile);//this replaces the previously pushed version
+                        recentFilesList.write(edit);
+                        edit.apply();
+                    }
+                    
                     return recentFile;
                 }
             }                                                                              )
                                {
-                                   @Override
-                                   protected void onPostExecute(final RecentFile recentFile) {                       
-                                       recentFilesList.push(recentFile);//this replaces the previously pushed version
-                                       recentFilesList.write(edit);
-                                       edit.apply();
-                                   }
+                                   // @Override
+                                   // protected void onPostExecute(final RecentFile recentFile) {                       
+                                   //     recentFilesList.push(recentFile);//this replaces the previously pushed version
+                                   //     recentFilesList.write(edit);
+                                   //     edit.apply();
+                                   // }
             };
         mRenderThumbnailTask.execute(new RecentFile(recentFile));
     }
     
     
     private void saveViewportAndRecentFiles(Uri uri) {
-        SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
-        SharedPreferences.Editor edit = prefs.edit();
         if(uri != null)
         {
+            SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+            SharedPreferences.Editor edit = prefs.edit();
             saveRecentFiles(prefs, edit, uri);
             saveViewport(edit, uri.toString());
+            edit.apply();
         }
-        else
-            saveViewport(edit, uri.toString());
-        edit.apply();
     }
+
+
+    private void saveViewport(Uri uri) {
+        if(uri != null)
+        {
+            SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
+            SharedPreferences.Editor edit = prefs.edit();
+            saveViewport(edit, uri.toString());
+            edit.apply();
+        }
+    }
+
     
     @Override
     public Object onRetainCustomNonConfigurationInstance() { //Called if the app is destroyed for a configuration change
@@ -2219,7 +2239,7 @@ public static boolean isMediaDocument(Uri uri) {
                     public void onAnimationEnd(Animator animation) {
                         if(mDocView != null) {
                             mDocView.setScale(1.0f);
-                            saveViewportAndRecentFiles(core.getUri()); //So that we show the right page when the mDocView is recreated
+                            saveViewport(core.getUri()); //So that we show the right page when the mDocView is recreated
                         }
                         mDocView = null;
                         setupDocView();

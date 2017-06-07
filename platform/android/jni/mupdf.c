@@ -3302,6 +3302,17 @@ JNI_FN(MuPDFCore_abortCookie)(JNIEnv * env, jobject thiz, jlong cookiePtr)
 		cookie->abort = 1;
 }
 
+JNIEXPORT jboolean JNICALL
+JNI_FN(MuPDFCore_cookieAborted)(JNIEnv * env, jobject thiz, jlong cookiePtr)
+{
+	fz_cookie *cookie = (fz_cookie *) (intptr_t) cookiePtr;
+	if (cookie == NULL || cookie->abort == 1)
+		return true;
+    else
+        return false;
+}
+
+
 static char *tmp_gproof_path(char *path)
 {
 	FILE *f;

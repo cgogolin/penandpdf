@@ -99,6 +99,7 @@ public class MuPDFCore
     private native long createCookie();
     private native void destroyCookie(long cookie);
     private native void abortCookie(long cookie);
+    private native boolean cookieAborted(long cookie);
 
     
     public synchronized native void setInkThickness(float inkThickness);
@@ -126,6 +127,11 @@ public class MuPDFCore
             {
                 Log.v("Core", "aborting cookie "+cookiePtr);
                 abortCookie(cookiePtr);
+            }
+
+        public boolean aborted()
+            {
+                return cookieAborted(cookiePtr);
             }
         
         public void destroy()
@@ -186,7 +192,7 @@ public class MuPDFCore
             if(file_format == null) throw new Exception(String.format(context.getString(R.string.cannot_interpret_file), fileName));
 		}
 
-    public synchronized int countPages()
+    public int countPages()
 		{
             if (numPages < 0 || !numPagesIsUpToDate )
             {
@@ -196,7 +202,7 @@ public class MuPDFCore
             return numPages;
 		}
 
-    public synchronized String fileFormat()
+    public String fileFormat()
 		{
             return file_format;
 		}
