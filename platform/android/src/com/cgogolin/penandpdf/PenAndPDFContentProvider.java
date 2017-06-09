@@ -169,9 +169,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
         Log.i("PenAndPDFContentProvider", "includeFile()       id="+documentId+" displayName="+displayName+" flags="+flags+ " length="+length+" lastModified="+lastModified);
     }
 
-    private void includeForeignUri(MatrixCursor result, Uri uri, long lastModified) {
-        return;//disable this as it doesn't work reliably
-        
+//     private void includeForeignUri(MatrixCursor result, Uri uri, long lastModified) {
 //         Cursor cursor = getContext().getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.DATE_MODIFIED, MediaStore.MediaColumns.SIZE, MediaStore.MediaColumns.MIME_TYPE, MediaStore.MediaColumns.TITLE}, null, null, null); //This should be done asynchonously!
 
 //         if (cursor == null)
@@ -215,7 +213,7 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
 //         row.add(Document.COLUMN_MIME_TYPE, mimeType);
 //         row.add(Document.COLUMN_LAST_MODIFIED, lastModified);
 //         row.add(Document.COLUMN_FLAGS, flags);
-    }
+//     }
     
     @Override
     public Cursor queryRoots(String[] projection) throws FileNotFoundException {
@@ -290,11 +288,10 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
 //                    Log.i("PenAndPDFContentProvider", "adding file to recent files list");
                     includeFile(result, null, file);                    
                 }
-                else {
-//                    Log.i("PenAndPDFContentProvider", "adding uri to recent files list");
-                    includeForeignUri(result, recentFile.getUri(), recentFile.getLastOpened());
-                }
-                    
+//                 else {
+// //                    Log.i("PenAndPDFContentProvider", "adding uri to recent files list");
+//                     includeForeignUri(result, recentFile.getUri(), recentFile.getLastOpened());
+//                 }                    
             }
         }
         
@@ -312,9 +309,9 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
         Log.i("PenAndPDFContentProvider", "queryDocument() with id "+documentId);
             // Create a cursor with the requested projection, or the default projection.
         final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
-        if(documentId.startsWith("content://"))
-            includeForeignUri(result, Uri.parse(documentId), 0l);
-        else
+        // if(documentId.startsWith("content://"))
+        //     includeForeignUri(result, Uri.parse(documentId), 0l);
+        // else
             includeFile(result, documentId, null);
         return result;
     }
