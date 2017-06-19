@@ -1349,19 +1349,19 @@ public static boolean isMediaDocument(Uri uri) {
         scrollUp.setInterpolator(new AccelerateDecelerateInterpolator());
         Animator scrollDown = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat("translationY", 0, entryScreenScrollView.getHeight()));
         scrollDown.setInterpolator(new AccelerateDecelerateInterpolator());
-        scrollDown.addListener(new Animator.AnimatorListener() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    // if(entryScreenScrollView.getChildCount() == 0)
-                    //     entryScreenScrollView.setVisibility(View.INVISIBLE);
-                }
-                @Override
-                public void onAnimationStart(Animator animation) {}
-                @Override
-                public void onAnimationCancel(Animator animation) {}
-                @Override
-                public void onAnimationRepeat(Animator animation) {}
-            });
+        // scrollDown.addListener(new Animator.AnimatorListener() {
+        //         @Override
+        //         public void onAnimationEnd(Animator animation) {
+        //             // if(entryScreenScrollView.getChildCount() == 0)
+        //             //     entryScreenScrollView.setVisibility(View.INVISIBLE);
+        //         }
+        //         @Override
+        //         public void onAnimationStart(Animator animation) {}
+        //         @Override
+        //         public void onAnimationCancel(Animator animation) {}
+        //         @Override
+        //         public void onAnimationRepeat(Animator animation) {}
+        //     });
 
         LayoutTransition layoutTransition;
         layoutTransition = new LayoutTransition();
@@ -1399,7 +1399,7 @@ public static boolean isMediaDocument(Uri uri) {
 					openDocument();
 				}
 			});
-        fixedcard.setElevation(elevation);
+        fixedcard.setCardElevation(elevation);
         entryScreenLayout.addView(fixedcard);
         
         fixedcard = (CardView)getLayoutInflater().inflate(R.layout.dashboard_card, entryScreenLayout, false);
@@ -1415,7 +1415,7 @@ public static boolean isMediaDocument(Uri uri) {
                     showOpenNewDocumentDialoge();
 				}
 			});
-        fixedcard.setElevation(elevation);
+        fixedcard.setCardElevation(elevation);
         entryScreenLayout.addView(fixedcard);
         
         fixedcard = (CardView)getLayoutInflater().inflate(R.layout.dashboard_card, entryScreenLayout, false);
@@ -1433,7 +1433,7 @@ public static boolean isMediaDocument(Uri uri) {
 					overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
 				}
 			});
-        fixedcard.setElevation(elevation);
+        fixedcard.setCardElevation(elevation);
         entryScreenLayout.addView(fixedcard);
         
         RecentFilesList recentFilesList = new RecentFilesList(getApplicationContext(), prefs);
@@ -1446,7 +1446,7 @@ public static boolean isMediaDocument(Uri uri) {
             final CardView card = (CardView)getLayoutInflater().inflate(R.layout.dashboard_card_recent_file, entryScreenLayout, false);
 
             elevation += elevationInc;
-            card.setElevation(elevation);
+            card.setCardElevation(elevation);
             TextView tv = (TextView)card.findViewById(R.id.title);
             tv.setText(recentFile.getDisplayName());
             
