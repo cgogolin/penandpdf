@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE resources [
+  <!ENTITY appname "Pen&amp;PDF">
+]>
 <resources>
-  <string name="app_name">Pen&amp;PDF</string>
+  <string name="app_name">&appname;</string>
   
   <string name="add_a_note">Add a note&#8230;</string>
   <string name="annotation_settings">Annotation settings</string>
@@ -86,8 +89,8 @@
   <string name="no_text_selected">No text selected</string>
   <string name="not_supported">Not supported</string>
   <string name="notes">Notes</string>
-  <string name="notes_provider_summary">Notes created with Pen&amp;PDF</string>
-  <string name="notes_provider_title">Pen&amp;PDF notes</string>
+  <string name="notes_provider_summary">Notes created with &appname;</string>
+  <string name="notes_provider_title">&appname; notes</string>
   <string name="okay">Okay</string>
   <string name="overwrite">Overwrite</string>
   <string name="overwrite_question">Overwrite?</string>
@@ -95,6 +98,7 @@
   <string name="print">Print</string>
   <string name="reason">Reason</string>
   <string name="recent">Recent</string>
+  <string name="recent_files_list_heading">Recent files that &appname; can open:</string>
   <string name="save">Save</string>
   <string name="save_on_destroy">Auto save when destroyed</string>
   <string name="save_on_destroy_summ">Automatically save current file when the app is finally destroyed.</string>
@@ -102,7 +106,7 @@
   <string name="save_on_stop_summ">Automatically save current file when the app is stopped and sent to the background. If this is disabled, changes can in principle get lost if Android kills this app while in the background, however, it is recommender to  leave this off.</string>
   <string name="save_question">Save?</string>
   <string name="saveas">Save as</string>
-  <string name="search_hint">Search a pdf with Pen&amp;PDF</string>
+  <string name="search_hint">Search a pdf with &appname;</string>
   <string name="searching_">Searching&#8230;</string>
   <string name="select_text">Select text first</string>
   <string name="settings_title">Settings</string>

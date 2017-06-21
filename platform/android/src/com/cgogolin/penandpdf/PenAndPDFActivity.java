@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.PropertyValuesHolder;
 import android.animation.ObjectAnimator;
 import android.animation.LayoutTransition;
+import android.app.ActivityManager;
 import android.view.animation.OvershootInterpolator;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.app.ActionBar;
@@ -1349,19 +1350,6 @@ public static boolean isMediaDocument(Uri uri) {
         scrollUp.setInterpolator(new AccelerateDecelerateInterpolator());
         Animator scrollDown = ObjectAnimator.ofPropertyValuesHolder((Object)null, PropertyValuesHolder.ofFloat("translationY", 0, entryScreenScrollView.getHeight()));
         scrollDown.setInterpolator(new AccelerateDecelerateInterpolator());
-        // scrollDown.addListener(new Animator.AnimatorListener() {
-        //         @Override
-        //         public void onAnimationEnd(Animator animation) {
-        //             // if(entryScreenScrollView.getChildCount() == 0)
-        //             //     entryScreenScrollView.setVisibility(View.INVISIBLE);
-        //         }
-        //         @Override
-        //         public void onAnimationStart(Animator animation) {}
-        //         @Override
-        //         public void onAnimationCancel(Animator animation) {}
-        //         @Override
-        //         public void onAnimationRepeat(Animator animation) {}
-        //     });
 
         LayoutTransition layoutTransition;
         layoutTransition = new LayoutTransition();
@@ -1370,7 +1358,7 @@ public static boolean isMediaDocument(Uri uri) {
         entryScreenLayout.setLayoutTransition(layoutTransition);
 
         entryScreenScrollView.setVisibility(View.VISIBLE);
-        if(mDocView != null)
+//        if(mDocView != null)
         {
             TransitionDrawable transition = (TransitionDrawable) entryScreenScrollView.getBackground();
             int animationTime = (int)entryScreenLayout.getLayoutTransition().getDuration(LayoutTransition.DISAPPEARING);
@@ -1435,12 +1423,20 @@ public static boolean isMediaDocument(Uri uri) {
 			});
         fixedcard.setCardElevation(elevation);
         entryScreenLayout.addView(fixedcard);
-        
+
+        boolean beforeFirstCard = true;
         RecentFilesList recentFilesList = new RecentFilesList(getApplicationContext(), prefs);
         for(final RecentFile recentFile: recentFilesList) {
             if (!PenAndPDFCore.canReadFromUri(this, recentFile.getUri()))
             {
                 continue;
+            }
+
+            if(beforeFirstCard)
+            {
+                final CardView recentFilesListHeading = (CardView)getLayoutInflater().inflate(R.layout.dashboard_recent_files_list_heading, entryScreenLayout, false);
+                entryScreenLayout.addView(recentFilesListHeading);
+                beforeFirstCard = false;
             }
             
             final CardView card = (CardView)getLayoutInflater().inflate(R.layout.dashboard_card_recent_file, entryScreenLayout, false);
@@ -1483,17 +1479,19 @@ public static boolean isMediaDocument(Uri uri) {
             AsyncTask<RecentFile,Void,BitmapDrawable> setRecentFileThumbnailTask = new AsyncTask<RecentFile,Void,BitmapDrawable>() {
                 @Override
                 protected BitmapDrawable doInBackground(RecentFile... recentFile0) {
+                    if(memoryLow())
+                        return null;
+                    
                     RecentFile recentFile = recentFile0[0];
                     PdfThumbnailManager pdfThumbnailManager = new PdfThumbnailManager(card.getContext());
                     return pdfThumbnailManager.getDrawable(getResources(), recentFile.getThumbnailString());
                 }
                 @Override
                 protected void onPostExecute(BitmapDrawable drawable) {
-//                    Log.i("Pen&PDF", "received drawable="+drawable);
-                    ImageView imageView = (ImageView)card.findViewById(R.id.image);
-                    imageView.setImageDrawable(drawable);
                     if(drawable!=null) 
                     {
+                        ImageView imageView = (ImageView)card.findViewById(R.id.image);
+                        imageView.setImageDrawable(drawable);
                         final Matrix matrix = imageView.getImageMatrix();
                         final float imageWidth = drawable.getIntrinsicWidth();
                         final int screenWidth = entryScreenLayout.getWidth();
@@ -2344,6 +2342,21 @@ public static boolean isMediaDocument(Uri uri) {
         float scale = getResources().getDisplayMetrics().density;
         int dpAsPixels = (int) (sizeInDp*scale + 0.5f);
         return dpAsPixels;
+    }
+
+    private boolean memoryLow() {
+        ActivityManager.MemoryInfo memoryInfo = getAvailableMemory();
+        if (memoryInfo.lowMemory)
+            return true;
+        else
+            return false;
+    }
+
+    private ActivityManager.MemoryInfo getAvailableMemory() {
+        ActivityManager activityManager = (ActivityManager) this.getSystemService(ACTIVITY_SERVICE);
+        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
+        activityManager.getMemoryInfo(memoryInfo);
+        return memoryInfo;
     }
 }
     

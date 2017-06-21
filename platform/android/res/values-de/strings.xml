@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE resources [
+  <!ENTITY appname "Pen&amp;PDF">
+]>
 <resources>
   <!--<string name="app_name">Pen&amp;PDF</string>-->
 
@@ -86,8 +89,8 @@
   <string name="no_text_selected">Kein Text ausgewählt</string>
   <string name="not_supported">Nicht unterstützt</string>
   <string name="notes">Notizen</string>
-  <string name="notes_provider_summary">Mit Pen&amp;PDF erstellte Notizen</string>
-  <string name="notes_provider_title">Pen&amp;PDF Notizen</string>
+  <string name="notes_provider_summary">Mit &appname; erstellte Notizen</string>
+  <string name="notes_provider_title">&appname; Notizen</string>
   <string name="okay">OK</string>
   <string name="overwrite">Überschreibe</string>
   <string name="overwrite_question">Überschreiben?</string>
@@ -95,6 +98,7 @@
   <string name="print">Drucken</string>
   <string name="reason">Grund</string>
   <string name="recent">Kürzlich</string>
+  <string name="recent_files_list_heading">Kürzlich verwendete Dateien die &appname; öffnen kann:</string>
   <string name="save">Speichern</string>
   <string name="save_on_destroy">Automatisch speichern wenn endgültig geschlossen</string>
   <string name="save_on_destroy_summ">Automatisch speichern wenn die App endgültig geschlossen wird.</string>
@@ -102,7 +106,7 @@
   <string name="save_on_stop_summ">Automatisch speichern wenn die App vorübergehend gestoppt wird und in den Hintergrund tritt. Ist dies deaktiviert können Änderungen im Prinzip verloren gehen wenn die App von Android ohne Vorwarnung geschlossen wird, es wird jedoch trotzdem geraten diese Funktion deaktiviert zu lassen.</string>
   <string name="save_question">Speichern?</string>
   <string name="saveas">Speichern als</string>
-  <string name="search_hint">PDF mit Pen&amp;PDF durchsuchen</string>
+  <string name="search_hint">PDF mit &appname; durchsuchen</string>
   <string name="searching_">Suche…</string>
   <string name="select_text">Text auswählen</string>
   <string name="settings_title">Einstellungen</string>

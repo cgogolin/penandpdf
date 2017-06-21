@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE resources [
+  <!ENTITY appname "Pen&amp;PDF">
+]>
 <resources>
-  <!--<string name="app_name">MuPDF</string>-->
+  <!--<string name="app_name">Pen&amp;PDF</string>-->
 
   <string name="add_a_note">Añadir anotación &#8230;</string>
   <string name="annotation_settings">Configuration de anotaciónes</string>
