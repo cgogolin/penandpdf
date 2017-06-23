@@ -1990,7 +1990,12 @@ public static boolean isMediaDocument(Uri uri) {
 				public void onClick(DialogInterface dialog, int which) {
 					if (which == AlertDialog.BUTTON_POSITIVE) {
 							// User clicked OK button
-						int pageNumber = Integer.parseInt(input.getText().toString());
+                        int pageNumber;
+                        try{
+                            pageNumber = Integer.parseInt(input.getText().toString());
+                        }catch(NumberFormatException e){
+                            pageNumber = 0;
+                        }
 						mDocView.setDisplayedViewIndex(pageNumber == 0 ? 0 : pageNumber -1 );
 						mDocView.setScale(1.0f);
 						mDocView.setNormalizedScroll(0.0f,0.0f);
