@@ -12,7 +12,7 @@ import android.util.Log;
 
 public class RecentFilesList extends LinkedList<RecentFile> implements List<RecentFile> { //Probably not the most appropriate list type...
 
-    static final int MAX_RECENT_FILES=20;
+    static final int MAX_RECENT_FILES=100;
 
     private Context context = null;
     
