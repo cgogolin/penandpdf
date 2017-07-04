@@ -634,57 +634,61 @@ public static boolean isMediaDocument(Uri uri) {
                         MenuItem undoButton = menu.findItem(R.id.menu_undo);
                         undoButton.setEnabled(false).setVisible(false);
                     }
-
+                    if(mDocView!=null)
                     {
                         MenuItem cancelButton = menu.findItem(R.id.menu_cancel);
                         View cancelButtonActionView = MenuItemCompat.getActionView(cancelButton);
                         ImageButton cancelImageButton = (ImageButton)cancelButtonActionView.findViewById(R.id.cancel_image_button);
                         final MuPDFView pageView = (MuPDFView) mDocView.getSelectedView();
-                        cancelImageButton.setOnClickListener(new OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    showInfo(getString(R.string.long_press_to_delete));
-                                }
-                            });
-                        cancelImageButton.setOnLongClickListener(new OnLongClickListener() {
-                                @Override
-                                public boolean onLongClick(View v) {
-                                    if (pageView != null) {
-                                        pageView.deselectText();
-                                        pageView.cancelDraw();
-                                    }
-                                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                                    return true;
-                                }
-                            });
-                    }
-                    
-                    if(mDocView.getMode() == MuPDFReaderView.Mode.Drawing)
-                    {
-                        MenuItem drawButton = menu.findItem(R.id.menu_draw);
-                        drawButton.setEnabled(false).setVisible(false);
-                    }
-                    else if(mDocView.getMode() == MuPDFReaderView.Mode.Erasing)
-                    {
-                        MenuItem eraseButton = menu.findItem(R.id.menu_erase);
-                        eraseButton.setEnabled(false).setVisible(false);
 
-                        MenuItem drawButton = menu.findItem(R.id.menu_draw);
-						View drawButtonActionView = MenuItemCompat.getActionView(drawButton);
-                        ImageButton drawImageButton = (ImageButton)drawButtonActionView.findViewById(R.id.draw_image_button);
-                        drawImageButton.setOnClickListener(new OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    mDocView.setMode(MuPDFReaderView.Mode.Drawing);
-                                }
-                            });
-                        drawImageButton.setOnLongClickListener(new OnLongClickListener() {
-                                @Override
-                                public boolean onLongClick(View v) {
-                                    showInfo("long click");
-                                    return true;
-                                }
-                            });
+                        if(pageView!=null)
+                        {
+                            cancelImageButton.setOnClickListener(new OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        showInfo(getString(R.string.long_press_to_delete));
+                                    }
+                                });
+                            cancelImageButton.setOnLongClickListener(new OnLongClickListener() {
+                                    @Override
+                                    public boolean onLongClick(View v) {
+                                        if (pageView != null) {
+                                            pageView.deselectText();
+                                            pageView.cancelDraw();
+                                        }
+                                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                                        return true;
+                                    }
+                                });
+                        }
+                    
+                        if(mDocView.getMode() == MuPDFReaderView.Mode.Drawing)
+                        {
+                            MenuItem drawButton = menu.findItem(R.id.menu_draw);
+                            drawButton.setEnabled(false).setVisible(false);
+                        }
+                        else if(mDocView.getMode() == MuPDFReaderView.Mode.Erasing)
+                        {
+                            MenuItem eraseButton = menu.findItem(R.id.menu_erase);
+                            eraseButton.setEnabled(false).setVisible(false);
+                            
+                            MenuItem drawButton = menu.findItem(R.id.menu_draw);
+                            View drawButtonActionView = MenuItemCompat.getActionView(drawButton);
+                            ImageButton drawImageButton = (ImageButton)drawButtonActionView.findViewById(R.id.draw_image_button);
+                            drawImageButton.setOnClickListener(new OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        mDocView.setMode(MuPDFReaderView.Mode.Drawing);
+                                    }
+                                });
+                            drawImageButton.setOnLongClickListener(new OnLongClickListener() {
+                                    @Override
+                                    public boolean onLongClick(View v) {
+                                        showInfo("long click");
+                                        return true;
+                                    }
+                                });
+                        }
                     }
                     break;
                 case Edit:
@@ -1427,6 +1431,12 @@ public static boolean isMediaDocument(Uri uri) {
         boolean beforeFirstCard = true;
         RecentFilesList recentFilesList = new RecentFilesList(getApplicationContext(), prefs);
         for(final RecentFile recentFile: recentFilesList) {
+
+            if (PenAndPDFCore.canReadFromUri(this, recentFile.getUri()))
+                Log.i(getString(R.string.app_name), "can read from "+recentFile.getUri());
+            else
+                Log.i(getString(R.string.app_name), "can not read from "+recentFile.getUri());
+            
             if (!PenAndPDFCore.canReadFromUri(this, recentFile.getUri()))
             {
                 continue;
@@ -1531,20 +1541,31 @@ public static boolean isMediaDocument(Uri uri) {
 	}
 
     
-    public void openNewDocument(String filename) throws java.io.IOException {		
+    public void openNewDocument(final String filename) throws java.io.IOException {		
         File dir = getNotesDir(this);
 		File file = new File(dir, filename);
-		Uri uri = Uri.fromFile(file);
+		final Uri uri = Uri.fromFile(file);
 		
 		PenAndPDFCore.createEmptyDocument(this, uri);
-		
-		getIntent().setAction(Intent.ACTION_VIEW);
-		getIntent().setData(uri);
-		if (core != null) {
-			core.onDestroy();
-			core = null;
-		}
-		onResume();//New core and new docview are setup here	
+
+        checkSaveThenCall(new Callable<Void>(){
+                public Void call() {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uri, getApplicationContext(), PenAndPDFActivity.class);
+                    intent.putExtra(Intent.EXTRA_TITLE, filename);
+                    intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                    startActivity(intent);
+                    overridePendingTransition(R.animator.fade_in, R.animator.fade_out);
+                    hideDashboard();
+                    finish();
+                    return null;
+                }});
+		// getIntent().setAction(Intent.ACTION_VIEW);
+		// getIntent().setData(uri);
+		// if (core != null) {
+		// 	core.onDestroy();
+		// 	core = null;
+		// }
+		// onResume();//New core and new docview are setup here	
 	}
 
     
@@ -1681,6 +1702,9 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
     private void showSaveAsActivity() {
+        if(core == null)
+            return;
+        
         if (android.os.Build.VERSION.SDK_INT < 19)
         {
             Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
@@ -2043,7 +2067,16 @@ public static boolean isMediaDocument(Uri uri) {
                         try
                         {
                             if(filename != "")
-                                openNewDocument(filename+".pdf");
+                            {
+                                filename+=".pdf";
+                                File dir = getNotesDir(mAlertDialog.getContext());
+                                File file = new File(dir, filename);
+
+                                if(file != null && file.isFile() && file.length() > 0)
+                                    showInfo(String.format(getString(R.string.file_alrady_exists), filename));
+                                else
+                                    openNewDocument(filename);
+                            }
                         }
                         catch(java.io.IOException e){
                             AlertDialog alert = mAlertBuilder.create();

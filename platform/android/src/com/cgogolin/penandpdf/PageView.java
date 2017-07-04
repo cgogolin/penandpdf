@@ -981,8 +981,9 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
         final float docRelX = (x - getLeft())/scale;
         final float docRelY = (y - getTop())/scale;
-
-        eraser.set(docRelX,docRelY);
+        
+        if(eraser!=null)
+            eraser.set(docRelX,docRelY);
         
         ArrayList<ArrayList<PointF>> newArcs = new ArrayList<ArrayList<PointF>>();
         if (mDrawing != null && mDrawing.size() > 0) {

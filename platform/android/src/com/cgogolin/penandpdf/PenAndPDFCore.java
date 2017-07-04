@@ -494,8 +494,13 @@ public class PenAndPDFCore extends MuPDFCore
             Log.i(context.getString(R.string.app_name), "exception while trying to figure out permissions: "+e);
             return false;
         }
-        // if(!haveReadPermissionToUri)
-        //     return false;
+        
+        if(!haveReadPermissionToUri && uri.toString().startsWith("file://") )
+        {
+            File file = new File(Uri.decode(uri.getEncodedPath()));
+            if(file.isFile() && file.isFile() && file.canRead())
+                haveReadPermissionToUri = true;
+        }
         return haveReadPermissionToUri;
 
 

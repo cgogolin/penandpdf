@@ -126,4 +126,5 @@
   <string name="use_stylus">Usar active stylus</string>
   <string name="use_stylus_summ">(Sólo para dispositivos con active stylus) Sólo el stylus puede escribir en modo de escritura libre y tocar la pantalla con él activa este modo.</string>
   <string name="yes">Sí</string>
+  <string name="file_alrady_exists">El archivo %1$s ya existe</string>
 </resources>
