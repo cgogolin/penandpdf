@@ -43,9 +43,15 @@ abstract public class MuPDFReaderView extends ReaderView {
     abstract protected void addTextAnnotFromUserInput(Annotation annot);
 
         //Gesture detector for long press
-    private final Handler longPressHandler = new Handler();
+    private final Handler longInputHandler = new Handler();
     private MotionEvent longPressStartEvent;
-    Runnable longPressed;
+    private Runnable longPressed;
+    private boolean recentStylusEvent = false;
+    private Runnable recentStylusEventUnset = new Runnable() {
+            public void run() {
+                recentStylusEvent = false;
+            }
+        };    
     
     public void setLinksEnabled(boolean b) {
         mLinksEnabled = b;
@@ -91,7 +97,7 @@ abstract public class MuPDFReaderView extends ReaderView {
         if (pageView == null ) return super.onSingleTapUp(e);
 
             //Stop the long tap handler
-        longPressHandler.removeCallbacks(longPressed);
+        longInputHandler.removeCallbacks(longPressed);
         longPressStartEvent = null;
         
         if (mMode == Mode.Viewing && !tapDisabled) {
@@ -239,9 +245,9 @@ abstract public class MuPDFReaderView extends ReaderView {
                     }   
                 };
             if(!mUseStylus)
-                longPressHandler.postDelayed(longPressed, android.view.ViewConfiguration.getLongPressTimeout());
+                longInputHandler.postDelayed(longPressed, android.view.ViewConfiguration.getLongPressTimeout());
             else
-                longPressHandler.postDelayed(longPressed, 2*android.view.ViewConfiguration.getLongPressTimeout()); //Use a longer timeout to interfere less with drawing
+                longInputHandler.postDelayed(longPressed, 2*android.view.ViewConfiguration.getLongPressTimeout()); //Use a longer timeout to interfere less with drawing
         }
         return super.onDown(e);
     }
@@ -256,7 +262,7 @@ abstract public class MuPDFReaderView extends ReaderView {
 
         if( longPressStartEvent != null && (Math.abs(longPressStartEvent.getX() - e1.getX()) > ViewConfiguration.get(mContext).getScaledTouchSlop() || Math.abs(longPressStartEvent.getY() - e1.getY()) > ViewConfiguration.get(mContext).getScaledTouchSlop()) ) 
         {
-            longPressHandler.removeCallbacks(longPressed);
+            longInputHandler.removeCallbacks(longPressed);
             longPressStartEvent = null;
         }
         
@@ -290,7 +296,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
                            float velocityY) {
 
-        longPressHandler.removeCallbacks(longPressed);
+        longInputHandler.removeCallbacks(longPressed);
         longPressStartEvent = null;
 
         if(maySwitchView()) 
@@ -299,11 +305,12 @@ abstract public class MuPDFReaderView extends ReaderView {
             return true;
     }
 
+    @Override
     public boolean onScaleBegin(ScaleGestureDetector d) {
-            // Disabled showing the buttons until next touch.
-            // Not sure why this is needed, but without it
-            // pinch zoom can make the buttons appear
-        longPressHandler.removeCallbacks(longPressed);
+        if(mUseStylus && recentStylusEvent)
+            return false;
+
+        longInputHandler.removeCallbacks(longPressed);
         longPressStartEvent = null;
         
         tapDisabled = true;
@@ -320,7 +327,7 @@ abstract public class MuPDFReaderView extends ReaderView {
                 scrollStartedAtLeftMarker = false;
                 scrollStartedAtRightMarker = false;
                 
-                longPressHandler.removeCallbacks(longPressed);
+                longInputHandler.removeCallbacks(longPressed);
                 longPressStartEvent = null;
                 break;
             // case MotionEvent.ACTION_HOVER_ENTER:
@@ -329,7 +336,7 @@ abstract public class MuPDFReaderView extends ReaderView {
             //         //If a stylus is hovering interup the long press handler to avoid swithcing to selectio mode
             //     for(int pointerIndex = 0; pointerIndex < event.getPointerCount(); pointerIndex++) {
             //         if (event.getToolType(pointerIndex) == android.view.MotionEvent.TOOL_TYPE_STYLUS) {
-            //             longPressHandler.removeCallbacks(longPressed);
+            //             longInputHandler.removeCallbacks(longPressed);
             //             longPressStartEvent = null;
             //             break;
             //         }
@@ -348,6 +355,8 @@ abstract public class MuPDFReaderView extends ReaderView {
             for(int pointerIndex = 0; pointerIndex < event.getPointerCount(); pointerIndex++) {
                 if (event.getToolType(pointerIndex) == android.view.MotionEvent.TOOL_TYPE_STYLUS) {
                     pointerIndexOfStylus = pointerIndex;
+                    recentStylusEvent = true;
+                    longInputHandler.postDelayed(recentStylusEventUnset, android.view.ViewConfiguration.getLongPressTimeout()); 
                     break; // We simply take the first stylus we find.
                 }
             }
