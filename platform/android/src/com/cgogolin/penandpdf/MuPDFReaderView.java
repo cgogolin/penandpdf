@@ -219,7 +219,7 @@ abstract public class MuPDFReaderView extends ReaderView {
                         if(cv==null || longPressStartEvent==null) return;
                         
                             //Process the long press event
-                        if(mMode == Mode.Drawing && mUseStylus)
+                        if(mMode == Mode.Drawing && mUseStylus && cv.getDrawingSize() == 1)
                         {
                             cv.undoDraw();
                             onNumberOfStrokesChanged(cv.getDrawingSize());
