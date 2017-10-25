@@ -26,6 +26,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.File;
 import java.io.ByteArrayOutputStream;
+import java.lang.OutOfMemoryError;
+
 import android.os.ParcelFileDescriptor;
 import android.content.pm.PackageManager;
 import android.content.Intent;
@@ -79,25 +81,32 @@ public class PenAndPDFCore extends MuPDFCore
                 }
                 if(is != null && is.available() > 0)
                 {
-                    int len = 0;
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream(8192);
-                    try {
-                        byte buffer[] = new byte[8192];
-                        int num = 0;
-                        while((num = is.read(buffer)) != -1) {
-                            len+=num;
-                            baos.write(buffer, 0, num);
-                        }
-                        Log.i(context.getString(R.string.app_name), "reached end of stream");
-                    }
-                    finally
+                    try
                     {
-                        is.close();
-                        if(pfd != null) pfd.close();
+                        int len = 0;
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream(8192);
+                        try {
+                            byte buffer[] = new byte[8192];
+                            int num = 0;
+                            while((num = is.read(buffer)) != -1) {
+                                len+=num;
+                                baos.write(buffer, 0, num);
+                            }
+                            Log.i(context.getString(R.string.app_name), "reached end of stream");
+                        }
+                        finally
+                        {
+                            is.close();
+                            if(pfd != null) pfd.close();
+                        }
+                        byte buffer[] = baos.toByteArray();
+                        Log.i(context.getString(R.string.app_name), "read "+len+" bytes into buffer "+buffer);
+                        super.init(context, buffer, displayName);
                     }
-                    byte buffer[] = baos.toByteArray();
-                    Log.i(context.getString(R.string.app_name), "read "+len+" bytes into buffer "+buffer);
-                    super.init(context, buffer, displayName);
+                    catch (OutOfMemoryError E)
+                    {
+                        throw new Exception("ran out of memory while opening "+uri.toString());
+                    }
                 }
                 else
                     throw new Exception("unable to open input stream to uri "+uri.toString());
@@ -115,14 +124,31 @@ public class PenAndPDFCore extends MuPDFCore
             String oldPath = getPath();
             String oldFileName = getFileName();
             boolean oldHasChanges = hasChanges();
-                //Write to tmpFile
-            if(tmpFile == null) {
+            
+                //If no tmpflie has been created or the file name has changed, creat a new tmpFile and, if appropriate, remeber the old tmpFile to delete it after the core has saved to the new location. 
+            File oldTmpFile = null;
+            if(tmpFile==null || !tmpFile.getName().equals(oldFileName) )
+            {
+                oldTmpFile = tmpFile;
                 File cacheDir = new File(context.getCacheDir(), "tmpfiles");
                 cacheDir.mkdirs();
                 tmpFile = new File(cacheDir, oldFileName);
             }
+            
+            // File oldTmpFile = tmpFile;
+            // // if(tmpFile == null)
+            // // {
+            // File cacheDir = new File(context.getCacheDir(), "tmpfiles");
+            // cacheDir.mkdirs();
+            // tmpFile = new File(cacheDir, oldFileName);
+            // // }
+            
             if(super.saveAs(tmpFile.getPath()) != 0)
                 throw new java.io.IOException("native code failed to save to tmp file: "+tmpFile.getPath());
+
+                //Delete old tmp file if we created a new one
+            if(oldTmpFile!=null)
+                oldTmpFile.delete();
             
                 //reinit because the MuPDFCore core gets useless after saveIntenal()
             init(context, Uri.fromFile(tmpFile)); 

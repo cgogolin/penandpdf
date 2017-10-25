@@ -5,9 +5,12 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.ArrayDeque;
 import java.util.LinkedList;
+import android.util.TypedValue;
 import java.lang.Thread;
 
 import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectStreamException;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -56,16 +59,18 @@ class PointFSerializable extends PointF implements Serializable
     public PointFSerializable(PointF pointF) {
         super(pointF.x, pointF.y);
     }
-    // private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-        
-    // }
-    // private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-    //     this.x = 
-    //         this.y =
-    // }
-    // private void readObjectNoData() throws ObjectStreamException {
-        
-    // }
+    private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+        out.writeFloat(x);
+        out.writeFloat(y);
+    }
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        float x = in.readFloat();
+        float y = in.readFloat();
+        set(x,y);
+    }
+    private void readObjectNoData() throws ObjectStreamException {
+        set(0f,0f);        
+    }
 }
 
 
@@ -995,7 +1000,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 boolean newArcHasBeenCreated = false;
                 if(iter.hasNext()) lastPoint = iter.next();
                     //Remove the first point if under eraser
-                if(PointFMath.distance(lastPoint,eraser) <= eraserThickness) iter.remove();
+                if(lastPoint!=null && eraser!=null && PointFMath.distance(lastPoint,eraser) <= eraserThickness) iter.remove();
                 while (iter.hasNext())
                 {
                     PointF point = iter.next();
@@ -1280,10 +1285,26 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         mSearchResult = searchTaskResult;
     }
     
-    public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key) {
+    public static void onSharedPreferenceChanged(SharedPreferences sharedPref, String key, Context context) {
             //Set ink thickness and colors for PageView
-        inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
-        eraserThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_ERASER_THICKNESS, Float.toString(eraserThickness)));
+        try{
+            inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(inkThickness)));
+        }
+        catch(NumberFormatException ex) {
+            TypedValue typedValue = new TypedValue();
+            context.getResources().getValue(R.dimen.ink_thickness_default, typedValue, true);
+            inkThickness = typedValue.getFloat();
+        }
+
+        try{
+            eraserThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_ERASER_THICKNESS, Float.toString(eraserThickness)).replaceAll("[^0-9.]",""));
+        }
+        catch(NumberFormatException ex) {
+            TypedValue typedValue = new TypedValue();
+            context.getResources().getValue(R.dimen.eraser_thickness_default, typedValue, true);
+            eraserThickness = typedValue.getFloat();
+        }
+            
         inkColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, Integer.toString(inkColor))));
         highlightColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, Integer.toString(highlightColor))));
         underlineColor = ColorPalette.getHex(Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, Integer.toString(underlineColor))));
@@ -1358,25 +1379,30 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             ArrayDeque<ArrayList<ArrayList<PointFSerializable>>> drawingHistorySerializable = (ArrayDeque<ArrayList<ArrayList<PointFSerializable>>>)bundle.getSerializable("mDrawingHistory");
             
             mDrawing = new ArrayList<ArrayList<PointF>>();
-            for(ArrayList<PointFSerializable> strokeSerializable : drawingSerializable) {
-                ArrayList<PointF> stroke = new ArrayList<PointF>();
-                for(PointFSerializable pointFSerializable : strokeSerializable) {
-                    stroke.add((PointF)pointFSerializable);
-                }
-                mDrawing.add(stroke);
-            }
-            mDrawingHistory = new ArrayDeque<ArrayList<ArrayList<PointF>>>();
-            for(ArrayList<ArrayList<PointFSerializable>> listSerializable : drawingHistorySerializable) {
-                ArrayList<ArrayList<PointF>> list = new ArrayList<ArrayList<PointF>>();
-                for(ArrayList<PointFSerializable> strokeSerializable : listSerializable) {
+            if(drawingSerializable!=null)
+                for(ArrayList<PointFSerializable> strokeSerializable : drawingSerializable) {
                     ArrayList<PointF> stroke = new ArrayList<PointF>();
-                    for(PointF pointFSerializable : strokeSerializable) {
-                        stroke.add((PointF)pointFSerializable);
-                    }
-                    list.add(stroke);
+                    if(strokeSerializable!=null)
+                        for(PointFSerializable pointFSerializable : strokeSerializable) {
+                            stroke.add((PointF)pointFSerializable);
+                        }
+                    mDrawing.add(stroke);
                 }
-                mDrawingHistory.add(list);
-            }            
+            mDrawingHistory = new ArrayDeque<ArrayList<ArrayList<PointF>>>();
+            if(drawingHistorySerializable!=null)
+                for(ArrayList<ArrayList<PointFSerializable>> listSerializable : drawingHistorySerializable) {
+                    ArrayList<ArrayList<PointF>> list = new ArrayList<ArrayList<PointF>>();
+                    if(listSerializable!=null)
+                        for(ArrayList<PointFSerializable> strokeSerializable : listSerializable) {
+                            ArrayList<PointF> stroke = new ArrayList<PointF>();
+                            if(listSerializable!=null)
+                                for(PointF pointFSerializable : strokeSerializable) {
+                                    stroke.add((PointF)pointFSerializable);
+                                }
+                            list.add(stroke);
+                        }
+                    mDrawingHistory.add(list);       
+                }
             
             inkThickness = bundle.getFloat("inkThickness");
             eraserThickness = bundle.getFloat("eraserThickness");

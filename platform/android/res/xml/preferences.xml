@@ -61,14 +61,14 @@
 	  android:summary="@string/ink_thickness_summ"
 	  android:numeric="decimal"
 	  android:digits="0123456789."
-	  android:defaultValue="1.3" />
+	  android:defaultValue="@dimen/ink_thickness_default" />
       <EditTextPreference
 	  android:key="pref_eraser_thickness"
 	  android:title="@string/eraser_thickness"
 	  android:summary="@string/eraser_thickness_summ"
 	  android:numeric="decimal"
 	  android:digits="0123456789."
-	  android:defaultValue="10.0" />
+	  android:defaultValue="@dimen/eraser_thickness_default" />
       <!--The following are populated in SettingsFragment.java-->
       <ListPreference
 	  android:key="pref_ink_color"

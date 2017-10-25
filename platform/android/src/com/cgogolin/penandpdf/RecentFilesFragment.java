@@ -220,7 +220,7 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
 
             //Update the data in the adapter
         mRecentFilesAdapter.clear();
-        mRecentFilesAdapter.addAll(recentFilesList.toArray(new String[recentFilesList.size()]));
+        mRecentFilesAdapter.addAll(recentFilesList.toStringArray());
         mRecentFilesAdapter.notifyDataSetChanged();
     }
 

@@ -789,12 +789,15 @@ public static boolean isMediaDocument(Uri uri) {
         {
             case R.id.menu_addpage:
                     //Insert a new blank page at the end
-                core.insertBlankPageAtEnd();
-                invalidateOptionsMenu();
-                    //Display the newly inserted page
-                mDocView.setDisplayedViewIndex(core.countPages()-1, true);
-                mDocView.setScale(1.0f);
-                mDocView.setNormalizedScroll(0.0f,0.0f);
+                if(core!=null && mDocView!=null)
+                {
+                    core.insertBlankPageAtEnd();
+                    invalidateOptionsMenu();
+                        //Display the newly inserted page
+                    mDocView.setDisplayedViewIndex(core.countPages()-1, true);
+                    mDocView.setScale(1.0f);
+                    mDocView.setNormalizedScroll(0.0f,0.0f);
+                }
                 return true;
             case R.id.menu_fullscreen:
                 enterFullscreen();
@@ -805,7 +808,8 @@ public static boolean isMediaDocument(Uri uri) {
 				overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
                 return true;
             case R.id.menu_draw:
-                mDocView.setMode(MuPDFReaderView.Mode.Drawing);
+                if(mDocView!=null)
+                    mDocView.setMode(MuPDFReaderView.Mode.Drawing);
                 return true;
             case R.id.menu_print:
                 printDoc();
@@ -1663,7 +1667,9 @@ public static boolean isMediaDocument(Uri uri) {
                 overridePendingTransition(R.animator.fade_in, R.animator.exit_to_left);
                 if (resultCode == RESULT_OK) {
                     final Uri uri = intent.getData();
-					File file = new File(getActualPath(this, uri));
+                    File file = null;
+                    if (uri!=null)
+                        file = new File(getActualPath(this, uri));
 					if(file != null && file.isFile() && file.length() > 0) //Warn if file already exists
                     {
                         DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
@@ -1687,7 +1693,7 @@ public static boolean isMediaDocument(Uri uri) {
                     }
                     else
                     {
-                        if(!saveAs(uri))
+                        if(uri == null || !saveAs(uri))
                             showInfo(getString(R.string.error_saveing));
                         else
 							setTitle();
@@ -1914,7 +1920,7 @@ public static boolean isMediaDocument(Uri uri) {
         
             //Also notify other classes and members of the preference change
         ReaderView.onSharedPreferenceChanged(sharedPref, key);
-        PageView.onSharedPreferenceChanged(sharedPref, key);
+        PageView.onSharedPreferenceChanged(sharedPref, key, this);
         if(core != null) core.onSharedPreferenceChanged(sharedPref, key);
     }    
 
@@ -1941,7 +1947,7 @@ public static boolean isMediaDocument(Uri uri) {
         Uri exportedUri = null;
         try
         {
-            exportedUri = core.export(this);            
+            exportedUri = core.export(this);    
         }
         catch(Exception e)
         {
@@ -1977,7 +1983,7 @@ public static boolean isMediaDocument(Uri uri) {
                             public void onClick(DialogInterface dialog, int which) {
                                     // if (core.authenticatePassword(mPasswordView.getText().toString())) {
                                     //     setupUI();
-                                if (!core.authenticatePassword(mPasswordView.getText().toString()))
+                                if (core==null || !core.authenticatePassword(mPasswordView.getText().toString()))
                                     requestPassword();
                                 
                             }

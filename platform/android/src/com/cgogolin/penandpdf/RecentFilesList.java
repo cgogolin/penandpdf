@@ -84,4 +84,13 @@ public class RecentFilesList extends LinkedList<RecentFile> implements List<Rece
             pdfThumbnailManager.delete(removeLast().getThumbnailString());
         }
     }
+
+    public String[] toStringArray() {
+        String[] array = new String[size()];
+        for (int i = 0; i<size(); i++)
+        {
+            array[i] = get(i).getFileString();
+        }
+        return array;
+    }
 }

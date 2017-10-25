@@ -148,7 +148,14 @@ abstract public class MuPDFReaderView extends ReaderView {
                                 //Clicked on an external link
                             Intent intent = new Intent(Intent.ACTION_VIEW, Uri
                                                        .parse(li.url));
-                            mContext.startActivity(intent);
+                            try
+                            {
+                                mContext.startActivity(intent);
+                            }
+                            catch(Exception e)
+                            {
+                                Toast.makeText(mContext, "Error opening link: "+e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
                         }
                         @Override
                         public void visitRemote(LinkInfoRemote li) {
