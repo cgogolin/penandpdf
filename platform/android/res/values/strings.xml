@@ -127,4 +127,6 @@
   <string name="use_stylus_summ">(Only for devices that have an active stylus) Only the stylus draws in free hand drawing mode and touching the screen with it automatically activates this mode.</string>
   <string name="yes">Yes</string>
   <string name="file_alrady_exists">File %1$s already exists</string>
+  <string name="number_recent_files">Recent files</string>
+  <string name="number_recent_files_summ">Number of recent files shown in menu</string>
 </resources>

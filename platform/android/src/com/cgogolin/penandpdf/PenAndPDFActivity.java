@@ -112,7 +112,8 @@ public class PenAndPDFActivity extends AppCompatActivity implements SharedPrefer
     private float mNormalizedScaleBeforeInternalLinkHit = 1.0f;
     private float mNormalizedXScrollBeforeInternalLinkHit = 0;
     private float mNormalizedYScrollBeforeInternalLinkHit = 0;
-
+    private int numberRecentFilesInMenu = 20;
+    
     private final int    OUTLINE_REQUEST=0;
     private final int    PRINT_REQUEST=1;
     private final int    FILEPICK_REQUEST = 2;
@@ -1441,18 +1442,19 @@ public static boolean isMediaDocument(Uri uri) {
         entryScreenLayout.addView(fixedcard);
 
         boolean beforeFirstCard = true;
+        int cardNumber = 0;
         RecentFilesList recentFilesList = new RecentFilesList(getApplicationContext(), prefs);
         for(final RecentFile recentFile: recentFilesList) {
-
-            if (PenAndPDFCore.canReadFromUri(this, recentFile.getUri()))
-                Log.i(getString(R.string.app_name), "can read from "+recentFile.getUri());
-            else
-                Log.i(getString(R.string.app_name), "can not read from "+recentFile.getUri());
+            cardNumber++;
+            if(cardNumber > numberRecentFilesInMenu) break;
+                
+            // if (PenAndPDFCore.canReadFromUri(this, recentFile.getUri()))
+            //     Log.i(getString(R.string.app_name), "can read from "+recentFile.getUri());
+            // else
+            //     Log.i(getString(R.string.app_name), "can not read from "+recentFile.getUri());
             
             if (!PenAndPDFCore.canReadFromUri(this, recentFile.getUri()))
-            {
                 continue;
-            }
 
             if(beforeFirstCard)
             {
@@ -1925,7 +1927,9 @@ public static boolean isMediaDocument(Uri uri) {
 
         mSaveOnStop = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).getBoolean(SettingsActivity.PREF_SAVE_ON_STOP, true);
         mSaveOnDestroy = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).getBoolean(SettingsActivity.PREF_SAVE_ON_DESTROY, true);
-        
+
+        numberRecentFilesInMenu = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).getInt(SettingsActivity.PREF_NUMBER_RECENT_FILES, 20);
+            
             //Also notify other classes and members of the preference change
         ReaderView.onSharedPreferenceChanged(sharedPref, key);
         PageView.onSharedPreferenceChanged(sharedPref, key, this);

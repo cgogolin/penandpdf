@@ -127,4 +127,6 @@
   <string name="use_stylus_summ">(Für Geräte mit Stifteingabe) Nur der Stift malt im freihand Modus und eine Berührung des Bildschirms mit dem Stift aktiviert diesen automatisch.</string>
   <string name="yes">Ja</string>
   <string name="file_alrady_exists">Datei %1$s existiert bereits</string>
+  <string name="number_recent_files">Zuletzt verwendete Dateien</string>
+  <string name="number_recent_files_summ">Zahl der zuletzt verwendeten Dateien im Menü</string>
 </resources>

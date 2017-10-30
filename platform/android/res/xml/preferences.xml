@@ -100,6 +100,13 @@
        android:summary="@string/textannoticon_color_summ"
        android:negativeButtonText=""
        android:defaultValue="10" />
+    <EditTextPreference
+       android:key="pref_number_recent_files"
+       android:title="@string/number_recent_files"
+       android:summary="@string/number_recent_files_summ"
+       android:numeric="integer"
+       android:digits="0123456789"
+       android:defaultValue="20" />
     <!--      <EditTextPreference
 	      android:key="pref_ink_color"
 	      android:title="@string/ink_color"

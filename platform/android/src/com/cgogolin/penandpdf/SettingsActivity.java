@@ -18,6 +18,8 @@ public class SettingsActivity extends android.support.v7.app.AppCompatActivity {
     final static String PREF_STRIKEOUT_COLOR = "pref_strikeout_color";
     final static String PREF_TEXTANNOTICON_COLOR = "pref_textannoticon_color";
     
+    final static String PREF_NUMBER_RECENT_FILES = "pref_number_recent_files";
+    
     final static String PREF_SAVE_ON_DESTROY = "pref_save_on_destroy";
     final static String PREF_SAVE_ON_STOP = "pref_save_on_stop";
     final static String PREF_SMART_TEXT_SELECTION = "pref_smart_text_selection";
