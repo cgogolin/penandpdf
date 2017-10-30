@@ -833,7 +833,7 @@ JNI_FN(MuPDFCore_drawPage)(JNIEnv *env, jobject thiz, jobject bitmap,
 			pc->page_list = fz_new_display_list(ctx);
 			dev = fz_new_list_device(ctx, pc->page_list);
 
-            LOGI("native draw_page() with cookie=%d", cookie);
+            LOGI("native draw_page() with cookie=%d", (int)cookie);
             if (cookie != NULL && !cookie->abort)
                 fz_run_page_contents(ctx, pc->page, dev, &fz_identity, cookie);
 			fz_drop_device(ctx, dev);

@@ -84,9 +84,9 @@ public class PenAndPDFCore extends MuPDFCore
                     try
                     {
                         int len = 0;
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream(8192);
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
                         try {
-                            byte buffer[] = new byte[8192];
+                            byte buffer[] = new byte[1024];
                             int num = 0;
                             while((num = is.read(buffer)) != -1) {
                                 len+=num;

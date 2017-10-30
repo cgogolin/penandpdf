@@ -97,7 +97,7 @@ public class PdfThumbnailManager
         File cacheDir = context.getCacheDir();
         File bitmapFile = new File(cacheDir, thumbnail);
 
-        Log.i("Pen&PDF", "getDrawable() for "+bitmapFile.getPath()+" and bitmapFile.isFile()="+bitmapFile.isFile()+" with length="+bitmapFile.length());
+//        Log.i("Pen&PDF", "getDrawable() for "+bitmapFile.getPath()+" and bitmapFile.isFile()="+bitmapFile.isFile()+" with length="+bitmapFile.length());
         
         if(bitmapFile != null && bitmapFile.isFile()) {
             return new BitmapDrawable(res, bitmapFile.getPath());

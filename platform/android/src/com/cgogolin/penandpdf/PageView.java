@@ -1339,22 +1339,25 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         if(mDrawing != null)
             for(ArrayList<PointF> stroke : mDrawing) {
                 ArrayList<PointFSerializable> strokeSerializable = new ArrayList<PointFSerializable>();
-                for(PointF pointF : stroke) {
-                    strokeSerializable.add(new PointFSerializable(pointF));
-                }
+                if(stroke!=null)
+                    for(PointF pointF : stroke) {
+                        strokeSerializable.add(new PointFSerializable(pointF));
+                    }
                 drawingSerializable.add(strokeSerializable);
             }
         ArrayDeque<ArrayList<ArrayList<PointFSerializable>>> drawingHistorySerializable = new ArrayDeque<ArrayList<ArrayList<PointFSerializable>>>();
         if(mDrawingHistory != null)
             for(ArrayList<ArrayList<PointF>> list : mDrawingHistory) {
                 ArrayList<ArrayList<PointFSerializable>> listSerializable = new ArrayList<ArrayList<PointFSerializable>>();
-                for(ArrayList<PointF> stroke : list) {
-                    ArrayList<PointFSerializable> strokeSerializable = new ArrayList<PointFSerializable>();
-                    for(PointF pointF : stroke) {
-                        strokeSerializable.add(new PointFSerializable(pointF));
+                if(list!=null)
+                    for(ArrayList<PointF> stroke : list) {
+                        ArrayList<PointFSerializable> strokeSerializable = new ArrayList<PointFSerializable>();
+                        if(stroke!=null)
+                            for(PointF pointF : stroke) {
+                                strokeSerializable.add(new PointFSerializable(pointF));
+                            }
+                        listSerializable.add(strokeSerializable);
                     }
-                    listSerializable.add(strokeSerializable);
-                }
                 drawingHistorySerializable.add(listSerializable);
             }
         

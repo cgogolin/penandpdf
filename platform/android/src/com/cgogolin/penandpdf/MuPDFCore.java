@@ -21,10 +21,19 @@ public class MuPDFCore
 {
     private static final float INK_THICKNESS=10f;
     private boolean mHasAdditionalChanges = false;
-    
+
+    private static boolean LIBRARY_LOADED=false;
 		/* load our native library */
     static {
-        System.loadLibrary("mupdf");
+        try
+        {
+            System.loadLibrary("mupdf");
+            LIBRARY_LOADED=true;
+        }
+        catch (UnsatisfiedLinkError e)
+        {
+            LIBRARY_LOADED=false;
+        }
     }
 
 	public static String cachDir;
@@ -147,6 +156,8 @@ public class MuPDFCore
     
     public MuPDFCore(Context context, String path) throws Exception
         {
+            if(!LIBRARY_LOADED)
+                throw new Exception("Unable to load native library");
             init(context, path);
         }
     
@@ -237,11 +248,11 @@ public class MuPDFCore
         replyToAlertInternal(new MuPDFAlertInternal(alert));
     }
 
-    public void stopAlerts() {
+    public synchronized void stopAlerts() {
         stopAlertsInternal();
     }
 
-    public void startAlerts() {
+    public synchronized void startAlerts() {
         startAlertsInternal();
     }
 
@@ -499,16 +510,36 @@ public class MuPDFCore
         float inkThickness = Float.parseFloat(sharedPref.getString(SettingsActivity.PREF_INK_THICKNESS, Float.toString(INK_THICKNESS)));
         setInkThickness(inkThickness*0.5f);
             //Set colors
-        int colorNumber;                    
-        colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, "0" ));
+        int colorNumber;
+        try {
+            colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_INK_COLOR, "0" ));
+        } catch(NumberFormatException ex) {
+            colorNumber = 0;
+        }
         setInkColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
-        colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, "0" ));
+        try {
+            colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_HIGHLIGHT_COLOR, "0" ));
+        } catch(NumberFormatException ex) {
+            colorNumber = 0;
+        }
         setHighlightColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
+        try {
         colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_UNDERLINE_COLOR, "0" ));
+        } catch(NumberFormatException ex) {
+            colorNumber = 0;
+        }
         setUnderlineColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
-        colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, "0" ));
+        try {
+            colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_STRIKEOUT_COLOR, "0" ));
+        } catch(NumberFormatException ex) {
+            colorNumber = 0;
+        }
         setStrikeoutColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
-        colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_TEXTANNOTICON_COLOR, "0" ));
+        try {
+            colorNumber = Integer.parseInt(sharedPref.getString(SettingsActivity.PREF_TEXTANNOTICON_COLOR, "0" ));
+        } catch(NumberFormatException ex) {
+            colorNumber = 0;
+        }
         setTextAnnotIconColor(ColorPalette.getR(colorNumber), ColorPalette.getG(colorNumber), ColorPalette.getB(colorNumber));
     }
 

@@ -172,10 +172,17 @@ public static String getActualPath(final Context context, final Uri uri) {
         // DownloadsProvider
         else if (isDownloadsDocument(uri)) {
             final String id = DocumentsContract.getDocumentId(uri);
-            final Uri contentUri = ContentUris.withAppendedId(
-                    Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
-
-            return getDataColumn(context, contentUri, null, null);
+            try
+            {
+                final Long idl = Long.valueOf(id);
+                final Uri contentUri = ContentUris.withAppendedId(
+                    Uri.parse("content://downloads/public_downloads"), idl);
+                
+                return getDataColumn(context, contentUri, null, null);
+            }
+            catch(NumberFormatException ex) {
+                    //Nothing we can do, just keep trying the other options
+            }
         }
         // MediaProvider
         else if (isMediaDocument(uri)) {
@@ -884,7 +891,8 @@ public static boolean isMediaDocument(Uri uri) {
                 showGoToPageDialoge();
                 return true;
             case R.id.menu_linkback:
-                setViewport(mPageBeforeInternalLinkHit,mNormalizedScaleBeforeInternalLinkHit, mNormalizedXScrollBeforeInternalLinkHit, mNormalizedYScrollBeforeInternalLinkHit);
+                if(mPageBeforeInternalLinkHit>=0)
+                    setViewport(mPageBeforeInternalLinkHit,mNormalizedScaleBeforeInternalLinkHit, mNormalizedXScrollBeforeInternalLinkHit, mNormalizedYScrollBeforeInternalLinkHit);
                 mPageBeforeInternalLinkHit = -1;
                 invalidateOptionsMenu();
                 return true;
@@ -1631,8 +1639,8 @@ public static boolean isMediaDocument(Uri uri) {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        if(intent!=null)
-            Log.i(getString(R.string.app_name), "onActivityResult() flags="+intent.getFlags()+" and write flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == Intent.FLAG_GRANT_WRITE_URI_PERMISSION)+" and read flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION) == Intent.FLAG_GRANT_READ_URI_PERMISSION));
+        // if(intent!=null)
+        //     Log.i(getString(R.string.app_name), "onActivityResult() flags="+intent.getFlags()+" and write flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == Intent.FLAG_GRANT_WRITE_URI_PERMISSION)+" and read flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION) == Intent.FLAG_GRANT_READ_URI_PERMISSION));
         
         switch (requestCode) {
             case EDIT_REQUEST:
@@ -1656,7 +1664,7 @@ public static boolean isMediaDocument(Uri uri) {
                 }
                 break;
             case OUTLINE_REQUEST:
-                if (resultCode >= 0)
+                if (resultCode >= 0 && mDocView!=null)
                     mDocView.setDisplayedViewIndex(resultCode);
                 break;
             case PRINT_REQUEST:
