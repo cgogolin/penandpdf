@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <item name="ink_thickness_default" type="dimen" format="float">1.3</item>
+  <item name="eraser_thickness_default" type="dimen" format="float">10.0</item>
+</resources>
