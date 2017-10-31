@@ -4,7 +4,7 @@
 ]>
 <resources>
   <string name="app_name">&appname;</string>
-  
+  <string name="number_recent_files_default">20</string>
   <string name="add_a_note">Add a note&#8230;</string>
   <string name="annotation_settings">Annotation settings</string>
   <string name="autosave_settings">Auto save</string>

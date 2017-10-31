@@ -83,6 +83,7 @@ import java.io.FileOutputStream;
 import java.lang.reflect.Field;
 import java.lang.Runtime;
 import java.lang.Math;
+import java.lang.Integer;
 import java.util.ArrayList;
 import java.util.concurrent.Executor;
 import java.util.Set;
@@ -1928,7 +1929,13 @@ public static boolean isMediaDocument(Uri uri) {
         mSaveOnStop = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).getBoolean(SettingsActivity.PREF_SAVE_ON_STOP, true);
         mSaveOnDestroy = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).getBoolean(SettingsActivity.PREF_SAVE_ON_DESTROY, true);
 
-        numberRecentFilesInMenu = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).getInt(SettingsActivity.PREF_NUMBER_RECENT_FILES, 20);
+        try{
+            numberRecentFilesInMenu = Integer.parseInt(getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).getString(SettingsActivity.PREF_NUMBER_RECENT_FILES, "20"));
+        }
+        catch(NumberFormatException ex) {
+            numberRecentFilesInMenu = Integer.parseInt(getResources().getString(R.string.number_recent_files_default));
+        }
+        
             
             //Also notify other classes and members of the preference change
         ReaderView.onSharedPreferenceChanged(sharedPref, key);
@@ -2309,12 +2316,12 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
     public static File getNotesDir(Context contex) {
+        File notesDir = new File(Environment.getExternalStorageDirectory(), "PenAndPDFNotes");
+        notesDir.mkdirs();
+        
+            //Migrate old notes
         try
         {
-            File notesDir = new File(Environment.getExternalStorageDirectory(), "PenAndPDFNotes");
-            notesDir.mkdirs();
-            
-                //Migrate old notes
             File oldNotesDir = contex.getDir("notes", Context.MODE_WORLD_READABLE);
             File[] listOfFiles = oldNotesDir.listFiles();
             if(listOfFiles != null && listOfFiles.length > 0)
@@ -2337,15 +2344,15 @@ public static boolean isMediaDocument(Uri uri) {
                     }
                 }
             }
-            
-            return notesDir;
         }
         catch (Exception e)
         {
-            return null;
+                //Nothing we could do
         }
+        
+        return notesDir;
     }
-
+    
     public ArrayList<TemporaryUriPermission> getTemporaryUriPermissions() {
         return temporaryUriPermissions;
     }

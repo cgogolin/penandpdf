@@ -106,7 +106,7 @@
        android:summary="@string/number_recent_files_summ"
        android:numeric="integer"
        android:digits="0123456789"
-       android:defaultValue="20" />
+       android:defaultValue="@string/number_recent_files_default" />
     <!--      <EditTextPreference
 	      android:key="pref_ink_color"
 	      android:title="@string/ink_color"
