@@ -70,6 +70,7 @@ import android.widget.RelativeLayout;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Toast;
@@ -1824,11 +1825,12 @@ public static boolean isMediaDocument(Uri uri) {
 
     private void saveAsInBackground(final Uri uri, final Callable success, final Callable failure) {
         final AlertDialog waitWhileSavingDialog = mAlertBuilder.create();
-//        final ProgressDialog waitWhileSavingDialog = new ProgressDialog(this);
-//        waitWhileSavingDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         waitWhileSavingDialog.setTitle(getString(R.string.saving));
         waitWhileSavingDialog.setCancelable(false);
         waitWhileSavingDialog.setCanceledOnTouchOutside(false);
+        final ProgressBar busyIndicator = new ProgressBar(this);
+        busyIndicator.setIndeterminate(true);
+        waitWhileSavingDialog.setView(busyIndicator);
 
         mSaveAsTask = new AsyncTask<Uri,Void,Boolean>() {
                 @Override
@@ -1845,9 +1847,13 @@ public static boolean isMediaDocument(Uri uri) {
                 protected void onPostExecute(Boolean result) {
                     waitWhileSavingDialog.dismiss();
                     if(result)
-                        if(success!=null) try{success.call();}catch(Exception e){} //Exceptions should be propertly handled! But how? I cannot pass them on because I can not declare that onPostExecute throws an exception?!
+                        if(success!=null) try{success.call();}catch(Exception e){
+                                showInfo(getString(R.string.error_saveing)+": "+e);
+                            }
                     else
-                        if(failure!=null) try{failure.call();}catch(Exception e){}
+                        if(failure!=null) try{failure.call();}catch(Exception e){
+                                showInfo(getString(R.string.error_saveing)+": "+e);
+                            }
                 }
             };
         mSaveAsTask.execute(uri);
@@ -1875,17 +1881,35 @@ public static boolean isMediaDocument(Uri uri) {
     }
     
     private void saveInBackground(final Callable success, final Callable failure) {
+        final AlertDialog waitWhileSavingDialog = mAlertBuilder.create();
+        waitWhileSavingDialog.setTitle(getString(R.string.saving));
+        waitWhileSavingDialog.setCancelable(false);
+        waitWhileSavingDialog.setCanceledOnTouchOutside(false);
+        final ProgressBar busyIndicator = new ProgressBar(this);
+        busyIndicator.setIndeterminate(true);
+        waitWhileSavingDialog.setView(busyIndicator);
+        
         mSaveTask = new AsyncTask<Void,Void,Boolean>() {
                 @Override
+                protected void onPreExecute() {
+                    waitWhileSavingDialog.show();
+                }
+                @Override
                 protected Boolean doInBackground(Void... v0) {
+                    try{Thread.sleep(2000);}catch(Exception e){}//ONLY FOR DEBUGGING REMOVE THIS!
                     return save();
                 }
                 @Override
                 protected void onPostExecute(Boolean result) {
+                    waitWhileSavingDialog.dismiss();
                     if(result)
-                        if(success!=null) try{success.call();}catch(Exception e){} //Exceptions should be propertly handled! But how? I cannot pass them on because I can not declare that onPostExecute throws an exception?!
+                        if(success!=null) try{success.call();}catch(Exception e){
+                                showInfo(getString(R.string.error_saveing)+": "+e);
+                            }
                     else
-                        if(failure!=null) try{failure.call();}catch(Exception e){}
+                        if(failure!=null) try{failure.call();}catch(Exception e){
+                                showInfo(getString(R.string.error_saveing)+": "+e);
+                            }
                 }
             };
         mSaveTask.execute();
