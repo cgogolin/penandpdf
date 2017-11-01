@@ -106,6 +106,7 @@
   <string name="save_on_stop_summ">Guardar automáticamente el fichero actual al parar la aplicación y enviarla a background. Si se desactiva, los cambios pueden perderse si Android cierra la aplicación mientras está en background, sin embargo, se recomienda dejar esta opción desactivada.</string>
   <string name="save_question">¿Guardar?</string>
   <string name="saveas">Guardar como</string>
+  <string name="saving">Guardando&#8230;</string>
   <string name="search_hint">Buscar un pdf con &appname;</string>
   <string name="searching_">Buscando&#8230;</string>
   <string name="select_text">Seccionar primero el texto</string>

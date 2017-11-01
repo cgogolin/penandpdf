@@ -106,6 +106,7 @@
   <string name="save_on_stop_summ">Automatically save current file when the app is stopped and sent to the background. If this is disabled, changes can in principle get lost if Android kills this app while in the background, however, it is recommender to  leave this off.</string>
   <string name="save_question">Save?</string>
   <string name="saveas">Save as</string>
+  <string name="saving">Saving&#8230;</string>
   <string name="search_hint">Search a pdf with &appname;</string>
   <string name="searching_">Searching&#8230;</string>
   <string name="select_text">Select text first</string>

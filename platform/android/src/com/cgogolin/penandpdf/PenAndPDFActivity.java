@@ -139,7 +139,10 @@ public class PenAndPDFActivity extends AppCompatActivity implements SharedPrefer
     private CancellableAsyncTask<RecentFile, RecentFile> mRenderThumbnailTask = null;
     private AlertDialog mAlertDialog;
     private FilePicker mFilePicker;
-
+    
+    private AsyncTask<Uri,Void,Boolean> mSaveAsTask;
+    private AsyncTask<Void,Void,Boolean> mSaveTask;
+    
     private ArrayList<TemporaryUriPermission> temporaryUriPermissions = new ArrayList<TemporaryUriPermission>();
 
     private boolean mDashboardIsShown = false;
@@ -549,8 +552,15 @@ public static boolean isMediaDocument(Uri uri) {
         {
 			if(mSaveOnStop && !mIgnoreSaveOnStopThisTime && core.canSaveToCurrentUri(this))
             {
-                if(!save())
-                    showInfo(getString(R.string.error_saveing));
+                saveInBackground(null,
+                                 new Callable<Void>() {
+                                     @Override
+                                     public Void call() {
+                                         showInfo(getString(R.string.error_saveing));
+                                         return null;
+                                     }
+                                 }
+                                 );
             }
         }
         mIgnoreSaveOnStopThisTime = false;
@@ -573,13 +583,31 @@ public static boolean isMediaDocument(Uri uri) {
 			SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
 			if(mSaveOnDestroy && !mIgnoreSaveOnDestroyThisTime && core.canSaveToCurrentUri(this))
 			{
-				if(!save())
-					showInfo(getString(R.string.error_saveing));
-			}
-			if(core!=null)
-			{
-				core.onDestroy(); //Destroy even if not saved as we have no choice
-				core = null;
+                saveInBackground(
+                    new Callable() {
+                        @Override
+                        public Void call() {
+                            if(core!=null)
+                            {
+                                core.onDestroy();
+                                core = null;
+                            }
+                            return null;
+                        }
+                    },
+                    new Callable<Void>() {
+                        @Override
+                        public Void call() {
+                            showInfo(getString(R.string.error_saveing));
+                            if(core!=null)
+                            {
+                                core.onDestroy(); //Destroy even if not saved as we have no choice
+                                core = null;
+                            }
+                            return null;
+                        }
+                    }
+                                 );
 			}
 		}
         mIgnoreSaveOnDestroyThisTime = false;
@@ -865,12 +893,22 @@ public static boolean isMediaDocument(Uri uri) {
                             if (which == AlertDialog.BUTTON_POSITIVE) {
                                 if(core != null)
                                 {
-                                    if(!save())
-                                        showInfo(getString(R.string.error_saveing));
-                                    else
-                                    {
-										setTitle();
-                                    }
+                                    saveInBackground(
+                                        new Callable<Void>() {
+                                            @Override
+                                            public Void call() {
+                                                setTitle();
+                                                return null;
+                                            }
+                                        },
+                                        new Callable<Void>() {
+                                            @Override
+                                            public Void call() {
+                                                showInfo(getString(R.string.error_saveing));
+                                                return null;
+                                            }
+                                        }
+                                                     );
                                 }
                             }
                             if (which == AlertDialog.BUTTON_NEUTRAL) {
@@ -1601,12 +1639,19 @@ public static boolean isMediaDocument(Uri uri) {
 						if (which == AlertDialog.BUTTON_POSITIVE) {
 							if(core.canSaveToCurrentUri(activity))
 							{
-								if(!save())
-									showInfo(getString(R.string.error_saveing));
-                                else
-//                                    showOpenDocumentDialog();
-                                    try{callable.call();}catch(Exception e){}
-                                
+                                saveInBackground(callable,
+                                                 new Callable<Void>() {
+                                                     @Override
+                                                     public Void call() {
+                                                         showInfo(getString(R.string.error_saveing));
+                                                         return null;
+                                                     }
+                                                 }
+                                                 );
+								// if(!save())
+								// 	showInfo(getString(R.string.error_saveing));
+                                // else
+                                //     try{callable.call();}catch(Exception e){}                                
 							}
 							else
 							{
@@ -1686,10 +1731,22 @@ public static boolean isMediaDocument(Uri uri) {
                         DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
                                     if (which == AlertDialog.BUTTON_POSITIVE) {
-                                        if(!saveAs(uri))
-                                            showInfo(getString(R.string.error_saveing));
-                                        else
-											setTitle();
+                                        saveAsInBackground(uri,
+                                                           new Callable<Void>() {
+                                                               @Override
+                                                               public Void call() {
+                                                                   setTitle();
+                                                                   return null;
+                                                               }
+                                                           },
+                                                           new Callable<Void>() {
+                                                               @Override
+                                                               public Void call() {
+                                                                   showInfo(getString(R.string.error_saveing));
+                                                                   return null;
+                                                               }
+                                                           }
+                                                           );
                                     }
                                     if (which == AlertDialog.BUTTON_NEGATIVE) {
                                     }
@@ -1704,10 +1761,28 @@ public static boolean isMediaDocument(Uri uri) {
                     }
                     else
                     {
-                        if(uri == null || !saveAs(uri))
+                        if(uri == null)
                             showInfo(getString(R.string.error_saveing));
                         else
-							setTitle();
+                        {
+                            saveAsInBackground(uri,
+                                               new Callable<Void>() {
+                                                   @Override
+                                                   public Void call() {
+                                                       setTitle();
+                                                       return null;
+                                                   }
+                                               },
+                                               new Callable<Void>() {
+                                                   @Override
+                                                   public Void call() {
+                                                       showInfo(getString(R.string.error_saveing));
+                                                       return null;
+                                                   }
+                                               }
+                                               );
+                            
+                        }
                     }
                 }
                 // else if (resultCode == RESULT_CANCELED)
@@ -1746,7 +1821,39 @@ public static boolean isMediaDocument(Uri uri) {
         }
     }
 
-    private boolean saveAs(Uri uri) {
+
+    private void saveAsInBackground(final Uri uri, final Callable success, final Callable failure) {
+        final AlertDialog waitWhileSavingDialog = mAlertBuilder.create();
+//        final ProgressDialog waitWhileSavingDialog = new ProgressDialog(this);
+//        waitWhileSavingDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        waitWhileSavingDialog.setTitle(getString(R.string.saving));
+        waitWhileSavingDialog.setCancelable(false);
+        waitWhileSavingDialog.setCanceledOnTouchOutside(false);
+
+        mSaveAsTask = new AsyncTask<Uri,Void,Boolean>() {
+                @Override
+                protected void onPreExecute() {
+                    waitWhileSavingDialog.show();
+                }
+                @Override
+                protected Boolean doInBackground(Uri... uri0) {
+                    Uri uri = uri0[0];
+                    try{Thread.sleep(2000);}catch(Exception e){}//ONLY FOR DEBUGGING REMOVE THIS!
+                    return saveAs(uri);
+                }
+                @Override
+                protected void onPostExecute(Boolean result) {
+                    waitWhileSavingDialog.dismiss();
+                    if(result)
+                        if(success!=null) try{success.call();}catch(Exception e){} //Exceptions should be propertly handled! But how? I cannot pass them on because I can not declare that onPostExecute throws an exception?!
+                    else
+                        if(failure!=null) try{failure.call();}catch(Exception e){}
+                }
+            };
+        mSaveAsTask.execute(uri);
+    }
+    
+    private synchronized boolean saveAs(Uri uri) {
         if (core == null) return false;
         try
         {
@@ -1767,7 +1874,24 @@ public static boolean isMediaDocument(Uri uri) {
         return true;
     }
     
-    private boolean save() {
+    private void saveInBackground(final Callable success, final Callable failure) {
+        mSaveTask = new AsyncTask<Void,Void,Boolean>() {
+                @Override
+                protected Boolean doInBackground(Void... v0) {
+                    return save();
+                }
+                @Override
+                protected void onPostExecute(Boolean result) {
+                    if(result)
+                        if(success!=null) try{success.call();}catch(Exception e){} //Exceptions should be propertly handled! But how? I cannot pass them on because I can not declare that onPostExecute throws an exception?!
+                    else
+                        if(failure!=null) try{failure.call();}catch(Exception e){}
+                }
+            };
+        mSaveTask.execute();
+    }
+
+    private synchronized boolean save() {
         if (core == null) return false;
         try
         {   
@@ -2184,14 +2308,32 @@ public static boolean isMediaDocument(Uri uri) {
                         if (which == AlertDialog.BUTTON_POSITIVE) {
                             if(core.canSaveToCurrentUri(PenAndPDFActivity.this))
                             {
-                                if(!save())
-                                    showInfo(getString(R.string.error_saveing));
-                                else 
-                                {
-                                    mIgnoreSaveOnStopThisTime = true;//No need to save twice
-                                    mIgnoreSaveOnDestroyThisTime = true;//No need to save twice
-                                    finish();
-                                }
+                                saveInBackground(
+                                    new Callable<Void>() {
+                                        @Override
+                                        public Void call() {
+                                            mIgnoreSaveOnStopThisTime = true;//No need to save twice
+                                            mIgnoreSaveOnDestroyThisTime = true;//No need to save twice
+                                            finish();
+                                            return null;
+                                        }
+                                    },
+                                    new Callable<Void>() {
+                                        @Override
+                                        public Void call() {
+                                            showInfo(getString(R.string.error_saveing));
+                                            return null;
+                                        }
+                                    }
+                                                 );                                
+                                // if(!save())
+                                //     showInfo(getString(R.string.error_saveing));
+                                // else 
+                                // {
+                                //     mIgnoreSaveOnStopThisTime = true;//No need to save twice
+                                //     mIgnoreSaveOnDestroyThisTime = true;//No need to save twice
+                                //     finish();
+                                // }
                             }
                             else
                                 showSaveAsActivity();

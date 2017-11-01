@@ -106,6 +106,7 @@
   <string name="save_on_stop_summ">Automatisch speichern wenn die App vorübergehend gestoppt wird und in den Hintergrund tritt. Ist dies deaktiviert können Änderungen im Prinzip verloren gehen wenn die App von Android ohne Vorwarnung geschlossen wird, es wird jedoch trotzdem geraten diese Funktion deaktiviert zu lassen.</string>
   <string name="save_question">Speichern?</string>
   <string name="saveas">Speichern als</string>
+  <string name="saving">Speichere&#8230;</string>
   <string name="search_hint">PDF mit &appname; durchsuchen</string>
   <string name="searching_">Suche…</string>
   <string name="select_text">Text auswählen</string>
