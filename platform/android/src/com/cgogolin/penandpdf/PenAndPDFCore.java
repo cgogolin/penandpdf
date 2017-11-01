@@ -132,7 +132,17 @@ public class PenAndPDFCore extends MuPDFCore
                 oldTmpFile = tmpFile;
                 File cacheDir = new File(context.getCacheDir(), "tmpfiles");
                 cacheDir.mkdirs();
-                tmpFile = new File(cacheDir, oldFileName);
+                File uniqueDirInCacheDir = null;
+                int i = 0;
+                do
+                {
+                    uniqueDirInCacheDir = new File(cacheDir, Integer.toString(i));
+                    i++;
+                }
+                while(uniqueDirInCacheDir == null || uniqueDirInCacheDir.exists());
+                
+                uniqueDirInCacheDir.mkdirs();
+                tmpFile = new File(uniqueDirInCacheDir, oldFileName);
             }
             
             // File oldTmpFile = tmpFile;
