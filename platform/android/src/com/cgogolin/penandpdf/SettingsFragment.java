@@ -60,51 +60,5 @@ public class SettingsFragment extends PreferenceFragment {
             }
         }
         return view;
-      // android:paddingTop="?attr/actionBarSize"
-      //       android:clipToPadding="false"
     }
-    
-
-	// 	//Hack to work around a bug in how theme are apllied in PreferenceFragement, also see:
-	// 	//http://stackoverflow.com/questions/2615528/preferenceactivity-and-theme-not-applying
-	// @Override
-	// public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen,
-	// 									 Preference preference) {
-	// 	super.onPreferenceTreeClick(preferenceScreen, preference);
-	// 	if (preference != null) {
-	// 		if (preference instanceof PreferenceScreen) {
-	// 			if (((PreferenceScreen) preference).getDialog() != null) {
-	// 				((PreferenceScreen) preference)
-    //                     .getDialog()
-    //                     .getWindow()
-    //                     .getDecorView()
-    //                     .setBackgroundDrawable(
-	// 						getActivity()
-	// 						.getWindow()
-	// 						.getDecorView()
-	// 						.getBackground()
-	// 						.getConstantState()
-	// 						.newDrawable()
-	// 										   );
-	// 			}
-	// 		}
-	// 		if (preference instanceof ListPreference) {
-	// 			if (((ListPreference) preference).getDialog() != null) {
-	// 				((ListPreference) preference)
-    //                     .getDialog()
-    //                     .getWindow()
-    //                     .getDecorView()
-    //                     .setBackgroundDrawable(
-	// 						getActivity()
-	// 						.getWindow()
-	// 						.getDecorView()
-	// 						.getBackground()
-	// 						.getConstantState()
-	// 						.newDrawable()
-	// 										   );
-	// 			}
-	// 		}
-	// 	}
-	// 	return false;
-	// }
 }

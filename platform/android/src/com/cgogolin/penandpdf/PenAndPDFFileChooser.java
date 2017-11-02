@@ -2,11 +2,7 @@ package com.cgogolin.penandpdf;
 
 import java.io.File;
 
-//import android.app.Activity;
-//import android.app.Fragment;
-//import android.app.FragmentManager;
 import android.os.Bundle;
-//import android.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.widget.Toast;
 import android.view.Menu;
@@ -134,7 +130,6 @@ public class PenAndPDFFileChooser extends AppCompatActivity implements RecentFil
     public boolean onCreateOptionsMenu(Menu menu) {//Inflates the options menu
         
         MenuInflater inflater = getMenuInflater();
-            //inflater.inflate(R.menu.choosepdf_menu, menu);
         inflater.inflate(R.menu.empty_menu, menu);
         return true;
     }

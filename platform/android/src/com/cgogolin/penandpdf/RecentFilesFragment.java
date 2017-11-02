@@ -32,7 +32,6 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
     }
     
     private enum Purpose { ChooseFileForOpening, PickKeyFile, ChooseFileForSaving, ChooseFileForOpeningAndLaunch }
-//    private enum Purpose { ChoosePDF, PickKeyFile, PickFile }
     
     private ArrayAdapter<String> mRecentFilesAdapter;
     private Purpose mPurpose;
@@ -54,12 +53,6 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
             purpose = Purpose.ChooseFileForSaving;
         else
             purpose = Purpose.PickKeyFile;
-        // if (Intent.ACTION_MAIN.equals(intent.getAction())) 
-        //     purpose = Purpose.ChoosePDF;
-        // else if (Intent.ACTION_PICK.equals(intent.getAction()))
-        //     purpose = Purpose.PickFile;
-        // else
-        //     purpose = Purpose.PickKeyFile;
         
             //Put the collected data in a Bundle
         Bundle bundle = new Bundle(3);
@@ -121,7 +114,6 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
                 } else {
                     view = convertView;
                 }
-//                ((TextView)view.findViewById(R.id.name)).setText(getItem(position));
 				String recentFileString = null;
 				Uri recentFileUri = Uri.parse(getItem(position));
 				if(recentFileUri != null)
@@ -162,7 +154,6 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
         if (mRecentFilesAdapter == null ) return;
 
             //A directory was clicked and we are in pick a file mode
-//        if(mPurpose == Purpose.PickFile && position < numDirectories)
         if(position < numDirectories)
         {
             ((goToDirInterface)getActivity()).goToDir(new File(uri.getPath()));
@@ -206,7 +197,6 @@ public class RecentFilesFragment extends ListFragment implements SharedPreferenc
 		ListIterator<RecentFile> iterartor = recentFilesList.listIterator(0);
 		while (iterartor.hasNext()) {
 			RecentFile recentFile = iterartor.next();
-//			recentDirectoriesList.push(recentFileString.substring(0,recentFileString.lastIndexOf("/")));
 			Uri recentFileUri = Uri.parse(recentFile.getFileString());
 			File recentFileFile = new File(Uri.decode(recentFileUri.getEncodedPath()));
 			if(recentFileFile != null){

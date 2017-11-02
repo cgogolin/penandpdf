@@ -105,8 +105,6 @@ public abstract class FragmentPagerAdapter extends PagerAdapter {
                     makeFragmentName(container.getId(), position));
         }
         if (fragment != mCurrentPrimaryItem) {
-            // Fragment.setMenuVisibility(fragment, false);
-            // Fragment.setUserVisibleHint(fragment, false);
             fragment.setMenuVisibility(false);
             fragment.setUserVisibleHint(false);
         }
@@ -129,14 +127,10 @@ public abstract class FragmentPagerAdapter extends PagerAdapter {
         Fragment fragment = (Fragment)object;
         if (fragment != mCurrentPrimaryItem) {
             if (mCurrentPrimaryItem != null) {
-                // Fragment.setMenuVisibility(mCurrentPrimaryItem, false);
-                // Fragment.setUserVisibleHint(mCurrentPrimaryItem, false);
                 mCurrentPrimaryItem.setMenuVisibility(false);
                 mCurrentPrimaryItem.setUserVisibleHint(false);
             }
             if (fragment != null) {
-                // Fragment.setMenuVisibility(fragment, true);
-                // Fragment.setUserVisibleHint(fragment, true);
                 fragment.setMenuVisibility(true);
                 fragment.setUserVisibleHint(true);
             }

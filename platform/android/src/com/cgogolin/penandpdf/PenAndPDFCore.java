@@ -48,15 +48,13 @@ public class PenAndPDFCore extends MuPDFCore
          */
     
     public PenAndPDFCore(Context context, Uri uri) throws Exception
-	{
+        {
             init(context, uri);
         }
     
     
     public synchronized void init(Context context, Uri uri) throws Exception
-	{
-//            Log.i("context.getString(R.string.app_name)", "creating with uri="+uri);
-            
+        {
             this.uri = uri;
 
                 /*Sometimes we can open a uri both as a file and via a content provider. On old versions of Android the former works better, whereas on new versions the latter works generally better. Hence we switch the order in which we try depending on the Android version.*/
@@ -125,7 +123,9 @@ public class PenAndPDFCore extends MuPDFCore
             String oldFileName = getFileName();
             boolean oldHasChanges = hasChanges();
             
-                //If no tmpflie has been created or the file name has changed, creat a new tmpFile and, if appropriate, remeber the old tmpFile to delete it after the core has saved to the new location. 
+                //If no tmpflie has been created or the file name has changed,
+                //creat a new tmpFile and, if appropriate, remeber the old tmpFile
+                //to delete it after the core has saved to the new location. 
             File oldTmpFile = null;
             if(tmpFile==null || !tmpFile.getName().equals(oldFileName) )
             {
@@ -144,14 +144,6 @@ public class PenAndPDFCore extends MuPDFCore
                 uniqueDirInCacheDir.mkdirs();
                 tmpFile = new File(uniqueDirInCacheDir, oldFileName);
             }
-            
-            // File oldTmpFile = tmpFile;
-            // // if(tmpFile == null)
-            // // {
-            // File cacheDir = new File(context.getCacheDir(), "tmpfiles");
-            // cacheDir.mkdirs();
-            // tmpFile = new File(cacheDir, oldFileName);
-            // // }
             
             if(super.saveAs(tmpFile.getPath()) != 0)
                 throw new java.io.IOException("native code failed to save to tmp file: "+tmpFile.getPath());
@@ -251,7 +243,6 @@ public class PenAndPDFCore extends MuPDFCore
         boolean haveWritePermissionToUri = false;
         try
         {
-            //     haveWritePermissionToUri = true;
             for(TemporaryUriPermission permission : (context).getTemporaryUriPermissions()) {
                 Log.i(context.getString(R.string.app_name), "checking saved temporary permission for "+permission.getUri()+" while uri="+uri+" write permission is "+permission.isWritePermission()+" and uris are equal "+permission.getUri().equals(uri));
                 if(permission.isWritePermission() && permission.getUri().equals(uri))
@@ -538,46 +529,16 @@ public class PenAndPDFCore extends MuPDFCore
                 haveReadPermissionToUri = true;
         }
         return haveReadPermissionToUri;
-
-
-            //Opening an input stream can lock for very long time if the Uri for exaple came from Google drive and there is no network 
-        // boolean canRead = false;
-        // InputStream is = null;
-        // try{
-        //     is = context.getContentResolver().openInputStream(uri);
-        //     if(is != null)
-        //     {
-        //         is.close();
-        //         canRead = true;
-        //     }
-        // }
-        // catch(Exception e)
-        // {
-        //     if(is != null)
-        //         try
-        //         {
-        //             is.close();
-        //         }
-        //         catch(Exception e2)
-        //         {
-        //             is = null;
-        //         }
-        // }
-        
-        // return canRead;
     }
 
     public synchronized String getFileName(Context context, Uri uri) {
         String displayName = null;
         if (uri.toString().startsWith("content://")) //Uri points to a content provider
         {
-//            Log.i(context.getString(R.string.app_name), "uri "+uri.toString()+" points to content");
-            Cursor cursor = context.getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null); //This should be done asynchonously!
+            Cursor cursor = context.getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null); //This should be done asynchonously
 
             if (cursor != null && cursor.moveToFirst())
             {
-//                    Log.i(context.getString(R.string.app_name), "got the cursor "+cursor);
-                    
                     //Try to get the display name/title
                 int displayNameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
                 if(displayNameIndex >= 0) displayName = cursor.getString(displayNameIndex);
@@ -589,7 +550,7 @@ public class PenAndPDFCore extends MuPDFCore
                 cursor.close();
             }
             
-                    //Some programms encode parts of the filename in utf-8 base 64 encoding if the filename contains special charcters. This can look like this: '=?UTF-8?B?[text here]==?=' Here we decode such cases:
+                //Some programms encode parts of the filename in utf-8 base 64 encoding if the filename contains special charcters. This can look like this: '=?UTF-8?B?[text here]==?=' Here we decode such cases:
             if(displayName!=null)
             {
                 Pattern utf8BPattern = Pattern.compile("=\\?UTF-8\\?B\\?(.+)\\?=");
@@ -619,4 +580,3 @@ public class PenAndPDFCore extends MuPDFCore
         return displayName;
     }
 }
-

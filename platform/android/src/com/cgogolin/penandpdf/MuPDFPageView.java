@@ -92,17 +92,14 @@ class PassClickResultSignature extends PassClickResult {
 }
 
 public class MuPDFPageView extends PageView implements MuPDFView {
-        private int lastHitAnnotation = 0;
+    private int lastHitAnnotation = 0;
     
 	final private FilePicker.FilePickerSupport mFilePickerSupport;
 	private final MuPDFCore mCore;
 	private AsyncTask<Void,Void,PassClickResult> mPassClick;
 	private RectF mWidgetAreas[];
-//        private TextWord text[][] = null;
-//	private Annotation mAnnotations[];
 	private int mSelectedAnnotationIndex = -1;
     private AsyncTask<Void,Void,RectF[]> mLoadWidgetAreas; //Should be moved to PageView!
-//	private AsyncTask<Void,Void,Annotation[]> mLoadAnnotations;
 	private AlertDialog.Builder mTextEntryBuilder;
 	private AlertDialog.Builder mChoiceEntryBuilder;
 	private AlertDialog.Builder mSigningDialogBuilder;
@@ -115,7 +112,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	private AsyncTask<String,Void,Boolean> mSetWidgetText;
 	private AsyncTask<String,Void,Void> mSetWidgetChoice;
 	private AsyncTask<PointF[],Void,Void> mAddMarkupAnnotation;
-    	private AsyncTask<PointF[],Void,Void> mAddTextAnnotation;
+    private AsyncTask<PointF[],Void,Void> mAddTextAnnotation;
 	private AsyncTask<PointF[][],Void,Void> mAddInkAnnotation;
 	private AsyncTask<Integer,Void,Void> mDeleteAnnotation;
 	private AsyncTask<Void,Void,String> mCheckSignature;
@@ -123,7 +120,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	private Runnable changeReporter;
     
 	public MuPDFPageView(Context context, FilePicker.FilePickerSupport filePickerSupport, MuPDFCore core, ViewGroup parent) {
-                super(context, parent);
+        super(context, parent);
 		mFilePickerSupport = filePickerSupport;
 		mCore = core;
 		mTextEntryBuilder = new AlertDialog.Builder(context);
@@ -132,28 +129,28 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		mEditText = (EditText)inflater.inflate(R.layout.textentry, null);
 		mTextEntryBuilder.setView(mEditText);
 		mTextEntryBuilder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		});
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
 		mTextEntryBuilder.setPositiveButton(R.string.okay, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				mSetWidgetText = new AsyncTask<String,Void,Boolean> () {
-					@Override
-					protected Boolean doInBackground(String... arg0) {
-						return mCore.setFocusedWidgetText(mPageNumber, arg0[0]);
-					}
-					@Override
-					protected void onPostExecute(Boolean result) {
-						changeReporter.run();
-						if (!result)
-							invokeTextDialog(mEditText.getText().toString());
-					}
-				};
+                public void onClick(DialogInterface dialog, int which) {
+                    mSetWidgetText = new AsyncTask<String,Void,Boolean> () {
+                            @Override
+                            protected Boolean doInBackground(String... arg0) {
+                                return mCore.setFocusedWidgetText(mPageNumber, arg0[0]);
+                            }
+                            @Override
+                            protected void onPostExecute(Boolean result) {
+                                changeReporter.run();
+                                if (!result)
+                                    invokeTextDialog(mEditText.getText().toString());
+                            }
+                        };
 
-				mSetWidgetText.execute(mEditText.getText().toString());
-			}
-		});
+                    mSetWidgetText.execute(mEditText.getText().toString());
+                }
+            });
 		mTextEntry = mTextEntryBuilder.create();
 
 		mChoiceEntryBuilder = new AlertDialog.Builder(context);
@@ -162,33 +159,33 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		mSigningDialogBuilder = new AlertDialog.Builder(context);
 		mSigningDialogBuilder.setTitle("Select certificate and sign?");
 		mSigningDialogBuilder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		});
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
 		mSigningDialogBuilder.setPositiveButton(R.string.okay, new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				FilePicker picker = new FilePicker(mFilePickerSupport) {
-					@Override
-					void onPick(Uri uri) {
-						signWithKeyFile(uri);
-					}
-				};
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    FilePicker picker = new FilePicker(mFilePickerSupport) {
+                            @Override
+                            void onPick(Uri uri) {
+                                signWithKeyFile(uri);
+                            }
+                        };
 
-				picker.pick();
-			}
-		});
+                    picker.pick();
+                }
+            });
 
 		mSignatureReportBuilder = new AlertDialog.Builder(context);
 		mSignatureReportBuilder.setTitle("Signature checked");
 		mSignatureReportBuilder.setPositiveButton(R.string.okay, new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		});
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
 
 		mPasswordText = new EditText(context);
 		mPasswordText.setInputType(EditorInfo.TYPE_TEXT_VARIATION_PASSWORD);
@@ -198,11 +195,11 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		mPasswordEntryBuilder.setTitle(R.string.enter_password);
 		mPasswordEntryBuilder.setView(mPasswordText);
 		mPasswordEntryBuilder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		});
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
 
 		mPasswordEntry = mPasswordEntryBuilder.create();
 	}
@@ -210,36 +207,36 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	private void signWithKeyFile(final Uri uri) {
 		mPasswordEntry.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
 		mPasswordEntry.setButton(AlertDialog.BUTTON_POSITIVE, "Sign", new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-				signWithKeyFileAndPassword(uri, mPasswordText.getText().toString());
-			}
-		});
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                    signWithKeyFileAndPassword(uri, mPasswordText.getText().toString());
+                }
+            });
 
 		mPasswordEntry.show();
 	}
 
 	private void signWithKeyFileAndPassword(final Uri uri, final String password) {
 		mSign = new AsyncTask<Void,Void,Boolean>() {
-			@Override
-			protected Boolean doInBackground(Void... params) {
-				return mCore.signFocusedSignature(Uri.decode(uri.getEncodedPath()), password);
-			}
-			@Override
-			protected void onPostExecute(Boolean result) {
-				if (result)
-				{
-					changeReporter.run();
-				}
-				else
-				{
-					mPasswordText.setText("");
-					signWithKeyFile(uri);
-				}
-			}
+                @Override
+                protected Boolean doInBackground(Void... params) {
+                    return mCore.signFocusedSignature(Uri.decode(uri.getEncodedPath()), password);
+                }
+                @Override
+                protected void onPostExecute(Boolean result) {
+                    if (result)
+                    {
+                        changeReporter.run();
+                    }
+                    else
+                    {
+                        mPasswordText.setText("");
+                        signWithKeyFile(uri);
+                    }
+                }
 
-		};
+            };
 
 		mSign.execute();
 	}
@@ -264,41 +261,41 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 	private void invokeChoiceDialog(final String [] options) {
 		mChoiceEntryBuilder.setItems(options, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				mSetWidgetChoice = new AsyncTask<String,Void,Void>() {
-					@Override
-					protected Void doInBackground(String... params) {
-						String [] sel = {params[0]};
-						mCore.setFocusedWidgetChoiceSelected(sel);
-						return null;
-					}
+                public void onClick(DialogInterface dialog, int which) {
+                    mSetWidgetChoice = new AsyncTask<String,Void,Void>() {
+                            @Override
+                            protected Void doInBackground(String... params) {
+                                String [] sel = {params[0]};
+                                mCore.setFocusedWidgetChoiceSelected(sel);
+                                return null;
+                            }
 
-					@Override
-					protected void onPostExecute(Void result) {
-						changeReporter.run();
-					}
-				};
+                            @Override
+                            protected void onPostExecute(Void result) {
+                                changeReporter.run();
+                            }
+                        };
 
-				mSetWidgetChoice.execute(options[which]);
-			}
-		});
+                    mSetWidgetChoice.execute(options[which]);
+                }
+            });
 		AlertDialog dialog = mChoiceEntryBuilder.create();
 		dialog.show();
 	}
 
 	private void invokeSignatureCheckingDialog() {
 		mCheckSignature = new AsyncTask<Void,Void,String> () {
-			@Override
-			protected String doInBackground(Void... params) {
-				return mCore.checkFocusedSignature();
-			}
-			@Override
-			protected void onPostExecute(String result) {
-				AlertDialog report = mSignatureReportBuilder.create();
-				report.setMessage(result);
-				report.show();
-			}
-		};
+                @Override
+                protected String doInBackground(Void... params) {
+                    return mCore.checkFocusedSignature();
+                }
+                @Override
+                protected void onPostExecute(String result) {
+                    AlertDialog report = mSignatureReportBuilder.create();
+                    report.setMessage(result);
+                    report.show();
+                }
+            };
 
 		mCheckSignature.execute();
 	}
@@ -315,69 +312,68 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	}
 
 	public void setChangeReporter(Runnable reporter) {
-            changeReporter = reporter;
+        changeReporter = reporter;
 	}
 
 	public Hit passClickEvent(MotionEvent e) {
-            float x = e.getX();
-            float y = e.getY();
-            float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+        float x = e.getX();
+        float y = e.getY();
+        float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
 		final float docRelX = (x - getLeft())/scale;
 		final float docRelY = (y - getTop())/scale;
 		boolean hit = false;
 		int i;
 
 		if (mLinks != null)
-                    for (LinkInfo l: mLinks)
-                        if (l.rect.contains(docRelX, docRelY))
-                        {
-                            deselectAnnotation();
-                            switch(l.type())
-                            {
-                                case Internal:
-                                    return Hit.LinkInternal;
-                                case External:
-                                    return Hit.LinkExternal;
-                                case Remote:
-                                    return Hit.LinkRemote;
-                            }
-                        }
+            for (LinkInfo l: mLinks)
+                if (l.rect.contains(docRelX, docRelY))
+                {
+                    deselectAnnotation();
+                    switch(l.type())
+                    {
+                        case Internal:
+                            return Hit.LinkInternal;
+                        case External:
+                            return Hit.LinkExternal;
+                        case Remote:
+                            return Hit.LinkRemote;
+                    }
+                }
                 
 		if (mAnnotations != null) {
-                    for (i = 0; i < mAnnotations.length; i++)
-                    {
-                            //If multiple annotations overlap, make sure we
-                            //return a different annotation as hit each
-                            //time we are called 
-                        int j = (i+lastHitAnnotation+1) % mAnnotations.length;
-                        if (mAnnotations[j].contains(docRelX, docRelY))
-                        {
-                            hit = true;
-                            i = lastHitAnnotation = j;
-                            break;
-                        }
-                    }
-                    if (hit) {
-                        switch (mAnnotations[i].type) {
-                            case HIGHLIGHT:
-                            case UNDERLINE:
-                            case SQUIGGLY:
-                            case STRIKEOUT:
-                                mSelectedAnnotationIndex = i;
-                                setItemSelectBox(mAnnotations[i]);
-                                return Hit.Annotation;
-                            case INK:
-                                mSelectedAnnotationIndex = i;
-                                setItemSelectBox(mAnnotations[i]);
-                                return Hit.InkAnnotation;
-                            case TEXT:
-                                mSelectedAnnotationIndex = i;
-                                setItemSelectBox(mAnnotations[i]);
-                                ((MuPDFReaderView)mParent).addTextAnnotFromUserInput(mAnnotations[i]);
-//                                deleteSelectedAnnotation();
-                                return Hit.TextAnnotation;
-                        }
-                    }
+            for (i = 0; i < mAnnotations.length; i++)
+            {
+                    //If multiple annotations overlap, make sure we
+                    //return a different annotation as hit each
+                    //time we are called 
+                int j = (i+lastHitAnnotation+1) % mAnnotations.length;
+                if (mAnnotations[j].contains(docRelX, docRelY))
+                {
+                    hit = true;
+                    i = lastHitAnnotation = j;
+                    break;
+                }
+            }
+            if (hit) {
+                switch (mAnnotations[i].type) {
+                    case HIGHLIGHT:
+                    case UNDERLINE:
+                    case SQUIGGLY:
+                    case STRIKEOUT:
+                        mSelectedAnnotationIndex = i;
+                        setItemSelectBox(mAnnotations[i]);
+                        return Hit.Annotation;
+                    case INK:
+                        mSelectedAnnotationIndex = i;
+                        setItemSelectBox(mAnnotations[i]);
+                        return Hit.InkAnnotation;
+                    case TEXT:
+                        mSelectedAnnotationIndex = i;
+                        setItemSelectBox(mAnnotations[i]);
+                        ((MuPDFReaderView)mParent).addTextAnnotFromUserInput(mAnnotations[i]);
+                        return Hit.TextAnnotation;
+                }
+            }
 		}
 		deselectAnnotation();
 		
@@ -392,45 +388,45 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 		if (hit) {
 			mPassClick = new AsyncTask<Void,Void,PassClickResult>() {
-				@Override
-				protected PassClickResult doInBackground(Void... arg0) {
-					return mCore.passClickEvent(mPageNumber, docRelX, docRelY);
-				}
+                    @Override
+                    protected PassClickResult doInBackground(Void... arg0) {
+                        return mCore.passClickEvent(mPageNumber, docRelX, docRelY);
+                    }
 
-				@Override
-				protected void onPostExecute(PassClickResult result) {
-					if (result.changed) {
-						changeReporter.run();
-					}
+                    @Override
+                    protected void onPostExecute(PassClickResult result) {
+                        if (result.changed) {
+                            changeReporter.run();
+                        }
 
-					result.acceptVisitor(new PassClickResultVisitor() {
-						@Override
-						public void visitText(PassClickResultText result) {
-							invokeTextDialog(result.text);
-						}
+                        result.acceptVisitor(new PassClickResultVisitor() {
+                                @Override
+                                public void visitText(PassClickResultText result) {
+                                    invokeTextDialog(result.text);
+                                }
 
-						@Override
-						public void visitChoice(PassClickResultChoice result) {
-							invokeChoiceDialog(result.options);
-						}
+                                @Override
+                                public void visitChoice(PassClickResultChoice result) {
+                                    invokeChoiceDialog(result.options);
+                                }
 
-						@Override
-						public void visitSignature(PassClickResultSignature result) {
-							switch (result.state) {
-							case NoSupport:
-								warnNoSignatureSupport();
-								break;
-							case Unsigned:
-								invokeSigningDialog();
-								break;
-							case Signed:
-								invokeSignatureCheckingDialog();
-								break;
-							}
-						}
-					});
-				}
-			};
+                                @Override
+                                public void visitSignature(PassClickResultSignature result) {
+                                    switch (result.state) {
+                                        case NoSupport:
+                                            warnNoSignatureSupport();
+                                            break;
+                                        case Unsigned:
+                                            invokeSigningDialog();
+                                            break;
+                                        case Signed:
+                                            invokeSignatureCheckingDialog();
+                                            break;
+                                    }
+                                }
+                            });
+                    }
+                };
 
 			mPassClick.execute();
 			return Hit.Widget;
@@ -440,56 +436,56 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	}
 
 
-    	public Hit clickWouldHit(MotionEvent e) {
-            float x = e.getX();
-            float y = e.getY();
-            float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
+    public Hit clickWouldHit(MotionEvent e) {
+        float x = e.getX();
+        float y = e.getY();
+        float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
 		final float docRelX = (x - getLeft())/scale;
 		final float docRelY = (y - getTop())/scale;
 		boolean hit = false;
 		int i;
 
 		if (mLinks != null)
-                    for (LinkInfo l: mLinks)
-                        if (l.rect.contains(docRelX, docRelY))
-                        {
-                            switch(l.type())
-                            {
-                                case Internal:
-                                    return Hit.LinkInternal;
-                                case External:
-                                    return Hit.LinkExternal;
-                                case Remote:
-                                    return Hit.LinkRemote;
-                            }
-                        }
+            for (LinkInfo l: mLinks)
+                if (l.rect.contains(docRelX, docRelY))
+                {
+                    switch(l.type())
+                    {
+                        case Internal:
+                            return Hit.LinkInternal;
+                        case External:
+                            return Hit.LinkExternal;
+                        case Remote:
+                            return Hit.LinkRemote;
+                    }
+                }
                 
 		if (mAnnotations != null) {
-                    for (i = 0; i < mAnnotations.length; i++)
-                    {
-                            //If multiple annotations overlap, make sure we
-                            //return a different annotation as hit each
-                            //time we are called 
-                        int j = (i+lastHitAnnotation) % mAnnotations.length;
-                        if (mAnnotations[j].contains(docRelX, docRelY))
-                        {
-                            hit = true;
-                            break;
-                        }
-                    }
-                    if (hit) {
-                        switch (mAnnotations[i].type) {
-                            case HIGHLIGHT:
-                            case UNDERLINE:
-                            case SQUIGGLY:
-                            case STRIKEOUT:
-                                return Hit.Annotation;
-                            case INK:
-                                return Hit.InkAnnotation;
-                            case TEXT:
-                                return Hit.TextAnnotation;
-                        }
-                    }
+            for (i = 0; i < mAnnotations.length; i++)
+            {
+                    //If multiple annotations overlap, make sure we
+                    //return a different annotation as hit each
+                    //time we are called 
+                int j = (i+lastHitAnnotation) % mAnnotations.length;
+                if (mAnnotations[j].contains(docRelX, docRelY))
+                {
+                    hit = true;
+                    break;
+                }
+            }
+            if (hit) {
+                switch (mAnnotations[i].type) {
+                    case HIGHLIGHT:
+                    case UNDERLINE:
+                    case SQUIGGLY:
+                    case STRIKEOUT:
+                        return Hit.Annotation;
+                    case INK:
+                        return Hit.InkAnnotation;
+                    case TEXT:
+                        return Hit.TextAnnotation;
+                }
+            }
 		}
                 
 		if (!mCore.javascriptSupported())
@@ -512,24 +508,24 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		final StringBuilder text = new StringBuilder();
 
 		processSelectedText(new TextProcessor() {
-			StringBuilder line;
+                StringBuilder line;
 
-			public void onStartLine() {
-				line = new StringBuilder();
-			}
+                public void onStartLine() {
+                    line = new StringBuilder();
+                }
 
-			public void onWord(TextWord word) {
-                            line.append(word.w);
-			}
+                public void onWord(TextWord word) {
+                    line.append(word.w);
+                }
 
-			public void onEndLine() {
-				if (text.length() > 0)
-					text.append('\n');
-				text.append(line);
-			}
+                public void onEndLine() {
+                    if (text.length() > 0)
+                        text.append('\n');
+                    text.append(line);
+                }
 
-			public void onEndText() {};
-		});
+                public void onEndText() {};
+            });
 
 		if (text.length() == 0)
 			return false;
@@ -552,43 +548,43 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	public boolean markupSelection(final Annotation.Type type) {
 		final ArrayList<PointF> quadPoints = new ArrayList<PointF>();
 		processSelectedText(new TextProcessor() {
-			RectF rect;
+                RectF rect;
 
-			public void onStartLine() {
-				rect = new RectF();
-			}
+                public void onStartLine() {
+                    rect = new RectF();
+                }
 
-			public void onWord(TextWord word) {
-				rect.union(word);
-			}
+                public void onWord(TextWord word) {
+                    rect.union(word);
+                }
 
-			public void onEndLine() {
-				if (!rect.isEmpty()) {
-                                        quadPoints.add(new PointF(rect.left, rect.bottom));
-                                        quadPoints.add(new PointF(rect.right, rect.bottom));
-					quadPoints.add(new PointF(rect.right, rect.top));
-					quadPoints.add(new PointF(rect.left, rect.top));
-				}
-			}
+                public void onEndLine() {
+                    if (!rect.isEmpty()) {
+                        quadPoints.add(new PointF(rect.left, rect.bottom));
+                        quadPoints.add(new PointF(rect.right, rect.bottom));
+                        quadPoints.add(new PointF(rect.right, rect.top));
+                        quadPoints.add(new PointF(rect.left, rect.top));
+                    }
+                }
                         
-                        public void onEndText() {};
-		});
+                public void onEndText() {};
+            });
 
 		if (quadPoints.size() == 0)
 			return false;
 
 		mAddMarkupAnnotation = new AsyncTask<PointF[],Void,Void>() {
-			@Override
-			protected Void doInBackground(PointF[]... params) {
-				addMarkup(params[0], type);
-				return null;
-			}
+                @Override
+                protected Void doInBackground(PointF[]... params) {
+                    addMarkup(params[0], type);
+                    return null;
+                }
 
-			@Override
-			protected void onPostExecute(Void result) {
-				loadAnnotations();
-			}
-		};
+                @Override
+                protected void onPostExecute(Void result) {
+                    loadAnnotations();
+                }
+            };
 
 		mAddMarkupAnnotation.execute(quadPoints.toArray(new PointF[quadPoints.size()]));
 
@@ -604,21 +600,21 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 				mDeleteAnnotation.cancel(true);
 
 			mDeleteAnnotation = new AsyncTask<Integer,Void,Void>() {
-				@Override
-				protected Void doInBackground(Integer... params) {
-					mCore.deleteAnnotation(mPageNumber, params[0]);
-					return null;
-				}
+                    @Override
+                    protected Void doInBackground(Integer... params) {
+                        mCore.deleteAnnotation(mPageNumber, params[0]);
+                        return null;
+                    }
 
-				@Override
-				protected void onPostExecute(Void result) {
-					loadAnnotations();
-				}
-			};
+                    @Override
+                    protected void onPostExecute(Void result) {
+                        loadAnnotations();
+                    }
+                };
 
 			mDeleteAnnotation.execute(mSelectedAnnotationIndex);
 
-                        deselectAnnotation();
+            deselectAnnotation();
 		}
 	}
 
@@ -637,10 +633,6 @@ public class MuPDFPageView extends PageView implements MuPDFView {
                         deleteSelectedAnnotation();
                     }
                     break;
-                // case TEXT:
-                //     deleteSelectedAnnotation();
-                //     ((MuPDFReaderView)mParent).addTextAnnotFromUserInput(annot.left, annot.top, annot);
-                //     break;
             }
         }
     }
@@ -685,12 +677,12 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			mAddInkAnnotation = null;
 		}
 		mAddInkAnnotation = new AsyncTask<PointF[][],Void,Void>() {
-			@Override
-			protected Void doInBackground(PointF[][]... params) {
-				mCore.addInkAnnotation(mPageNumber, params[0]);
-                loadAnnotations();
-				return null;
-			}
+                @Override
+                protected Void doInBackground(PointF[][]... params) {
+                    mCore.addInkAnnotation(mPageNumber, params[0]);
+                    loadAnnotations();
+                    return null;
+                }
             };
         mAddInkAnnotation.execute(path);
 
@@ -698,15 +690,13 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 	}
 
 
-//    @Override
     private void drawPage(Bitmap bm, int sizeX, int sizeY,
-                            int patchX, int patchY, int patchWidth, int patchHeight, MuPDFCore.Cookie cookie) {
+                          int patchX, int patchY, int patchWidth, int patchHeight, MuPDFCore.Cookie cookie) {
         mCore.drawPage(bm, mPageNumber, sizeX, sizeY, patchX, patchY, patchWidth, patchHeight, cookie);
     }
     
-//    @Override
     private void updatePage(Bitmap bm, int sizeX, int sizeY,
-                              int patchX, int patchY, int patchWidth, int patchHeight, MuPDFCore.Cookie cookie) {
+                            int patchX, int patchY, int patchWidth, int patchHeight, MuPDFCore.Cookie cookie) {
         mCore.updatePage(bm, mPageNumber, sizeX, sizeY, patchX, patchY, patchWidth, patchHeight, cookie);
     }
 	
@@ -736,16 +726,6 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 				}
 				return patchInfo;
 			}			
-				// @Override
-				// public Void doInBackground(MuPDFCore.Cookie cookie, Void ... params) {
-				// 	// Workaround bug in Android Honeycomb 3.x, where the bitmap generation count
-				// 	// is not incremented when drawing.
-				// 	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB &&
-				// 			Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-				// 		bm.eraseColor(0);
-				// 	mCore.updatePage(bm, mPageNumber, sizeX, sizeY, patchX, patchY, patchWidth, patchHeight, cookie);
-				// 	return null;
-				// }
 		};
 	}
 	
@@ -757,12 +737,12 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 
 	@Override
 	protected TextWord[][] getText() {
-            return mCore.textLines(mPageNumber);
+        return mCore.textLines(mPageNumber);
 	}
 
 	@Override
 	protected Annotation[] getAnnotations() {
-            return mCore.getAnnoations(mPageNumber);
+        return mCore.getAnnoations(mPageNumber);
 	}
     
 	@Override
@@ -770,49 +750,44 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 		mCore.addMarkupAnnotation(mPageNumber, quadPoints, type);
 	}
 
-    	@Override
+    @Override
 	protected void addTextAnnotation(final Annotation annot) {
             
-            mAddTextAnnotation = new AsyncTask<PointF[],Void,Void>() {
+        mAddTextAnnotation = new AsyncTask<PointF[],Void,Void>() {
                 @Override
                 protected Void doInBackground(PointF[]... params) {
                     mCore.addTextAnnotation(mPageNumber, params[0], annot.text);
                     loadAnnotations();
                     return null;
                 }
-                
-                // @Override
-                // protected void onPostExecute(Void result) {
-
-                // }
             };
-            mAddTextAnnotation.execute(new PointF[]{new PointF(annot.left, getHeight()/getScale()-annot.top), new PointF(annot.right, getHeight()/getScale()-annot.bottom)});
+        mAddTextAnnotation.execute(new PointF[]{new PointF(annot.left, getHeight()/getScale()-annot.top), new PointF(annot.right, getHeight()/getScale()-annot.bottom)});
 	}
 
 	@Override
 	public void setPage(final int page, PointF size) {
 
 		mLoadWidgetAreas = new AsyncTask<Void,Void,RectF[]> () {
-			@Override
-			protected RectF[] doInBackground(Void... arg0) {
-				return mCore.getWidgetAreas(page);
-			}
+                @Override
+                protected RectF[] doInBackground(Void... arg0) {
+                    return mCore.getWidgetAreas(page);
+                }
 
-			@Override
-			protected void onPostExecute(RectF[] result) {
-				mWidgetAreas = result;
-			}
-		};
+                @Override
+                protected void onPostExecute(RectF[] result) {
+                    mWidgetAreas = result;
+                }
+            };
 
 		mLoadWidgetAreas.execute();
 
 		super.setPage(page, size);
-                loadAnnotations();//Must be done after super.setPage() otherwise page number is wrong!
+        loadAnnotations();//Must be done after super.setPage() otherwise page number is wrong!
 	}
 
 	public void setScale(float scale) {
-		// This type of view scales automatically to fit the size
-		// determined by the parent view groups during layout
+            // This type of view scales automatically to fit the size
+            // determined by the parent view groups during layout
 	}
 
 	@Override
@@ -842,7 +817,7 @@ public class MuPDFPageView extends PageView implements MuPDFView {
 			mAddMarkupAnnotation = null;
 		}
 
-                if (mAddInkAnnotation != null) {
+        if (mAddInkAnnotation != null) {
 			mAddInkAnnotation.cancel(true);
 			mAddInkAnnotation = null;
 		}

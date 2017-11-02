@@ -17,7 +17,6 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-//import android.view.View.OnLayoutChangeListener;
 import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.Scroller;
@@ -55,7 +54,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     private int               mNewCurrent;
     private boolean           mHasNewCurrent = false;
     private boolean           mNextScrollWithCenter = false;
-//    private boolean           mResetLayout = false;
     private final SparseArray<View> mChildViews = new SparseArray<View>(3); // Shadows the children of the AdapterView but with more sensible indexing
     private final LinkedList<View> mViewCache = new LinkedList<View>();
     private boolean           mUserInteracting;  // Whether the user is interacting
@@ -78,8 +76,8 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
     private int               mYScroll = 0;
     private int               mScrollerLastX;
     private int               mScrollerLastY;
-    private int previousFocusX;
-    private int previousFocusY;
+    private int               previousFocusX;
+    private int               previousFocusY;
     
     private boolean           mReflow = false;
     private final GestureDetector mGestureDetector;
@@ -201,7 +199,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 int nextDocHeight = nv.getMeasuredHeight();
 
                     // Allow for the next page maybe being shorter than the screen is high
-//                yOffset = (nextDocHeight < screenHeight ? ((nextDocHeight - screenHeight)>>1) : 0);
                 if(nextDocHeight < screenHeight)
                 {
                     yOffset = ((nextDocHeight - screenHeight)>>1);
@@ -534,11 +531,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                 if ( Math.abs(mScale - fitWidthScale) <= 0.15 && fitWidthScale >= 1.15) 
                 {
                     mScale = Math.min(Math.max(fitWidthScale, min_scale), max_scale);
-                        // float factor = mScale/previousScale;
-                        // float viewFocusX = (float)getWidth()/2;
-                        // float viewFocusY = (float)getHeight()/2;
-                        // mXScroll += viewFocusX - viewFocusX * factor;
-                        // mYScroll += viewFocusY - viewFocusY * factor;
                     mScroller.forceFinished(true);
                     mXScroll = -cv.getLeft();
                     mYScroll = 0;
@@ -677,7 +669,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
             cv = getOrCreateChild(mCurrent, right-left, bottom-top);
             
                 //Set mXScroll, mYScroll and mScale from the values set in setScale() and setScroll()
-//            if(!changed && !mReflow)
             if(!mReflow)
             {
                 float scale_factor = mReflow ? REFLOW_SCALE_FACTOR : 1.0f;
@@ -781,8 +772,6 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
                       cvRight + rv.getMeasuredWidth() + gap,
                       (cvBottom + cvTop + rv.getMeasuredHeight())/2);
         }
-
-//        invalidate();
     }
 
     
@@ -1114,4 +1103,3 @@ abstract public class ReaderView extends AdapterView<Adapter> implements Gesture
         super.onRestoreInstanceState(state);
     }
 }
-

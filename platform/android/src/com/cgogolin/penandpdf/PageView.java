@@ -195,13 +195,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private static int underlineColor = 0x80AC7225;
     private static int strikeoutColor = 0x80AC7225;
     private static boolean useSmartTextSelection = false;    
-    
-        //To be overrwritten by any superclass
-    // protected abstract void drawPage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
-    // protected abstract void updatePage(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
-    // 
-    // protected abstract CancellableTaskDefinition<Void, Void> getDrawPageTask(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
-    // protected abstract CancellableTaskDefinition<Void, Void> getUpdatePageTask(Bitmap bm, int sizeX, int sizeY, int patchX, int patchY, int patchWidth, int patchHeight);
 
     protected abstract CancellableTaskDefinition<PatchInfo,PatchInfo> getRenderTask(PatchInfo patchInfo);
     protected abstract LinkInfo[] getLinkInfo();
@@ -356,12 +349,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         float docRelX = (e.getX() - getLeft())/scale;
         float docRelY = (e.getY() - getTop())/scale;
 
-        // if(docRelX < mSelectBox.right)
         mSelectBox.left=docRelX;
-        // else {
-        //     mSelectBox.left=mSelectBox.right;
-        //     mSelectBox.right=docRelX;
-        // }
         if(docRelY < mSelectBox.bottom)
             mSelectBox.top=docRelY;
         else {
@@ -377,12 +365,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
         float docRelX = (e.getX() - getLeft())/scale;
         float docRelY = (e.getY() - getTop())/scale;
-        // if(docRelX > mSelectBox.left)
         mSelectBox.right=docRelX;
-        // else {
-        //     mSelectBox.right=mSelectBox.left;
-        //     mSelectBox.left=docRelX;
-        // }
         if(docRelY > mSelectBox.top)
             mSelectBox.bottom=docRelY;
         else {
@@ -820,7 +803,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             return true;
     }
 
-        //This is incredibly wastefull. Should stop going through the resto of the text as soon as it has found some word
+        //This is incredibly wastefull. Should stop going through the rest of the text as soon as it has found some word
     public boolean hasTextSelected() {
 
         class Boolean {
@@ -831,7 +814,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         b.value = false;
         
         processSelectedText(new TextProcessor() {
-                public void onStartLine() {}                
+                public void onStartLine() {}
                 public void onWord(TextWord word) {
                     b.value = true;
                 }
@@ -938,16 +921,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
         
         if (mDrawing != null && mDrawing.size() > 0) {
             ArrayList<PointF> arc = mDrawing.get(mDrawing.size() - 1);
-            // int lastElementIndex = arc.size()-1;
-            // if(lastElementIndex >= 2 && PointFMath.pointToLineDistance(arc.get(lastElementIndex-2),point,arc.get(lastElementIndex-1)) < inkThickness && PointFMath.pointToLineDistance(arc.get(lastElementIndex-2),arc.get(lastElementIndex),arc.get(lastElementIndex-1)) < inkThickness) {
-            //     arc.remove(lastElementIndex-1);
-            // }
-            // if(lastElementIndex >= 2 && PointFMath.distance(arc.get(lastElementIndex-1), point) < inkThickness)
-            //     arc.remove(lastElementIndex);
             arc.add(point);
             
-                //Invalidate only the region arround the point where we are actually drawing
-                //            mOverlayView.invalidate();
             PointF point0 = arc.get(arc.size()-2);
             Rect invalidRect = new Rect();
             invalidRect.union((int)(point.x*scale+getLeft()), (int)(point.y*scale+getTop()));
@@ -1233,7 +1208,7 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
     
     
-    public void addHq(boolean update) {//If update is true a more efficient method is used to redraw the patch but it is redrawn even if the area hasn't changed
+    public void addHq(boolean update) {//If update is true, a more efficient method is used to redraw the patch but it is redrawn even if the area hasn't changed
         Rect viewArea = new Rect(getLeft(),getTop(),getRight(),getBottom());
         
         if(viewArea == null || mSize == null)
@@ -1245,10 +1220,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             //Construct the PatchInfo (important: the bitmap is shared between all page views that belong to a given readerview, so we ask the ReadderView to provide it)
         PatchInfo patchInfo = new PatchInfo(viewArea, ((ReaderView)mParent).getPatchBm(update), mHqView, update);
 
-//        Log.e("PenAndPDF", "got "+patchInfo.patchBm);
-
-//        Log.v("PageView", "addHq() intersects="+patchInfo.intersects+", area changed="+patchInfo.areaChanged);
-        
             //If there is no itersection there is no need to draw anything
         if(!patchInfo.intersects) return;
         
@@ -1262,7 +1233,6 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             if(mOverlayView != null) mOverlayView.bringToFront();
         }
 
-//        Log.v("PageView", "addHq() rendering now");
         mHqView.renderInBackground(patchInfo);
     }
 

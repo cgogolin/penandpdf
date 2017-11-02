@@ -73,7 +73,6 @@ abstract public class MuPDFReaderView extends ReaderView {
     public MuPDFReaderView(Activity act) {
         super(act);
         mContext = act;
-//        setBackgroundColor(BACKGROUND_COLOR);
             // Get the screen size etc to customise tap margins.
             // We calculate the size of 1 inch of the screen for tapping.
             // On some devices the dpi values returned are wrong, so we
@@ -122,7 +121,6 @@ abstract public class MuPDFReaderView extends ReaderView {
                                     //If the link target is of /XYZ type r might be a zoom value
                                 if( (li.targetFlags & LinkInfoInternal.fz_link_flag_r_is_zoom) == LinkInfoInternal.fz_link_flag_r_is_zoom && (li.targetFlags & LinkInfoInternal.fz_link_flag_r_valid) == LinkInfoInternal.fz_link_flag_r_valid )
                                 {
-//                                    Toast.makeText(getContext(), "zoom="+li.target.right, Toast.LENGTH_SHORT).show();
                                     if(li.target.right > 0 && li.target.right <= 1.0f)
                                         setScale(li.target.right);
                                 }
@@ -193,10 +191,6 @@ abstract public class MuPDFReaderView extends ReaderView {
             mMode = Mode.Viewing;
             onTapMainDocArea();
         }
-        // else if (mMode == Mode.Selecting && !tapDisabled) {
-        //     MuPDFView pageView = (MuPDFView)getSelectedView();
-        //     if(pageView!=null) pageView.deselectText();            
-        // }        
             
         return super.onSingleTapUp(e);
     }
@@ -208,13 +202,7 @@ abstract public class MuPDFReaderView extends ReaderView {
     }
     
     @Override
-    public boolean onDown(MotionEvent e) {
-        // switch (mMode) {
-        //     case Selecting:
-        //         MuPDFView pageView = (MuPDFView)getSelectedView();
-        //         if(pageView!=null) pageView.deselectText();
-        // }
-        
+    public boolean onDown(MotionEvent e) {        
             //Make text selectable by long press
         MuPDFPageView cv = (MuPDFPageView)getSelectedView();
         if( (mMode == Mode.Viewing || mMode == Mode.Selecting || mMode == Mode.Drawing) && cv != null && !cv.hitsLeftMarker(e.getX(),e.getY()) && !cv.hitsRightMarker(e.getX(),e.getY()) )
@@ -235,7 +223,7 @@ abstract public class MuPDFReaderView extends ReaderView {
                         }
                         if(mMode == Mode.Viewing || mMode == Mode.Selecting)
                         {
-                                //Strangely getY() doesn't return the correct coordinate relative to the view on my device so we have to compute them ourselves from the getRaw methods. I hope this works on multiwindow devices...
+                                //Strangely getY() doesn't return the correct coordinate relative to the view on my Samsung s4 mini so we have to compute them ourselves from the getRaw methods. I hope this works on multiwindow devices...
                             int[] locationOnScreen = new int[] {0,0};
                             getLocationOnScreen(locationOnScreen);
                             cv.deselectAnnotation();
@@ -337,22 +325,10 @@ abstract public class MuPDFReaderView extends ReaderView {
                 longInputHandler.removeCallbacks(longPressed);
                 longPressStartEvent = null;
                 break;
-            // case MotionEvent.ACTION_HOVER_ENTER:
-            // case MotionEvent.ACTION_HOVER_EXIT:
-            // case MotionEvent.ACTION_HOVER_MOVE:
-            //         //If a stylus is hovering interup the long press handler to avoid swithcing to selectio mode
-            //     for(int pointerIndex = 0; pointerIndex < event.getPointerCount(); pointerIndex++) {
-            //         if (event.getToolType(pointerIndex) == android.view.MotionEvent.TOOL_TYPE_STYLUS) {
-            //             longInputHandler.removeCallbacks(longPressed);
-            //             longPressStartEvent = null;
-            //             break;
-            //         }
-            //     }
-            //     break;
         }
         
             // Now we process events to be interpreted as drawing or ereasing or as events that start drawing
-            // 
+
             // By default use the first pointer
         int pointerIndexToUse = 0; 
             // If in stylus mode use the stylus istead
@@ -376,9 +352,8 @@ abstract public class MuPDFReaderView extends ReaderView {
                 if(item != null && Hit.InkAnnotation.equals(item)){
                     pageView.passClickEvent(event);
                     pageView.editSelectedAnnotation();
-//                    onHit(item);
                 }
-                else //if(item == null || Hit.Nothing.equals(item) )
+                else
                 {
                     pageView.deselectAnnotation();
                     setMode(MuPDFReaderView.Mode.Drawing);
@@ -491,7 +466,7 @@ abstract public class MuPDFReaderView extends ReaderView {
         }
         else
         {
-                //Notify user that more results might be coming if the searchTask ist still running
+                //Maybe notify user that more results might be coming if the searchTask ist still running?
         }
     }
     
@@ -526,7 +501,6 @@ abstract public class MuPDFReaderView extends ReaderView {
 
     @Override
     protected void onSettle(View v) {
-//        Log.v("MuPDFReaderView", "onSettle("+v+")");
             // When the layout has settled ask the page to render in HQ
         ((MuPDFView) v).addHq(false);
     }
@@ -538,16 +512,10 @@ abstract public class MuPDFReaderView extends ReaderView {
         ((MuPDFView) v).removeHq();
     }
 
-    // @Override
-    // protected void onNotInUse(View v) {
-    //     ((MuPDFView) v).releaseResources();
-    // }
-
     @Override
     protected void onScaleChild(View v, Float scale) {
         ((MuPDFView) v).setScale(scale);
     }
-
 
     @Override
     public Parcelable onSaveInstanceState() {

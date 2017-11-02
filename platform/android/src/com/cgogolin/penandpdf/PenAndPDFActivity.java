@@ -104,7 +104,6 @@ public class PenAndPDFActivity extends AppCompatActivity implements SharedPrefer
     private SearchView searchView = null;
     private String latestTextInSearchBox = "";
     private String textOfLastSearch = "";
-//    private ShareActionProvider mShareActionProvider = null;
     private boolean mSaveOnStop = false;
     private boolean mSaveOnDestroy = false;
     private boolean mIgnoreSaveOnStopThisTime = false;
@@ -141,15 +140,16 @@ public class PenAndPDFActivity extends AppCompatActivity implements SharedPrefer
     private AlertDialog mAlertDialog;
     private FilePicker mFilePicker;
     
-    // private AsyncTask<Uri,Void,Boolean> mSaveAsTask;
-    // private AsyncTask<Void,Void,Boolean> mSaveTask;
     private AsyncTask<Callable<Boolean>,Void,Boolean> mSaveAsOrSaveTask;
     
     private ArrayList<TemporaryUriPermission> temporaryUriPermissions = new ArrayList<TemporaryUriPermission>();
 
     private boolean mDashboardIsShown = false;
-		//Code from http://stackoverflow.com/questions/13209494/how-to-get-the-full-file-path-from-uri
+    
+		
 /**
+ * Code from http://stackoverflow.com/questions/13209494/how-to-get-the-full-file-path-from-uri
+ * 
  * Get a file path from a Uri. This will get the the path for Storage Access
  * Framework Documents, as well as the _data field for the MediaStore and
  * other file-based ContentProviders.
@@ -395,10 +395,6 @@ public static boolean isMediaDocument(Uri uri) {
         }
     }
 
-    // @Override
-    // public void onNewIntent(Intent intent)
-    //     {}
-
     
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -430,8 +426,6 @@ public static boolean isMediaDocument(Uri uri) {
                 invalidateOptionsMenu();
             }
             
-                //Initialize the alert builder working arround a bug in varoious themes
-//			mAlertBuilder = new AlertDialog.Builder(this, R.style.PenAndPDFAlertDialogTheme);
 			mAlertBuilder = new AlertDialog.Builder(this);
             
                 //Get the core saved with onRetainNonConfigurationInstance()
@@ -440,31 +434,6 @@ public static boolean isMediaDocument(Uri uri) {
                 if(core != null) mDocViewNeedsNewAdapter = true;
             }
         }
-
-
-    // @Override
-    // public void onWindowFocusChanged (boolean hasFocus) {
-    //     super.onWindowFocusChanged(hasFocus);
-    //     if (hasFocus) {
-    //         Intent intent = getIntent();
-    //         if (Intent.ACTION_MAIN.equals(intent.getAction()) && core == null && !dashboardIsShown())
-    //         {
-    //             showDashboard();//If this is done earlier the animation is not played
-    //         }
-    //     }
-    // }
-
-    // @Override
-    // protected void onStart() {
-    //     super.onStart();
-        
-    //     Intent intent = getIntent();
-    //     if (Intent.ACTION_MAIN.equals(intent.getAction()) && core == null)
-    //     {
-    //         showDashboard();
-    //     }
-    // }
-
     
     @Override
     protected void onResume()
@@ -482,12 +451,9 @@ public static boolean isMediaDocument(Uri uri) {
             
 			Intent intent = getIntent();
 
-//            Log.i(getString(R.string.app_name), "onResume() with intent="+intent+" core="+core);
-                        
 			if (Intent.ACTION_MAIN.equals(intent.getAction()) && core == null)
             {
                     //If showDashboard() is run directly from onResume() the animation doesn't play...
-//				showDashboard(); 
                 final Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                         @Override
@@ -554,13 +520,7 @@ public static boolean isMediaDocument(Uri uri) {
         {
 			if(mSaveOnStop && !mIgnoreSaveOnStopThisTime && core.canSaveToCurrentUri(this))
             {
-                saveInBackground(/*new Callable<Void>() {
-                                     @Override
-                                     public Void call() {
-                                         showInfo("Successfully saved during onStop!");
-                                         return null;
-                                     }
-                                     }*/null,
+                saveInBackground(null,
                                  new Callable<Void>() {
                                      @Override
                                      public Void call() {
@@ -999,18 +959,6 @@ public static boolean isMediaDocument(Uri uri) {
                 return true;
             case R.id.menu_cancel:
                 switch (mActionBarMode) {
-                    // case Annot:
-                    //     if (pageView != null) {
-                    //             pageView.deselectText();
-                    //             pageView.cancelDraw();
-                    //     }
-                    //     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                    //     break;
-                    // case Edit:
-                    //     if (pageView != null)
-                    //         pageView.deleteSelectedAnnotation();
-                    //     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                    //     break;
                     case Search:
                         hideKeyboard();
                         if (mSearchTaskManager != null) mSearchTaskManager.stop();
@@ -1018,10 +966,6 @@ public static boolean isMediaDocument(Uri uri) {
                         mDocView.clearSearchResults();
                         mDocView.resetupChildren();
                         break;
-                    // case Selection:
-                    //     mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                    //     pageView.deselectText();
-                    //     break;
                     case AddingTextAnnot:
                         mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         break;
@@ -1056,7 +1000,6 @@ public static boolean isMediaDocument(Uri uri) {
 			try
 			{
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-//                Log.i(getString(R.string.app_name), "Succesfully took persistable read uri permissions for "+uri);
 			}
 			catch(Exception e)
 			{
@@ -1068,7 +1011,6 @@ public static boolean isMediaDocument(Uri uri) {
                 try
                 {
                     getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-//                    Log.i(getString(R.string.app_name), "Succesfully took persistable write uri permissions for "+uri);
                 }
                 catch(Exception e)
                 {
@@ -1316,11 +1258,6 @@ public static boolean isMediaDocument(Uri uri) {
                         }
                     }
 
-                        // @Override
-                        // protected void onSelectionStatusChanged() {
-                        //     invalidateOptionsMenu();
-                        // }
-
                     @Override
                     protected void onNumberOfStrokesChanged(int numberOfStrokes) {
                         invalidateOptionsMenu();
@@ -1373,7 +1310,6 @@ public static boolean isMediaDocument(Uri uri) {
 	private void hideDashboard() {
         final ScrollView entryScreenScrollView = (ScrollView)findViewById(R.id.entry_screen_scroll_view);
         LinearLayout entryScreenLayout = (LinearLayout)findViewById(R.id.entry_screen_layout);
-            //entryScreenLayout.removeAllViews();
         if(entryScreenLayout.getChildCount() > 0)
             entryScreenLayout.removeViews(0,entryScreenLayout.getChildCount());
         mActionBarMode = ActionBarMode.Main;
@@ -1422,13 +1358,12 @@ public static boolean isMediaDocument(Uri uri) {
         entryScreenLayout.setLayoutTransition(layoutTransition);
 
         entryScreenScrollView.setVisibility(View.VISIBLE);
-//        if(mDocView != null)
-        {
-            TransitionDrawable transition = (TransitionDrawable) entryScreenScrollView.getBackground();
-            int animationTime = (int)entryScreenLayout.getLayoutTransition().getDuration(LayoutTransition.DISAPPEARING);
+        
+        TransitionDrawable transition = (TransitionDrawable) entryScreenScrollView.getBackground();
+        int animationTime = (int)entryScreenLayout.getLayoutTransition().getDuration(LayoutTransition.DISAPPEARING);
 
-            transition.startTransition(animationTime);
-        }
+        transition.startTransition(animationTime);
+        
         
         SharedPreferences prefs = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, Context.MODE_MULTI_PROCESS);
         int elevation = 5;
@@ -1494,11 +1429,6 @@ public static boolean isMediaDocument(Uri uri) {
         for(final RecentFile recentFile: recentFilesList) {
             cardNumber++;
             if(cardNumber > numberRecentFilesInMenu) break;
-                
-            // if (PenAndPDFCore.canReadFromUri(this, recentFile.getUri()))
-            //     Log.i(getString(R.string.app_name), "can read from "+recentFile.getUri());
-            // else
-            //     Log.i(getString(R.string.app_name), "can not read from "+recentFile.getUri());
             
             if (!PenAndPDFCore.canReadFromUri(this, recentFile.getUri()))
                 continue;
@@ -1520,12 +1450,6 @@ public static boolean isMediaDocument(Uri uri) {
             card.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        // Intent intent = new Intent(Intent.ACTION_VIEW, recentFile.getUri(), card.getContext(), PenAndPDFActivity.class);
-                        // intent.putExtra(Intent.EXTRA_TITLE, recentFile.getDisplayName());
-                        // startActivity(intent);
-                        // overridePendingTransition(R.animator.fade_in, R.animator.fade_out);
-                        // hideDashboard();
-                        // finish();
                         checkSaveThenCall(new Callable<Void>(){
                                 public Void call() {
                                     Intent intent = new Intent(Intent.ACTION_VIEW, recentFile.getUri(), card.getContext(), PenAndPDFActivity.class);
@@ -1536,14 +1460,6 @@ public static boolean isMediaDocument(Uri uri) {
                                     finish();
                                     return null;
                                 }});
-                        // getIntent().setAction(Intent.ACTION_VIEW);
-                        // getIntent().setData(recentFile.getUri());
-                        // if (core != null) {
-                        //     core.onDestroy();
-                        //     core = null;
-                        // }
-                        // onResume();
-                        // hideDashboard();
                     }
                 });
 
@@ -1575,7 +1491,6 @@ public static boolean isMediaDocument(Uri uri) {
                 }
             };
             setRecentFileThumbnailTask.execute(recentFile);
-//            entryScreenLayout.addView(card);
         }
 	}
     
@@ -1620,13 +1535,6 @@ public static boolean isMediaDocument(Uri uri) {
                     finish();
                     return null;
                 }});
-		// getIntent().setAction(Intent.ACTION_VIEW);
-		// getIntent().setData(uri);
-		// if (core != null) {
-		// 	core.onDestroy();
-		// 	core = null;
-		// }
-		// onResume();//New core and new docview are setup here	
 	}
 
     
@@ -1656,19 +1564,13 @@ public static boolean isMediaDocument(Uri uri) {
                                                      }
                                                  }
                                                  );
-								// if(!save())
-								// 	showInfo(getString(R.string.error_saveing));
-                                // else
-                                //     try{callable.call();}catch(Exception e){}                                
 							}
 							else
 							{
 								showSaveAsActivity();
-                                    //We should show the open dialog after save as has compltete...
 							}
 						}
 						if (which == AlertDialog.BUTTON_NEGATIVE) {
-//							showOpenDocumentDialog();
                             try{callable.call();}catch(Exception e){}
 						}
 						if (which == AlertDialog.BUTTON_NEUTRAL) {
@@ -1688,16 +1590,12 @@ public static boolean isMediaDocument(Uri uri) {
 		}
 		else
 		{
-//			showOpenDocumentDialog();
             try{callable.call();}catch(Exception e){}
 		}
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        // if(intent!=null)
-        //     Log.i(getString(R.string.app_name), "onActivityResult() flags="+intent.getFlags()+" and write flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == Intent.FLAG_GRANT_WRITE_URI_PERMISSION)+" and read flag is set to "+((intent.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION) == Intent.FLAG_GRANT_READ_URI_PERMISSION));
-        
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {        
         switch (requestCode) {
             case EDIT_REQUEST:
                 overridePendingTransition(R.animator.fade_in, R.animator.exit_to_left);
@@ -1793,10 +1691,6 @@ public static boolean isMediaDocument(Uri uri) {
                         }
                     }
                 }
-                // else if (resultCode == RESULT_CANCELED)
-                // {
-                //     showInfo("Aborted");
-                // }
         }
         super.onActivityResult(requestCode, resultCode, intent);
     }
@@ -1914,40 +1808,6 @@ public static boolean isMediaDocument(Uri uri) {
         return true;
     }
     
-//     private void saveInBackground(final Callable success, final Callable failure) {
-//         final AlertDialog waitWhileSavingDialog = mAlertBuilder.create();
-//         waitWhileSavingDialog.setTitle(getString(R.string.saving));
-//         waitWhileSavingDialog.setCancelable(false);
-//         waitWhileSavingDialog.setCanceledOnTouchOutside(false);
-//         final ProgressBar busyIndicator = new ProgressBar(this);
-//         busyIndicator.setIndeterminate(true);
-//         waitWhileSavingDialog.setView(busyIndicator);
-        
-//         mSaveTask = new AsyncTask<Void,Void,Boolean>() {
-//                 @Override
-//                 protected void onPreExecute() {
-//                     waitWhileSavingDialog.show();
-//                 }
-//                 @Override
-//                 protected Boolean doInBackground(Void... v0) {
-// //                    try{Thread.sleep(2000);}catch(Exception e){}//ONLY FOR DEBUGGING REMOVE THIS!
-//                     return save();
-//                 }
-//                 @Override
-//                 protected void onPostExecute(Boolean result) {
-//                     waitWhileSavingDialog.dismiss();
-//                     if(result)
-//                         if(success!=null) try{success.call();}catch(Exception e){
-//                                 showInfo(getString(R.string.error_saveing)+": "+e);
-//                             }
-//                     else
-//                         if(failure!=null) try{failure.call();}catch(Exception e){
-//                                 showInfo(getString(R.string.error_saveing)+": "+e);
-//                             }
-//                 }
-//             };
-//         mSaveTask.execute();
-//     }
 
     private synchronized boolean save() {
         if (core == null) return false;
@@ -2035,23 +1895,21 @@ public static boolean isMediaDocument(Uri uri) {
                     if(thunbnailString != null && !cookie.aborted())
                     {
                         recentFile.setThumbnailString(thunbnailString);
-//                        recentFilesList.push(recentFile);//this replaces the previously pushed version
                         recentFilesList.write(edit);
                         edit.apply();
                     }
                     
                     return recentFile;
                 }
-            }                                                                              )
+            })
                                {
-                                   // @Override
-                                   // protected void onPostExecute(final RecentFile recentFile) {                       
-                                   //     recentFilesList.push(recentFile);//this replaces the previously pushed version
-                                   //     recentFilesList.write(edit);
-                                   //     edit.apply();
-                                   // }
+                                       // @Override
+                                       // protected void onPostExecute(final RecentFile recentFile) {                       
+                                       //     recentFilesList.push(recentFile);//this replaces the previously pushed version
+                                       //     recentFilesList.write(edit);
+                                       //     edit.apply();
+                                       // }
             };
-//        mRenderThumbnailTask.execute(new RecentFile(recentFile));
         mRenderThumbnailTask.execute(recentFile);
     }
     
@@ -2066,7 +1924,7 @@ public static boolean isMediaDocument(Uri uri) {
             edit.apply();
         }
     }
-
+    
 
     private void saveViewport(Uri uri) {
         if(uri != null)
@@ -2116,8 +1974,7 @@ public static boolean isMediaDocument(Uri uri) {
         }
         catch(NumberFormatException ex) {
             numberRecentFilesInMenu = Integer.parseInt(getResources().getString(R.string.number_recent_files_default));
-        }
-        
+        }    
             
             //Also notify other classes and members of the preference change
         ReaderView.onSharedPreferenceChanged(sharedPref, key);
@@ -2182,8 +2039,6 @@ public static boolean isMediaDocument(Uri uri) {
         alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.okay),
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
-                                    // if (core.authenticatePassword(mPasswordView.getText().toString())) {
-                                    //     setupUI();
                                 if (core==null || !core.authenticatePassword(mPasswordView.getText().toString()))
                                     requestPassword();
                                 
@@ -2207,7 +2062,8 @@ public static boolean isMediaDocument(Uri uri) {
 		final LinearLayout editTextLayout = new LinearLayout(mAlertDialog.getContext());
 		editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 		editTextLayout.setOrientation(LinearLayout.VERTICAL);
-		editTextLayout.setPadding(16, 16, 16, 0);//should not be hard coded
+        int padding = dpToPixel(16);
+		editTextLayout.setPadding(padding, padding, padding, 0);
 		
         final EditText input = new EditText(editTextLayout.getContext());
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -2242,7 +2098,6 @@ public static boolean isMediaDocument(Uri uri) {
 		mAlertDialog.setView(editTextLayout);
 		mAlertDialog.show();
 		input.requestFocus();
-//		showKeyboard();
     }
 
 
@@ -2253,13 +2108,12 @@ public static boolean isMediaDocument(Uri uri) {
 		final LinearLayout editTextLayout = new LinearLayout(mAlertDialog.getContext());
 		editTextLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 		editTextLayout.setOrientation(LinearLayout.VERTICAL);
-		editTextLayout.setPadding(16, 16, 16, 0);//should not be hard coded
+        int padding = dpToPixel(16);
+		editTextLayout.setPadding(padding, padding, padding, 0);
         final EditText input = new EditText(editTextLayout.getContext());
         input.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
         input.setSingleLine();
 		input.setBackgroundDrawable(null);
-//		input.setHint(getString(R.string.dialog_newdoc_hint));
-//        input.setText();
         TextDrawable textDrawable = new TextDrawable(".pdf", input.getTextSize(), input.getCurrentTextColor());
         input.setCompoundDrawablesWithIntrinsicBounds(null , null, textDrawable, null);
         input.setFocusable(true);
@@ -2314,7 +2168,6 @@ public static boolean isMediaDocument(Uri uri) {
 		mAlertDialog.show();
 		input.requestFocus();
         input.setSelection(0);
-//		showKeyboard();
     }
 
     
@@ -2384,14 +2237,6 @@ public static boolean isMediaDocument(Uri uri) {
                                         }
                                     }
                                                  );                                
-                                // if(!save())
-                                //     showInfo(getString(R.string.error_saveing));
-                                // else 
-                                // {
-                                //     mIgnoreSaveOnStopThisTime = true;//No need to save twice
-                                //     mIgnoreSaveOnDestroyThisTime = true;//No need to save twice
-                                //     finish();
-                                // }
                             }
                             else
                                 showSaveAsActivity();
@@ -2461,10 +2306,8 @@ public static boolean isMediaDocument(Uri uri) {
         getSupportActionBar().hide();
         mActionBarMode = ActionBarMode.Hidden;
         invalidateOptionsMenu();
-//        mDocView.setNormalizedScroll(0f,0f);
         mDocView.setScale(1.0f);
         mDocView.setLinksEnabled(false);
-//        resetupDocViewAfterActionBarAnimation(false);
         mDocView.setPadding(0, 0, 0, 0);
     }
             
@@ -2475,9 +2318,7 @@ public static boolean isMediaDocument(Uri uri) {
             mActionBarMode = ActionBarMode.Main;
         invalidateOptionsMenu();
         mDocView.setScale(1.0f);
-//        mDocView.setNormalizedScroll(0f,0f);
         mDocView.setLinksEnabled(true);
-//        resetupDocViewAfterActionBarAnimation(true);
             //Make content appear below the toolbar if completely zoomed out
         TypedValue tv = new TypedValue();
         if(getSupportActionBar().isShowing() && getTheme().resolveAttribute(android.support.v7.appcompat.R.attr.actionBarSize, tv, true)) {
@@ -2511,7 +2352,7 @@ public static boolean isMediaDocument(Uri uri) {
                     
                 });
         } catch (final Exception ignored) {
-        // Nothing to do
+                // Nothing to do
         }
     }
 
@@ -2622,4 +2463,3 @@ public static boolean isMediaDocument(Uri uri) {
         return memoryInfo;
     }
 }
-    

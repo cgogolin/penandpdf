@@ -330,8 +330,7 @@ public class MuPDFCore
         for (LinkInfo link: pageLinks)
             if(link.type() == LinkInfo.LinkType.Internal)
             {
-//                Log.v("Core", "internal link with left="+((LinkInfoInternal)link).target.left+" top="+((LinkInfoInternal)link).target.top+" on page of height="+getPageSize(((LinkInfoInternal)link).pageNumber).y);
-                    //The 2s don't make any sense...
+                    //The 2*s don't make any sense, but for some reason they are necessary.
                 ((LinkInfoInternal)link).target.left = 2*((LinkInfoInternal)link).target.left; 
                 ((LinkInfoInternal)link).target.top = getPageSize(((LinkInfoInternal)link).pageNumber).y - 2*((LinkInfoInternal)link).target.top ;
                 ((LinkInfoInternal)link).target.right = 2*((LinkInfoInternal)link).target.right;
@@ -376,38 +375,22 @@ public class MuPDFCore
 
                 for (TextChar[] sp: ln) {
                     for (TextChar tc: sp) {
-//                        final int type = Character.getType(tc.c);
-//                        final boolean special = Character.isWhitespace(tc.c) || type == Character.END_PUNCTUATION || type == Character.FINAL_QUOTE_PUNCTUATION || type == Character.INITIAL_QUOTE_PUNCTUATION || type == Character.OTHER_PUNCTUATION || type == Character.START_PUNCTUATION;
-//                        final boolean special = !Character.isLetter(tc.c);
-                        
-//                        if (special)
                         if(!Character.isLetter(tc.c))
                         {
                                 //Non-letter characters start a new word, so add what we already have to wds
                             if (wd.w.length() > 0) {
                                 wds.add(wd);
-//                                Log.v("Core", "'"+wd.w+"' at "+((RectF)wd));
                                 wd = new TextWord();
                             }
                         }
-//                        if (!Character.isWhitespace(tc.c))
-//                        {
-                            //Add the character
-
-							// if (Character.isWhitespace(tc.c))
-							//     Log.v("Core", "tc.c='"+tc.c+"' at "+((RectF)tc));
                         
                         wd.add(tc);
-//                            if (type == Character.END_PUNCTUATION || type == Character.FINAL_QUOTE_PUNCTUATION || type == Character.INITIAL_QUOTE_PUNCTUATION || type == Character.OTHER_PUNCTUATION || type == Character.START_PUNCTUATION)
-//                        if (special)
                         if(!Character.isLetter(tc.c))
                         {
                                 //Non-letter characters go into a word on their own
                             wds.add(wd);
-//                            Log.v("Core", "wd.w='"+wd.w+"' at "+((RectF)wd));
                             wd = new TextWord();
                         }
-//                        }
                     }
                 }
                 
@@ -448,8 +431,6 @@ public class MuPDFCore
                             }
                     }
                 }
-					// for (TextWord word: wds)
-					//     Log.v("Core", "word='"+word.w+"' at "+word);
             }
         }
         

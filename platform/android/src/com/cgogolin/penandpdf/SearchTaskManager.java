@@ -100,7 +100,6 @@ public abstract class SearchTaskManager {
                 do
                 {
                     publishProgress(index+1);
-//                    Log.v("SearchTask", "searching page " + (index+1));
                     RectF searchHits[] = mCore.searchPage(index, text);
                     if (searchHits != null && searchHits.length > 0)
                     {
@@ -162,11 +161,3 @@ public abstract class SearchTaskManager {
     }
 
 }
-
-
-                        // //Mirror the y coordinate
-                        // float pageHeight = mCore.getPageSize(index).y;
-                        // for(RectF hit : searchHits) 
-                        // {
-                        //     hit.set(hit.left, pageHeight - hit.top, hit.right, pageHeight - hit.bottom);
-                        // }

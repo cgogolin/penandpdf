@@ -41,7 +41,6 @@ public class SettingsActivity extends android.support.v7.app.AppCompatActivity {
         android.support.v7.app.ActionBar actionBar = getSupportActionBar();
 		if(actionBar != null){
 			actionBar.setTitle(title);
-//			actionBar.setSubtitle(subtitle);
 		}
         
         // Add the fragment to the layout
@@ -49,7 +48,6 @@ public class SettingsActivity extends android.support.v7.app.AppCompatActivity {
         if(savedInstanceState == null)
         {
             getFragmentManager().beginTransaction()
-//                .replace(android.R.id.content, new SettingsFragment())
                 .add(R.id.sub_layout, new SettingsFragment())
                 .commit();
         }

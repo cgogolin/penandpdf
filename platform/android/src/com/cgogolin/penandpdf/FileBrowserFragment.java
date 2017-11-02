@@ -1,6 +1,5 @@
 package com.cgogolin.penandpdf;
 
-//import android.app.Activity;
 import android.app.AlertDialog;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
@@ -66,17 +65,6 @@ public class FileBrowserFragment extends ListFragment {
             purpose = Purpose.ChooseFileForSaving;
         else
             purpose = Purpose.PickKeyFile;
-        // switch(intent.getAction())
-        // {
-        //     case ACTION_MAIN:
-        //         purpose = Purpose.ChooseFileForOpeningAndLaunch;
-        //     case ACTION_EDIT:
-        //         purpose = Purpose.ChooseFileForOpening;
-        //     case ACTION_PICK:
-        //         purpose = Purpose.ChooseFileForSaving;
-        //     default:
-        //         purpose = Purpose.PickKeyFile;
-        // }
 
             //Try to retrieve file name and path
         String filename = null;
@@ -89,7 +77,6 @@ public class FileBrowserFragment extends ListFragment {
         {
             if(purpose == Purpose.ChooseFileForSaving && intent.getData() != null)
             {
-//                File file = (new File(intent.getData().getPath()));
                 File file = new File(Uri.decode(intent.getData().getEncodedPath()));
                 if(file.canWrite())
                     directory = file.getParentFile();

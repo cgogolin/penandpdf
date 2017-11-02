@@ -43,7 +43,6 @@ public class PdfThumbnailManager
         testPixelColor=bm.getPixel(0,0);
         if(bm==null || cookie.aborted()) return null;
         core.drawPage(bm, 0, bmWidth, (int)(((float)bmWidth)/size.x*size.y), 0, 0, bmWidth, bmHeight, cookie);
-//        Log.i("Pen&PDF", "pixel check "+bm.getPixel(0,0)+" ?= "+testPixelColor);
         if(bm.getPixel(0,0) == testPixelColor) return null;
         
         File cacheDir = context.getCacheDir();
@@ -97,8 +96,6 @@ public class PdfThumbnailManager
         File cacheDir = context.getCacheDir();
         File bitmapFile = new File(cacheDir, thumbnail);
 
-//        Log.i("Pen&PDF", "getDrawable() for "+bitmapFile.getPath()+" and bitmapFile.isFile()="+bitmapFile.isFile()+" with length="+bitmapFile.length());
-        
         if(bitmapFile != null && bitmapFile.isFile()) {
             return new BitmapDrawable(res, bitmapFile.getPath());
         }

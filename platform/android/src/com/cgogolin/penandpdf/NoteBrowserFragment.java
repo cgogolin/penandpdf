@@ -1,11 +1,9 @@
 package com.cgogolin.penandpdf;
 
-//import android.app.Activity;
 import android.app.AlertDialog;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.support.v7.app.AppCompatActivity;
-//import android.content.Context;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -66,17 +64,6 @@ public class NoteBrowserFragment extends ListFragment {
             purpose = Purpose.ChooseFileForSaving;
         else
             purpose = Purpose.PickKeyFile;
-        // switch(intent.getAction())
-        // {
-        //     case ACTION_MAIN:
-        //         purpose = Purpose.ChooseFileForOpeningAndLaunch;
-        //     case ACTION_EDIT:
-        //         purpose = Purpose.ChooseFileForOpening;
-        //     case ACTION_PICK:
-        //         purpose = Purpose.ChooseFileForSaving;
-        //     default:
-        //         purpose = Purpose.PickKeyFile;
-        // }
 
             //Try to retrieve file name and path
         String filename = null;
@@ -89,7 +76,6 @@ public class NoteBrowserFragment extends ListFragment {
         {
             if(purpose == Purpose.ChooseFileForSaving && intent.getData() != null)
             {
-//                File file = (new File(intent.getData().getPath()));
                 File file = new File(Uri.decode(intent.getData().getEncodedPath()));
                 if(file.canWrite())
                     directory = file.getParentFile();
@@ -142,7 +128,6 @@ public class NoteBrowserFragment extends ListFragment {
             //We default to the notes directory
         if(mDirectory == null)
             mDirectory = PenAndPDFActivity.getNotesDir(getActivity());
-//            mDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         
             // Create a new handler that is updated dynamically when files are scanned
         mHandler = new Handler();
@@ -152,7 +137,6 @@ public class NoteBrowserFragment extends ListFragment {
                     if(mDirectory==null) return;
 
                         //Get the parent directory and the directories and files
-//                    mParent = mDirectory.getParentFile();
                     mDirs = mDirectory.listFiles(new FileFilter() {
                             public boolean accept(File file) {
                                 return file.isDirectory();
@@ -192,18 +176,9 @@ public class NoteBrowserFragment extends ListFragment {
                                 return arg0.getName().compareToIgnoreCase(arg1.getName());
                             }
                         });
-                    // Arrays.sort(mDirs, new Comparator<File>() {
-                    //         public int compare(File arg0, File arg1) {
-                    //             return arg0.getName().compareToIgnoreCase(arg1.getName());
-                    //         }
-                    //     });
 
                         //Add them to the adapter
                     mAdapter.clear();
-                    // if (mParent != null)
-                    //     mAdapter.add(new ChoosePDFItem(ChoosePDFItem.Type.PARENT, getString(R.string.parent_directory)));
-                    // for (File f : mDirs)
-                    //     mAdapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DIR, f.getName()));
                     for (File f : mFiles)
                         mAdapter.add(new ChoosePDFItem(ChoosePDFItem.Type.DOC, f.getName()));
                     mAdapter.notifyDataSetChanged();
