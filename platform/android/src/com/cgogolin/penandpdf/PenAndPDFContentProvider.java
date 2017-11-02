@@ -145,8 +145,6 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
         row.add(Document.COLUMN_MIME_TYPE, mimeType);
         row.add(Document.COLUMN_LAST_MODIFIED, lastModified);
         row.add(Document.COLUMN_FLAGS, flags);
-
-        Log.i("PenAndPDFContentProvider", "includeFile()       id="+documentId+" displayName="+displayName+" flags="+flags+ " length="+length+" lastModified="+lastModified);
     }
     
     
@@ -227,7 +225,6 @@ public class PenAndPDFContentProvider extends DocumentsProvider {
     
     @Override
     public Cursor queryDocument(String documentId, String[] projection) throws FileNotFoundException {
-        Log.i("PenAndPDFContentProvider", "queryDocument() with id "+documentId);
             // Create a cursor with the requested projection, or the default projection.
         final MatrixCursor result = new MatrixCursor(resolveDocumentProjection(projection));
             includeFile(result, documentId, null);

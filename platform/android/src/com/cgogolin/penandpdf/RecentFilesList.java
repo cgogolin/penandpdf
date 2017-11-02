@@ -64,9 +64,6 @@ public class RecentFilesList extends LinkedList<RecentFile> implements List<Rece
     
     @Override
     public void push(RecentFile recentFile) {
-
-        Log.i("Pen&PDF", "push() recent file "+recentFile.getDisplayName()+" with thunbnail "+recentFile.getThumbnailString());
-                    
             //Make sure we don't put duplicates
         PdfThumbnailManager pdfThumbnailManager = new PdfThumbnailManager(context);
         int index = -1;

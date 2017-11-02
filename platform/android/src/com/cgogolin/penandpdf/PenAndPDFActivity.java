@@ -1004,7 +1004,6 @@ public static boolean isMediaDocument(Uri uri) {
 			catch(Exception e)
 			{
 					//Nothing we can do if we don't get the permission
-                Log.i(getString(R.string.app_name), "Failed to take persistable read uri permissions for "+uri+" Exception: "+e);
 			}
             finally
             {
@@ -2399,7 +2398,6 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
     public void rememberTemporaryUriPermission(Intent intent) {
-        Log.i(getString(R.string.app_name), "remembering temporary permission for "+intent.getData()+" with flags="+intent.getFlags());
         temporaryUriPermissions.add(new TemporaryUriPermission(intent));
     }
 

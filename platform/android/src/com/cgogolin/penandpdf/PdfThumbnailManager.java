@@ -53,7 +53,6 @@ public class PdfThumbnailManager
             bitmapFile = File.createTempFile("thumbnail", ".png", cacheDir);
             out = new FileOutputStream(bitmapFile);
             bm.compress(Bitmap.CompressFormat.PNG, 100, out);
-            Log.i("Pen&PDF", "generate()    for "+bitmapFile.getPath()+" and bitmapFile.isFile()="+bitmapFile.isFile()+" with length="+bitmapFile.length());
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -111,8 +110,6 @@ public class PdfThumbnailManager
         File cacheDir = context.getCacheDir();
         File bitmapFile = new File(cacheDir, thumbnail);
 
-        Log.i("Pen&PDF", "delete()      for "+bitmapFile.getPath()+" and bitmapFile.isFile()="+bitmapFile.isFile()+" with length="+bitmapFile.length());
-        
         if(bitmapFile!=null && bitmapFile.isFile())
             try
             {

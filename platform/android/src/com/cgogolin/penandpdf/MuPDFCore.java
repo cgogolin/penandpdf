@@ -134,7 +134,6 @@ public class MuPDFCore
         
         public void abort()
             {
-                Log.v("Core", "aborting cookie "+cookiePtr);
                 abortCookie(cookiePtr);
             }
 

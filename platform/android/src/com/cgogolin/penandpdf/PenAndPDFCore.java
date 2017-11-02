@@ -61,7 +61,7 @@ public class PenAndPDFCore extends MuPDFCore
             
             if(android.os.Build.VERSION.SDK_INT < 23 && new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
             {
-                Log.i(context.getString(R.string.app_name), "uri "+uri.toString()+" points to file");
+//                Log.i(context.getString(R.string.app_name), "uri "+uri.toString()+" points to file");
                 super.init(context, Uri.decode(uri.getEncodedPath()));
             }
             else if (uri.toString().startsWith("content://")) //Uri points to a content provider
@@ -90,7 +90,7 @@ public class PenAndPDFCore extends MuPDFCore
                                 len+=num;
                                 baos.write(buffer, 0, num);
                             }
-                            Log.i(context.getString(R.string.app_name), "reached end of stream");
+//                            Log.i(context.getString(R.string.app_name), "reached end of stream");
                         }
                         finally
                         {
@@ -98,7 +98,7 @@ public class PenAndPDFCore extends MuPDFCore
                             if(pfd != null) pfd.close();
                         }
                         byte buffer[] = baos.toByteArray();
-                        Log.i(context.getString(R.string.app_name), "read "+len+" bytes into buffer "+buffer);
+//                        Log.i(context.getString(R.string.app_name), "read "+len+" bytes into buffer "+buffer);
                         super.init(context, buffer, displayName);
                     }
                     catch (OutOfMemoryError E)
@@ -111,7 +111,7 @@ public class PenAndPDFCore extends MuPDFCore
             }
             else if(android.os.Build.VERSION.SDK_INT >= 23 && new File(Uri.decode(uri.getEncodedPath())).isFile()) //Uri points to a file
             {
-                Log.i(context.getString(R.string.app_name), "uri "+uri.toString()+" points to file");
+//                Log.i(context.getString(R.string.app_name), "uri "+uri.toString()+" points to file");
                 super.init(context, Uri.decode(uri.getEncodedPath()));
             }
         }
@@ -202,11 +202,11 @@ public class PenAndPDFCore extends MuPDFCore
                         throw new java.io.IOException("Unable to open output stream to given uri: "+uri);
                 }
                 copyStream(fileInputStream,fileOutputStream);
-                Log.i(context.getString(R.string.app_name), "copyStream() succesfull");
+//                Log.i(context.getString(R.string.app_name), "copyStream() succesfull");
             }
             catch (java.io.FileNotFoundException e) 
             {
-                Log.i("context.getString(R.string.app_name)", "Exception for uri="+uri);
+                Log.e("context.getString(R.string.app_name)", "Exception for uri="+uri);
                 throw e;
             }
             catch (java.io.IOException e)
@@ -244,7 +244,7 @@ public class PenAndPDFCore extends MuPDFCore
         try
         {
             for(TemporaryUriPermission permission : (context).getTemporaryUriPermissions()) {
-                Log.i(context.getString(R.string.app_name), "checking saved temporary permission for "+permission.getUri()+" while uri="+uri+" write permission is "+permission.isWritePermission()+" and uris are equal "+permission.getUri().equals(uri));
+//                Log.i(context.getString(R.string.app_name), "checking saved temporary permission for "+permission.getUri()+" while uri="+uri+" write permission is "+permission.isWritePermission()+" and uris are equal "+permission.getUri().equals(uri));
                 if(permission.isWritePermission() && permission.getUri().equals(uri))
                 {
                     haveWritePermissionToUri = true;
@@ -274,7 +274,7 @@ public class PenAndPDFCore extends MuPDFCore
         }
         catch(Exception e)
         {
-            Log.i(context.getString(R.string.app_name), "exception while trying to figure out permissions: "+e);
+            Log.e(context.getString(R.string.app_name), "exception while trying to figure out permissions: "+e);
             return false;
         }
         if(!haveWritePermissionToUri)
@@ -282,19 +282,19 @@ public class PenAndPDFCore extends MuPDFCore
             
         boolean canWrite = false;
         OutputStream os = null;
-        Log.i(context.getString(R.string.app_name), "we have write permissions, so checking if we can somehow open an output stream");
+//        Log.i(context.getString(R.string.app_name), "we have write permissions, so checking if we can somehow open an output stream");
         try{
             os = context.getContentResolver().openOutputStream(uri, "wa");
             if(os != null)
             {
-                Log.i(context.getString(R.string.app_name), "opened os succesfully");
+//                Log.i(context.getString(R.string.app_name), "opened os succesfully");
                 os.close();
                 canWrite = true;
             }
         }
         catch(Exception e)
         {
-            Log.i(context.getString(R.string.app_name), "exception while opening os: "+e);
+//            Log.i(context.getString(R.string.app_name), "exception while opening os: "+e);
             if(os != null)
                 try
                 {
@@ -308,11 +308,11 @@ public class PenAndPDFCore extends MuPDFCore
         if(!canWrite){
             os = null;
             ParcelFileDescriptor pfd = null;
-            Log.i(context.getString(R.string.app_name), "checking if we can open a pfd");
+//            Log.i(context.getString(R.string.app_name), "checking if we can open a pfd");
             try{
                 pfd = context.getContentResolver().openFileDescriptor(uri, "wa");
                 if(pfd != null) {
-                    Log.i(context.getString(R.string.app_name), "opened pfd succesfully so trying to open os via pfd");
+//                    Log.i(context.getString(R.string.app_name), "opened pfd succesfully so trying to open os via pfd");
                     os = new FileOutputStream(pfd.getFileDescriptor());
                     if(os != null)
                     {
@@ -324,10 +324,10 @@ public class PenAndPDFCore extends MuPDFCore
             }
             catch(Exception e)
             {
-                Log.i(context.getString(R.string.app_name), "exception while opening pfd or os via pfd: "+e);
+//                Log.i(context.getString(R.string.app_name), "exception while opening pfd or os via pfd: "+e);
                 if(e.getMessage().contains("Unsupported mode: wa"))
                 {
-                    Log.i(context.getString(R.string.app_name), "assuming that the only problem was the mode 'wa' and setting canWrite = true");
+//                    Log.i(context.getString(R.string.app_name), "assuming that the only problem was the mode 'wa' and setting canWrite = true");
                     canWrite = true; //We assume that writing with "w" would work to make google dirve work!
                 }
                 if(os != null)
@@ -518,7 +518,7 @@ public class PenAndPDFCore extends MuPDFCore
         }
         catch(Exception e)
         {
-            Log.i(context.getString(R.string.app_name), "exception while trying to figure out permissions: "+e);
+//            Log.i(context.getString(R.string.app_name), "exception while trying to figure out permissions: "+e);
             return false;
         }
         
