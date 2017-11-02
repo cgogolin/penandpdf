@@ -554,7 +554,13 @@ public static boolean isMediaDocument(Uri uri) {
         {
 			if(mSaveOnStop && !mIgnoreSaveOnStopThisTime && core.canSaveToCurrentUri(this))
             {
-                saveInBackground(null,
+                saveInBackground(/*new Callable<Void>() {
+                                     @Override
+                                     public Void call() {
+                                         showInfo("Successfully saved during onStop!");
+                                         return null;
+                                     }
+                                     }*/null,
                                  new Callable<Void>() {
                                      @Override
                                      public Void call() {
