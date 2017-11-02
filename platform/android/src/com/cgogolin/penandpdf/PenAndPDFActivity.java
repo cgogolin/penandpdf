@@ -141,8 +141,9 @@ public class PenAndPDFActivity extends AppCompatActivity implements SharedPrefer
     private AlertDialog mAlertDialog;
     private FilePicker mFilePicker;
     
-    private AsyncTask<Uri,Void,Boolean> mSaveAsTask;
-    private AsyncTask<Void,Void,Boolean> mSaveTask;
+    // private AsyncTask<Uri,Void,Boolean> mSaveAsTask;
+    // private AsyncTask<Void,Void,Boolean> mSaveTask;
+    private AsyncTask<Callable<Boolean>,Void,Boolean> mSaveAsOrSaveTask;
     
     private ArrayList<TemporaryUriPermission> temporaryUriPermissions = new ArrayList<TemporaryUriPermission>();
 
@@ -1822,41 +1823,68 @@ public static boolean isMediaDocument(Uri uri) {
         }
     }
 
+    private void saveAsInBackground(final Uri uri, final Callable successCallable, final Callable failureCallable) {
+        saveAsOrSaveInBackground(new Callable<Boolean>() {
+                @Override
+                public Boolean call() {
+                    return saveAs(uri);
+                }
+            },
+            successCallable, failureCallable);
+    }
+    
+    private void saveInBackground(final Callable successCallable, final Callable failureCallable) {
+        saveAsOrSaveInBackground(new Callable<Boolean>() {
+                @Override
+                public Boolean call() {
+                    return save();
+                }
+            },
+            successCallable, failureCallable);
+    }
 
-    private void saveAsInBackground(final Uri uri, final Callable success, final Callable failure) {
+    private void saveAsOrSaveInBackground(final Callable<Boolean> saveCallable, final Callable successCallable, final Callable failureCallable) {
         final AlertDialog waitWhileSavingDialog = mAlertBuilder.create();
         waitWhileSavingDialog.setTitle(getString(R.string.saving));
         waitWhileSavingDialog.setCancelable(false);
         waitWhileSavingDialog.setCanceledOnTouchOutside(false);
         final ProgressBar busyIndicator = new ProgressBar(this);
         busyIndicator.setIndeterminate(true);
-        waitWhileSavingDialog.setView(busyIndicator);
+        int extraSpace = dpToPixel(20);
+        waitWhileSavingDialog.setView(busyIndicator, 0, extraSpace, 0, extraSpace);
 
-        mSaveAsTask = new AsyncTask<Uri,Void,Boolean>() {
+        mSaveAsOrSaveTask = new AsyncTask<Callable<Boolean>,Void,Boolean>() {
                 @Override
                 protected void onPreExecute() {
                     waitWhileSavingDialog.show();
                 }
                 @Override
-                protected Boolean doInBackground(Uri... uri0) {
-                    Uri uri = uri0[0];
-                    try{Thread.sleep(2000);}catch(Exception e){}//ONLY FOR DEBUGGING REMOVE THIS!
-                    return saveAs(uri);
+                protected Boolean doInBackground(Callable<Boolean>... saveCallable0) {
+                    Callable<Boolean> saveCallable = saveCallable0[0];
+//                    try{Thread.sleep(2000);}catch(Exception e){}//ONLY FOR DEBUGGING REMOVE THIS!
+                    try{
+                        return saveCallable.call();
+                    }
+                    catch(Exception e)
+                    {
+                        return false;
+                    }
                 }
                 @Override
                 protected void onPostExecute(Boolean result) {
-                    waitWhileSavingDialog.dismiss();
+                    if(waitWhileSavingDialog!=null && waitWhileSavingDialog.isShowing())
+                        waitWhileSavingDialog.dismiss();
                     if(result)
-                        if(success!=null) try{success.call();}catch(Exception e){
+                        if(successCallable!=null) try{successCallable.call();}catch(Exception e){
                                 showInfo(getString(R.string.error_saveing)+": "+e);
                             }
                     else
-                        if(failure!=null) try{failure.call();}catch(Exception e){
+                        if(failureCallable!=null) try{failureCallable.call();}catch(Exception e){
                                 showInfo(getString(R.string.error_saveing)+": "+e);
                             }
                 }
             };
-        mSaveAsTask.execute(uri);
+        mSaveAsOrSaveTask.execute(saveCallable);
     }
     
     private synchronized boolean saveAs(Uri uri) {
@@ -1880,40 +1908,40 @@ public static boolean isMediaDocument(Uri uri) {
         return true;
     }
     
-    private void saveInBackground(final Callable success, final Callable failure) {
-        final AlertDialog waitWhileSavingDialog = mAlertBuilder.create();
-        waitWhileSavingDialog.setTitle(getString(R.string.saving));
-        waitWhileSavingDialog.setCancelable(false);
-        waitWhileSavingDialog.setCanceledOnTouchOutside(false);
-        final ProgressBar busyIndicator = new ProgressBar(this);
-        busyIndicator.setIndeterminate(true);
-        waitWhileSavingDialog.setView(busyIndicator);
+//     private void saveInBackground(final Callable success, final Callable failure) {
+//         final AlertDialog waitWhileSavingDialog = mAlertBuilder.create();
+//         waitWhileSavingDialog.setTitle(getString(R.string.saving));
+//         waitWhileSavingDialog.setCancelable(false);
+//         waitWhileSavingDialog.setCanceledOnTouchOutside(false);
+//         final ProgressBar busyIndicator = new ProgressBar(this);
+//         busyIndicator.setIndeterminate(true);
+//         waitWhileSavingDialog.setView(busyIndicator);
         
-        mSaveTask = new AsyncTask<Void,Void,Boolean>() {
-                @Override
-                protected void onPreExecute() {
-                    waitWhileSavingDialog.show();
-                }
-                @Override
-                protected Boolean doInBackground(Void... v0) {
-                    try{Thread.sleep(2000);}catch(Exception e){}//ONLY FOR DEBUGGING REMOVE THIS!
-                    return save();
-                }
-                @Override
-                protected void onPostExecute(Boolean result) {
-                    waitWhileSavingDialog.dismiss();
-                    if(result)
-                        if(success!=null) try{success.call();}catch(Exception e){
-                                showInfo(getString(R.string.error_saveing)+": "+e);
-                            }
-                    else
-                        if(failure!=null) try{failure.call();}catch(Exception e){
-                                showInfo(getString(R.string.error_saveing)+": "+e);
-                            }
-                }
-            };
-        mSaveTask.execute();
-    }
+//         mSaveTask = new AsyncTask<Void,Void,Boolean>() {
+//                 @Override
+//                 protected void onPreExecute() {
+//                     waitWhileSavingDialog.show();
+//                 }
+//                 @Override
+//                 protected Boolean doInBackground(Void... v0) {
+// //                    try{Thread.sleep(2000);}catch(Exception e){}//ONLY FOR DEBUGGING REMOVE THIS!
+//                     return save();
+//                 }
+//                 @Override
+//                 protected void onPostExecute(Boolean result) {
+//                     waitWhileSavingDialog.dismiss();
+//                     if(result)
+//                         if(success!=null) try{success.call();}catch(Exception e){
+//                                 showInfo(getString(R.string.error_saveing)+": "+e);
+//                             }
+//                     else
+//                         if(failure!=null) try{failure.call();}catch(Exception e){
+//                                 showInfo(getString(R.string.error_saveing)+": "+e);
+//                             }
+//                 }
+//             };
+//         mSaveTask.execute();
+//     }
 
     private synchronized boolean save() {
         if (core == null) return false;

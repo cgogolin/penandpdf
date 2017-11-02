@@ -188,8 +188,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     private final Handler   mHandler = new Handler();
     
         //Just dummy values, reall values are set in onSharedPreferenceChanged()
-    private static float inkThickness = 10;
-    private static float eraserThickness = 20;
+    private static float inkThickness = 10f;
+    private static float eraserThickness = 20f;
     private static int inkColor = 0x80AC7225;
     private static int highlightColor = 0x80AC7225;
     private static int underlineColor = 0x80AC7225;
