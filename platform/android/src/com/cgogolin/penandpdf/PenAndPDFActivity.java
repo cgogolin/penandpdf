@@ -1723,28 +1723,30 @@ public static boolean isMediaDocument(Uri uri) {
     }
 
     private void saveAsInBackground(final Uri uri, final Callable successCallable, final Callable failureCallable) {
-        saveAsOrSaveInBackground(new Callable<Exception>() {
-                @Override
-                public Exception call() {
-                    return saveAs(uri);
-                }
-            },
-            successCallable, failureCallable);
+        callInBackgroundAndShowDialog(getString(R.string.saving),
+                                 new Callable<Exception>() {
+                                     @Override
+                                     public Exception call() {
+                                         return saveAs(uri);
+                                     }
+                                 },
+                                 successCallable, failureCallable);
     }
     
     private void saveInBackground(final Callable successCallable, final Callable failureCallable) {
-        saveAsOrSaveInBackground(new Callable<Exception>() {
-                @Override
-                public Exception call() {
-                    return save();
-                }
-            },
-            successCallable, failureCallable);
+        callInBackgroundAndShowDialog(getString(R.string.saving),
+                                 new Callable<Exception>() {
+                                     @Override
+                                     public Exception call() {
+                                         return save();
+                                     }
+                                 },
+                                 successCallable, failureCallable);
     }
 
-    private void saveAsOrSaveInBackground(final Callable<Exception> saveCallable, final Callable successCallable, final Callable failureCallable) {
+    private void callInBackgroundAndShowDialog(final String messege, final Callable<Exception> saveCallable, final Callable successCallable, final Callable failureCallable) {
         final AlertDialog waitWhileSavingDialog = mAlertBuilder.create();
-        waitWhileSavingDialog.setTitle(getString(R.string.saving));
+        waitWhileSavingDialog.setTitle(messege);
         waitWhileSavingDialog.setCancelable(false);
         waitWhileSavingDialog.setCanceledOnTouchOutside(false);
         final ProgressBar busyIndicator = new ProgressBar(this);
@@ -1995,38 +1997,100 @@ public static boolean isMediaDocument(Uri uri) {
             showInfo(getString(R.string.format_currently_not_supported));
             return;
         }
-        Intent printIntent = new Intent(this, PrintDialogActivity.class);
-        try
-        {
-            printIntent.setDataAndType(core.export(this), "aplication/pdf");
-        }
-        catch(Exception e)
-        {
-            showInfo(getString(R.string.error_exporting)+" "+e.toString());
-        }
-        printIntent.putExtra("title", core.getFileName());
-        startActivityForResult(printIntent, PRINT_REQUEST);
+
+        final Intent printIntent = new Intent();
+
+        callInBackgroundAndShowDialog(
+            getString(R.string.preparing_to_print),
+            new Callable<Exception>() {
+                @Override
+                public Exception call() {
+                    try
+                    {
+                        printIntent.setDataAndType(core.export(getApplicationContext()), "aplication/pdf");
+                        printIntent.putExtra("title", core.getFileName());
+                    }
+                    catch(Exception e)
+                    {
+                        return e;
+                    }
+                    return null;
+                }
+            },
+            new Callable<Void>() {
+                @Override
+                public Void call() {
+                    mIgnoreSaveOnStopThisTime = true;
+                    startActivityForResult(printIntent, PRINT_REQUEST);
+                    return null;
+                }
+            },
+            null);
+        // Intent printIntent = new Intent(this, PrintDialogActivity.class);
+        // try
+        // {
+        //     printIntent.setDataAndType(core.export(this), "aplication/pdf");
+        // }
+        // catch(Exception e)
+        // {
+        //     showInfo(getString(R.string.error_exporting)+" "+e.toString());
+        // }
+        // printIntent.putExtra("title", core.getFileName());
+        // mIgnoreSaveOnStopThisTime = true;
+        // startActivityForResult(printIntent, PRINT_REQUEST);
     }
 
     private void shareDoc() {
-        Uri exportedUri = null;
-        try
-        {
-            exportedUri = core.export(this);    
-        }
-        catch(Exception e)
-        {
-            showInfo(getString(R.string.error_exporting)+" "+e.toString());
-        }
-        if(exportedUri != null) 
-        {
-            Intent shareIntent = new Intent();
-            shareIntent.setAction(Intent.ACTION_SEND);
-            shareIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            shareIntent.setDataAndType(exportedUri, getContentResolver().getType(exportedUri));
-            shareIntent.putExtra(Intent.EXTRA_STREAM, exportedUri);
-            startActivity(Intent.createChooser(shareIntent, getString(R.string.share_with)));
-        }
+        final Intent shareIntent = new Intent();
+
+        callInBackgroundAndShowDialog(
+            getString(R.string.preparing_to_share),
+            new Callable<Exception>() {
+                @Override
+                public Exception call() {
+                    Uri exportedUri = null;
+                    try
+                    {
+                        exportedUri = core.export(getApplicationContext());
+                    }
+                    catch(Exception e)
+                    {
+                        return e;
+                    }
+                    shareIntent.setAction(Intent.ACTION_SEND);
+                    shareIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    shareIntent.setDataAndType(exportedUri, getContentResolver().getType(exportedUri));
+                    shareIntent.putExtra(Intent.EXTRA_STREAM, exportedUri);
+                    return null;
+                }
+            },
+            new Callable<Void>() {
+                @Override
+                public Void call() {
+                    mIgnoreSaveOnStopThisTime = true;
+                    startActivity(Intent.createChooser(shareIntent, getString(R.string.share_with)));
+                    return null;
+                }
+            },
+            null);
+        // try
+        // {
+        //     exportedUri = core.export(this);    
+        // }
+        // catch(Exception e)
+        // {
+        //     showInfo(getString(R.string.error_exporting)+" "+e.toString());
+        // }
+        // if(exportedUri != null) 
+        // {
+        //     Intent shareIntent = new Intent();
+        //     shareIntent.setAction(Intent.ACTION_SEND);
+        //     shareIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        //     shareIntent.setDataAndType(exportedUri, getContentResolver().getType(exportedUri));
+        //     shareIntent.putExtra(Intent.EXTRA_STREAM, exportedUri);
+        //     mIgnoreSaveOnStopThisTime = true;
+        //     startActivity(Intent.createChooser(shareIntent, getString(R.string.share_with)));
+        // }
     }
     
     

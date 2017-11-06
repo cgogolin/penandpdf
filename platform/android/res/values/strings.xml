@@ -95,6 +95,8 @@
   <string name="overwrite">Overwrite</string>
   <string name="overwrite_question">Overwrite?</string>
   <string name="parent_directory">..</string>
+  <string name="preparing_to_print">Preparing to print&#8230;</string>
+  <string name="preparing_to_share">Preparing to share&#8230;</string>
   <string name="print">Print</string>
   <string name="reason">Reason</string>
   <string name="recent">Recent</string>

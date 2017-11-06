@@ -95,6 +95,8 @@
   <string name="overwrite">Reemplazar</string>
   <string name="overwrite_question">¿Quieres reemplazar el archivo?</string>
   <string name="parent_directory">..</string>
+  <string name="preparing_to_print">Preparando a imprimir&#8230;</string>
+  <string name="preparing_to_share">Preparando a compartir&#8230;</string>
   <string name="print">Imprimir</string>
   <string name="reason">Motivo</string>
   <string name="recent">Reciente</string>

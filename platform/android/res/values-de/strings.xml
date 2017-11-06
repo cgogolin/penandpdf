@@ -95,6 +95,8 @@
   <string name="overwrite">Überschreibe</string>
   <string name="overwrite_question">Überschreiben?</string>
   <string name="parent_directory">..</string>
+  <string name="preparing_to_print">Drucken vorbereiten&#8230;</string>
+  <string name="preparing_to_share">Teilen vorbereiten&#8230;</string>
   <string name="print">Drucken</string>
   <string name="reason">Grund</string>
   <string name="recent">Kürzlich</string>
