@@ -140,7 +140,7 @@ public class PenAndPDFActivity extends AppCompatActivity implements SharedPrefer
     private AlertDialog mAlertDialog;
     private FilePicker mFilePicker;
     
-    private AsyncTask<Callable<Boolean>,Void,Boolean> mSaveAsOrSaveTask;
+    private AsyncTask<Callable<Exception>,Void,Exception> mSaveAsOrSaveTask;
     
     private ArrayList<TemporaryUriPermission> temporaryUriPermissions = new ArrayList<TemporaryUriPermission>();
 
@@ -608,7 +608,7 @@ public static boolean isMediaDocument(Uri uri) {
                         if(recentFile != null && recentFile.getAbsolutePath().startsWith(getNotesDir(this).getAbsolutePath()))
                         {
                             MenuItem deleteNoteItem = menu.findItem(R.id.menu_delete_note);
-                            deleteNoteItem.setVisible(true);
+                            if(deleteNoteItem!=null) deleteNoteItem.setVisible(true);
                         }
                     }
                     
@@ -1685,8 +1685,7 @@ public static boolean isMediaDocument(Uri uri) {
                                                        return null;
                                                    }
                                                }
-                                               );
-                            
+                                               );         
                         }
                     }
                 }
@@ -1697,13 +1696,13 @@ public static boolean isMediaDocument(Uri uri) {
     private void showSaveAsActivity() {
         if(core == null)
             return;
-        
         if (android.os.Build.VERSION.SDK_INT < 19)
         {
             Intent intent = new Intent(getApplicationContext(),PenAndPDFFileChooser.class);
             if (core.getUri() != null) intent.setData(core.getUri());
             intent.putExtra(Intent.EXTRA_TITLE, core.getFileName());
             intent.setAction(Intent.ACTION_PICK);
+            mIgnoreSaveOnStopThisTime = true;
             startActivityForResult(intent, SAVEAS_REQUEST);
         }
         else
@@ -1717,15 +1716,16 @@ public static boolean isMediaDocument(Uri uri) {
                 // Create a file with the requested MIME type.
             intent.setType("application/pdf");
             intent.putExtra(Intent.EXTRA_TITLE, core.getFileName());
+            mIgnoreSaveOnStopThisTime = true;
             startActivityForResult(intent, SAVEAS_REQUEST);
             overridePendingTransition(R.animator.enter_from_left, R.animator.fade_out);
         }
     }
 
     private void saveAsInBackground(final Uri uri, final Callable successCallable, final Callable failureCallable) {
-        saveAsOrSaveInBackground(new Callable<Boolean>() {
+        saveAsOrSaveInBackground(new Callable<Exception>() {
                 @Override
-                public Boolean call() {
+                public Exception call() {
                     return saveAs(uri);
                 }
             },
@@ -1733,16 +1733,16 @@ public static boolean isMediaDocument(Uri uri) {
     }
     
     private void saveInBackground(final Callable successCallable, final Callable failureCallable) {
-        saveAsOrSaveInBackground(new Callable<Boolean>() {
+        saveAsOrSaveInBackground(new Callable<Exception>() {
                 @Override
-                public Boolean call() {
+                public Exception call() {
                     return save();
                 }
             },
             successCallable, failureCallable);
     }
 
-    private void saveAsOrSaveInBackground(final Callable<Boolean> saveCallable, final Callable successCallable, final Callable failureCallable) {
+    private void saveAsOrSaveInBackground(final Callable<Exception> saveCallable, final Callable successCallable, final Callable failureCallable) {
         final AlertDialog waitWhileSavingDialog = mAlertBuilder.create();
         waitWhileSavingDialog.setTitle(getString(R.string.saving));
         waitWhileSavingDialog.setCancelable(false);
@@ -1752,42 +1752,50 @@ public static boolean isMediaDocument(Uri uri) {
         int extraSpace = dpToPixel(20);
         waitWhileSavingDialog.setView(busyIndicator, 0, extraSpace, 0, extraSpace);
 
-        mSaveAsOrSaveTask = new AsyncTask<Callable<Boolean>,Void,Boolean>() {
+        mSaveAsOrSaveTask = new AsyncTask<Callable<Exception>,Void,Exception>() {
                 @Override
                 protected void onPreExecute() {
                     waitWhileSavingDialog.show();
                 }
                 @Override
-                protected Boolean doInBackground(Callable<Boolean>... saveCallable0) {
-                    Callable<Boolean> saveCallable = saveCallable0[0];
+                protected Exception doInBackground(Callable<Exception>... saveCallable0) {
+                    Callable<Exception> saveCallable = saveCallable0[0];
 //                    try{Thread.sleep(2000);}catch(Exception e){}//ONLY FOR DEBUGGING REMOVE THIS!
                     try{
                         return saveCallable.call();
                     }
                     catch(Exception e)
                     {
-                        return false;
+                        return e;
                     }
                 }
                 @Override
-                protected void onPostExecute(Boolean result) {
+                protected void onPostExecute(Exception result) {
                     if(waitWhileSavingDialog!=null && waitWhileSavingDialog.isShowing())
-                        waitWhileSavingDialog.dismiss();
-                    if(result)
-                        if(successCallable!=null) try{successCallable.call();}catch(Exception e){
-                                showInfo(getString(R.string.error_saveing)+": "+e);
-                            }
+                        try{waitWhileSavingDialog.dismiss();}
+                        catch(java.lang.IllegalArgumentException e){}//This throws an IllegalArgumentException if the app has been stopped while we were saving.
+                    if(result==null)
+                    {
+                        if(successCallable!=null) {
+                            try{successCallable.call();}
+                            catch(Exception e){showInfo(getString(R.string.error_saveing)+": "+e);}
+                        }
+                    }
                     else
-                        if(failureCallable!=null) try{failureCallable.call();}catch(Exception e){
-                                showInfo(getString(R.string.error_saveing)+": "+e);
-                            }
+                    {
+                        showInfo(getString(R.string.error_saveing)+": "+result);
+                        if(failureCallable!=null) {
+                            try{failureCallable.call();}
+                            catch(Exception e) {showInfo(getString(R.string.error_saveing)+": "+e);}
+                        }
+                    }
                 }
             };
         mSaveAsOrSaveTask.execute(saveCallable);
     }
     
-    private synchronized boolean saveAs(Uri uri) {
-        if (core == null) return false;
+    private synchronized Exception saveAs(Uri uri) {
+        if (core == null) return new Exception("core is null");
         try
         {
             core.saveAs(this, uri);
@@ -1795,7 +1803,7 @@ public static boolean isMediaDocument(Uri uri) {
         catch(Exception e)
         {
             Log.e(getString(R.string.app_name), "Exception during saveAs(): "+e);
-            return false;
+            return e;
         }
             //Set the uri of this intent to the new file path
         getIntent().setData(uri);
@@ -1804,12 +1812,12 @@ public static boolean isMediaDocument(Uri uri) {
 			//Try to take permissions
 		tryToTakePersistablePermissions(getIntent());
         rememberTemporaryUriPermission(getIntent());
-        return true;
+        return null;
     }
     
 
-    private synchronized boolean save() {
-        if (core == null) return false;
+    private synchronized Exception save() {
+        if (core == null) return new Exception("core is null");
         try
         {   
             core.save(this);
@@ -1817,11 +1825,11 @@ public static boolean isMediaDocument(Uri uri) {
         catch(Exception e)
         {
             Log.e(getString(R.string.app_name), "Exception during save(): "+e);
-            return false;
+            return e;
         }
             //Save the viewport
         saveViewportAndRecentFiles(core.getUri());
-        return true;
+        return null;
     }
     
             
