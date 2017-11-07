@@ -6,7 +6,7 @@
   <string name="app_name">&appname;</string>
   <string name="number_recent_files_default">20</string>
   <string name="add_a_note">Add a note&#8230;</string>
-  <string name="annotation_settings">Annotation settings</string>
+  <string name="annotation_settings">Annotations</string>
   <string name="autosave_settings">Auto save</string>
   <string name="browse">Browse</string>
   <string name="cancel">Cancel</string>
@@ -29,7 +29,7 @@
   <string name="dialog_newpermissions_ok">Close</string>
   <string name="dialog_newpermissions_title">Restart of app required</string>
   <string name="dismiss">Dismiss</string>
-  <string name="display_settings">Display settings</string>
+  <string name="display_settings">Display</string>
   <string name="document_has_changes_save_them">Document has changes. Do you want to save them?</string>
   <string name="enter_new_filename">Select above or enter new fielname</string>
   <string name="enter_password">Enter password</string>
@@ -61,7 +61,6 @@
   <string name="keep_screen_on">Keep screen on</string>
   <string name="keep_screen_on_summ">Keep screen on while reading.</string>
   <string name="long_press_to_delete">Long press to delete.</string>	
-  <string name="markup_settings">Markup settings</string>
   <string name="menu_accept">Accept</string>
   <string name="menu_add_text_annot">Add text annotation</string>
   <string name="menu_addpage">Add page</string>
@@ -120,6 +119,7 @@
   <string name="text_not_found">Text not found</string>
   <string name="textannoticon_color">Text annotation icon color</string>
   <string name="textannoticon_color_summ">Set color for the icon of text annotations.</string>
+  <string name="ui_settings">User interface</string>
   <string name="unable_to_interpret_uri">Unable to interpret</string>
   <string name="underline_color">Underline color</string>
   <string name="underline_color_summ">Set color for underlining text.</string>

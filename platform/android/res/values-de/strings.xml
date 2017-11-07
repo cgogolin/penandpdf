@@ -61,7 +61,6 @@
   <string name="keep_screen_on">Bildschirm an</string>
   <string name="keep_screen_on_summ">Bildschirm beim lesen nicht automatisch ausschalten.</string>
   <string name="long_press_to_delete">Lange gedrückt halten zum löschen.</string>
-  <string name="markup_settings">Kommentiereinstellungen</string>
   <string name="menu_accept">Akzeptieren</string>
   <string name="menu_add_text_annot">Text Kommentar hinzufügen</string>
   <string name="menu_addpage">Seite hinzufügen</string>
@@ -120,6 +119,7 @@
   <string name="text_not_found">Text konnte nicht gefunden werden</string>
   <string name="textannoticon_color">Farbe für Text Kommentare</string>
   <string name="textannoticon_color_summ">Farbe für das Symbol von Text Kommentaren wählen.</string>
+  <string name="ui_settings">Benutzeroberfläche</string>
   <string name="unable_to_interpret_uri">Fehler beim interpretieren von</string>
   <string name="underline_color">Farbe fürs Unterstreichen</string>
   <string name="underline_color_summ">Farbe für das Unterstreichen von Text wählen.</string>

@@ -15,8 +15,8 @@
        android:defaultValue="false" />
   </PreferenceCategory>
   <PreferenceCategory 
-     android:title="@string/markup_settings"
-     android:key="pref_markup_settings">
+     android:title="@string/ui_settings"
+     android:key="pref_ui_settings">
     <CheckBoxPreference
        android:key="pref_use_stylus"
        android:title="@string/use_stylus"
@@ -27,6 +27,13 @@
        android:title="@string/use_smart_text_selection"
        android:summary="@string/use_smart_text_selection_summ"
        android:defaultValue="false" />
+	<EditTextPreference
+       android:key="pref_number_recent_files"
+       android:title="@string/number_recent_files"
+       android:summary="@string/number_recent_files_summ"
+       android:numeric="integer"
+       android:digits="0123456789"
+       android:defaultValue="@string/number_recent_files_default" />
   </PreferenceCategory>
   <PreferenceCategory 
      android:title="@string/display_settings"
@@ -100,13 +107,6 @@
        android:summary="@string/textannoticon_color_summ"
        android:negativeButtonText=""
        android:defaultValue="10" />
-    <EditTextPreference
-       android:key="pref_number_recent_files"
-       android:title="@string/number_recent_files"
-       android:summary="@string/number_recent_files_summ"
-       android:numeric="integer"
-       android:digits="0123456789"
-       android:defaultValue="@string/number_recent_files_default" />
     <!--      <EditTextPreference
 	      android:key="pref_ink_color"
 	      android:title="@string/ink_color"
@@ -136,7 +136,6 @@
 		 android:digits="0123456789."
 		 android:defaultValue="17" />-->
   </PreferenceCategory>
-
   <!--    <ListPreference
 	  android:key="pref_test_list_preference"
 	  android:title="Test"

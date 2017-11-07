@@ -60,8 +60,7 @@
   <string name="ink_thickness_summ">Ajustar la anchura de línea para el modo de escritura libre.</string>
   <string name="keep_screen_on">Bloqueo de pantalla</string>
   <string name="keep_screen_on_summ">Evita la suspensión de la pantalla en modo de lectura.</string>
-  <string name="long_press_to_delete">Presionado prolongado para eliminar.</string>	
-  <string name="markup_settings">Ajustes de marcado</string>
+  <string name="long_press_to_delete">Presionado prolongado para eliminar.</string>
   <string name="menu_accept">Aceptar</string>
   <string name="menu_add_text_annot">Añadir comentario</string>
   <string name="menu_addpage">Añadir página</string>
@@ -120,6 +119,7 @@
   <string name="text_not_found">Texto no encontrado</string>
   <string name="textannoticon_color">Color de icono para comentarios</string>
   <string name="textannoticon_color_summ">Escoger el color de icono para comentarios.</string>
+  <string name="ui_settings">Interfaz del usuario</string>
   <string name="unable_to_interpret_uri">Imposible de interpretar</string>
   <string name="underline_color">Color para subrayar</string>
   <string name="underline_color_summ">Escoger el color para el texto subrayado.</string>
