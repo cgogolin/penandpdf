@@ -823,8 +823,9 @@ public static boolean isMediaDocument(Uri uri) {
                 shareDoc();
                 return true;
             case R.id.menu_search:
+                if(mDocView==null) return true;
                 mActionBarMode = ActionBarMode.Search;
-				mDocView.setMode(MuPDFReaderView.Mode.Searching);
+                mDocView.setMode(MuPDFReaderView.Mode.Searching);
                 invalidateOptionsMenu();
                 return true;
             case R.id.menu_next:
@@ -1757,7 +1758,7 @@ public static boolean isMediaDocument(Uri uri) {
         mSaveAsOrSaveTask = new AsyncTask<Callable<Exception>,Void,Exception>() {
                 @Override
                 protected void onPreExecute() {
-                    waitWhileSavingDialog.show();
+                    if(!isFinishing()) waitWhileSavingDialog.show();
                 }
                 @Override
                 protected Exception doInBackground(Callable<Exception>... saveCallable0) {
@@ -2154,12 +2155,13 @@ public static boolean isMediaDocument(Uri uri) {
                         }catch(NumberFormatException e){
                             pageNumber = 0;
                         }
-						mDocView.setDisplayedViewIndex(pageNumber == 0 ? 0 : pageNumber -1 );
-						mDocView.setScale(1.0f);
-						mDocView.setNormalizedScroll(0.0f,0.0f);
-					}
-					else if (which == AlertDialog.BUTTON_NEGATIVE) {
-						
+                        if(mDocView!=null)
+                        {
+                            mDocView.setDisplayedViewIndex(pageNumber == 0 ? 0 : pageNumber -1 );
+                            mDocView.setScale(1.0f);
+                            mDocView.setNormalizedScroll(0.0f,0.0f);
+                        }
+					} else if (which == AlertDialog.BUTTON_NEGATIVE) {
 					}
 				}
 			};
