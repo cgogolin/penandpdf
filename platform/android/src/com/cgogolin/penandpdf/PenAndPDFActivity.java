@@ -907,90 +907,95 @@ public static boolean isMediaDocument(Uri uri) {
                 return true;
         }
 
-        MuPDFView pageView = (MuPDFView) mDocView.getSelectedView();
-        switch (item.getItemId()) 
+        if(mDocView!=null)
         {
-            case R.id.menu_undo:
-                pageView.undoDraw();
-                mDocView.onNumberOfStrokesChanged(pageView.getDrawingSize());
-                return true;
-            case R.id.menu_edit:
-                ((MuPDFPageView)pageView).editSelectedAnnotation();
-                mDocView.setMode(MuPDFReaderView.Mode.Drawing);
-                return true;
-            case R.id.menu_add_text_annot:
-                mDocView.setMode(MuPDFReaderView.Mode.AddingTextAnnot);
-                showInfo(getString(R.string.tap_to_add_annotation));
-                return true;
-            case R.id.menu_erase:
-                mDocView.setMode(MuPDFReaderView.Mode.Erasing);
-                return true;
-            case R.id.menu_highlight:
-                if (pageView.hasSelection()) {
-                    pageView.markupSelection(Annotation.Type.HIGHLIGHT);
-                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                }
-                else
-                    showInfo(getString(R.string.select_text));
-                return true;
-            case R.id.menu_underline:
-                if (pageView.hasSelection()) {
-                    pageView.markupSelection(Annotation.Type.UNDERLINE);
-                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                }
-                else
-                    showInfo(getString(R.string.select_text));
-                return true;
-            case R.id.menu_strikeout:
-                if (pageView.hasSelection()) {
-                    pageView.markupSelection(Annotation.Type.STRIKEOUT);
-                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                }
-                else
-                    showInfo(getString(R.string.select_text));
-                return true;
-            case R.id.menu_copytext:
-                if (pageView.hasSelection()) {
-                    boolean success = pageView.copySelection();
-                    showInfo(success?getString(R.string.copied_to_clipboard):getString(R.string.no_text_selected));
-                    mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                }
-                else
-                    showInfo(getString(R.string.select_text));
-                return true;
-            case R.id.menu_cancel:
-                switch (mActionBarMode) {
-                    case Search:
-                        hideKeyboard();
-                        if (mSearchTaskManager != null) mSearchTaskManager.stop();
-						mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                        mDocView.clearSearchResults();
-                        mDocView.resetupChildren();
-                        break;
-                    case AddingTextAnnot:
-                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                        break;
-                }
-                mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                return true;
-            case R.id.menu_accept:
-                switch (mActionBarMode) {
-                    case Annot:
-                        if (pageView != null) {
-                            pageView.saveDraw();
+            MuPDFView pageView = (MuPDFView) mDocView.getSelectedView();
+            if(pageView!=null)
+            {
+                switch (item.getItemId()) 
+                {
+                    case R.id.menu_undo:
+                        pageView.undoDraw();
+                        mDocView.onNumberOfStrokesChanged(pageView.getDrawingSize());
+                        return true;
+                    case R.id.menu_edit:
+                        ((MuPDFPageView)pageView).editSelectedAnnotation();
+                        mDocView.setMode(MuPDFReaderView.Mode.Drawing);
+                        return true;
+                    case R.id.menu_add_text_annot:
+                        mDocView.setMode(MuPDFReaderView.Mode.AddingTextAnnot);
+                        showInfo(getString(R.string.tap_to_add_annotation));
+                        return true;
+                    case R.id.menu_erase:
+                        mDocView.setMode(MuPDFReaderView.Mode.Erasing);
+                        return true;
+                    case R.id.menu_highlight:
+                        if (pageView.hasSelection()) {
+                            pageView.markupSelection(Annotation.Type.HIGHLIGHT);
+                            mDocView.setMode(MuPDFReaderView.Mode.Viewing);
                         }
-                        break;
-                    case Edit:
-                        if (pageView != null)
-                            pageView.deselectAnnotation();
-                        break;
+                        else
+                            showInfo(getString(R.string.select_text));
+                        return true;
+                    case R.id.menu_underline:
+                        if (pageView.hasSelection()) {
+                            pageView.markupSelection(Annotation.Type.UNDERLINE);
+                            mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                        }
+                        else
+                            showInfo(getString(R.string.select_text));
+                        return true;
+                    case R.id.menu_strikeout:
+                        if (pageView.hasSelection()) {
+                            pageView.markupSelection(Annotation.Type.STRIKEOUT);
+                            mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                        }
+                        else
+                            showInfo(getString(R.string.select_text));
+                        return true;
+                    case R.id.menu_copytext:
+                        if (pageView.hasSelection()) {
+                            boolean success = pageView.copySelection();
+                            showInfo(success?getString(R.string.copied_to_clipboard):getString(R.string.no_text_selected));
+                            mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                        }
+                        else
+                            showInfo(getString(R.string.select_text));
+                        return true;
+                    case R.id.menu_cancel:
+                        switch (mActionBarMode) {
+                            case Search:
+                                hideKeyboard();
+                                if (mSearchTaskManager != null) mSearchTaskManager.stop();
+                                mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                                mDocView.clearSearchResults();
+                                mDocView.resetupChildren();
+                                break;
+                            case AddingTextAnnot:
+                                mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                                break;
+                        }
+                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                        return true;
+                    case R.id.menu_accept:
+                        switch (mActionBarMode) {
+                            case Annot:
+                                if (pageView != null) {
+                                    pageView.saveDraw();
+                                }
+                                break;
+                            case Edit:
+                                if (pageView != null)
+                                    pageView.deselectAnnotation();
+                                break;
+                        }
+                        mDocView.setMode(MuPDFReaderView.Mode.Viewing);
+                        return true;
+                    default:
+                        return super.onOptionsItemSelected(item);
                 }
-                mDocView.setMode(MuPDFReaderView.Mode.Viewing);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+            }
         }
-
         
     }
 
