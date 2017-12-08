@@ -1352,23 +1352,23 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
             ArrayDeque<ArrayList<ArrayList<PointFSerializable>>> drawingHistorySerializable = (ArrayDeque<ArrayList<ArrayList<PointFSerializable>>>)bundle.getSerializable("mDrawingHistory");
             
             mDrawing = new ArrayList<ArrayList<PointF>>();
-            if(drawingSerializable!=null)
+            if(drawingSerializable!=null && !drawingSerializable.isEmpty())
                 for(ArrayList<PointFSerializable> strokeSerializable : drawingSerializable) {
                     ArrayList<PointF> stroke = new ArrayList<PointF>();
-                    if(strokeSerializable!=null)
+                    if(strokeSerializable!=null && !strokeSerializable.isEmpty())
                         for(PointFSerializable pointFSerializable : strokeSerializable) {
                             stroke.add((PointF)pointFSerializable);
                         }
                     mDrawing.add(stroke);
                 }
             mDrawingHistory = new ArrayDeque<ArrayList<ArrayList<PointF>>>();
-            if(drawingHistorySerializable!=null)
+            if(drawingHistorySerializable!=null && !drawingHistorySerializable.isEmpty())
                 for(ArrayList<ArrayList<PointFSerializable>> listSerializable : drawingHistorySerializable) {
                     ArrayList<ArrayList<PointF>> list = new ArrayList<ArrayList<PointF>>();
-                    if(listSerializable!=null)
+                    if(listSerializable!=null && !listSerializable.isEmpty())
                         for(ArrayList<PointFSerializable> strokeSerializable : listSerializable) {
                             ArrayList<PointF> stroke = new ArrayList<PointF>();
-                            if(listSerializable!=null)
+                            if(listSerializable!=null && !listSerializable.isEmpty())
                                 for(PointF pointFSerializable : strokeSerializable) {
                                     stroke.add((PointF)pointFSerializable);
                                 }
