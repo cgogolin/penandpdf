@@ -476,11 +476,11 @@ public class MuPDFCore
         return mHasAdditionalChanges || hasChangesInternal();
     }
     
-    public synchronized String getPath() {
+    public String getPath() {
         return mPath;
     }
 
-    public synchronized String getFileName() {
+    public String getFileName() {
         return mFileName;
     }    
 
