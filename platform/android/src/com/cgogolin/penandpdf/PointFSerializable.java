@@ -1,5 +1,9 @@
 package com.cgogolin.penandpdf;
 
+import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectStreamException;
+
 import android.graphics.PointF;
 
 class PointFSerializable extends PointF implements Serializable

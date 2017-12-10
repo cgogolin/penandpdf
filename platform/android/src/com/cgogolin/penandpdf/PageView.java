@@ -53,27 +53,6 @@ interface TextProcessor {
     void onEndText();
 }
 
-
-class PointFSerializable extends PointF implements Serializable
-{
-    public PointFSerializable(PointF pointF) {
-        super(pointF.x, pointF.y);
-    }
-    private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-        out.writeFloat(x);
-        out.writeFloat(y);
-    }
-    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-        float x = in.readFloat();
-        float y = in.readFloat();
-        set(x,y);
-    }
-    private void readObjectNoData() throws ObjectStreamException {
-        set(0f,0f);        
-    }
-}
-
-
 class TextSelector
 {
     final private TextWord[][] mText;
@@ -1356,7 +1335,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 for(ArrayList<PointFSerializable> strokeSerializable : drawingSerializable) {
                     ArrayList<PointF> stroke = new ArrayList<PointF>();
                     if(strokeSerializable!=null && !strokeSerializable.isEmpty())
-                        for(PointFSerializable pointFSerializable : strokeSerializable) {
+                            //Somehow, in the following line instead of PointF I can not use PointFSerializable and I don't understand why. See also https://stackoverflow.com/questions/47741898/store-and-retrieve-arraylist-of-custom-serializable-class-from-bundle
+                        for(PointF pointFSerializable : strokeSerializable) {
                             stroke.add((PointF)pointFSerializable);
                         }
                     mDrawing.add(stroke);

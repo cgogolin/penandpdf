@@ -401,8 +401,7 @@ public static boolean isMediaDocument(Uri uri) {
     public void onCreate(Bundle savedInstanceState)
         {
                 //See onSaveInstanceState() for why we do this
-            savedInstanceState = loadBundleFromFileForBuildVersionAndDelete("onSaveInstanceState");
-            
+            savedInstanceState = SaveInstanceStateManager.recoverBundleIfNecessary(savedInstanceState, getClass().getClassLoader());
             
             super.onCreate(savedInstanceState);
 
@@ -1980,64 +1979,8 @@ public static boolean isMediaDocument(Uri uri) {
             /* If the bundle is too large, which can happen because it contains the drawing and drawing history
              * the data is lost and under Android N the app hard crashes with a android.os.TransactionTooLargeException,
              * therefore we instead save the bundle to a file and restore from there in onResume()*/
-        saveBundleToFileForBuildVersion(outState, "onSaveInstanceState");
-        outState.clear();
-    }
-
-        /* Taken from https://stackoverflow.com/questions/14256809/save-bundle-to-file
-         * As the data returned by marshall can not be reliably read under a different
-         * platform version we add the incremetal version to the file name. Restoring
-         * then simply yields null.
-         * see also: https://developer.android.com/reference/android/os/Parcel.html#marshall() */
-    private void saveBundleToFileForBuildVersion(Bundle bundle, String filename) {
-        FileOutputStream fos = null;
-        try {
-            fos = openFileOutput(filename + android.os.Build.VERSION.INCREMENTAL, Context.MODE_PRIVATE);
-            Parcel p = Parcel.obtain();
-            bundle.writeToParcel(p, 0);
-            fos.write(p.marshall());
-            fos.flush();
-        } catch (Exception e) {
-        } finally {
-            if(fos!=null)
-                try {
-                    fos.close();
-                } catch (Exception e) {}
-        }
-    }
-    private Bundle loadBundleFromFileForBuildVersionAndDelete(String filename) {
-        Bundle out = loadBundleFromFileForBuildVersion(filename);
-        try
-        {
-            deleteFile(filename + android.os.Build.VERSION.INCREMENTAL);
-        } catch(Exception e) {}
-        return out;
-    }
-    
-    private Bundle loadBundleFromFileForBuildVersion(String filename) {
-        Bundle out = null;
-        Parcel parcel = Parcel.obtain();
-        FileInputStream fis = null;
-        try {
-            fis = openFileInput(filename + android.os.Build.VERSION.INCREMENTAL);
-            byte[] array = new byte[(int) fis.getChannel().size()];
-            fis.read(array, 0, array.length);
-            parcel.unmarshall(array, 0, array.length);
-            parcel.setDataPosition(0);
-            out = parcel.readBundle();
-//            out.putAll(out);
-        } catch (Exception e) {
-        } finally {
-            if(parcel!=null)
-                parcel.recycle();
-            if(fis!=null)
-                try 
-                {
-                    fis.close();
-                } catch (Exception e) {}
-        }
-        return out;
-    }
+        SaveInstanceStateManager.saveBundleIfNecessary(outState);
+    }        
     
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPref, String key) {
