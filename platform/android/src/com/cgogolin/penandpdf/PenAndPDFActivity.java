@@ -400,7 +400,7 @@ public static boolean isMediaDocument(Uri uri) {
     @Override
     public void onCreate(Bundle savedInstanceState)
         {
-                //See onSaveInstanceState() for why we do this
+                //Treat the bundle with the SaveInstanceStateManager before calling through to super
             savedInstanceState = SaveInstanceStateManager.recoverBundleIfNecessary(savedInstanceState, getClass().getClassLoader());
             
             super.onCreate(savedInstanceState);
@@ -1976,6 +1976,7 @@ public static boolean isMediaDocument(Uri uri) {
         if(mDocView != null) outState.putParcelable("mDocView", mDocView.onSaveInstanceState());
         outState.putString("latestTextInSearchBox", latestTextInSearchBox);
 
+            //Treat the bundle with the SaveInstanceStateManager before saving it
         SaveInstanceStateManager.saveBundleIfNecessary(outState);
     }        
     

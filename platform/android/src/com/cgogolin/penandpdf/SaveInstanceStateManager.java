@@ -2,13 +2,12 @@ package com.cgogolin.penandpdf;
 
 // Partially taken from https://stackoverflow.com/questions/14256809/save-bundle-to-file
 
-/* As the data returned by marshall can not be reliably read under a different
- * platform version we add the incremetal version to the file name. Restoring
- * then simply yields null.
- * see also: https://developer.android.com/reference/android/os/Parcel.html#marshall().
- If the bundle is too large, which can happen because it contains the drawing and drawing history
+/* If the bundle passed to onSaveInstanceState() is too large, which can happen because here it contains the drawing and drawing history,
  * the data is lost and under Android N the app hard crashes with a android.os.TransactionTooLargeException,
- * therefore we instead save the bundle to a file and restore from there in onResume()*/
+ * therefore through this handler we instead save the bundle to a file and restore from there in onResume()
+ * A warning: As the data returned by marshall can not be reliably read under a different
+ * platforms one shouldn't save a marshaled bundle to permanent storage. Here we are only saving to a temporary file wich is deleted when the VM exits and this should be OK.
+ * See also: https://developer.android.com/reference/android/os/Parcel.html#marshall(). */
 
 import android.content.Context;
 import android.os.Bundle;
