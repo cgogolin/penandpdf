@@ -1976,9 +1976,6 @@ public static boolean isMediaDocument(Uri uri) {
         if(mDocView != null) outState.putParcelable("mDocView", mDocView.onSaveInstanceState());
         outState.putString("latestTextInSearchBox", latestTextInSearchBox);
 
-            /* If the bundle is too large, which can happen because it contains the drawing and drawing history
-             * the data is lost and under Android N the app hard crashes with a android.os.TransactionTooLargeException,
-             * therefore we instead save the bundle to a file and restore from there in onResume()*/
         SaveInstanceStateManager.saveBundleIfNecessary(outState);
     }        
     

@@ -3,9 +3,12 @@ package com.cgogolin.penandpdf;
 // Partially taken from https://stackoverflow.com/questions/14256809/save-bundle-to-file
 
 /* As the data returned by marshall can not be reliably read under a different
-         * platform version we add the incremetal version to the file name. Restoring
-         * then simply yields null.
-         * see also: https://developer.android.com/reference/android/os/Parcel.html#marshall() */
+ * platform version we add the incremetal version to the file name. Restoring
+ * then simply yields null.
+ * see also: https://developer.android.com/reference/android/os/Parcel.html#marshall().
+ If the bundle is too large, which can happen because it contains the drawing and drawing history
+ * the data is lost and under Android N the app hard crashes with a android.os.TransactionTooLargeException,
+ * therefore we instead save the bundle to a file and restore from there in onResume()*/
 
 import android.content.Context;
 import android.os.Bundle;
@@ -17,13 +20,16 @@ import java.lang.ClassLoader;
 
 final class SaveInstanceStateManager
 {
+    private static String bundleFileNamePrefix = "instanceState";
+    private static String bundleFileNameMarkerString = "bundleWasSavedToFileWithName";
+    
     private SaveInstanceStateManager() {}
 
-    static public void saveBundleIfNecessary(Bundle bundle) {
+    static public Bundle saveBundleIfNecessary(Bundle bundle) {
         
         FileOutputStream fos = null;
         try {
-            File bundleFile = File.createTempFile("instanceState", null);
+            File bundleFile = File.createTempFile(bundleFileNamePrefix, null);
             bundleFile.deleteOnExit();
             fos = new FileOutputStream(bundleFile);
             Parcel p = Parcel.obtain();
@@ -31,7 +37,7 @@ final class SaveInstanceStateManager
             fos.write(p.marshall());
             fos.flush();
             bundle.clear();
-            bundle.putString(bundleFile.getAbsolutePath(), "bundleWasSavedToFileWithName");
+            bundle.putString(bundleFileNameMarkerString, bundleFile.getAbsolutePath());
         } catch (Exception e) {
         } finally {
             if(fos!=null)
@@ -39,10 +45,13 @@ final class SaveInstanceStateManager
                     fos.close();
                 } catch (Exception e) {}
         }
+        return bundle;
     }
     
     static public Bundle recoverBundleIfNecessary(Bundle bundle, ClassLoader classLoader) {
-        String path = bundle.getString("bundleWasSavedToFileWithName", null);
+        if(bundle == null)
+            return bundle;
+        String path = bundle.getString(bundleFileNameMarkerString, null);
         if(path == null)
             return bundle; //The Bundle was apparently not saved so we simply return it unchanged
 
