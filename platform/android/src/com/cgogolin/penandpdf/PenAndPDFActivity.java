@@ -520,7 +520,7 @@ public static boolean isMediaDocument(Uri uri) {
     protected void onStop() {
         super.onStop();
             //Save only during onStop() as this can take some time
-        if(core != null && !isChangingConfigurations())
+        if(core != null && core.hasChanges() && !isChangingConfigurations())
         {
 			if(mSaveOnStop && !mIgnoreSaveOnStopThisTime && core.canSaveToCurrentUri(this))
             {
@@ -550,7 +550,7 @@ public static boolean isMediaDocument(Uri uri) {
         super.onDestroy();
             
 		getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS).unregisterOnSharedPreferenceChangeListener(this);            
-		if(core != null && !isChangingConfigurations())
+		if(core != null && core.hasChanges() && !isChangingConfigurations())
 		{
 			SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.SHARED_PREFERENCES_STRING, MODE_MULTI_PROCESS);
 			if(mSaveOnDestroy && !mIgnoreSaveOnDestroyThisTime && core.canSaveToCurrentUri(this))
