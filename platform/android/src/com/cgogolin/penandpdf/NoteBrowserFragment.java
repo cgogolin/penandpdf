@@ -1,6 +1,7 @@
 package com.cgogolin.penandpdf;
 
 import android.app.AlertDialog;
+import android.app.Activity;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.support.v7.app.AppCompatActivity;
@@ -312,9 +313,12 @@ public class NoteBrowserFragment extends ListFragment {
     }
 
     private void setTitle() {
-        Resources res = getResources();
-        String appName = res.getString(R.string.app_name);
-        getActivity().setTitle(appName);
+        Activity activity = getActivity(); 
+        if (isAdded() && activity != null) {
+            Resources res = getResources();
+            String appName = res.getString(R.string.app_name);
+            activity.setTitle(appName);
+        }
     }
 
     public void inForground() {

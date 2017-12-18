@@ -937,12 +937,14 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
     }
     
     public void continueErase(final float x, final float y) {
+        if(eraser==null)
+            return;//I don't understand under which conditions this is possible but very rarely this function gets called while eraser==null
+        
         final float scale = mSourceScale*(float)getWidth()/(float)mSize.x;
         final float docRelX = (x - getLeft())/scale;
         final float docRelY = (y - getTop())/scale;
-        
-        if(eraser!=null)
-            eraser.set(docRelX,docRelY);
+
+        eraser.set(docRelX,docRelY);
         
         ArrayList<ArrayList<PointF>> newArcs = new ArrayList<ArrayList<PointF>>();
         if (mDrawing != null && mDrawing.size() > 0) {
@@ -954,7 +956,8 @@ public abstract class PageView extends ViewGroup implements MuPDFView {
                 boolean newArcHasBeenCreated = false;
                 if(iter.hasNext()) lastPoint = iter.next();
                     //Remove the first point if under eraser
-                if(lastPoint!=null && eraser!=null && PointFMath.distance(lastPoint,eraser) <= eraserThickness) iter.remove();
+                if(lastPoint!=null && PointFMath.distance(lastPoint,eraser) <= eraserThickness)
+                    iter.remove();
                 while (iter.hasNext())
                 {
                     PointF point = iter.next();

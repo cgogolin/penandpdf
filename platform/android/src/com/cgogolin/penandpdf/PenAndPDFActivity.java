@@ -2387,6 +2387,8 @@ public static boolean isMediaDocument(Uri uri) {
 	
 
     private void enterFullscreen() {
+        if(mDocView==null)
+            return;
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getSupportActionBar().hide();
         mActionBarMode = ActionBarMode.Hidden;
@@ -2397,6 +2399,8 @@ public static boolean isMediaDocument(Uri uri) {
     }
             
     private void exitFullScreen() {
+        if(mDocView==null)
+            return;
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getSupportActionBar().show();
         if(mActionBarMode == ActionBarMode.Hidden)

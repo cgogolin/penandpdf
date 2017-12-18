@@ -325,7 +325,7 @@ public class PenAndPDFCore extends MuPDFCore
             catch(Exception e)
             {
 //                Log.i(context.getString(R.string.app_name), "exception while opening pfd or os via pfd: "+e);
-                if(e.getMessage().contains("Unsupported mode: wa"))
+                if(e.getMessage()!=null && e.getMessage().contains("Unsupported mode: wa"))
                 {
 //                    Log.i(context.getString(R.string.app_name), "assuming that the only problem was the mode 'wa' and setting canWrite = true");
                     canWrite = true; //We assume that writing with "w" would work to make google dirve work!

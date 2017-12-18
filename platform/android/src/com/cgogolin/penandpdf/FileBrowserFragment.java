@@ -1,6 +1,7 @@
 package com.cgogolin.penandpdf;
 
 import android.app.AlertDialog;
+import android.app.Activity;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.support.v7.app.AppCompatActivity;
@@ -332,8 +333,9 @@ public class FileBrowserFragment extends ListFragment {
     }
 
     private void setTitle() {
-        if(mDirectory != null)
-            getActivity().setTitle(mDirectory.getPath());
+        Activity activity = getActivity(); 
+        if (mDirectory != null && isAdded() && activity != null)
+            activity.setTitle(mDirectory.getPath());
     }
 
     public void inForground() {

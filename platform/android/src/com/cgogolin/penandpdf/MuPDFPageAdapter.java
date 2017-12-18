@@ -16,11 +16,28 @@ public class MuPDFPageAdapter extends BaseAdapter {
     private final FilePicker.FilePickerSupport mFilePickerSupport;
     private final MuPDFCore mCore;
     private final SparseArray<PointF> mPageSizes = new SparseArray<PointF>();
+    private AsyncTask<MuPDFCore,Void,Void> getPageSizesTask;
     
     public MuPDFPageAdapter(Context c, FilePicker.FilePickerSupport filePickerSupport, MuPDFCore core) {
         mContext = c;
         mFilePickerSupport = filePickerSupport;
         mCore = core;
+
+        if(mCore!=null)
+        {   
+            getPageSizesTask = new AsyncTask<MuPDFCore,Void,Void>(){
+                    @Override
+                    protected Void doInBackground(MuPDFCore... core) {
+                        int numPages = getCount();
+                        for(int position = 0; position < numPages; position++) {
+                            PointF size = core[0].getPageSize(position);
+                            mPageSizes.put(position, size);
+                        }
+                        return null;
+                    }
+                };
+            getPageSizesTask.execute(mCore);
+        }
     }
     
     @Override
@@ -57,9 +74,10 @@ public class MuPDFPageAdapter extends BaseAdapter {
                 // Page size as yet unknown so find it out
             PointF size = mCore.getPageSize(position);
             mPageSizes.put(position, size);
-            pageView.setPage(position, size);            
+            pageView.setPage(position, size);
                 // Warning: Page size must be known for measuring so 
-                // we can't do this in background!!!
+                // we can't do this in background, but we try to fetch
+                // all page sizes in the background when the adapter is created
         }
         return pageView;
     }
