@@ -111,12 +111,12 @@ public class MuPDFCore
     private native boolean cookieAborted(long cookie);
 
     
-    public synchronized native void setInkThickness(float inkThickness);
-    public synchronized native void setInkColor(float r, float g, float b);
-    public synchronized native void setHighlightColor(float r, float g, float b);
-    public synchronized native void setUnderlineColor(float r, float g, float b);
-    public synchronized native void setStrikeoutColor(float r, float g, float b);
-    public synchronized native void setTextAnnotIconColor(float r, float g, float b);
+    public native void setInkThickness(float inkThickness);
+    public native void setInkColor(float r, float g, float b);
+    public native void setHighlightColor(float r, float g, float b);
+    public native void setUnderlineColor(float r, float g, float b);
+    public native void setStrikeoutColor(float r, float g, float b);
+    public native void setTextAnnotIconColor(float r, float g, float b);
     public synchronized native int insertBlankPageBeforeInternal(int position);
 	
 	public synchronized native boolean javascriptSupported();
