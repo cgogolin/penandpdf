@@ -1277,7 +1277,7 @@ int pdf_text_widget_set_text(fz_context *ctx, pdf_document *doc, pdf_widget *tw,
 }
 
 /* Get either the listed value or the export value. */
-int pdf_choice_widget_options(fz_context *ctx, pdf_document *doc, pdf_widget *tw, int exportval, char *opts[])
+int pdf_choice_widget_options(fz_context *ctx, pdf_document *doc, pdf_widget *tw, int exportval, char *opts[], unsigned int len[])
 {
 	pdf_annot *annot = (pdf_annot *)tw;
 	pdf_obj *optarr;
@@ -1298,11 +1298,20 @@ int pdf_choice_widget_options(fz_context *ctx, pdf_document *doc, pdf_widget *tw
 			   if we want the listing value */
 			if (m == 2)
 				if (exportval)
+                {
 					opts[i] = pdf_to_str_buf(ctx, pdf_array_get(ctx, pdf_array_get(ctx, optarr, i), 0));
+                    len[i] = pdf_to_str_len(ctx, pdf_array_get(ctx, pdf_array_get(ctx, optarr, i), 0));
+                }
 				else
+                {
 					opts[i] = pdf_to_str_buf(ctx, pdf_array_get(ctx, pdf_array_get(ctx, optarr, i), 1));
+                    len[i] = pdf_to_str_len(ctx, pdf_array_get(ctx, pdf_array_get(ctx, optarr, i), 1));
+                }
 			else
+            {
 				opts[i] = pdf_to_str_buf(ctx, pdf_array_get(ctx, optarr, i));
+                len[i] = pdf_to_str_len(ctx, pdf_array_get(ctx, optarr, i));
+            }
 		}
 	}
 	return n;
