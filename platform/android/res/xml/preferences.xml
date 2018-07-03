@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-  <PreferenceCategory 
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+				  xmlns:app="http://schemas.android.com/apk/res-auto">
+  <PreferenceCategory
      android:title="@string/autosave_settings"
      android:key="pref_autosave_settings">
     <CheckBoxPreference
@@ -14,7 +15,7 @@
        android:summary="@string/save_on_stop_summ"
        android:defaultValue="false" />
   </PreferenceCategory>
-  <PreferenceCategory 
+  <PreferenceCategory
      android:title="@string/ui_settings"
      android:key="pref_ui_settings">
     <CheckBoxPreference
@@ -27,7 +28,7 @@
        android:title="@string/use_smart_text_selection"
        android:summary="@string/use_smart_text_selection_summ"
        android:defaultValue="false" />
-	<EditTextPreference
+	<com.cgogolin.penandpdf.NonEmptyEditTextPreference
        android:key="pref_number_recent_files"
        android:title="@string/number_recent_files"
        android:summary="@string/number_recent_files_summ"
@@ -35,7 +36,7 @@
        android:digits="0123456789"
        android:defaultValue="@string/number_recent_files_default" />
   </PreferenceCategory>
-  <PreferenceCategory 
+  <PreferenceCategory
      android:title="@string/display_settings"
      android:key="display_settings">
     <CheckBoxPreference
@@ -59,17 +60,17 @@
 		 android:summary="@string/scroll_continuous_summ"
 		 android:defaultValue="false" />-->
   </PreferenceCategory>
-  <PreferenceCategory 
+  <PreferenceCategory
      android:title="@string/annotation_settings"
      android:key="pref_annotation_settings">
-    <EditTextPreference
+    <com.cgogolin.penandpdf.NonEmptyEditTextPreference
        android:key="pref_ink_thickness"
        android:title="@string/ink_thickness"
        android:summary="@string/ink_thickness_summ"
        android:numeric="decimal"
        android:digits="0123456789."
        android:defaultValue="@dimen/ink_thickness_default" />
-    <EditTextPreference
+    <com.cgogolin.penandpdf.NonEmptyEditTextPreference
        android:key="pref_eraser_thickness"
        android:title="@string/eraser_thickness"
        android:summary="@string/eraser_thickness_summ"
@@ -140,7 +141,7 @@
 	  android:key="pref_test_list_preference"
 	  android:title="Test"
 	  android:summary="Test summary" />-->
-  <PreferenceCategory 
+  <PreferenceCategory
      android:title="@string/experimental_mode_settings"
      android:key="pref_experimental_mode_settings">
     <CheckBoxPreference
@@ -148,5 +149,5 @@
        android:title="@string/experimental_mode"
        android:summary="@string/experimental_mode_summ"
        android:defaultValue="false" />
-  </PreferenceCategory>    
+  </PreferenceCategory>
 </PreferenceScreen>
