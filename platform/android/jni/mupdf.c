@@ -1722,13 +1722,13 @@ JNI_FN(MuPDFCore_addMarkupAnnotationInternal)(JNIEnv * env, jobject thiz, jobjec
            dstptr[0] = 0xfeff;
            for (i = 0; i < length; i++)
                dstptr[i+1] = text[i];
-           length++;
-               //int i;
-               //for (i=0; i< length+1; i++)
+
+           int i;
+           for (i=0; i< length+1; i++)
                    //LOGI("mupdf.c: raw chars of new annotation: %x", dstptr[i]);
            
 //            pdf_set_text_details(idoc, (pdf_annot *)annot, &rect, text, length); //in pdf-annot.c
-           pdf_set_text_details(ctx, idoc, (pdf_annot *)annot, &rect, dstptr, length); //in pdf-annot.c
+           pdf_set_text_details(ctx, idoc, (pdf_annot *)annot, &rect, dstptr, length+1); //in pdf-annot.c
            
                //Generate an appearance stream (AP) for the annotation (this should only be done once for each document and then the relevant xobject just referenced...)
            const float linewidth = (pts[1].x - pts[0].x)*0.06;
@@ -2252,7 +2252,7 @@ JNI_FN(MuPDFCore_getAnnotationsInternal)(JNIEnv * env, jobject thiz, int pageNum
                     break;
                 }
             }
-            if(inHighBits && length >= 2) // If all characters are in the high bits we assume that we got a non standard conform encoding (some pdf programms do that) and try to handle this nicely
+            if(inHighBits && length >= 2) // => non standard encoding
             {
                     //LOGI("mupdf.c: assuming a non-standard encoding");
                 length = length/2;
@@ -2471,8 +2471,7 @@ JNI_FN(MuPDFCore_getFocusedWidgetTextInternal)(JNIEnv * env, jobject thiz)
 	char *text = "";
 	globals *glo = get_globals(env, thiz);
 	fz_context *ctx = glo->ctx;
-    jchar * text16;
-    
+
 	fz_try(ctx)
 	{
 		pdf_document *idoc = pdf_specifics(ctx, glo->doc);
@@ -2482,63 +2481,15 @@ JNI_FN(MuPDFCore_getFocusedWidgetTextInternal)(JNIEnv * env, jobject thiz)
 			pdf_widget *focus = pdf_focused_widget(ctx, idoc);
 
 			if (focus)
-            {
-
-                    /*
-                     * Replace this fuction call by inlined code to enabled
-                     * propper decoding:
-                     * */
-//				text = pdf_text_widget_text(ctx, idoc, focus);
-                pdf_annot *annot = (pdf_annot *)focus;
-                fz_var(text);
-                fz_try(ctx)
-                {
-//                    text = pdf_field_value(ctx, idoc, annot->obj);
-//                    text = pdf_get_string_or_stream(ctx, idoc, pdf_get_inheritable(ctx, idoc, annot->obj, PDF_NAME_V));
-                    int length = 0;
-                    char *buf = NULL;
-                    pdf_obj *obj = pdf_get_inheritable(ctx, idoc, annot->obj, PDF_NAME_V);
-                    length = pdf_to_str_len(ctx, obj);
-                    buf = pdf_to_str_buf(ctx, obj);
-
-                    text = fz_malloc(ctx, length+2);
-                    memcpy(text, buf, length);
-                    text[length] = 0;
-                    text[length+1] = 0; //Add a double null character because this might be utf16
-                    
-                    /* int j; */
-                    /* for(j=0; j<length; j++) */
-                    /*     LOGI("mupdf.c: text char %d as int: %d", j, text[j]); */
-
-                        //Test and decode utf16
-                    text16 = (jchar *)(void *)text;
-                    if (text16[0] == 0xfffe || text16[0] == 0xfeff)
-                    {
-                        length = length/2;
-                        if (text16[0] == 0xfffe)
-                        { //We must swap the byte order because NewString() doesn't respect the BOM
-                            int i;
-                            for (i=0; i< length; i++)
-                                text16[i] = (text16[i]<<8) | (text16[i]>>8);
-                        }
-//                        LOGI("mupdf.c: returning a string based on utf16");
-                        return (*env)->NewString(env, text16+1, length-1);
-                    }
-                    
-                }
-                fz_catch(ctx)
-                {
-                    fz_warn(ctx, "failed allocation");
-                }
-            }
+				text = pdf_text_widget_text(ctx, idoc, focus);
 		}
 	}
 	fz_catch(ctx)
 	{
 		LOGE("getFocusedWidgetText failed: %s", ctx->error->message);
 	}
-    
-	return (*env)->NewStringUTF(env, text); // NewStringUTF doesn't work for some encodings, therefore see above.
+
+	return (*env)->NewStringUTF(env, text);
 }
 
 JNIEXPORT int JNICALL
@@ -2550,19 +2501,11 @@ JNI_FN(MuPDFCore_setFocusedWidgetTextInternal)(JNIEnv * env, jobject thiz, jstri
 	fz_context *ctx = glo->ctx;
 
 	text = (*env)->GetStringUTFChars(env, jtext, NULL);
-    /* const jchar * text = (*env)->GetStringChars(env, jtext, NULL); */
-    /* unsigned int length = (*env)->GetStringLength(env, jtext); */
-    /* if (text == NULL) */
-	/* { */
-	/* 	LOGE("Failed to get text"); */
-	/* 	return 0; */
-	/* } */
-    /*     //Add the BOM to make clear this is UTF-16BE encoding (this is what we get from the java side) */
-    /* jchar *dstptr = (jchar *)malloc((length+1)*sizeof(jchar)); */
-    /* dstptr[0] = 0xfeff; */
-    /* for (i = 0; i < length; i++) */
-    /*     dstptr[i+1] = text[i]; */
-    /* length++; */
+	if (text == NULL)
+	{
+		LOGE("Failed to get text");
+		return 0;
+	}
 
 	fz_try(ctx)
 	{
@@ -2574,15 +2517,7 @@ JNI_FN(MuPDFCore_setFocusedWidgetTextInternal)(JNIEnv * env, jobject thiz, jstri
 
 			if (focus)
 			{
-                    /*
-                     * Replace this function call with inline code to
-                     * propperly encode text.   
-                     */
 				result = pdf_text_widget_set_text(ctx, idoc, focus, (char *)text);
-                /* int accepted = run_keystroke(ctx, doc, annot->obj, &text); */
-                /* if (accepted) */
-                /*     accepted = pdf_field_set_value(ctx, doc, annot->obj, text) */;
-                
 				dump_annotation_display_lists(glo);
 			}
 		}
@@ -2607,7 +2542,6 @@ JNI_FN(MuPDFCore_getFocusedWidgetChoiceOptions)(JNIEnv * env, jobject thiz)
 	int type;
 	int nopts, i;
 	char **opts = NULL;
-    unsigned int *len = NULL;
 	jclass stringClass;
 	jobjectArray arr;
 
@@ -2625,10 +2559,9 @@ JNI_FN(MuPDFCore_getFocusedWidgetChoiceOptions)(JNIEnv * env, jobject thiz)
 	fz_var(opts);
 	fz_try(ctx)
 	{
-		nopts = pdf_choice_widget_options(ctx, idoc, focus, 0, NULL, NULL);
+		nopts = pdf_choice_widget_options(ctx, idoc, focus, 0, NULL);
 		opts = fz_malloc(ctx, nopts * sizeof(*opts));
-        len = fz_malloc(ctx, nopts * sizeof(unsigned int));
-		(void)pdf_choice_widget_options(ctx, idoc, focus, 0, opts, len);
+		(void)pdf_choice_widget_options(ctx, idoc, focus, 0, opts);
 	}
 	fz_catch(ctx)
 	{
@@ -2643,29 +2576,7 @@ JNI_FN(MuPDFCore_getFocusedWidgetChoiceOptions)(JNIEnv * env, jobject thiz)
 
 	for (i = 0; i < nopts; i++)
 	{
-            /*
-             * Repaced this function call by inline code to do
-             * propper decoding.
-             */
-		jstring s;
-        unsigned int length = len[i];
-            //possibly replace 
-        jchar * text16 = (jchar *)(void *)opts[i];
-        if (text16[0] == 0xfffe || text16[0] == 0xfeff)
-        {
-            length = length/2;
-            if (text16[0] == 0xfffe)
-            { //We must swap the byte order because NewString() doesn't respect the BOM
-                int i;
-                for (i=0; i< length; i++)
-                    text16[i] = (text16[i]<<8) | (text16[i]>>8);
-            }
-//            LOGI("mupdf.c: returning a string based on utf16");
-            s = (*env)->NewString(env, text16+1, length-1);
-        }
-        else
-            s = (*env)->NewStringUTF(env, opts[i]);
-            
+		jstring s = (*env)->NewStringUTF(env, opts[i]);
 		if (s != NULL)
 			(*env)->SetObjectArrayElement(env, arr, i, s);
 

@@ -100,7 +100,7 @@ int pdf_text_widget_set_text(fz_context *ctx, pdf_document *doc, pdf_widget *tw,
 	is true, then the export values will be returned and not the list
 	values if there are export values present.
 */
-int pdf_choice_widget_options(fz_context *ctx, pdf_document *doc, pdf_widget *tw, int exportval, char *opts[], unsigned int len[]);
+int pdf_choice_widget_options(fz_context *ctx, pdf_document *doc, pdf_widget *tw, int exportval, char *opts[]);
 
 /*
 	pdf_choice_widget_is_multiselect: returns whether a list box or
