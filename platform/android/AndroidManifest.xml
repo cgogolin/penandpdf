@@ -8,7 +8,6 @@
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
   <uses-permission android:name="com.cgogolin.penandpdf.LAUNCH_PEN_AND_PDF_FILE_CHOOSER" />
-  <uses-permission android:name="android.permission.INTERNET" /><!--For printing with clound print-->
   <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="28" />
   <supports-screens
      android:smallScreens="true"
