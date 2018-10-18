@@ -21,10 +21,10 @@ public class PenAndPDFPrintDocumentAdapter extends PrintDocumentAdapter {
 
     public void onLayout(PrintAttributes oldAttributes, PrintAttributes newAttributes, CancellationSignal cancellationSignal, PrintDocumentAdapter.LayoutResultCallback callback, Bundle extras) {}
 
-    public void onWrite (PageRange[] pages,
-                         ParcelFileDescriptor destination,
-                         CancellationSignal cancellationSignal,
-                         PrintDocumentAdapter.WriteResultCallback callback) {
+    public void onWrite(PageRange[] pages,
+                        ParcelFileDescriptor destination,
+                        CancellationSignal cancellationSignal,
+                        PrintDocumentAdapter.WriteResultCallback callback) {
             //TODO: pages are so far not take into account
         try
         {
@@ -41,8 +41,9 @@ public class PenAndPDFPrintDocumentAdapter extends PrintDocumentAdapter {
             tmp_file_pfd.close();
             os.close();//destination is closed automatically here
 
-            PageRange[] range = {new PageRange(1, core.countPages())};
-            callback.onWriteFinished(range);
+            // PageRange[] range = {new PageRange(1, core.countPages())};
+            // callback.onWriteFinished(range);
+            callback.onWriteFinished(pages);
         }
         catch(Exception e)
         {
