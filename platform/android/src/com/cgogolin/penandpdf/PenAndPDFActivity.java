@@ -623,7 +623,7 @@ public static boolean isMediaDocument(Uri uri) {
 
                         // Set up the print action
                     MenuItem printItem = menu.findItem(R.id.menu_print);
-                    if (core == null)
+                    if (core == null || android.os.Build.VERSION.SDK_INT < 19)
                         printItem.setEnabled(false).setVisible(false);
                     else
                         printItem.setEnabled(true).setVisible(true);
@@ -2014,7 +2014,7 @@ public static boolean isMediaDocument(Uri uri) {
 
         PrintManager printManager = (PrintManager) getSystemService(Context.PRINT_SERVICE);
         String jobName = getString(R.string.app_name) + " " + core.getFileName();
-        printManager.print(jobName, new PenAndPDFPrintDocumentAdapter(this, core), null);
+        printManager.print(jobName, new PenAndPDFPrintDocumentAdapter(this, core, jobName), null);
 
         // final Intent printIntent = new Intent();
 
