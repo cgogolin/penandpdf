@@ -40,6 +40,7 @@
        android:label="@string/app_name" 			
        android:launchMode="standard"
        android:alwaysRetainTaskState="true"
+       android:allowEmbedded="true"
        >
       <intent-filter>
 	<action android:name="android.intent.action.MAIN"/>
